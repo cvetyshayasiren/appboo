@@ -1,48 +1,42 @@
-# appboo
+# AppBoo
 
-Сборник сгенерированных веб-приложений. Каталог, фильтры и плеер — один файл `index.html`, без внешних библиотек.
+Сборник веб-приложений, опубликованных на GitHub Pages. Можно сразу открыть каталог и пользоваться приложениями в браузере — локальный сервер и установка не нужны.
 
-Каждое приложение лежит в своей папке внутри `apps/`. Список собирается из `apps/apps.json`, карточки читают `meta.json`.
+**[Открыть AppBoo — основной каталог](https://cvetyshayasiren.github.io/appboo/)**
 
-## Каталог
+## Каталог приложений
 
-- **Карточка** — сразу открывает приложение в полноэкранном окне
-- **Перейти** — новая вкладка
-- **Окно** — то же полноэкранное окно
-- **Тег** или **нейросеть** — мгновенно оставляет только этот фильтр; повторный клик снимает его
-- **Платформа** — Desktop / Mobile / все
-- **Сортировка «По умолчанию»** — новые сверху. Порядок в `apps.json` — время появления, новые в конце файла
+Все ссылки ведут непосредственно на соответствующие приложения.
 
-Акцент интерфейса: `#86C26B`. Иконки — единый линейный SVG.
+| Приложение | Описание | Открыть |
+|---|---|---|
+| Клавиатурные заметки | Заметки поверх раскладки | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/keyboardNotes/) |
+| Покемоны Пороховых | Лови, сражайся, собирай | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/pokegame/) |
+| Покеген | Генератор покевайба | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/pokegen/) |
+| KOLaGEN | Генератор кольев | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/kolagen/) |
+| 8-bit Music Maker | Редактор 8-bit музыки | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/8-bit%20Music%20Maker/) |
+| 8-bit Melody Machine | Рандомный чиптюн | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/8-bit%20Melody%20Machine/) |
+| 8-bit Melody Machine v2 | Рандомный чиптюн v2 | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/8-bit%20Melody%20Machine%20v2/) |
+| СКРОЛЛ | Лента, которая проверяет, что ты реально видишь | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/scroll/) |
+| Мгновенная память | Пиксель·ASCII консоль | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/memory%20game/) |
+| Граффити-войны | Перекрывай чужие теги, верни стены городу | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/wars%20graffiti/) |
+| PIXEL LAB | Пиксель-арт редактор | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/PIXEL%20LAB/) |
+| CRT·VIEW | Просмотрщик изображений с эффектами | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/CRT%C2%B7VIEW/) |
+| ФРАКТАЛБУК | Книга живых фракталов | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/fractal%20book/) |
+| Стандартная модель | Карта элементарных частиц | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/Standard%20Model/) |
+| Стандартная модель v2 | Карта элементарных частиц, вторая версия | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/Standard%20Model%20v2/) |
+| PixelForge | Студия пиксель-арта и палитр | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/PixelForge/) |
+| Погодный страж | Хранитель погоды над маленьким островом | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/weather%20warden/) |
+| STYLE LAB | Один экран — четырнадцать визуальных стилей | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/STYLE%20LAB/) |
+| FFMPEGo | Браузерный конвертер на ffmpeg.wasm | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/FFMPEGo/) |
+| Эмодзиатор | Пикер эмодзи | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/emoji-picker/) |
+| Color Lab | Инструменты для работы с цветом | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/color%20lab/) |
 
-## Приложения
+## Как устроен проект
 
-Порядок как в `apps.json`, от старых к новым:
+Каждое приложение находится в отдельной папке внутри `apps/`. Общий каталог собирает список из `apps/apps.json`, а карточки приложений используют собственные файлы `meta.json`.
 
-| Приложение | Что это |
-|---|---|
-| Клавиатурные заметки | Заметки поверх раскладки |
-| Покемоны Пороховых | Лови, сражайся, собирай |
-| Покеген | Генератор покевайба |
-| KOLaGEN | Генератор кольев |
-| 8-bit Music Maker | Редактор 8-bit музыки |
-| 8-bit Melody Machine | Рандомный чиптюн |
-| 8-bit Melody Machine v2 | Рандомный чиптюн v2 |
-| СКРОЛЛ | Лента, которая проверяет, что ты реально видишь |
-| Мгновенная память | Пиксель·ASCII консоль |
-| Граффити-войны | Перекрывай чужие теги, верни стены городу |
-| PIXEL LAB | Пиксель-арт редактор |
-| CRT·VIEW | Просмотрщик изображений с эффектами |
-| ФРАКТАЛБУК | Книга живых фракталов |
-| Стандартная модель | Карта элементарных частиц |
-| Стандартная модель v2 | Карта элементарных частиц, вторая версия |
-| PixelForge | Студия пиксель-арта и палитр |
-| Погодный страж | Хранитель погоды над маленьким островом |
-| STYLE LAB | Один экран — четырнадцать визуальных стилей |
-| FFMPEGo | Браузерный конвертер на ffmpeg.wasm |
-| Эмодзиатор | Пикер эмодзи |
-
-## Структура
+## Структура проекта
 
 ```
 appboo/
@@ -56,7 +50,7 @@ appboo/
         └── icon.svg
 ```
 
-`meta.json`:
+### Формат meta.json
 
 ```json
 {
@@ -71,12 +65,4 @@ appboo/
 }
 ```
 
-`platform`: `desktop` | `mobile` | `both`.
-
-## Запуск
-
-```bash
-python3 -m http.server 8080
-```
-
-Открой `http://localhost:8080`.
+Значение `platform`: `desktop`, `mobile` или `both`.
