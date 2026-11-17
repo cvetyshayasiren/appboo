@@ -4,9 +4,5 @@
   "icon": "icon.svg",
   "ai": "Qwen4-MAX",
   "platform": "both",
-  "tags": [
-    "game",
-    "pixel art",
-    "random"
-  ]
+  "tags": ["Social", "Simulation", "Narrative", "Random"]
 }
