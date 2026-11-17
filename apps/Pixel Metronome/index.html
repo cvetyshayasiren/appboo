@@ -73,6 +73,97 @@ h2{color:var(--yellow);font-size:11px}
 }
 @media(max-width:560px){.beat-walk{left:15%;right:15%}}
 
+
+/* Fullscreen tabbed workstation */
+:root{--bg:#101b18;--panel:#172923;--panel2:#203a30;--ink:#f2fff7;--muted:#9ab9a7;--red:#ff7185;--yellow:#d9ff72;--blue:#70e6c0;--green:#9dffb2;--pink:#ff9ecb;--purple:#b7a0ff;--line:#365d4b;--shadow:#07110d;--accent:#9dffb2}
+html,body{height:100%;min-height:0;overflow:hidden}
+body{background:var(--bg);font-family:ui-monospace,"Courier New",monospace}
+.app{height:100dvh;min-height:0;max-width:1180px;padding:clamp(7px,1.5vw,16px);gap:9px;overflow:hidden}
+header{border-radius:15px;background:linear-gradient(120deg,#1b382b,#203b36);border:1px solid #5c896b;box-shadow:0 8px 28px #0005}
+.panel{border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 22px #0003,inset 0 1px #ffffff12;padding:clamp(9px,1.3vw,14px)}
+.logo{border-radius:12px;background:var(--yellow);color:#183126;box-shadow:0 4px 0 #4c805d;animation:logoBob 3s ease-in-out infinite}
+h1{font-size:clamp(16px,2.5vw,25px);text-shadow:none;color:#eaffef}
+h2{font-size:11px;letter-spacing:1.5px;color:var(--yellow)}
+.sub{letter-spacing:.4px}
+.main{display:block;flex:1;min-height:0;overflow:hidden}
+.pages{height:100%;min-height:0}
+.page{height:100%;min-height:0;display:none;overflow:hidden;gap:9px}
+.page.active{display:grid;animation:pageIn .22s ease-out}
+#page-play{grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);grid-template-rows:minmax(0,1fr) auto}
+#page-play .stage{grid-column:1/-1;min-height:0}
+#page-play .panel:nth-child(2){min-height:0}
+#page-play .panel:nth-child(3){min-height:0}
+#page-sound,#page-extras,#page-colors{grid-template-columns:1fr;align-content:start}
+#page-sound .panel,#page-extras .panel,#page-colors .panel{width:100%;max-width:780px;margin-inline:auto}
+.stage{background:radial-gradient(ellipse at 50% 45%,#315342 0%,#1c332a 58%,#172923 100%);border-color:#58866a;min-height:0;position:relative}
+.pulse{border-radius:18px;background:var(--blue);border:5px solid var(--yellow);box-shadow:0 8px 0 #07110d,0 0 32px color-mix(in srgb,var(--blue) 35%,transparent);transition:transform .12s cubic-bezier(.2,1.8,.4,1),background .12s}
+.pulse.hit{transform:scale(1.14) rotate(-3deg)}
+.counter{border-radius:12px;background:#102019;border-color:#416b53}
+.counter strong{color:var(--yellow);font-size:clamp(20px,4vw,30px)}
+.beat-walk{border-color:#638b70}
+.walk-node{border-radius:50%;width:10px;height:10px;background:#557865}
+.walk-node.active{background:var(--yellow);box-shadow:0 0 12px var(--yellow)}
+.walker{border-radius:4px;background:var(--pink);box-shadow:0 0 14px var(--pink);transition:left .09s linear;animation:walkerBounce .35s ease-in-out infinite alternate}
+.btn{border-radius:10px;border:1px solid #557a62;background:#294638;box-shadow:0 3px 0 #0b1710;transition:transform .14s,filter .14s,box-shadow .14s}
+.btn:hover{filter:brightness(1.2);transform:translateY(-2px);box-shadow:0 5px 0 #0b1710}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0b1710}
+.btn.primary{background:var(--green);color:#11251a;border-color:#d9ffe0}
+.btn.danger{background:#b94159;border-color:#ff9aab}
+.beat{border-radius:9px;box-shadow:0 3px 0 #0a1710;transition:transform .12s,filter .12s}
+.beat.current{filter:brightness(1.3);transform:translateY(-4px) scale(1.04)}
+.control-box,.counter{border-radius:10px}
+input,select{border-radius:8px!important}
+.tempo-value input{border-radius:10px!important}
+.tabs{display:flex;gap:6px;flex:0 0 auto;padding:5px;background:#101f19;border:1px solid #345744;border-radius:13px}
+.tab{flex:1;min-width:0;padding:9px 5px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--muted);font:700 11px ui-monospace,monospace;cursor:pointer}
+.tab.active{background:#2b4d3b;color:var(--yellow);border-color:#5e8a68;box-shadow:inset 0 1px #ffffff16}
+.tab span{display:block;font-size:16px;margin-bottom:2px}
+.theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.theme-choice{border:2px solid var(--line);border-radius:12px;padding:10px 6px;background:#102019;cursor:pointer;text-align:center;font:700 11px ui-monospace,monospace}
+.theme-choice.active{border-color:var(--yellow);box-shadow:0 0 0 2px #d9ff7233}
+.swatch{height:34px;border-radius:8px;margin-bottom:7px;border:1px solid #ffffff44}
+.custom-color{display:flex;align-items:center;gap:12px;margin-top:18px;padding:12px;background:#102019;border:1px solid var(--line);border-radius:12px}
+.custom-color input{width:48px;height:38px;border:0;padding:0;background:none}
+.toast{border-radius:10px;background:var(--yellow);color:#102019;border:1px solid white;box-shadow:0 5px 20px #0007}
+@keyframes pageIn{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes logoBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes walkerBounce{from{transform:translate(-50%,0)}to{transform:translate(-50%,-3px)}}
+@media(max-width:700px){
+ .app{padding:7px;gap:7px}
+ header{padding:8px 10px;gap:5px}
+ .brand{gap:9px}.logo{width:36px;height:36px;font-size:20px}
+ .sub{font-size:8px}.status{gap:5px}.pill{padding:3px 6px;font-size:9px}
+ .tabs{gap:3px;padding:4px}.tab{padding:7px 2px;font-size:9px}.tab span{font-size:15px}
+ #page-play{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(105px,.8fr) auto auto;gap:6px}
+ #page-play .stage{grid-column:auto;gap:15px;padding:8px 8px 29px}
+ #page-play .panel{padding:8px}
+ .pulse{width:clamp(62px,17vw,88px);height:clamp(62px,17vw,88px)}
+ .pulse-label{margin-top:7px;font-size:8px}
+ .counters{gap:5px}.counter{padding:6px 8px}.counter span{font-size:8px}
+ .beat-grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+ .beat{font-size:10px}
+ .legend{font-size:8px;gap:7px;margin-top:6px}
+ .tempo{grid-template-columns:auto minmax(0,1fr);gap:6px}
+ .tempo-value input{width:65px;font-size:18px;padding:5px}
+ .transport{gap:5px;margin-top:7px!important}
+ .transport .btn{padding:7px 8px;font-size:10px}
+ .hint{display:none}
+ #page-sound .panel{padding:9px}
+ .sound-row{grid-template-columns:58px minmax(65px,1fr) 48px 34px;gap:5px}
+ .sound-row select{font-size:10px;padding:5px}
+ .theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-height:650px) and (max-width:700px){
+ .app{gap:5px}.panel{padding:7px!important}
+ #page-play{grid-template-rows:minmax(85px,.7fr) auto auto}
+ #page-play .stage{min-height:0}
+ .pulse{width:58px;height:58px}
+ .beat{aspect-ratio:1.2}
+ .beat-grid{gap:3px}
+ .transport .btn{padding:5px 6px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
 </style>
 </head>
 <body>
@@ -81,7 +172,8 @@ h2{color:var(--yellow);font-size:11px}
  <div class="brand"><div class="logo" aria-hidden="true">♪</div><div><h1>PIXEL METRONOME</h1><div class="sub">8-BIT RHYTHM MACHINE // точность в каждом тике</div></div></div>
  <div class="status"><span class="pill bpm-chip" id="headerBpm">120 BPM</span><span class="pill" id="status">IDLE</span><span class="pill" id="audioStatus">CLICK TO START</span></div>
 </header>
-<div class="main">
+<nav class="tabs" aria-label="Разделы метронома"><button class="tab active" data-tab="play"><span>♫</span>РИТМ</button><button class="tab" data-tab="sound"><span>◖</span>ЗВУК</button><button class="tab" data-tab="extras"><span>✦</span>ПАТТЕРНЫ</button><button class="tab" data-tab="colors"><span>◈</span>ЦВЕТ</button></nav>
+<div class="main"><div class="pages">
 <section class="left">
  <div class="panel stage">
   <div class="pulse-wrap"><div class="pulse" id="pulse" aria-label="Визуальный пульс"></div><div class="pulse-label" id="beatLabel">ГОТОВ К СТАРТУ</div></div>
@@ -131,7 +223,7 @@ h2{color:var(--yellow);font-size:11px}
   <div class="patterns" style="margin-top:8px"><button class="btn small" id="loadPreset">ЗАГРУЗИТЬ</button><button class="btn small" id="deletePreset">УДАЛИТЬ</button><button class="btn small" id="exportPreset">ЭКСПОРТ JSON</button><button class="btn small" id="importPreset">ИМПОРТ JSON</button><input class="file-hidden" id="importFile" type="file" accept="application/json,.json"></div>
  </div>
 </section>
-</div>
+</div></div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script>
@@ -291,6 +383,48 @@ const UI=(()=>{
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
  return {bind,toast,status,counters,beat,pulse,pulseIdle,renderGrid,soundFor,volumeFor,pitch};
 })();
+
+/* Разделы и цветовые темы: вся рабочая область помещается в экран */
+(function setupWorkspace(){
+ const main=document.querySelector('.main'),left=document.querySelector('.left'),right=document.querySelector('.right');
+ const panels=[...left.children,...right.children];
+ const pages={play:document.createElement('section'),sound:document.createElement('section'),extras:document.createElement('section'),colors:document.createElement('section')};
+ Object.entries(pages).forEach(([k,p])=>{p.className='page'+(k==='play'?' active':'');p.id='page-'+k;main.querySelector('.pages').appendChild(p)});
+ [panels[0],panels[1],panels[2]].forEach(p=>pages.play.appendChild(p));
+ pages.sound.appendChild(panels[3]);pages.extras.append(panels[4],panels[5]);
+ const colorPanel=document.createElement('div');colorPanel.className='panel';
+ colorPanel.innerHTML='<h2>Цветовая схема</h2><div class="sub">Выбери настроение своей ритм-машины</div><div class="theme-grid" id="themeGrid"></div><div class="custom-color"><input type="color" id="customAccent" value="#9dffb2" aria-label="Свой базовый цвет"><div><b>Свой цвет</b><div class="sub">Подбери основной акцент — палитра адаптируется автоматически</div></div></div>';
+ pages.colors.appendChild(colorPanel);
+ const themes=[
+  {id:'green',name:'Forest',swatch:'#9dffb2',vars:['#101b18','#172923','#203a30','#9dffb2','#d9ff72','#70e6c0','#ff9ecb','#b7a0ff']},
+  {id:'sunset',name:'Sunset',swatch:'#ffad78',vars:['#211522','#302039','#49304a','#ffad78','#ffe08a','#ff7e9d','#ff9ecb','#c6a0ff']},
+  {id:'ocean',name:'Ocean',swatch:'#65d9ff',vars:['#101b2a','#17283a','#203b52','#65d9ff','#b6f2ff','#72e6c8','#ffb4cf','#a6a7ff']},
+  {id:'violet',name:'Arcade',swatch:'#c0a0ff',vars:['#19152a','#28203d','#393052','#c0a0ff','#ffe17a','#7be5ff','#ff91c8','#a6f0b0']}
+ ];
+ const root=document.documentElement;
+ function apply(t,persist=true){
+  const v=t.vars;['--bg','--panel','--panel2','--green','--yellow','--blue','--pink','--purple'].forEach((k,i)=>root.style.setProperty(k,v[i]));
+  root.style.setProperty('--accent',v[3]);root.style.setProperty('--line',v[3]+'55');root.style.setProperty('--red',v[6]);
+  document.querySelectorAll('.theme-choice').forEach(b=>b.classList.toggle('active',b.dataset.theme===t.id));
+  if(persist)localStorage.setItem('pixelMetronome.theme',JSON.stringify(t));
+ }
+ const grid=colorPanel.querySelector('#themeGrid');
+ themes.forEach(t=>{const b=document.createElement('button');b.className='theme-choice';b.dataset.theme=t.id;b.innerHTML='<div class="swatch" style="background:'+t.swatch+'"></div>'+t.name;b.onclick=()=>apply(t);grid.appendChild(b)});
+ const saved=(()=>{try{return JSON.parse(localStorage.getItem('pixelMetronome.theme'))}catch{return null}})();
+ apply(saved||themes[0],false);
+ colorPanel.querySelector('#customAccent').oninput=e=>{
+  const hex=e.target.value, h=parseInt(hex.slice(1),16),r=h>>16,g=(h>>8)&255,b=h&255;
+  const tint=(x)=>'#'+[0,1,2].map(i=>Math.round(x[i]*.18+[16,27,24][i]*.82).toString(16).padStart(2,'0')).join('');
+  const custom={id:'custom',name:'Custom',vars:[tint([r,g,b]),tint([r,g,b]),tint([r,g,b]),hex,hex,hex,'#ff9ecb','#b7a0ff']};
+  apply(custom);
+ };
+ pages.colors.appendChild(document.createElement('div'));
+ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  Object.values(pages).forEach(p=>p.classList.toggle('active',p.id==='page-'+b.dataset.tab));
+ }));
+})();
+
 Scheduler.state.sub=1;Scheduler.state.denominator=4;Scheduler.state.types=['accent','normal','normal','normal'];UI.bind();
 </script>
 </body>
