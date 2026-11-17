@@ -231,6 +231,12 @@ input,select{border-radius:8px!important}
 const Presets=(()=>{
  const sounds={
   BLIP:{wave:'square',freq:1250,duration:.055,kind:'tone'},
+  PING:{wave:'sine',freq:1760,duration:.16,kind:'tone'},
+  MARIMBA:{wave:'triangle',freq:880,duration:.12,kind:'tone'},
+  RIM:{wave:'square',freq:2450,duration:.035,kind:'tone'},
+  TOM:{wave:'sine',freq:210,duration:.19,kind:'tone'},
+  CHIME:{wave:'sine',freq:1320,duration:.24,kind:'tone'},
+  ARCADE:{wave:'sawtooth',freq:740,duration:.09,kind:'tone'},
   KICK:{wave:'sine',freq:150,duration:.16,kind:'kick'},
   SNARE:{wave:'noise',freq:1800,duration:.13,kind:'snare'},
   HAT:{wave:'noise',freq:8500,duration:.045,kind:'hat'},
@@ -297,7 +303,7 @@ const AudioEngine=(()=>{
  return {init,play,setMaster,setMute,get muted(){return muted},panic,get context(){return ctx}};
 })();
 const Scheduler=(()=>{
- let timer=null,running=false,paused=false,nextTime=0,step=0,bar=0,scheduled=[],lookahead=.1,interval=25;
+ let timer=null,running=false,paused=false,nextTime=0,step=0,bar=0,scheduled=[],lookahead=.1,interval=25,lastVisualTime=-1;
  const state={bpm:120,beats:4,types:[],sub:1};
  function beatDuration(){return 60/state.bpm*(4/(state.denominator||4))}
  function start(){const c=AudioEngine.init();if(c.state==='suspended')c.resume();if(running)return;running=true;paused=false;nextTime=c.currentTime+.05;timer=setInterval(tick,interval);tick();UI.status(true);UI.toast('Метроном запущен')}
@@ -326,9 +332,10 @@ const Scheduler=(()=>{
  function setTempo(v){state.bpm=Math.max(20,Math.min(300,Math.round(v)))}
  function setMeter(n,d){state.beats=n;state.denominator=d;state.types=Array.from({length:n},(_,i)=>state.types[i]|| (i===0?'accent':'normal'));step=step%n;UI.renderGrid()}
  function setTypes(a){state.types=a.slice(0,state.beats);while(state.types.length<state.beats)state.types.push('normal')}
- function visual(now){
-  if(running){let active=null;for(const b of scheduled){if(b.time<=now+.01&&b.time>=now-.12)active=b}
-   if(active){UI.beat(active.index);UI.counters(active.bar+1,active.index+1,state.beats,active.sub);UI.pulse(active.type)}
+ function visual(){
+  const now=AudioEngine.context?AudioEngine.context.currentTime:0;
+  if(running){let active=null;for(const b of scheduled){if(b.time<=now+.012&&b.time>=now-.09)active=b}
+   if(active&&active.time!==lastVisualTime){lastVisualTime=active.time;UI.beat(active.index);UI.counters(active.bar+1,active.index+1,state.beats,active.sub);UI.pulse(active.type)}
   }
   requestAnimationFrame(visual);
  }
