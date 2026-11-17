@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<!-- Адаптивный viewport для мобильных -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>appboo</title>
+<style>
+/* ============================================================
+   appboo — плеер мини-приложений
+   Один файл: HTML + CSS + JS. Без внешних библиотек.
+   ============================================================ */
+
+/* --- Тема: тёмная по умолчанию, светлая через prefers-color-scheme --- */
+:root {
+  --bg: #0a0c10;
+  --bg-elevated: #11141b;
+  --card: #161a23;
+  --card-hover: #1c2230;
+  --border: #232a39;
+  --border-strong: #2e3648;
+  --text: #e8eaf0;
+  --text-muted: #8b91a1;
+  --text-dim: #5e6473;
+  --accent: #7c83ff;
+  --accent-hover: #6366f1;
+  --accent-soft: rgba(124, 131, 255, 0.14);
+  --danger: #ef4444;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.45);
+  --sk-color: #1f2531;
+  color-scheme: dark;
+}
+
+/* Ручное переключение темы (data-theme имеет приоритет над системной) */
+:root[data-theme="light"] {
+  --bg: #f4f5f9;
+  --bg-elevated: #ffffff;
+  --card: #ffffff;
+  --card-hover: #fafbff;
+  --border: #e6e8ee;
+  --border-strong: #d4d8e2;
+  --text: #161a23;
+  --text-muted: #5f6573;
+  --text-dim: #9aa0ad;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: rgba(79, 70, 229, 0.10);
+  --sk-color: #e9ebf1;
+  --shadow: 0 6px 24px rgba(20, 25, 40, 0.08);
+  --shadow-hover: 0 12px 34px rgba(20, 25, 40, 0.13);
+  color-scheme: light;
+}
+
+/* Если data-theme не задан — следуем системной теме */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #f4f5f9;
+    --bg-elevated: #ffffff;
+    --card: #ffffff;
+    --card-hover: #fafbff;
+    --border: #e6e8ee;
+    --border-strong: #d4d8e2;
+    --text: #161a23;
+    --text-muted: #5f6573;
+    --text-dim: #9aa0ad;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: rgba(79, 70, 229, 0.10);
+    --sk-color: #e9ebf1;
+    --shadow: 0 6px 24px rgba(20, 25, 40, 0.08);
+    --shadow-hover: 0 12px 34px rgba(20, 25, 40, 0.13);
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* --- Шапка --- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: saturate(140%) blur(8px);
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), #a855f7);
+  color: #fff;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 14px var(--accent-soft);
+}
+.logo-accent { color: var(--accent); }
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.theme-toggle:hover { background: var(--card-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+.theme-toggle:active { transform: translateY(0); }
+.theme-toggle .theme-icon-light { display: none; }
+:root[data-theme="light"] .theme-toggle .theme-icon-dark { display: none; }
+:root[data-theme="light"] .theme-toggle .theme-icon-light { display: inline; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .theme-toggle .theme-icon-dark { display: none; }
+  :root:not([data-theme]) .theme-toggle .theme-icon-light { display: inline; }
+}
+
+/* --- Основной контейнер --- */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 22px 20px 60px;
+}
+
+/* --- Панель фильтров --- */
+.toolbar {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow);
+}
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Сегментный переключатель платформы */
+.seg {
+  display: inline-flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 7px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-soft);
+}
+/* Выпадающий список сортировки */
+.sort-select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sort-select:hover { border-color: var(--border-strong); }
+.sort-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Кнопка сброса */
+.btn-reset {
+  margin-left: auto;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.btn-reset:hover { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+
+/* --- Пилюли тегов (фильтр и карточки используют один стиль) --- */
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-filters:empty { display: none; }
+.tag {
+  /* hue задаётся инлайн через style="--hue:N" — детерминированный цвет по тексту тега */
+  --hue: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: hsla(var(--hue), 70%, 55%, 0.14);
+  color: hsl(var(--hue), 75%, 72%);
+  border: 1px solid hsla(var(--hue), 70%, 55%, 0.28);
+  cursor: default;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: transform 0.12s, background 0.18s;
+}
+/* Пилюля-фильтр кликабельна и переключает состояние */
+.tag-filter {
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid hsla(var(--hue), 70%, 55%, 0.30);
+  color: hsl(var(--hue), 60%, 68%);
+}
+.tag-filter:hover { transform: translateY(-1px); background: hsla(var(--hue), 70%, 55%, 0.12); }
+.tag-filter.active {
+  background: hsla(var(--hue), 70%, 55%, 0.22);
+  color: hsl(var(--hue), 85%, 80%);
+  border-color: hsla(var(--hue), 80%, 60%, 0.6);
+  box-shadow: 0 0 0 1px hsla(var(--hue), 80%, 60%, 0.25);
+}
+/* Светлая тема: теги темнее для читаемости */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .tag {
+    background: hsla(var(--hue), 65%, 50%, 0.12);
+    color: hsl(var(--hue), 55%, 38%);
+    border-color: hsla(var(--hue), 65%, 45%, 0.25);
+  }
+  :root:not([data-theme]) .tag-filter {
+    color: hsl(var(--hue), 48%, 36%);
+    border-color: hsla(var(--hue), 60%, 45%, 0.28);
+  }
+  :root:not([data-theme]) .tag-filter.active {
+    background: hsla(var(--hue), 65%, 50%, 0.20);
+    color: hsl(var(--hue), 50%, 30%);
+  }
+}
+:root[data-theme="light"] .tag {
+  background: hsla(var(--hue), 65%, 50%, 0.12);
+  color: hsl(var(--hue), 55%, 38%);
+  border-color: hsla(var(--hue), 65%, 45%, 0.25);
+}
+:root[data-theme="light"] .tag-filter {
+  color: hsl(var(--hue), 48%, 36%);
+  border-color: hsla(var(--hue), 60%, 45%, 0.28);
+}
+:root[data-theme="light"] .tag-filter.active {
+  background: hsla(var(--hue), 65%, 50%, 0.20);
+  color: hsl(var(--hue), 50%, 30%);
+}
+
+/* --- Сетка карточек --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
+}
+
+/* --- Карточка приложения --- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: var(--shadow);
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-hover);
+}
+/* Блок иконки: цветная подложка + img поверх (если задан путь) */
+.card-icon {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--icon-color, var(--accent));
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.icon-glyph {
+  font-size: clamp(2rem, 7vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+  max-width: 86%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.icon-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* при ошибке загрузки img удаляется, остаётся цветная подложка с буквой */
+}
+.card-content {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+.card-desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.card-info {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.card-tags:empty { display: none; }
+/* Бейдж нейросети — похож на тег, но с пометкой робота и пунктирной обводкой */
+.ai-badge {
+  --hue: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: hsla(var(--hue), 70%, 55%, 0.16);
+  color: hsl(var(--hue), 80%, 74%);
+  border: 1px dashed hsla(var(--hue), 75%, 60%, 0.55);
+}
+.ai-robot { font-size: 0.9rem; }
+:root[data-theme="light"] .ai-badge {
+  background: hsla(var(--hue), 65%, 50%, 0.14);
+  color: hsl(var(--hue), 55%, 36%);
+  border-color: hsla(var(--hue), 60%, 45%, 0.5);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .ai-badge {
+    background: hsla(var(--hue), 65%, 50%, 0.14);
+    color: hsl(var(--hue), 55%, 36%);
+    border-color: hsla(var(--hue), 60%, 45%, 0.5);
+  }
+}
+/* Бейдж платформы — нейтральный, с иконкой */
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid hsla(240, 60%, 60%, 0.25);
+}
+:root[data-theme="light"] .platform-badge { color: var(--accent); }
+/* Кнопки действий */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.btn {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: transform 0.12s, background 0.18s, border-color 0.18s, color 0.18s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-secondary {
+  background: var(--card-hover);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn-secondary:hover { background: var(--bg-elevated); border-color: var(--accent); color: var(--accent); }
+.btn:active { transform: translateY(0); }
+
+/* --- Состояние загрузки (скелетоны) --- */
+.skeleton-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.sk-icon { aspect-ratio: 16 / 9; background: var(--sk-color); }
+.sk-line { height: 12px; margin: 12px 16px 0; border-radius: 6px; background: var(--sk-color); }
+.sk-line.sk-title { height: 18px; width: 60%; }
+.sk-line.sk-short { width: 40%; }
+.sk-tags { height: 22px; margin: 16px; border-radius: 11px; background: var(--sk-color); width: 45%; }
+.sk-icon, .sk-line, .sk-tags { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
+/* --- Пустые состояния --- */
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 56px 20px;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  background: var(--card);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+.empty.error { color: var(--danger); border-color: var(--danger); }
+
+/* --- Модальное окно с iframe на весь экран --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal.open { opacity: 1; pointer-events: auto; }
+.modal-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+/* Единственный элемент интерфейса поверх iframe — кнопка закрытия */
+.modal-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1001;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  transition: background 0.18s, transform 0.18s;
+}
+.modal-close:hover { background: var(--danger); transform: scale(1.08); }
+.modal-close:active { transform: scale(1); }
+
+/* --- Подвал --- */
+.app-footer {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  padding: 10px 20px 30px;
+}
+
+/* --- Адаптивность --- */
+@media (max-width: 600px) {
+  .header-inner { padding: 12px 16px; }
+  main { padding: 16px 14px 40px; }
+  .toolbar { padding: 12px; }
+  .btn-reset { margin-left: 0; width: 100%; text-align: center; }
+  .modal-close { top: 10px; right: 10px; width: 42px; height: 42px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <a class="logo" href="./" aria-label="appboo">
+      <span class="logo-mark">⚡</span>
+      <span class="logo-text">app<span class="logo-accent">boo</span></span>
+    </a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему" title="Переключить тему">
+      <span class="theme-icon-dark">🌙</span>
+      <span class="theme-icon-light">☀️</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- Панель фильтров и сортировки -->
+  <div class="toolbar">
+    <div class="toolbar-row">
+      <div class="filter-group">
+        <span class="filter-label">Платформа</span>
+        <div class="seg" role="group" aria-label="Фильтр по платформе">
+          <button class="seg-btn active" data-platform="all">Все</button>
+          <button class="seg-btn" data-platform="desktop">🖥 Desktop</button>
+          <button class="seg-btn" data-platform="mobile">📱 Mobile</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Сортировка</span>
+        <select id="sort-select" class="sort-select" aria-label="Сортировка">
+          <option value="default">По умолчанию</option>
+          <option value="az">По алфавиту (А–Я)</option>
+          <option value="za">По алфавиту (Я–А)</option>
+        </select>
+      </div>
+      <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
+    </div>
+    <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
+  </div>
+
+  <!-- Сетка карточек -->
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer class="app-footer">appboo — коллекция мини-приложений</footer>
+
+<!-- Модальное окно: iframe на весь экран + кнопка закрытия -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Просмотр приложения">
+  <button class="modal-close" id="modal-close" title="Закрыть / Вернуться к плееру" aria-label="Закрыть / Вернуться к плееру">✕</button>
+  <iframe id="modal-iframe" class="modal-iframe" src="about:blank"
+    allow="autoplay; fullscreen; clipboard-read; clipboard-write; encrypted-media; picture-in-picture"
+    allowfullscreen></iframe>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   appboo — логика плеера
+   ============================================================ */
+
+/* --- Состояние плеера --- */
+let allApps = [];                 // массив загруженных приложений {id, ...meta}
+let activeTagFilters = new Set(); // выбранные теги (ИЛИ)
+let activePlatform = "all";       // "all" | "desktop" | "mobile"
+let sortMode = "default";         // "default" | "az" | "za"
+
+/* --- Утилиты --- */
+
+// Экранирование текста/атрибутов для безопасной вставки в innerHTML
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+const escapeAttr = escapeHtml;
+
+// Похоже ли значение icon на путь к файлу (icon.png, logo.svg и т.п.)
+function isIconFile(val) {
+  return /\.[a-z0-9]{2,4}$/i.test(String(val));
+}
+
+// Первая буква названия (для автогенерации иконки)
+function firstLetter(title) {
+  const t = (title || "").trim();
+  return t ? t.charAt(0).toUpperCase() : "?";
+}
+
+// Детерминированный хэш строки -> число
+function hashStr(s) {
+  let h = 0;
+  s = String(s);
+  for (let i = 0; i < s.length; i++) {
+    h = s.charCodeAt(i) + ((h << 5) - h);
+    h |= 0; // приводим к 32-битному целому
+  }
+  return Math.abs(h);
+}
+
+// Автоматический цвет иконки: hue из хэша названия (или поле color)
+function autoColor(text) {
+  const hue = hashStr(text) % 360;
+  return `hsl(${hue}, 58%, 48%)`;
+}
+
+// Hue для тега/нейросети: одинаковый текст -> одинаковый цвет во всех карточках
+function hueFor(text) {
+  return hashStr(text) % 360;
+}
+
+// URL приложения (относительный, без ведущего "/" — для GitHub Pages)
+function appUrl(id) {
+  return `apps/${encodeURIComponent(id)}/index.html`;
+}
+
+// Разрешение пути иконки: абсолютный URL как есть, иначе относительно папки приложения
+function resolveIconPath(val, id) {
+  if (/^(https?:)?\/\//i.test(val) || val.startsWith("data:")) return val;
+  const clean = String(val).replace(/^\/+/, ""); // убираем ведущие слэши
+  return `apps/${encodeURIComponent(id)}/${clean}`;
+}
+
+/* --- Дефолтные метаданные (на случай отсутствия/битости meta.json) --- */
+function defaultMeta(id) {
+  return {
+    id,
+    title: id,
+    description: "",
+    info: "",
+    icon: "",
+    color: "",
+    ai: "",
+    platform: "",
+    tags: []
+  };
+}
+
+/* --- Загрузка одного приложения --- */
+async function loadMeta(id) {
+  const meta = defaultMeta(id);
+  try {
+    // Защита от кэша через ?v=Date.now()
+    const res = await fetch(`apps/${encodeURIComponent(id)}/meta.json?v=${Date.now()}`);
+    if (!res.ok) return meta; // файла нет — используем дефолт
+    const text = await res.text();
+    if (!text.trim()) return meta; // пустой файл — дефолт
+    const data = JSON.parse(text);
+    // Мерджим известные поля, tags приводим к массиву
+    Object.assign(meta, {
+      title: data.title != null ? String(data.title) : id,
+      description: data.description != null ? String(data.description) : "",
+      info: data.info != null ? String(data.info) : "",
+      icon: data.icon != null ? String(data.icon) : "",
+      color: data.color != null ? String(data.color) : "",
+      ai: data.ai != null ? String(data.ai) : "",
+      platform: data.platform != null ? String(data.platform) : "",
+      tags: Array.isArray(data.tags) ? data.tags.map(String) : []
+    });
+  } catch (e) {
+    // Битый JSON или сетевая ошибка — тихо используем дефолт
+    return meta;
+  }
+  return meta;
+}
+
+/* --- Основная загрузка --- */
+async function loadApps() {
+  showLoading();
+  let ids = [];
+  try {
+    const res = await fetch(`apps/apps.json?v=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    ids = await res.json();
+    if (!Array.isArray(ids)) throw new Error("apps.json не является массивом");
+  } catch (e) {
+    showError(`Не удалось загрузить apps/apps.json — ${e.message}`);
+    return;
+  }
+  // Параллельно грузим meta.json всех приложений (порядок сохраняется)
+  const metas = await Promise.all(ids.map(id => loadMeta(String(id))));
+  allApps = metas.filter(Boolean);
+  buildTagFilters();
+  render();
+}
+
+/* --- Состояние загрузки: скелетоны --- */
+function showLoading() {
+  const grid = document.getElementById("grid");
+  const card = `<div class="skeleton-card">
+    <div class="sk-icon"></div>
+    <div class="sk-line sk-title"></div>
+    <div class="sk-line"></div>
+    <div class="sk-line sk-short"></div>
+    <div class="sk-tags"></div>
+  </div>`;
+  grid.innerHTML = card.repeat(6);
+}
+
+/* --- Состояние ошибки --- */
+function showError(msg) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = `<div class="empty error">⚠️ ${escapeHtml(msg)}</div>`;
+}
+
+/* --- Построение панели фильтров по тегам --- */
+function buildTagFilters() {
+  const container = document.getElementById("tag-filters");
+  const allTags = new Set();
+  allApps.forEach(app => (app.tags || []).forEach(t => allTags.add(t)));
+  const tags = [...allTags].sort((a, b) => a.localeCompare(b, "ru"));
+  container.innerHTML = tags.map(t => {
+    const hue = hueFor(t);
+    return `<button class="tag tag-filter" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
+  }).join("");
+}
+
+/* --- Рендер иконки --- */
+function renderIcon(meta) {
+  // Цвет подложки: поле color, иначе автогенер из названия
+  const color = meta.color && meta.color.trim() ? meta.color.trim() : autoColor(meta.title);
+  const iconVal = (meta.icon || "").trim();
+  let glyph = "";
+  let imgHtml = "";
+
+  if (iconVal && isIconFile(iconVal)) {
+    // Похоже на файл — рисуем img поверх текстовой подложки (на случай ошибки загрузки)
+    const src = resolveIconPath(iconVal, meta.id);
+    imgHtml = `<img class="icon-img" src="${escapeAttr(src)}" alt="" loading="lazy"
+      onerror="this.remove()">`;
+    glyph = firstLetter(meta.title);
+  } else if (iconVal) {
+    // Эмодзи, буква или короткий текст
+    glyph = iconVal;
+  } else {
+    glyph = firstLetter(meta.title);
+  }
+
+  return `<div class="card-icon" style="--icon-color:${escapeAttr(color)}">
+    <span class="icon-glyph">${escapeHtml(glyph)}</span>
+    ${imgHtml}
+  </div>`;
+}
+
+/* --- Рендер бейджа нейросети --- */
+function renderAiBadge(ai) {
+  if (!ai || !ai.trim()) return "";
+  const hue = hueFor(ai);
+  return `<span class="ai-badge" style="--hue:${hue}" title="Сделано с помощью: ${escapeAttr(ai)}">
+    <span class="ai-robot" aria-hidden="true">🤖</span>${escapeHtml(ai)}
+  </span>`;
+}
+
+/* --- Рендер бейджа платформы --- */
+const PLATFORMS = {
+  desktop: { icon: "🖥", label: "Desktop" },
+  mobile:  { icon: "📱", label: "Mobile" },
+  both:    { icon: "📲", label: "Desktop & Mobile" }
+};
+function renderPlatformBadge(platform) {
+  const p = PLATFORMS[platform];
+  if (!p) return "";
+  return `<span class="platform-badge" title="Платформа: ${escapeAttr(p.label)}">${p.icon} ${escapeHtml(p.label)}</span>`;
+}
+
+/* --- Рендер одной карточки --- */
+function renderCard(app) {
+  const tagsHtml = (app.tags || []).map(t => {
+    const hue = hueFor(t);
+    return `<span class="tag" style="--hue:${hue}">${escapeHtml(t)}</span>`;
+  }).join("");
+
+  const descHtml = app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : "";
+  const infoHtml = app.info ? `<p class="card-info">${escapeHtml(app.info)}</p>` : "";
+  const aiHtml = renderAiBadge(app.ai);
+  const platformHtml = renderPlatformBadge(app.platform);
+  const metaHtml = (aiHtml || platformHtml)
+    ? `<div class="card-meta">${aiHtml}${platformHtml}</div>` : "";
+  const tagsWrap = tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : "";
+
+  return `<article class="card" data-id="${escapeAttr(app.id)}">
+    ${renderIcon(app)}
+    <div class="card-content">
+      <h3 class="card-title">${escapeHtml(app.title)}</h3>
+      ${descHtml}
+      ${infoHtml}
+      ${metaHtml}
+      ${tagsWrap}
+      <div class="card-actions">
+        <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}" target="_blank" rel="noopener noreferrer">Открыть</a>
+        <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">В iframe</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+/* --- Основной рендер с учётом фильтров и сортировки --- */
+function render() {
+  const grid = document.getElementById("grid");
+
+  if (allApps.length === 0) {
+    grid.innerHTML = `<div class="empty">Приложений пока нет</div>`;
+    return;
+  }
+
+  let list = allApps.slice();
+
+  // Фильтр по тегам (ИЛИ — хотя бы один из выбранных)
+  if (activeTagFilters.size > 0) {
+    list = list.filter(app => (app.tags || []).some(t => activeTagFilters.has(t)));
+  }
+  // Фильтр по платформе (both попадает и в desktop, и в mobile)
+  if (activePlatform !== "all") {
+    list = list.filter(app => app.platform === activePlatform || app.platform === "both");
+  }
+  // Сортировка
+  if (sortMode === "az") {
+    list.sort((a, b) => a.title.localeCompare(b.title, "ru"));
+  } else if (sortMode === "za") {
+    list.sort((a, b) => b.title.localeCompare(a.title, "ru"));
+  }
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty">Ничего не найдено</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(renderCard).join("");
+}
+
+/* --- Управление состоянием кнопки «Сбросить фильтры» --- */
+function updateResetBtn() {
+  const show = activeTagFilters.size > 0 || activePlatform !== "all" || sortMode !== "default";
+  document.getElementById("reset-btn").style.display = show ? "" : "none";
+}
+
+function resetFilters() {
+  activeTagFilters.clear();
+  activePlatform = "all";
+  sortMode = "default";
+  document.querySelectorAll(".seg-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.platform === "all"));
+  document.querySelectorAll(".tag-filter").forEach(b => b.classList.remove("active"));
+  document.getElementById("sort-select").value = "default";
+  render();
+  updateResetBtn();
+}
+
+/* --- Модальное окно с iframe --- */
+function openIframe(url) {
+  const modal = document.getElementById("modal");
+  const iframe = document.getElementById("modal-iframe");
+  iframe.src = url;
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden"; // блокируем прокрутку фона
+}
+
+function closeIframe() {
+  const modal = document.getElementById("modal");
+  const iframe = document.getElementById("modal-iframe");
+  modal.classList.remove("open");
+  // Очищаем src, чтобы остановить приложение внутри iframe
+  iframe.src = "about:blank";
+  document.body.style.overflow = "";
+}
+
+/* --- Тема: ручное переключение с запоминанием в localStorage --- */
+function initTheme() {
+  const saved = localStorage.getItem("appboo-theme");
+  if (saved === "light" || saved === "dark") {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
+}
+function toggleTheme() {
+  const root = document.documentElement;
+  const current = root.getAttribute("data-theme")
+    || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  const next = current === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  localStorage.setItem("appboo-theme", next);
+}
+
+/* --- Навешивание событий --- */
+function bindEvents() {
+  // Фильтр по платформе
+  document.querySelector(".seg").addEventListener("click", e => {
+    const btn = e.target.closest("[data-platform]");
+    if (!btn) return;
+    document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activePlatform = btn.dataset.platform;
+    render();
+    updateResetBtn();
+  });
+
+  // Сортировка
+  document.getElementById("sort-select").addEventListener("change", e => {
+    sortMode = e.target.value;
+    render();
+    updateResetBtn();
+  });
+
+  // Фильтр по тегам (делегирование на контейнер пилюль)
+  document.getElementById("tag-filters").addEventListener("click", e => {
+    const btn = e.target.closest("[data-tag]");
+    if (!btn) return;
+    const tag = btn.dataset.tag;
+    if (activeTagFilters.has(tag)) {
+      activeTagFilters.delete(tag);
+      btn.classList.remove("active");
+    } else {
+      activeTagFilters.add(tag);
+      btn.classList.add("active");
+    }
+    render();
+    updateResetBtn();
+  });
+
+  // Сброс
+  document.getElementById("reset-btn").addEventListener("click", resetFilters);
+
+  // Кнопки «В iframe» (делегирование на сетку)
+  document.getElementById("grid").addEventListener("click", e => {
+    const btn = e.target.closest("[data-iframe]");
+    if (btn) openIframe(btn.dataset.iframe);
+  });
+
+  // Закрытие модалки
+  document.getElementById("modal-close").addEventListener("click", closeIframe);
+  // Клик по фону модалки (вне iframe — по краям не выйдет, iframe покрывает всё,
+  // но Esc закрывает)
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeIframe();
+  });
+
+  // Переключение темы
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+}
+
+/* --- Старт --- */
+initTheme();
+bindEvents();
+loadApps();
+</script>
+</body>
+</html>
