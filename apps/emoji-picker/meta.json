@@ -4,7 +4,5 @@
   "icon": "icon.svg",
   "ai": "GLM-5.3",
   "platform": "both",
-  "tags": [
-    "tool"
-  ]
+  "tags": ["Tool", "Emoji", "Text", "Picker"]
 }
