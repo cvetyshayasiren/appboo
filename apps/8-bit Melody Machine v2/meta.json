@@ -4,10 +4,5 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "desktop",
-  "tags": [
-    "game",
-    "music",
-    "random",
-    "pixel art"
-  ]
+  "tags": ["Creative", "Music", "Chiptune", "Generator"]
 }
