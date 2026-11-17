@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FFMPEGo — браузерный конвертер медиа</title>
+<!-- ============================================================
+     FFMPEGo — одностраничный браузерный конвертер на ffmpeg.wasm
+     Всё работает локально в браузере. Сервер не участвует.
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ==================== СТИЛИ ==================== */
+:root{
+  --bg:#171310;
+  --panel:#211a13;
+  --panel2:#2a211a;
+  --ink:#f2e6c9;
+  --dim:#a89878;
+  --amber:#ffb000;
+  --amber-dim:#7a5c14;
+  --green:#33ff66;
+  --red:#ff5544;
+  --line:#5a4a32;
+  --hard:#000000;
+  --term:#0d0a07;
+}
+[data-theme="light"]{
+  --bg:#ece0c3;
+  --panel:#e2d3b0;
+  --panel2:#d6c49c;
+  --ink:#2a1f12;
+  --dim:#6b5a3e;
+  --amber:#8a5a00;
+  --amber-dim:#c9a24a;
+  --green:#0a7a33;
+  --red:#b3202e;
+  --line:#8a764f;
+  --hard:#b49c6a;
+  --term:#241c12;
+}
+*{ box-sizing:border-box; margin:0; padding:0; border-radius:0 !important; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  font-family:'JetBrains Mono','IBM Plex Mono','Courier New',monospace;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  min-height:100dvh;
+  /* текстура перфорации, как на старых приборных панелях */
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(128,100,60,.07) 3px 4px),
+    repeating-linear-gradient(90deg, transparent 0 3px, rgba(128,100,60,.07) 3px 4px);
+  padding:16px;
+  padding-bottom:calc(16px + env(safe-area-inset-bottom));
+}
+button, input, select{ font-family:inherit; font-size:inherit; color:inherit; }
+:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+/* ---------- шапка ---------- */
+header{
+  display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start;
+  justify-content:space-between; max-width:1280px; margin:0 auto 16px;
+}
+.logo{ white-space:pre; color:var(--amber); font-weight:700; line-height:1.25;
+  text-shadow:2px 2px 0 var(--hard); font-size:14px; user-select:none; }
+.lamps{ display:flex; gap:14px; align-items:center; padding-top:4px; }
+.lamp{ display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-size:10px; letter-spacing:1px; color:var(--dim); }
+.lamp i{ width:14px; height:14px; border:2px solid var(--line); display:block;
+  background:var(--panel2); }
+.lamp.on i{ background:var(--green); box-shadow:0 0 8px var(--green); border-color:var(--green); }
+.lamp.amber.on i{ background:var(--amber); box-shadow:0 0 8px var(--amber); border-color:var(--amber); }
+
+/* ---------- общие блоки ---------- */
+.panel{
+  background:var(--panel);
+  border:2px solid var(--line);
+  box-shadow:2px 2px 0 var(--hard);
+  padding:14px;
+}
+.panel h2{
+  font-size:13px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--amber); margin-bottom:10px;
+  border-bottom:1px solid var(--line); padding-bottom:6px;
+}
+.sep{ color:var(--dim); letter-spacing:-1px; overflow:hidden;
+  white-space:nowrap; user-select:none; margin:10px 0; font-size:12px; }
+.hint{ color:var(--dim); font-size:12px; }
+.warn{ color:var(--red); font-size:12px; }
+
+/* ---------- сетка ---------- */
+main{ max-width:1280px; margin:0 auto; display:grid;
+  grid-template-columns:320px 1fr; gap:16px; align-items:start; }
+@media (max-width:900px){ main{ grid-template-columns:1fr; } }
+
+/* ---------- кнопки-«тумблеры» ---------- */
+.btn{
+  display:inline-block; background:var(--panel2); border:2px solid var(--line);
+  box-shadow:2px 2px 0 var(--hard); padding:9px 14px; cursor:pointer;
+  text-transform:uppercase; letter-spacing:1px; font-size:13px; font-weight:700;
+  color:var(--ink); user-select:none; min-height:44px;
+}
+.btn:hover{ border-color:var(--amber); color:var(--amber); }
+.btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--hard); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+.btn.primary{ background:var(--amber); color:#1a1208; border-color:var(--amber); }
+[data-theme="light"] .btn.primary{ color:#fff8ea; }
+.btn.primary:hover{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+.btn.danger:hover{ border-color:var(--red); color:var(--red); }
+
+/* ---------- переключатель темы ---------- */
+.toggle{ display:inline-flex; align-items:center; gap:10px; cursor:pointer;
+  min-height:44px; user-select:none; }
+.toggle .track{ width:56px; height:26px; border:2px solid var(--line);
+  background:var(--panel2); position:relative; box-shadow:2px 2px 0 var(--hard); flex:none; }
+.toggle .knob{ position:absolute; top:2px; left:2px; width:18px; height:18px;
+  background:var(--amber); transition:transform .15s ease-out; }
+.toggle input{ position:absolute; opacity:0; width:1px; height:1px; }
+.toggle input:checked + .track .knob{ transform:translateX(30px); background:var(--green); }
+.toggle input:focus-visible + .track{ outline:2px solid var(--amber); outline-offset:2px; }
+
+/* ---------- зона загрузки ---------- */
+#dropzone{
+  border:2px dashed var(--line); padding:22px 12px; text-align:center;
+  cursor:pointer; transition:border-color .15s ease-out; min-height:120px;
+  display:flex; flex-direction:column; justify-content:center; gap:6px;
+}
+#dropzone:hover, #dropzone.drag{ border-color:var(--amber); }
+#dropzone .dz-big{ color:var(--amber); font-weight:700; letter-spacing:1px; }
+#file-input{ display:none; }
+#fileinfo{ margin-top:10px; font-size:12px; display:none; }
+#fileinfo b{ color:var(--amber); }
+
+/* ---------- вкладки операций ---------- */
+.tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.tab{ padding:8px 12px; font-size:12px; }
+.tab.active{ background:var(--amber); color:#1a1208; border-color:var(--amber); }
+[data-theme="light"] .tab.active{ color:#fff8ea; }
+.opform{ display:none; }
+.opform.active{ display:block; }
+.opform .row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; align-items:flex-end; }
+.field{ display:flex; flex-direction:column; gap:4px; }
+.field label{ font-size:11px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; }
+.field input[type=text], .field input[type=number], .field select{
+  background:var(--bg); border:2px solid var(--line); padding:8px;
+  min-height:44px; min-width:90px; color:var(--ink);
+}
+.field input:focus, .field select:focus{ border-color:var(--amber); outline:none; }
+.field input[type=range]{ width:180px; accent-color:var(--amber); min-height:44px; }
+.check{ display:inline-flex; align-items:center; gap:8px; min-height:44px;
+  cursor:pointer; font-size:13px; }
+.check input{ width:18px; height:18px; accent-color:var(--amber); }
+.val{ color:var(--green); font-weight:700; min-width:44px; display:inline-block; }
+
+/* ---------- шкала прогресса (радио-настройка) ---------- */
+#scale-wrap{ margin:6px 0 2px; }
+#scale{ position:relative; height:46px; border:2px solid var(--line);
+  background:
+    repeating-linear-gradient(90deg, var(--line) 0 2px, transparent 2px 10px),
+    repeating-linear-gradient(90deg, var(--line) 0 2px, transparent 2px 50px),
+    var(--bg);
+  background-size:100% 12px, 100% 22px, 100% 100%;
+  background-position:bottom left, bottom left, bottom left;
+  background-repeat:no-repeat; }
+#needle{ position:absolute; top:-8px; width:0; height:0; left:0;
+  border-left:7px solid transparent; border-right:7px solid transparent;
+  border-top:12px solid var(--red); transform:translateX(-7px); }
+#freq{ display:flex; justify-content:space-between; font-size:10px;
+  color:var(--dim); margin-top:4px; user-select:none; }
+#pct{ color:var(--green); font-weight:700; }
+
+/* ---------- терминал-лог ---------- */
+#term{
+  background:var(--term); border:2px solid var(--line); height:190px;
+  overflow-y:auto; padding:8px; font-size:12px; line-height:1.5;
+  color:var(--green); box-shadow:inset 2px 2px 0 rgba(0,0,0,.6);
+}
+#term .t-amber{ color:var(--amber); }
+#term .t-red{ color:var(--red); }
+#term .t-dim{ color:var(--dim); }
+
+/* ---------- осциллограф ---------- */
+#scope{ border:2px solid var(--line); background:var(--term); height:70px;
+  margin-top:12px; overflow:hidden; position:relative;
+  box-shadow:inset 2px 2px 0 rgba(0,0,0,.6); }
+#scope svg{ position:absolute; top:0; left:0; height:100%; }
+.wave{ animation:wave 3s linear infinite; }
+@keyframes wave{ from{ transform:translateX(0);} to{ transform:translateX(-200px);} }
+@media (prefers-reduced-motion: reduce){ .wave{ animation:none; } }
+
+/* ---------- кот-маскот ---------- */
+#cat{ display:flex; gap:12px; align-items:flex-end; margin-top:12px; }
+#cat pre{ color:var(--amber); font-size:11px; line-height:1.3; user-select:none; }
+#cat-status{ font-size:12px; color:var(--dim); padding-bottom:2px; }
+#cat-status.ok{ color:var(--green); }
+#cat-status.err{ color:var(--red); }
+
+/* ---------- результат ---------- */
+#result{ display:none; margin-top:12px; }
+#result img, #result video{ max-width:100%; max-height:340px; border:2px solid var(--line);
+  display:block; background:#000; }
+#result audio{ width:100%; }
+#sizes{ font-size:12px; margin:8px 0; }
+#sizes b{ color:var(--green); }
+
+footer{ max-width:1280px; margin:20px auto 0; color:var(--dim); font-size:11px;
+  text-align:center; letter-spacing:1px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== РАЗМЕТКА ==================== -->
+<header>
+  <div class="logo">╔══════════════════════════════╗
+║ FFMPEGo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║
+╚══════════════════════════════╝</div>
+  <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+    <label class="toggle" title="Светлая/тёмная тема">
+      <input type="checkbox" id="theme-toggle">
+      <span class="track"><span class="knob"></span></span>
+      <span class="hint">ТЕМА</span>
+    </label>
+    <div class="lamps">
+      <div class="lamp" id="lamp-pwr"><i></i>PWR</div>
+      <div class="lamp amber" id="lamp-core"><i></i>CORE</div>
+      <div class="lamp amber" id="lamp-busy"><i></i>BUSY</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Панель файла -->
+  <section class="panel" id="panel-file">
+    <h2>Источник сигнала</h2>
+    <div id="dropzone" role="button" tabindex="0" aria-label="Загрузить файл">
+      <div class="dz-big">[ ЗАГРУЗИТЬ ФАЙЛ ]</div>
+      <div class="hint">видео · аудио · изображение<br>или перетащите сюда</div>
+    </div>
+    <input type="file" id="file-input"
+      accept="video/mp4,video/webm,video/x-matroska,video/quicktime,video/x-msvideo,video/x-flv,video/mp2t,video/3gpp,audio/mpeg,audio/wav,audio/aac,audio/flac,audio/ogg,audio/mp4,image/png,image/jpeg,image/webp,image/gif,image/bmp,image/x-icon,image/svg+xml,.mkv,.mov,.avi,.flv,.ts,.3gp,.m4a">
+    <div id="fileinfo"></div>
+    <div class="sep">────────────────────────</div>
+    <p class="warn">! Файлы &gt; 500 МБ могут не осилить —<br>памяти мало (лимит WASM ~2 ГБ).</p>
+    <div class="sep">────────────────────────</div>
+    <!-- кот-маскот -->
+    <div id="cat">
+      <pre id="cat-art"> /\_/\
+( o.o )
+ &gt; ^ &lt;</pre>
+      <div id="cat-status">КОТ ДРЕМЛЕТ</div>
+    </div>
+    <!-- осциллограф-декорация -->
+    <div id="scope" aria-hidden="true">
+      <svg class="wave" width="1200" height="70" viewBox="0 0 1200 70" preserveAspectRatio="none">
+        <path d="M0,35 Q25,5 50,35 T100,35 T150,35 T200,35 T250,35 T300,35 T350,35 T400,35 T450,35 T500,35 T550,35 T600,35 T650,35 T700,35 T750,35 T800,35 T850,35 T900,35 T950,35 T1000,35 T1050,35 T1100,35 T1150,35 T1200,35"
+          fill="none" stroke="#33ff66" stroke-width="2" opacity="0.85"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Панель операций -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <section class="panel" id="panel-ops">
+      <h2>Консоль операций</h2>
+      <div id="ops-empty" class="hint">Загрузите файл — кот покажет доступные операции.</div>
+      <div id="ops-body" style="display:none;">
+        <div class="tabs" id="tabs"></div>
+
+        <!-- ИЗОБРАЖЕНИЯ -->
+        <div class="opform" data-type="image" data-op="convert">
+          <div class="row">
+            <div class="field"><label>Целевой формат</label>
+              <select id="img-fmt">
+                <option value="png">PNG (без потерь)</option>
+                <option value="jpg" selected>JPG</option>
+                <option value="webp">WebP</option>
+                <option value="gif">GIF</option>
+                <option value="bmp">BMP</option>
+              </select>
+            </div>
+            <div class="field" id="img-q-wrap"><label>Качество</label>
+              <input type="range" id="img-q" min="0" max="100" value="85">
+              <span class="val" id="img-q-val">85</span>
+            </div>
+            <div class="field" id="img-ll-wrap" style="display:none;">
+              <label>&nbsp;</label>
+              <label class="check"><input type="checkbox" id="img-lossless"> LOSSLESS</label>
+            </div>
+          </div>
+          <div class="hint" id="img-q-hint"></div>
+          <div style="margin-top:10px;"><button class="btn primary" data-run="imgConvert">[ КОНВЕРТИРОВАТЬ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="image" data-op="resize">
+          <div class="row">
+            <div class="field"><label>Ширина (пусто = авто)</label>
+              <input type="number" id="rz-w" min="1" placeholder="auto"></div>
+            <div class="field"><label>Высота (пусто = авто)</label>
+              <input type="number" id="rz-h" min="1" placeholder="auto"></div>
+          </div>
+          <div class="hint">scale=Ш:В. Если поле пустое — пропорция сохранится (-1).</div>
+          <div style="margin-top:10px;"><button class="btn" data-run="imgResize">[ ИЗМЕНИТЬ РАЗМЕР ]</button></div>
+        </div>
+
+        <div class="opform" data-type="image" data-op="crop">
+          <div class="row">
+            <div class="field"><label>X</label><input type="number" id="cr-x" min="0" value="0"></div>
+            <div class="field"><label>Y</label><input type="number" id="cr-y" min="0" value="0"></div>
+            <div class="field"><label>Ширина</label><input type="number" id="cr-w" min="1" value="200"></div>
+            <div class="field"><label>Высота</label><input type="number" id="cr-h" min="1" value="200"></div>
+          </div>
+          <div class="hint" id="crop-hint">crop=Ш:В:X:Y</div>
+          <div style="margin-top:10px;"><button class="btn" data-run="imgCrop">[ ОБРЕЗАТЬ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="image" data-op="rotate">
+          <div class="row">
+            <button class="btn" data-run="imgRotL">[ 90° ВЛЕВО ]</button>
+            <button class="btn" data-run="imgRotR">[ 90° ВПРАВО ]</button>
+            <button class="btn" data-run="imgFlip">[ ОТРАЗИТЬ ⟷ ]</button>
+          </div>
+          <div class="hint">transpose=2 · transpose=1 · hflip</div>
+        </div>
+
+        <div class="opform" data-type="image" data-op="gray">
+          <div class="hint">Ч/Б через фильтр format=gray.</div>
+          <div style="margin-top:10px;"><button class="btn" data-run="imgGray">[ ЧЁРНО-БЕЛОЕ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="image" data-op="compress">
+          <div class="row">
+            <div class="field"><label>Формат</label>
+              <select id="cp-fmt"><option value="jpg" selected>JPG</option><option value="webp">WebP</option></select>
+            </div>
+            <div class="field"><label>Качество</label>
+              <input type="range" id="cp-q" min="1" max="100" value="75">
+              <span class="val" id="cp-q-val">75</span>
+            </div>
+            <div class="field" id="cp-ll-wrap" style="display:none;">
+              <label>&nbsp;</label>
+              <label class="check"><input type="checkbox" id="cp-lossless"> LOSSLESS</label>
+            </div>
+          </div>
+          <div class="hint">После обработки покажем «было / стало» в КБ.</div>
+          <div style="margin-top:10px;"><button class="btn primary" data-run="imgCompress">[ СЖАТЬ ]</button></div>
+        </div>
+
+        <!-- ВИДЕО -->
+        <div class="opform" data-type="video" data-op="convert">
+          <div class="row">
+            <div class="field"><label>Целевой формат</label>
+              <select id="v-fmt">
+                <option value="mp4" selected>MP4 (H.264)</option>
+                <option value="webm">WebM (VP9)</option>
+                <option value="mkv">MKV</option>
+                <option value="mov">MOV</option>
+                <option value="gif">GIF (без звука)</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn primary" data-run="vidConvert">[ КОНВЕРТИРОВАТЬ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="video" data-op="trim">
+          <div class="row">
+            <div class="field"><label>Старт (сек)</label><input type="number" id="v-ss" min="0" step="0.1" value="0"></div>
+            <div class="field"><label>Длительность (сек)</label><input type="number" id="v-t" min="0.1" step="0.1" value="5"></div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn" data-run="vidTrim">[ ОБРЕЗАТЬ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="video" data-op="thumb">
+          <div class="row">
+            <div class="field"><label>Время кадра (сек)</label><input type="number" id="v-tt" min="0" step="0.1" value="1"></div>
+            <div class="field"><label>Формат</label>
+              <select id="v-tf"><option value="jpg" selected>JPG</option><option value="png">PNG</option></select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn" data-run="vidThumb">[ ИЗВЛЕЧЬ КАДР ]</button></div>
+        </div>
+
+        <div class="opform" data-type="video" data-op="compress">
+          <div class="row">
+            <div class="field"><label>CRF (меньше = лучше)</label>
+              <input type="range" id="v-crf" min="18" max="40" value="28">
+              <span class="val" id="v-crf-val">28</span>
+            </div>
+          </div>
+          <div class="hint">Рекомендация: 23–32. Вывод — MP4 (H.264).</div>
+          <div style="margin-top:10px;"><button class="btn primary" data-run="vidCompress">[ СЖАТЬ ВИДЕО ]</button></div>
+        </div>
+
+        <div class="opform" data-type="video" data-op="audio">
+          <div class="row">
+            <div class="field"><label>Аудиодорожка в</label>
+              <select id="v-af">
+                <option value="mp3" selected>MP3</option>
+                <option value="wav">WAV</option>
+                <option value="aac">AAC</option>
+                <option value="ogg">OGG</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn" data-run="vidAudio">[ ИЗВЛЕЧЬ АУДИО ]</button></div>
+        </div>
+
+        <div class="opform" data-type="video" data-op="text">
+          <div class="row">
+            <div class="field"><label>Текст</label><input type="text" id="v-txt" value="FFMPEGo"></div>
+            <div class="field"><label>X</label><input type="number" id="v-tx" value="20"></div>
+            <div class="field"><label>Y</label><input type="number" id="v-ty" value="40"></div>
+            <div class="field"><label>Размер</label><input type="number" id="v-ts" min="8" value="32"></div>
+            <div class="field"><label>Цвет</label><input type="text" id="v-tc" value="yellow"></div>
+          </div>
+          <div class="hint">drawtext. Шрифт подгрузится при первом использовании.</div>
+          <div style="margin-top:10px;"><button class="btn" data-run="vidText">[ НАЛОЖИТЬ ТЕКСТ ]</button></div>
+        </div>
+
+        <!-- АУДИО -->
+        <div class="opform" data-type="audio" data-op="convert">
+          <div class="row">
+            <div class="field"><label>Целевой формат</label>
+              <select id="a-fmt">
+                <option value="mp3" selected>MP3</option>
+                <option value="wav">WAV</option>
+                <option value="aac">AAC</option>
+                <option value="flac">FLAC</option>
+                <option value="ogg">OGG</option>
+              </select>
+            </div>
+            <div class="field"><label>Битрейт</label>
+              <select id="a-br">
+                <option value="128k">128k</option>
+                <option value="192k" selected>192k</option>
+                <option value="320k">320k</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn primary" data-run="audConvert">[ КОНВЕРТИРОВАТЬ ]</button></div>
+        </div>
+
+        <div class="opform" data-type="audio" data-op="trim">
+          <div class="row">
+            <div class="field"><label>Старт (сек)</label><input type="number" id="a-ss" min="0" step="0.1" value="0"></div>
+            <div class="field"><label>Длительность (сек)</label><input type="number" id="a-t" min="0.1" step="0.1" value="10"></div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn" data-run="audTrim">[ ОБРЕЗАТЬ ]</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Панель вывода -->
+    <section class="panel" id="panel-out">
+      <h2>Шкала настройки</h2>
+      <div id="scale-wrap">
+        <div id="scale"><div id="needle"></div></div>
+        <div id="freq"><span>88</span><span>92</span><span>96</span><span>100</span>
+          <span>104</span><span>108</span><span id="pct">0%</span></div>
+      </div>
+      <div id="result">
+        <div class="sep">════════════════════</div>
+        <div id="preview"></div>
+        <div id="sizes"></div>
+        <a id="download" class="btn primary" download>[ СКАЧАТЬ ]</a>
+        <span id="badge" class="hint"></span>
+      </div>
+    </section>
+
+    <!-- Терминал -->
+    <section class="panel">
+      <h2>Системный журнал</h2>
+      <div id="term" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<footer>FFMPEGo · ffmpeg.wasm · обработка полностью в браузере · сервер не участвует</footer>
+
+<script type="module">
+/* ==================== КОНФИГ ==================== */
+const FFMPEG_URL = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
+const UTIL_URL   = 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+// Ядро берём ESM-сборку: наш собранный воркер — модульный, и грузит ядро
+// через динамический import(), которому нужен именно ESM-модуль
+// (у UMD нет export default). Однопоточная сборка — COOP/COEP не нужны.
+const CORE_BASE  = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm';
+// Шрифт для drawtext: грузится лениво, только при первом наложении текста.
+// Держим на CDN с CORS (jsdelivr), а не на raw.githubusercontent.com.
+const FONT_URL   = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf';
+const MAX_MB_WARN = 500;
+
+// типы файлов
+const IMAGE_EXT = ['png','jpg','jpeg','webp','gif','bmp','ico','svg'];
+const VIDEO_EXT = ['mp4','webm','mkv','mov','avi','flv','ts','3gp'];
+const AUDIO_EXT = ['mp3','wav','aac','flac','ogg','m4a'];
+
+// списки операций по типам медиа
+const OPS = {
+  image: [
+    ['convert','КОНВЕРТАЦИЯ'], ['resize','РАЗМЕР'], ['crop','ОБРЕЗКА'],
+    ['rotate','ПОВОРОТ'], ['gray','Ч/Б'], ['compress','СЖАТИЕ'],
+  ],
+  video: [
+    ['convert','КОНВЕРТАЦИЯ'], ['trim','ОБРЕЗКА'], ['thumb','КАДР'],
+    ['compress','СЖАТИЕ'], ['audio','АУДИО'], ['text','ТЕКСТ'],
+  ],
+  audio: [ ['convert','КОНВЕРТАЦИЯ'], ['trim','ОБРЕЗКА'] ],
+};
+
+/* ==================== СОСТОЯНИЕ ==================== */
+let ffmpeg = null;        // экземпляр FFmpeg (после ленивой загрузки)
+let ffmpegLoading = null; // промис загрузки ядра
+let fetchFileFn = null;   // fetchFile из @ffmpeg/util
+let currentFile = null;   // текущий File
+let currentType = null;   // 'image' | 'video' | 'audio'
+let currentExt  = '';
+let lastUrl = null;       // последний созданный objectURL (для revoke)
+
+/* ==================== DOM-ССЫЛКИ ==================== */
+const $ = (id) => document.getElementById(id);
+const term = $('term');
+
+/* ==================== УТИЛИТЫ: ЛОГ / СТАТУС / ШКАЛА ==================== */
+// запись строки в ASCII-терминал
+function log(msg, cls = '') {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = `[${new Date().toLocaleTimeString('ru-RU')}] ${msg}`;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+// кот-маскот: меняет статус (ok/err — цвет)
+function catSay(text, mood = '') {
+  $('cat-status').textContent = text;
+  $('cat-status').className = mood;
+}
+// стрелка-указатель на шкале прогресса
+function setProgress(p) {
+  const pct = Math.max(0, Math.min(100, Math.round(p * 100)));
+  $('needle').style.left = pct + '%';
+  $('pct').textContent = pct + '%';
+}
+// лампочки
+function setLamp(id, on) { $(id).classList.toggle('on', on); }
+function setBusy(on) {
+  setLamp('lamp-busy', on);
+  document.querySelectorAll('[data-run]').forEach(b => b.disabled = on);
+}
+// размер файла человекочитаемо
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' Б';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+  return (bytes / 1024 / 1024).toFixed(2) + ' МБ';
+}
+// безопасное имя выходного файла
+function outName(suffix, ext) {
+  const base = currentFile.name.replace(/\.[^.]+$/, '');
+  return `${base}.${suffix}.${ext}`;
+}
+
+/* ==================== ИНИЦИАЛИЗАЦИЯ FFMPEG (ЛЕНИВАЯ) ==================== */
+// ядро грузится только при первом действии, не при открытии страницы
+async function ensureFFmpeg() {
+  if (ffmpeg && ffmpeg.loaded) return ffmpeg;
+  if (!ffmpegLoading) {
+    ffmpegLoading = (async () => {
+      catSay('КОТ ГРУЗИТ ЯДРО...');
+      log('ЗАГРУЗКА ЯДРА ffmpeg.wasm...', 't-amber');
+      const [{ FFmpeg }, util] = await Promise.all([
+        import(FFMPEG_URL), import(UTIL_URL),
+      ]);
+      fetchFileFn = util.fetchFile;
+      // Проблема: ESM-сборка по умолчанию создаёт Worker через
+      // new URL('./worker.js', import.meta.url) — для CDN-ориджина браузер
+      // его блокирует, а worker.js сам не является самодостаточным
+      // (имеет относительные import'ы const.js/errors.js, которые не
+      // резолвятся из blob:). Решение: собираем воркер сами на лету —
+      // выкачиваем три файла, убираем import/export и склеиваем в один
+      // модульный blob-скрипт. Передаём его через classWorkerURL в load().
+      const ESM = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm';
+      const strip = (src) => src
+        .replace(/^import\s.+?;\s*$/gm, '')  // убрать строки-import'ы
+        .replace(/^export\s+/gm, '');        // export const/var -> const/var
+      const [constSrc, errSrc, workerSrc] = await Promise.all(
+        ['const.js', 'errors.js', 'worker.js']
+          .map((f) => fetch(`${ESM}/${f}`).then((r) => r.text())));
+      const workerURL = URL.createObjectURL(new Blob(
+        [strip(constSrc), '\n', strip(errSrc), '\n', strip(workerSrc)],
+        { type: 'text/javascript' }));
+      ffmpeg = new FFmpeg();
+      // прогресс кодирования -> стрелка на шкале
+      ffmpeg.on('progress', ({ progress }) => setProgress(progress));
+      // подробный лог ffmpeg -> терминал (приглушённо)
+      ffmpeg.on('log', ({ message }) => {
+        if (message && message.trim()) log('  ' + message.trim(), 't-dim');
+      });
+      // однопоточное ядро (без COOP/COEP)
+      const coreURL = await util.toBlobURL(`${CORE_BASE}/ffmpeg-core.js`, 'text/javascript');
+      const wasmURL = await util.toBlobURL(`${CORE_BASE}/ffmpeg-core.wasm`, 'application/wasm');
+      await ffmpeg.load({ classWorkerURL: workerURL, coreURL, wasmURL });
+      setLamp('lamp-core', true);
+      log('ЯДРО ЗАГРУЖЕНО. [ГОТОВО]');
+      catSay('КОТ ДОВОЛЕН', 'ok');
+      return ffmpeg; // важно: промис должен резолвиться экземпляром FFmpeg
+    })();
+    ffmpegLoading.catch((e) => {
+      ffmpegLoading = null; // при ошибке можно повторить
+      throw e;
+    });
+  }
+  return ffmpegLoading;
+}
+
+/* ==================== ОБЩИЙ КАРКАС ОПЕРАЦИИ ==================== */
+// пишет входной файл в ФС wasm, выполняет команду, отдаёт Blob результата
+async function runJob({ inName, args, outName, outMime, suffix, ext }) {
+  const ff = await ensureFFmpeg();
+  setBusy(true);
+  setProgress(0);
+  catSay('КОТ КРУТИТ ЛАМПЫ...');
+  log(`$ ffmpeg -i ${inName} ${args.join(' ')} ${outName}`, 't-amber');
+  try {
+    await ff.writeFile(inName, await fetchFileFn(currentFile));
+    const code = await ff.exec(args);
+    if (code !== 0) throw new Error('ffmpeg завершился с кодом ' + code);
+    const data = await ff.readFile(outName);
+    const buf = data.buffer ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) : data;
+    const blob = new Blob([buf], { type: outMime });
+    // освобождаем память wasm
+    try { await ff.deleteFile(inName); } catch (_) {}
+    try { await ff.deleteFile(outName); } catch (_) {}
+    setProgress(1);
+    log(`ГОТОВО: ${outName} (${fmtSize(blob.size)})`);
+    catSay('КОТ ДОВОЛЕН', 'ok');
+    return { blob, outName, suffix, ext };
+  } catch (e) {
+    log('ОШИБКА: ' + (e.message || e), 't-red');
+    if (e.stack) log('  стек: ' + e.stack.split('\n').slice(0, 4).join(' | '), 't-dim');
+    catSay('КОТ ГРУСТИТ (ошибка)', 'err');
+    throw e;
+  } finally {
+    setBusy(false);
+  }
+}
+
+// показ результата: превью + «было/стало» + кнопка скачивания
+function showResult({ blob, suffix, ext }) {
+  const pretty = outName(suffix, ext); // красивое имя для скачивания
+  if (lastUrl) URL.revokeObjectURL(lastUrl); // чистим прошлый URL
+  const url = URL.createObjectURL(blob);
+  lastUrl = url;
+  const prev = $('preview');
+  prev.innerHTML = '';
+  if (currentType === 'image' || ext === 'jpg' || ext === 'png' || ext === 'webp' || ext === 'gif' || ext === 'bmp') {
+    const img = document.createElement('img');
+    img.src = url; img.alt = pretty;
+    prev.appendChild(img);
+  } else if (currentType === 'audio' || AUDIO_EXT.includes(ext)) {
+    const a = document.createElement('audio');
+    a.controls = true; a.src = url;
+    prev.appendChild(a);
+  } else {
+    const v = document.createElement('video');
+    v.controls = true; v.src = url;
+    prev.appendChild(v);
+  }
+  const was = currentFile.size, now = blob.size;
+  $('sizes').innerHTML =
+    `БЫЛО: ${fmtSize(was)} &nbsp;→&nbsp; СТАЛО: <b>${fmtSize(now)}</b>` +
+    ` &nbsp;(${(now / was * 100).toFixed(1)}%)`;
+  const dl = $('download');
+  dl.href = url; dl.download = pretty;
+  $('badge').textContent = ' [ГОТОВО]';
+  $('result').style.display = 'block';
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// обёртка: запустить операцию и показать результат
+async function execAndShow(job) {
+  try {
+    const res = await runJob(job);
+    showResult(res);
+  } catch (_) { /* ошибка уже в логе и у кота */ }
+}
+
+/* ==================== ОБРАБОТЧИКИ: ИЗОБРАЖЕНИЯ ==================== */
+// аргументы качества по формату
+function imgQualityArgs(fmt, qRaw, lossless) {
+  if (fmt === 'jpg') return ['-q:v', String(Math.max(1, Math.min(31, Math.round((100 - qRaw) / 100 * 29 + 2))))];
+  if (fmt === 'webp') {
+    if (lossless) return ['-lossless', '1'];
+    return ['-quality', String(qRaw)];
+  }
+  return [];
+}
+// текущий формат входного изображения (через расширение)
+function imgInName() { return 'input.' + currentExt; }
+
+async function imgConvert() {
+  const fmt = $('img-fmt').value;
+  const q = +$('img-q').value;
+  const lossless = $('img-lossless').checked;
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, ...imgQualityArgs(fmt, q, lossless), 'output.' + fmt],
+    outName: 'output.' + fmt,
+    outMime: { png:'image/png', jpg:'image/jpeg', webp:'image/webp', gif:'image/gif', bmp:'image/bmp' }[fmt],
+    suffix: 'conv', ext: fmt,
+  });
+}
+
+async function imgResize() {
+  const w = $('rz-w').value, h = $('rz-h').value;
+  if (!w && !h) { log('Укажите ширину или высоту.', 't-red'); return; }
+  const scale = `scale=${w || -1}:${h || -1}`;
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vf', scale, 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix: `${w || 'a'}x${h || 'a'}`, ext: currentExt,
+  });
+}
+
+async function imgCrop() {
+  const x = $('cr-x').value, y = $('cr-y').value;
+  const w = $('cr-w').value, h = $('cr-h').value;
+  if (!w || !h) { log('Ширина и высота обрезки обязательны.', 't-red'); return; }
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vf', `crop=${w}:${h}:${x}:${y}`, 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix: `crop${w}x${h}`, ext: currentExt,
+  });
+}
+
+async function imgRotate(kind) {
+  const vf = { left: 'transpose=2', right: 'transpose=1', flip: 'hflip' }[kind];
+  const suffix = { left: 'rotl', right: 'rotr', flip: 'flip' }[kind];
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vf', vf, 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix, ext: currentExt,
+  });
+}
+
+async function imgGray() {
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vf', 'format=gray', 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix: 'gray', ext: currentExt,
+  });
+}
+
+async function imgCompress() {
+  const fmt = $('cp-fmt').value;
+  const q = +$('cp-q').value;
+  const lossless = $('cp-lossless').checked;
+  const inN = imgInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, ...imgQualityArgs(fmt, q, lossless), 'output.' + fmt],
+    outName: 'output.' + fmt,
+    outMime: fmt === 'jpg' ? 'image/jpeg' : 'image/webp',
+    suffix: 'min', ext: fmt,
+  });
+}
+
+/* ==================== ОБРАБОТЧИКИ: ВИДЕО ==================== */
+function vidInName() { return 'input.' + currentExt; }
+
+async function vidConvert() {
+  const fmt = $('v-fmt').value;
+  const inN = vidInName();
+  const extra = fmt === 'gif' ? ['-an'] : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-c:a', 'aac'];
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, ...extra, 'output.' + fmt],
+    outName: 'output.' + fmt,
+    outMime: { mp4:'video/mp4', webm:'video/webm', mkv:'video/x-matroska', mov:'video/quicktime', gif:'image/gif' }[fmt],
+    suffix: 'conv', ext: fmt,
+  });
+}
+
+async function vidTrim() {
+  const ss = $('v-ss').value, t = $('v-t').value;
+  const inN = vidInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-ss', ss, '-t', t, '-c', 'copy', 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix: `t${ss}s`, ext: currentExt,
+  });
+}
+
+async function vidThumb() {
+  const tt = $('v-tt').value, tf = $('v-tf').value;
+  const inN = vidInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-ss', tt, '-i', inN, '-frames:v', '1', 'output.' + tf],
+    outName: 'output.' + tf,
+    outMime: tf === 'png' ? 'image/png' : 'image/jpeg',
+    suffix: 'frame', ext: tf,
+  });
+}
+
+async function vidCompress() {
+  const crf = $('v-crf').value;
+  const inN = vidInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', crf, '-c:a', 'aac', 'output.mp4'],
+    outName: 'output.mp4',
+    outMime: 'video/mp4',
+    suffix: `crf${crf}`, ext: 'mp4',
+  });
+}
+
+async function vidAudio() {
+  const fmt = $('v-af').value;
+  const codec = { mp3: ['-c:a','libmp3lame'], wav: ['-c:a','pcm_s16le'], aac: ['-c:a','aac'], ogg: ['-c:a','libvorbis'] }[fmt];
+  const inN = vidInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vn', ...codec, 'output.' + fmt],
+    outName: 'output.' + fmt,
+    outMime: { mp3:'audio/mpeg', wav:'audio/wav', aac:'audio/aac', ogg:'audio/ogg' }[fmt],
+    suffix: 'audio', ext: fmt,
+  });
+}
+
+async function vidText() {
+  const txt = $('v-txt').value || 'FFMPEGo';
+  const ff = await ensureFFmpeg();
+  // шрифт для drawtext подгружаем один раз (с таймаутом, чтобы не висеть)
+  try { await ff.readFile('font.ttf'); }
+  catch (_) {
+    log('ЗАГРУЗКА ШРИФТА...', 't-amber');
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 30000);
+    try {
+      const resp = await fetch(FONT_URL, { signal: ac.signal });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const fontData = new Uint8Array(await resp.arrayBuffer());
+      await ff.writeFile('font.ttf', fontData);
+    } catch (fe) {
+      throw new Error('Не удалось загрузить шрифт для drawtext: ' + (fe.message || fe));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  const esc = txt.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+  const vf = `drawtext=fontfile=font.ttf:text='${esc}':x=${$('v-tx').value}:y=${$('v-ty').value}:fontsize=${$('v-ts').value}:fontcolor=${$('v-tc').value}`;
+  const inN = vidInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-vf', vf, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-c:a', 'aac', 'output.mp4'],
+    outName: 'output.mp4',
+    outMime: 'video/mp4',
+    suffix: 'txt', ext: 'mp4',
+  });
+}
+
+/* ==================== ОБРАБОТЧИКИ: АУДИО ==================== */
+function audInName() { return 'input.' + currentExt; }
+
+async function audConvert() {
+  const fmt = $('a-fmt').value, br = $('a-br').value;
+  const codec = { mp3:['-c:a','libmp3lame'], wav:['-c:a','pcm_s16le'], aac:['-c:a','aac'], flac:['-c:a','flac'], ogg:['-c:a','libvorbis'] }[fmt];
+  const extra = fmt === 'wav' || fmt === 'flac' ? [] : ['-b:a', br];
+  const inN = audInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, ...codec, ...extra, 'output.' + fmt],
+    outName: 'output.' + fmt,
+    outMime: { mp3:'audio/mpeg', wav:'audio/wav', aac:'audio/aac', flac:'audio/flac', ogg:'audio/ogg' }[fmt],
+    suffix: 'conv', ext: fmt,
+  });
+}
+
+async function audTrim() {
+  const ss = $('a-ss').value, t = $('a-t').value;
+  const inN = audInName();
+  await execAndShow({
+    inName: inN,
+    args: ['-i', inN, '-ss', ss, '-t', t, 'output.' + currentExt],
+    outName: 'output.' + currentExt,
+    outMime: currentFile.type || 'application/octet-stream',
+    suffix: `t${ss}s`, ext: currentExt,
+  });
+}
+
+/* ==================== РЕЕСТР ОПЕРАЦИЙ ==================== */
+const RUNNERS = {
+  imgConvert, imgResize, imgCrop,
+  imgRotL: () => imgRotate('left'), imgRotR: () => imgRotate('right'),
+  imgFlip: () => imgRotate('flip'),
+  imgGray, imgCompress,
+  vidConvert, vidTrim, vidThumb, vidCompress, vidAudio, vidText,
+  audConvert, audTrim,
+};
+
+/* ==================== UI: ФАЙЛ, ВКЛАДКИ, ТЕМА ==================== */
+// определение типа медиа по расширению
+function detectType(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (IMAGE_EXT.includes(ext)) return ['image', ext];
+  if (VIDEO_EXT.includes(ext)) return ['video', ext];
+  if (AUDIO_EXT.includes(ext)) return ['audio', ext];
+  return [null, ext];
+}
+
+// приём файла
+function takeFile(file) {
+  if (!file) return;
+  const [type, ext] = detectType(file.name);
+  if (!type) {
+    log('НЕПОДДЕРЖИВАЕМЫЙ ФОРМАТ: ' + file.name, 't-red');
+    catSay('КОТ ГРУСТИТ (ошибка)', 'err');
+    return;
+  }
+  currentFile = file; currentType = type; currentExt = ext === 'jpeg' ? 'jpg' : ext;
+  if (file.size > MAX_MB_WARN * 1024 * 1024) {
+    log(`ВНИМАНИЕ: файл ${fmtSize(file.size)} больше 500 МБ — может не хватить памяти.`, 't-amber');
+  }
+  log(`ФАЙЛ ПРИНЯТ: ${file.name} (${fmtSize(file.size)}) [ГОТОВО]`);
+  catSay('КОТ ДОВОЛЕН', 'ok');
+  $('fileinfo').style.display = 'block';
+  $('fileinfo').innerHTML =
+    `ИМЯ: <b>${file.name}</b><br>ТИП: <b>${type.toUpperCase()}</b> · РАЗМЕР: <b>${fmtSize(file.size)}</b>`;
+  buildTabs(type);
+  $('result').style.display = 'none';
+}
+
+// построение вкладок операций под тип медиа
+function buildTabs(type) {
+  $('ops-empty').style.display = 'none';
+  $('ops-body').style.display = 'block';
+  const tabs = $('tabs');
+  tabs.innerHTML = '';
+  document.querySelectorAll('.opform').forEach(f => f.classList.remove('active'));
+  OPS[type].forEach(([op, label], i) => {
+    const b = document.createElement('button');
+    b.className = 'btn tab' + (i === 0 ? ' active' : '');
+    b.textContent = `[ ${label} ]`;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.opform').forEach(f => f.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelector(`.opform[data-type="${type}"][data-op="${op}"]`).classList.add('active');
+    });
+    tabs.appendChild(b);
+    if (i === 0) {
+      document.querySelector(`.opform[data-type="${type}"][data-op="${op}"]`).classList.add('active');
+    }
+  });
+}
+
+// загрузка файла: клик, Enter, drag&drop
+const dz = $('dropzone'), fi = $('file-input');
+dz.addEventListener('click', () => fi.click());
+dz.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fi.click(); } });
+fi.addEventListener('change', () => takeFile(fi.files[0]));
+['dragover', 'dragleave', 'drop'].forEach(ev =>
+  dz.addEventListener(ev, (e) => {
+    e.preventDefault();
+    dz.classList.toggle('drag', ev === 'dragover');
+    if (ev === 'drop') takeFile(e.dataTransfer.files[0]);
+  }));
+
+// переключатель темы
+$('theme-toggle').addEventListener('change', (e) => {
+  document.documentElement.dataset.theme = e.target.checked ? 'light' : 'dark';
+  try { localStorage.setItem('ffmpego-theme', e.target.checked ? 'light' : 'dark'); } catch (_) {}
+});
+try {
+  const saved = localStorage.getItem('ffmpego-theme');
+  if (saved === 'light') { document.documentElement.dataset.theme = 'light'; $('theme-toggle').checked = true; }
+} catch (_) {}
+
+// слайдеры: мгновенное значение и подсказки качества
+function bindRange(id, valId, onChange) {
+  const r = $(id);
+  r.addEventListener('input', () => { $(valId).textContent = r.value; onChange && onChange(); });
+}
+function syncImgQualityUI() {
+  const fmt = $('img-fmt').value;
+  const q = $('img-q'), hint = $('img-q-hint');
+  $('img-ll-wrap').style.display = fmt === 'webp' ? '' : 'none';
+  if (fmt === 'jpg') {
+    q.min = 1; q.max = 31; q.value = 2; $('img-q-val').textContent = '2';
+    hint.textContent = 'JPG: -q:v 1–31 (меньше = лучше). Рекомендация: 2–5.';
+  } else if (fmt === 'webp') {
+    q.min = 0; q.max = 100; q.value = 85; $('img-q-val').textContent = '85';
+    hint.textContent = 'WebP: -quality 0–100. Рекомендация: 75–85. PNG/GIF/BMP — без потерь, качество не нужно.';
+  } else {
+    q.min = 0; q.max = 100; q.value = 100; $('img-q-val').textContent = '—';
+    hint.textContent = 'PNG/GIF/BMP — без потерь, параметры качества не применяются.';
+  }
+}
+$('img-fmt').addEventListener('change', syncImgQualityUI);
+bindRange('img-q', 'img-q-val');
+bindRange('cp-q', 'cp-q-val');
+bindRange('v-crf', 'v-crf-val');
+$('cp-fmt').addEventListener('change', () => {
+  $('cp-ll-wrap').style.display = $('cp-fmt').value === 'webp' ? '' : 'none';
+});
+
+// все кнопки операций -> реестр RUNNERS
+document.querySelectorAll('[data-run]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!currentFile) { log('Сначала загрузите файл.', 't-red'); return; }
+    RUNNERS[btn.dataset.run]();
+  });
+});
+
+/* ==================== СТАРТ ==================== */
+setLamp('lamp-pwr', true);
+setProgress(0);
+log('FFMPEGo v1.0 · панель активна. [ГОТОВО]');
+log('Ядро ffmpeg.wasm будет загружено лениво, при первой операции.', 't-dim');
+
+// небольшая отладочная ручка для консоли
+window.FFMPEGo = { version: '1.0', ensureFFmpeg };
+</script>
+</body>
+</html>
