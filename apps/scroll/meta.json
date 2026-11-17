@@ -2,7 +2,7 @@
   "title": "СКРОЛЛ",
   "description": "Это соцсеть, которая проверяет, что ты реально видишь в ленте. Посты бесконечны и каждый запуск уникален. Скоро тебе напишет незнакомец…",
   "icon": "icon.svg",
-  "ai": "Qwen4-MAX",
+  "ai": "Qwen4-Max",
   "platform": "both",
   "tags": ["Social", "Simulation", "Narrative", "Random"]
 }
