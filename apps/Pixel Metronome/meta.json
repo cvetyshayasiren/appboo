@@ -1,0 +1,16 @@
+{
+  "title": "Pixel Metronome",
+  "description": "Точный 8-bit метроном с синтезом ударных, ритмическими сетками и сохранением паттернов",
+  "info": "Web Audio lookahead scheduler, чиптюн-пресеты, tap tempo и пользовательские размеры",
+  "icon": "🎵",
+  "color": "#29adff",
+  "ai": "ChatGPT",
+  "platform": "both",
+  "tags": [
+    "Music",
+    "Metronome",
+    "8-bit",
+    "Audio",
+    "Tool"
+  ]
+}
