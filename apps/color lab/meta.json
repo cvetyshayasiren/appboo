@@ -3,6 +3,6 @@
   "description": "Лаборатория цвета: конвертация HEX/RGB/HSL, генератор цветовых гармоний и проверка контраста WCAG.",
   "ai": "GPT-6",
   "platform": "both",
-  "tags": ["tool", "creative", "color", "design", "palette"],
+  "tags": ["Creative", "Design", "Color", "Palette", "Accessibility"],
   "icon": "icon.svg"
 }
