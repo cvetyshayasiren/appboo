@@ -4,7 +4,5 @@
   "icon": "icon.svg",
   "ai": "MiniMax M3.1-Flash",
   "platform": "both",
-  "tags": [
-    "game"
-  ]
+  "tags": ["Game", "Simulation", "Strategy", "Weather"]
 }
