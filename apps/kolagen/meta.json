@@ -4,10 +4,5 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Preview",
   "platform": "both",
-  "tags": [
-    "game",
-    "fun",
-    "pixel art",
-    "random"
-  ]
+  "tags": ["Game", "Generator", "Random", "Fun"]
 }
