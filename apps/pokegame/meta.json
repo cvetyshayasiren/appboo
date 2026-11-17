@@ -4,7 +4,5 @@
   "icon": "icon.svg",
   "ai": "Qwen3.7-Plus",
   "platform": "both",
-  "tags": [
-    "game"
-  ]
+  "tags": ["Game", "RPG", "Collection", "Adventure"]
 }
