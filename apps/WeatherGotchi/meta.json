@@ -1,0 +1,14 @@
+{
+  "title": "WeatherGotchi",
+  "description": "Карманный погодный питомец: тамагочи с живой погодой и пиксельной графикой.",
+  "info": "Автор кода — Qwen4-Max.",
+  "icon": "icon.svg",
+  "color": "#8bac0f",
+  "ai": "Qwen4-Max",
+  "platform": "both",
+  "tags": [
+    "Game",
+    "Pet",
+    "Weather"
+  ]
+}
