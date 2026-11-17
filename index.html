@@ -215,6 +215,50 @@ main {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* Сворачиваемые секции фильтров */
+.filter-accordion {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+}
+.filter-accordion-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.filter-accordion-toggle:hover { background: var(--accent-soft); }
+.filter-accordion-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.filter-accordion-toggle .filter-label { min-width: 0; color: var(--text); }
+.filter-summary { margin-left: auto; color: var(--text-muted); font-size: .82rem; }
+.accordion-chevron { color: var(--text-muted); transition: transform .24s ease; font-size: 1.15rem; }
+.filter-accordion.open .accordion-chevron { transform: rotate(180deg); }
+.filter-accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .28s ease;
+}
+.filter-accordion.open .filter-accordion-panel { grid-template-rows: 1fr; }
+.filter-accordion-inner { min-height: 0; overflow: hidden; padding: 0 14px; }
+.filter-accordion.open .filter-accordion-inner { padding-bottom: 14px; }
+.filter-accordion .tag-filters { gap: 8px; }
+.filter-accordion .tag-filters:empty { display: none; }
+.filter-accordion:has(.tag-filters:empty) { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .filter-accordion-panel, .accordion-chevron { transition: none; }
+}
 /* Сегментный переключатель платформы */
 .seg {
   display: inline-flex;
@@ -680,14 +724,22 @@ main {
       </div>
       <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">Теги</span>
-      <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Нейросети</span>
-      <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
-    </div>
+    <section class="filter-group filter-accordion" data-accordion="tags">
+      <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="tag-panel">
+        <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="filter-accordion-panel" id="tag-panel" aria-hidden="true"><div class="filter-accordion-inner">
+        <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
+      </div></div>
+    </section>
+    <section class="filter-group filter-accordion" data-accordion="ai">
+      <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="ai-panel">
+        <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="filter-accordion-panel" id="ai-panel" aria-hidden="true"><div class="filter-accordion-inner">
+        <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
+      </div></div>
+    </section>
   </div>
 
   <!-- Сетка карточек -->
@@ -1077,6 +1129,19 @@ function toggleTheme() {
 
 /* --- Навешивание событий --- */
 function bindEvents() {
+  // Раскрытие и сворачивание блоков тегов и нейросетей
+  document.querySelectorAll(".filter-accordion-toggle").forEach(button => {
+    button.addEventListener("click", () => {
+      const section = button.closest(".filter-accordion");
+      const isOpen = section.classList.toggle("open");
+      button.setAttribute("aria-expanded", String(isOpen));
+      const panel = document.getElementById(button.getAttribute("aria-controls"));
+      if (panel) panel.setAttribute("aria-hidden", String(!isOpen));
+      const summary = section.querySelector(".filter-summary");
+      if (summary) summary.textContent = isOpen ? "Скрыть фильтры" : "Показать фильтры";
+    });
+  });
+
   // Фильтр по платформе
   document.querySelector(".seg").addEventListener("click", e => {
     const btn = e.target.closest("[data-platform]");
