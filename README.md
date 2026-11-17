@@ -31,6 +31,7 @@
 | FFMPEGo | Браузерный конвертер на ffmpeg.wasm | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/FFMPEGo/) |
 | Эмодзиатор | Пикер эмодзи | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/emoji-picker/) |
 | Color Lab | Инструменты для работы с цветом | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/color%20lab/) |
+| Pixel Metronome | Ретро-метроном с чиптюн-звуками и ритмическими паттернами | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/Pixel%20Metronome/) |
 
 ## Как устроен проект
 
