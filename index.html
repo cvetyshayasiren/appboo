@@ -243,7 +243,24 @@ main {
 .filter-accordion-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .filter-accordion-toggle .filter-label { min-width: 0; color: var(--text); }
 .filter-summary { margin-left: auto; color: var(--text-muted); font-size: .82rem; }
-.accordion-chevron { color: var(--text-muted); transition: transform .24s ease; font-size: 1.15rem; }
+.accordion-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: transform .24s ease, color .2s ease;
+  flex: 0 0 20px;
+}
+.accordion-chevron svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.filter-accordion-toggle:hover .accordion-chevron { color: var(--accent); }
 .filter-accordion.open .accordion-chevron { transform: rotate(180deg); }
 .filter-accordion-panel {
   display: grid;
@@ -251,9 +268,9 @@ main {
   transition: grid-template-rows .28s ease;
 }
 .filter-accordion.open .filter-accordion-panel { grid-template-rows: 1fr; }
-.filter-accordion-inner { min-height: 0; overflow: hidden; padding: 0 14px; }
+.filter-accordion-inner { min-height: 0; overflow: hidden; padding: 12px 14px 0; }
 .filter-accordion.open .filter-accordion-inner { padding-bottom: 14px; }
-.filter-accordion .tag-filters { gap: 8px; }
+.filter-accordion .tag-filters { gap: 10px 8px; }
 .filter-accordion .tag-filters:empty { display: none; }
 .filter-accordion:has(.tag-filters:empty) { display: none; }
 @media (prefers-reduced-motion: reduce) {
@@ -726,7 +743,7 @@ main {
     </div>
     <section class="filter-group filter-accordion" data-accordion="tags">
       <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="tag-panel">
-        <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true">⌄</span>
+        <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
       <div class="filter-accordion-panel" id="tag-panel" aria-hidden="true"><div class="filter-accordion-inner">
         <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
@@ -734,7 +751,7 @@ main {
     </section>
     <section class="filter-group filter-accordion" data-accordion="ai">
       <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="ai-panel">
-        <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true">⌄</span>
+        <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
       <div class="filter-accordion-panel" id="ai-panel" aria-hidden="true"><div class="filter-accordion-inner">
         <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
