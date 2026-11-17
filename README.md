@@ -33,6 +33,7 @@
 | Color Lab | Инструменты для работы с цветом | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/color%20lab/) |
 | Pixel Metronome | Ретро-метроном с чиптюн-звуками и ритмическими паттернами | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/Pixel%20Metronome/) |
 | WeatherGotchi | Карманный погодный питомец с живой погодой и пиксельной графикой | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/WeatherGotchi/) |
+| WikiRand | Случайные статьи из Википедии по разделам | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/WikiRand/) |
 
 ## Как устроен проект
 
