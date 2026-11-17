@@ -23,9 +23,9 @@
   --text: #e8eaf0;
   --text-muted: #8b91a1;
   --text-dim: #5e6473;
-  --accent: #7c83ff;
-  --accent-hover: #6366f1;
-  --accent-soft: rgba(124, 131, 255, 0.14);
+  --accent: #86C26B;
+  --accent-hover: #6FB356;
+  --accent-soft: rgba(134, 194, 107, 0.16);
   --danger: #ef4444;
   --radius: 16px;
   --radius-sm: 10px;
@@ -46,9 +46,9 @@
   --text: #161a23;
   --text-muted: #5f6573;
   --text-dim: #9aa0ad;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-soft: rgba(79, 70, 229, 0.10);
+  --accent: #86C26B;
+  --accent-hover: #5F9D47;
+  --accent-soft: rgba(134, 194, 107, 0.18);
   --sk-color: #e9ebf1;
   --shadow: 0 6px 24px rgba(20, 25, 40, 0.08);
   --shadow-hover: 0 12px 34px rgba(20, 25, 40, 0.13);
@@ -67,9 +67,9 @@
     --text: #161a23;
     --text-muted: #5f6573;
     --text-dim: #9aa0ad;
-    --accent: #4f46e5;
-    --accent-hover: #4338ca;
-    --accent-soft: rgba(79, 70, 229, 0.10);
+    --accent: #86C26B;
+    --accent-hover: #5F9D47;
+    --accent-soft: rgba(134, 194, 107, 0.18);
     --sk-color: #e9ebf1;
     --shadow: 0 6px 24px rgba(20, 25, 40, 0.08);
     --shadow-hover: 0 12px 34px rgba(20, 25, 40, 0.13);
@@ -130,7 +130,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), #a855f7);
+  background: linear-gradient(135deg, var(--accent), #b4de9a);
   color: #fff;
   font-size: 1.1rem;
   box-shadow: 0 4px 14px var(--accent-soft);
@@ -156,9 +156,25 @@ body {
 .theme-toggle .theme-icon-light { display: none; }
 :root[data-theme="light"] .theme-toggle .theme-icon-dark { display: none; }
 :root[data-theme="light"] .theme-toggle .theme-icon-light { display: inline; }
+:root[data-theme="light"] .card-icon {
+  background-color: #e8f3e1;
+  background-image:
+    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.35), transparent 52%),
+    linear-gradient(180deg, #d7ebcc, #c3dcb4);
+}
+:root[data-theme="light"] .icon-img { filter: none; }
+:root[data-theme="light"] .icon-mask { background: #3f6f2e; }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) .theme-toggle .theme-icon-dark { display: none; }
   :root:not([data-theme]) .theme-toggle .theme-icon-light { display: inline; }
+  :root:not([data-theme]) .card-icon {
+    background-color: #e8f3e1;
+    background-image:
+      radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.35), transparent 52%),
+      linear-gradient(180deg, #d7ebcc, #c3dcb4);
+  }
+  :root:not([data-theme]) .icon-img { filter: none; }
+  :root:not([data-theme]) .icon-mask { background: #3f6f2e; }
 }
 
 /* --- Основной контейнер --- */
@@ -263,6 +279,14 @@ main {
   gap: 8px;
 }
 .tag-filters:empty { display: none; }
+.filter-group:has(.tag-filters) {
+  align-items: flex-start;
+  width: 100%;
+}
+.filter-group:has(.tag-filters) .filter-label {
+  padding-top: 6px;
+  min-width: 92px;
+}
 .tag {
   /* hue задаётся инлайн через style="--hue:N" — детерминированный цвет по тексту тега */
   --hue: 0;
@@ -276,11 +300,15 @@ main {
   background: hsla(var(--hue), 70%, 55%, 0.14);
   color: hsl(var(--hue), 75%, 72%);
   border: 1px solid hsla(var(--hue), 70%, 55%, 0.28);
-  cursor: default;
+  cursor: pointer;
+  font-family: inherit;
   line-height: 1.4;
   white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
   transition: transform 0.12s, background 0.18s;
 }
+.tag:hover { transform: translateY(-1px); background: hsla(var(--hue), 70%, 55%, 0.22); }
 /* Пилюля-фильтр кликабельна и переключает состояние */
 .tag-filter {
   cursor: pointer;
@@ -340,6 +368,7 @@ main {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
   box-shadow: var(--shadow);
 }
@@ -353,8 +382,10 @@ main {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: var(--icon-color, var(--accent));
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.18));
+  background-color: #1c2619;
+  background-image:
+    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.28), transparent 52%),
+    linear-gradient(180deg, #24331f, #151c13);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -373,12 +404,28 @@ main {
 }
 .icon-img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* при ошибке загрузки img удаляется, остаётся цветная подложка с буквой */
+  inset: 22%;
+  width: auto;
+  height: auto;
+  max-width: 56%;
+  max-height: 56%;
+  margin: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
 }
+.icon-mask {
+  position: absolute;
+  inset: 22%;
+  margin: auto;
+  width: 46%;
+  height: 46%;
+  background: #ffffff;
+  -webkit-mask: var(--icon-src) center / contain no-repeat;
+  mask: var(--icon-src) center / contain no-repeat;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
+}
+.card-icon:has(.icon-img) .icon-glyph,
+.card-icon:has(.icon-mask) .icon-glyph { display: none; }
 .card-content {
   padding: 14px 16px 16px;
   display: flex;
@@ -431,6 +478,18 @@ main {
   background: hsla(var(--hue), 70%, 55%, 0.16);
   color: hsl(var(--hue), 80%, 74%);
   border: 1px dashed hsla(var(--hue), 75%, 60%, 0.55);
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.ai-badge:hover { transform: translateY(-1px); }
+.ai-filter {
+  background: transparent;
+}
+.ai-filter.active {
+  background: hsla(var(--hue), 70%, 55%, 0.22);
+  box-shadow: 0 0 0 1px hsla(var(--hue), 80%, 60%, 0.25);
 }
 .ai-robot { font-size: 0.9rem; }
 :root[data-theme="light"] .ai-badge {
@@ -456,7 +515,7 @@ main {
   font-weight: 600;
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid hsla(240, 60%, 60%, 0.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
 }
 :root[data-theme="light"] .platform-badge { color: var(--accent); }
 /* Кнопки действий */
@@ -621,7 +680,14 @@ main {
       </div>
       <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
     </div>
-    <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
+    <div class="filter-group">
+      <span class="filter-label">Теги</span>
+      <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Нейросети</span>
+      <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
+    </div>
   </div>
 
   <!-- Сетка карточек -->
@@ -646,7 +712,8 @@ main {
 
 /* --- Состояние плеера --- */
 let allApps = [];                 // массив загруженных приложений {id, ...meta}
-let activeTagFilters = new Set(); // выбранные теги (ИЛИ)
+let activeTagFilter = "";         // выбранный тег (один)
+let activeAiFilter = "";          // выбранная нейросеть (одна)
 let activePlatform = "all";       // "all" | "desktop" | "mobile"
 let sortMode = "default";         // "default" | "az" | "za"
 
@@ -765,6 +832,7 @@ async function loadApps() {
   const metas = await Promise.all(ids.map(id => loadMeta(String(id))));
   allApps = metas.filter(Boolean);
   buildTagFilters();
+  buildAiFilters();
   render();
 }
 
@@ -795,7 +863,23 @@ function buildTagFilters() {
   const tags = [...allTags].sort((a, b) => a.localeCompare(b, "ru"));
   container.innerHTML = tags.map(t => {
     const hue = hueFor(t);
-    return `<button class="tag tag-filter" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
+    const active = t === activeTagFilter ? " active" : "";
+    return `<button class="tag tag-filter${active}" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
+  }).join("");
+}
+
+/* --- Построение панели фильтров по нейросетям --- */
+function buildAiFilters() {
+  const container = document.getElementById("ai-filters");
+  const allAi = new Set();
+  allApps.forEach(app => { if (app.ai && app.ai.trim()) allAi.add(app.ai.trim()); });
+  const names = [...allAi].sort((a, b) => a.localeCompare(b, "ru"));
+  container.innerHTML = names.map(name => {
+    const hue = hueFor(name);
+    const active = name === activeAiFilter ? " active" : "";
+    return `<button class="ai-badge ai-filter${active}" data-ai="${escapeAttr(name)}" style="--hue:${hue}">
+      <span class="ai-robot" aria-hidden="true">🤖</span>${escapeHtml(name)}
+    </button>`;
   }).join("");
 }
 
@@ -808,10 +892,13 @@ function renderIcon(meta) {
   let imgHtml = "";
 
   if (iconVal && isIconFile(iconVal)) {
-    // Похоже на файл — рисуем img поверх текстовой подложки (на случай ошибки загрузки)
     const src = resolveIconPath(iconVal, meta.id);
-    imgHtml = `<img class="icon-img" src="${escapeAttr(src)}" alt="" loading="lazy"
-      onerror="this.remove()">`;
+    if (/\.svg$/i.test(iconVal)) {
+      imgHtml = `<span class="icon-mask" style="--icon-src:url('${escapeAttr(src)}')" aria-hidden="true"></span>`;
+    } else {
+      imgHtml = `<img class="icon-img" src="${escapeAttr(src)}" alt="" loading="lazy"
+        onerror="this.remove()">`;
+    }
     glyph = firstLetter(meta.title);
   } else if (iconVal) {
     // Эмодзи, буква или короткий текст
@@ -830,9 +917,9 @@ function renderIcon(meta) {
 function renderAiBadge(ai) {
   if (!ai || !ai.trim()) return "";
   const hue = hueFor(ai);
-  return `<span class="ai-badge" style="--hue:${hue}" title="Сделано с помощью: ${escapeAttr(ai)}">
+  return `<button class="ai-badge" type="button" data-ai="${escapeAttr(ai)}" style="--hue:${hue}" title="Фильтр: ${escapeAttr(ai)}">
     <span class="ai-robot" aria-hidden="true">🤖</span>${escapeHtml(ai)}
-  </span>`;
+  </button>`;
 }
 
 /* --- Рендер бейджа платформы --- */
@@ -851,7 +938,7 @@ function renderPlatformBadge(platform) {
 function renderCard(app) {
   const tagsHtml = (app.tags || []).map(t => {
     const hue = hueFor(t);
-    return `<span class="tag" style="--hue:${hue}">${escapeHtml(t)}</span>`;
+    return `<button class="tag" type="button" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
   }).join("");
 
   const descHtml = app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : "";
@@ -862,7 +949,7 @@ function renderCard(app) {
     ? `<div class="card-meta">${aiHtml}${platformHtml}</div>` : "";
   const tagsWrap = tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : "";
 
-  return `<article class="card" data-id="${escapeAttr(app.id)}">
+  return `<article class="card" data-id="${escapeAttr(app.id)}" data-open="${escapeAttr(appUrl(app.id))}">
     ${renderIcon(app)}
     <div class="card-content">
       <h3 class="card-title">${escapeHtml(app.title)}</h3>
@@ -871,8 +958,8 @@ function renderCard(app) {
       ${metaHtml}
       ${tagsWrap}
       <div class="card-actions">
-        <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}" target="_blank" rel="noopener noreferrer">Открыть</a>
-        <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">В iframe</button>
+        <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}" target="_blank" rel="noopener noreferrer">Перейти</a>
+        <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">Окно</button>
       </div>
     </div>
   </article>`;
@@ -889,19 +976,25 @@ function render() {
 
   let list = allApps.slice();
 
-  // Фильтр по тегам (ИЛИ — хотя бы один из выбранных)
-  if (activeTagFilters.size > 0) {
-    list = list.filter(app => (app.tags || []).some(t => activeTagFilters.has(t)));
+  // Фильтр по одному тегу
+  if (activeTagFilter) {
+    list = list.filter(app => (app.tags || []).includes(activeTagFilter));
+  }
+  // Фильтр по нейросети
+  if (activeAiFilter) {
+    list = list.filter(app => (app.ai || "").trim() === activeAiFilter);
   }
   // Фильтр по платформе (both попадает и в desktop, и в mobile)
   if (activePlatform !== "all") {
     list = list.filter(app => app.platform === activePlatform || app.platform === "both");
   }
-  // Сортировка
+  // Сортировка: default — новые сверху (обратный порядок apps.json)
   if (sortMode === "az") {
     list.sort((a, b) => a.title.localeCompare(b.title, "ru"));
   } else if (sortMode === "za") {
     list.sort((a, b) => b.title.localeCompare(a.title, "ru"));
+  } else {
+    list.reverse();
   }
 
   if (list.length === 0) {
@@ -914,17 +1007,35 @@ function render() {
 
 /* --- Управление состоянием кнопки «Сбросить фильтры» --- */
 function updateResetBtn() {
-  const show = activeTagFilters.size > 0 || activePlatform !== "all" || sortMode !== "default";
+  const show = !!activeTagFilter || !!activeAiFilter || activePlatform !== "all" || sortMode !== "default";
   document.getElementById("reset-btn").style.display = show ? "" : "none";
 }
 
+function applyTagFilter(tag) {
+  activeTagFilter = activeTagFilter === tag ? "" : tag;
+  document.querySelectorAll(".tag-filter").forEach(b =>
+    b.classList.toggle("active", b.dataset.tag === activeTagFilter));
+  render();
+  updateResetBtn();
+}
+
+function applyAiFilter(ai) {
+  activeAiFilter = activeAiFilter === ai ? "" : ai;
+  document.querySelectorAll(".ai-filter").forEach(b =>
+    b.classList.toggle("active", b.dataset.ai === activeAiFilter));
+  render();
+  updateResetBtn();
+}
+
 function resetFilters() {
-  activeTagFilters.clear();
+  activeTagFilter = "";
+  activeAiFilter = "";
   activePlatform = "all";
   sortMode = "default";
   document.querySelectorAll(".seg-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.platform === "all"));
   document.querySelectorAll(".tag-filter").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".ai-filter").forEach(b => b.classList.remove("active"));
   document.getElementById("sort-select").value = "default";
   render();
   updateResetBtn();
@@ -988,25 +1099,46 @@ function bindEvents() {
   document.getElementById("tag-filters").addEventListener("click", e => {
     const btn = e.target.closest("[data-tag]");
     if (!btn) return;
-    const tag = btn.dataset.tag;
-    if (activeTagFilters.has(tag)) {
-      activeTagFilters.delete(tag);
-      btn.classList.remove("active");
-    } else {
-      activeTagFilters.add(tag);
-      btn.classList.add("active");
-    }
-    render();
-    updateResetBtn();
+    applyTagFilter(btn.dataset.tag);
+  });
+
+  // Фильтр по нейросетям
+  document.getElementById("ai-filters").addEventListener("click", e => {
+    const btn = e.target.closest("[data-ai]");
+    if (!btn) return;
+    applyAiFilter(btn.dataset.ai);
   });
 
   // Сброс
   document.getElementById("reset-btn").addEventListener("click", resetFilters);
 
-  // Кнопки «В iframe» (делегирование на сетку)
+  // Клик по карточке, тегу, нейросети или кнопке «Окно»
   document.getElementById("grid").addEventListener("click", e => {
-    const btn = e.target.closest("[data-iframe]");
-    if (btn) openIframe(btn.dataset.iframe);
+    const iframeBtn = e.target.closest("[data-iframe]");
+    if (iframeBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openIframe(iframeBtn.dataset.iframe);
+      return;
+    }
+    const tagBtn = e.target.closest("[data-tag]");
+    if (tagBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      applyTagFilter(tagBtn.dataset.tag);
+      return;
+    }
+    const aiBtn = e.target.closest("[data-ai]");
+    if (aiBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      applyAiFilter(aiBtn.dataset.ai);
+      return;
+    }
+    const action = e.target.closest(".card-actions");
+    if (action) return;
+    const card = e.target.closest(".card[data-open]");
+    if (card) openIframe(card.dataset.open);
   });
 
   // Закрытие модалки

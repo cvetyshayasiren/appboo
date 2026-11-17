@@ -1,8 +1,10 @@
 {
   "title": "Клавиатурные заметки",
   "description": "Заметки поверх раскладки",
-  "icon": "⌨",
+  "icon": "icon.svg",
   "ai": "Qwen3.8-Max",
   "platform": "both",
-  "tags": ["tool"] 	
+  "tags": [
+    "tool"
+  ]
 }

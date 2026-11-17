@@ -1,8 +1,11 @@
 {
   "title": "ФРАКТАЛБУК",
   "description": "Старинная магическая книга живых фракталов",
-  "icon": "icon.png",
+  "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["game", "random"]
+  "tags": [
+    "game",
+    "random"
+  ]
 }

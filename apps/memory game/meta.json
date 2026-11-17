@@ -1,8 +1,12 @@
 {
   "title": "Мгновенная память",
   "description": "пиксель·ASCII консоль",
-  "icon": "icon.png",
+  "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["game", "pixel art", "random"]
+  "tags": [
+    "game",
+    "pixel art",
+    "random"
+  ]
 }

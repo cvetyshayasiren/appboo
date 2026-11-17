@@ -1,8 +1,13 @@
 {
   "title": "PIXEL LAB",
   "description": "Пиксель-арт редактор",
-  "icon": "icon.png",
+  "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["tool", "pixel art", "create", "editor"]
+  "tags": [
+    "tool",
+    "pixel art",
+    "create",
+    "editor"
+  ]
 }
