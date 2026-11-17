@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a1c2c">
+<title>Pixel Metronome — ретро-метроном</title>
+<style>
+:root{--bg:#1a1c2c;--panel:#25283d;--panel2:#303550;--ink:#f4f4f4;--muted:#a7abc4;--red:#ff004d;--yellow:#ffec27;--blue:#29adff;--green:#00e436;--pink:#ff77a8;--purple:#83769c;--shadow:#090b16;--line:#515875}
+*{box-sizing:border-box}html{min-height:100%;background:var(--bg)}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:13px/1.55 "Courier New",monospace;image-rendering:pixelated}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.app{max-width:1440px;margin:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+.panel{background:var(--panel);border:2px solid var(--line);box-shadow:4px 4px 0 var(--shadow),inset 2px 2px 0 #ffffff0b;padding:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;display:grid;place-items:center;background:var(--red);color:white;font-size:23px;border:3px solid #fff;box-shadow:4px 4px 0 var(--shadow)}
+h1{font-size:clamp(17px,3vw,27px);letter-spacing:1px;margin:0;color:var(--yellow);text-shadow:3px 3px 0 #000}h2{font-size:12px;letter-spacing:1px;color:var(--blue);margin:0 0 10px;text-transform:uppercase}
+.sub{color:var(--muted);font-size:10px}.status{display:flex;align-items:center;gap:8px}.pill{padding:5px 9px;border:2px solid var(--line);background:var(--panel2);font-weight:bold}.pill.running{color:var(--green);border-color:var(--green)}.bpm-chip{color:var(--yellow);font-size:15px}
+.main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.9fr);gap:12px;flex:1}.left,.right{display:flex;flex-direction:column;gap:12px;min-width:0}
+.stage{min-height:200px;display:flex;align-items:center;justify-content:center;gap:clamp(20px,5vw,70px);position:relative;overflow:hidden}
+.pulse-wrap{text-align:center}.pulse{width:clamp(84px,13vw,132px);height:clamp(84px,13vw,132px);background:var(--blue);border:8px solid var(--yellow);box-shadow:8px 8px 0 #090b16, inset -8px -8px 0 #1475b5;transform:scale(1);transition:transform 55ms steps(2,end),background 55ms steps(2,end)}
+.pulse.hit{transform:scale(1.13);background:var(--pink)}.pulse.accent{background:var(--yellow);border-color:var(--red)}
+.pulse-label{margin-top:14px;color:var(--muted);font-size:10px}.counters{display:grid;grid-template-columns:repeat(2,minmax(76px,1fr));gap:8px}.counter{background:var(--bg);border:2px solid var(--line);padding:10px;text-align:center}.counter strong{display:block;color:var(--yellow);font-size:22px}.counter span{font-size:9px;color:var(--muted)}
+.transport{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.btn{background:var(--panel2);border:2px solid var(--line);box-shadow:3px 3px 0 var(--shadow);padding:9px 12px;font-weight:bold;letter-spacing:.3px}.btn:hover{border-color:var(--yellow);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}.btn.primary{background:var(--green);color:#101522;border-color:#a4ffb5}.btn.danger{background:var(--red);border-color:#ff8ba9}.btn.small{padding:5px 8px;font-size:11px}.btn.active{border-color:var(--yellow);color:var(--yellow)}
+.tempo{display:grid;grid-template-columns:auto minmax(100px,1fr);gap:10px;align-items:center}.tempo-value{display:flex;align-items:center;gap:6px}.tempo-value input{width:88px;background:var(--bg);border:2px solid var(--line);padding:8px;text-align:center;color:var(--yellow);font-size:22px;font-weight:bold}.tempo-range{width:100%;accent-color:var(--yellow)}
+.field{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.field label{color:var(--muted);font-size:10px}.field input[type=number],.field input[type=text],select{background:var(--bg);border:2px solid var(--line);padding:6px;min-width:58px}.field select{max-width:100%}
+.beat-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:7px}.beat{aspect-ratio:1;border:2px solid var(--line);background:var(--bg);color:var(--muted);font-weight:bold;position:relative;min-width:0;padding:0}.beat[data-type="accent"]{background:var(--yellow);color:#1a1c2c;border-color:#fff}.beat[data-type="normal"]{background:var(--blue);color:#101522}.beat[data-type="weak"]{background:var(--purple);color:white}.beat[data-type="silent"]{background:#25283d;color:#777;border-style:dashed}.beat[data-type="custom"]{background:var(--pink);color:#1a1c2c}.beat.current{outline:3px solid var(--green);outline-offset:2px;transform:translateY(-3px)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:10px;margin-top:10px}.dot{display:inline-block;width:9px;height:9px;margin-right:4px;border:1px solid #fff}
+.controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.control-box{background:var(--bg);border:1px solid var(--line);padding:9px;min-width:0}.control-box .field{margin-top:7px}
+.sound-row{display:grid;grid-template-columns:76px minmax(90px,1fr) 54px 42px;gap:6px;align-items:center;margin:8px 0}.sound-row select{min-width:0;width:100%;font-size:11px}.sound-row input[type=range]{width:100%;accent-color:var(--pink)}.sound-row .btn{padding:4px;font-size:10px}
+.master{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.master input{accent-color:var(--green);flex:1;min-width:80px}
+.presets-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px}.presets-row input,.presets-row select{min-width:0;width:100%;background:var(--bg);border:2px solid var(--line);padding:7px}
+.patterns{display:flex;gap:6px;flex-wrap:wrap}.hint{font-size:10px;color:var(--muted);text-align:right}
+.toast{position:fixed;z-index:10;bottom:16px;left:50%;transform:translateX(-50%);background:var(--yellow);color:#1a1c2c;border:3px solid #fff;box-shadow:4px 4px 0 #000;padding:9px 14px;font-weight:bold;max-width:90vw}
+.flash{animation:flash .12s steps(2,end)}@keyframes flash{0%,100%{background:var(--bg)}50%{background:#6b243c}}
+.file-hidden{display:none}
+@media(max-width:850px){.main{grid-template-columns:1fr}.stage{min-height:170px}.app{padding:10px}.right{display:grid;grid-template-columns:1fr 1fr}.right .wide{grid-column:1/-1}}
+@media(max-width:560px){header{align-items:flex-start}.status{width:100%;justify-content:flex-start}.right{display:flex}.controls-grid{grid-template-columns:1fr}.beat-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.sound-row{grid-template-columns:64px minmax(75px,1fr) 42px 38px}.tempo{grid-template-columns:1fr}.tempo-value{justify-content:center}.hint{text-align:left}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="panel">
+ <div class="brand"><div class="logo" aria-hidden="true">♪</div><div><h1>PIXEL METRONOME</h1><div class="sub">8-BIT RHYTHM MACHINE // точность в каждом тике</div></div></div>
+ <div class="status"><span class="pill bpm-chip" id="headerBpm">120 BPM</span><span class="pill" id="status">IDLE</span><span class="pill" id="audioStatus">CLICK TO START</span></div>
+</header>
+<div class="main">
+<section class="left">
+ <div class="panel stage">
+  <div class="pulse-wrap"><div class="pulse" id="pulse" aria-label="Визуальный пульс"></div><div class="pulse-label" id="beatLabel">ГОТОВ К СТАРТУ</div></div>
+  <div class="counters"><div class="counter"><strong id="barCount">0</strong><span>ТАКТ</span></div><div class="counter"><strong id="beatCount">0/4</strong><span>ДОЛЯ</span></div></div>
+ </div>
+ <div class="panel">
+  <h2>Ритмическая сетка</h2>
+  <div class="field" style="margin-bottom:10px">
+   <label for="meter">РАЗМЕР</label><select id="meter"><option>1/4</option><option>2/4</option><option>3/4</option><option selected>4/4</option><option>5/4</option><option>6/8</option><option>7/8</option><option>9/8</option><option>12/8</option><option value="custom">Произвольный</option></select>
+   <span id="customMeter" hidden><input id="meterNum" type="number" min="1" max="16" value="4" aria-label="Числитель" style="width:52px"> / <input id="meterDen" type="number" min="2" max="16" step="2" value="4" aria-label="Знаменатель" style="width:52px"></span>
+   <label for="subdivision">ПОДДОЛИ</label><select id="subdivision"><option value="1">Off</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+  </div>
+  <div class="beat-grid" id="beatGrid" aria-label="Сетка долей"></div>
+  <div class="legend"><span><i class="dot" style="background:var(--yellow)"></i>Акцент</span><span><i class="dot" style="background:var(--blue)"></i>Обычный</span><span><i class="dot" style="background:var(--purple)"></i>Слабый</span><span><i class="dot" style="background:var(--pink)"></i>Кастом</span><span>пустой = тишина · нажми для смены типа</span></div>
+ </div>
+ <div class="panel">
+  <h2>Темп и транспорт</h2>
+  <div class="tempo">
+   <div class="tempo-value"><button class="btn" id="bpmDown" aria-label="Уменьшить BPM">−</button><input id="bpm" type="number" min="20" max="300" value="120" aria-label="Темп BPM"><button class="btn" id="bpmUp" aria-label="Увеличить BPM">+</button></div>
+   <input class="tempo-range" id="bpmRange" type="range" min="20" max="300" value="120" aria-label="Ползунок темпа">
+  </div>
+  <div class="transport" style="margin-top:12px"><button class="btn primary" id="start">▶ START</button><button class="btn" id="pause">Ⅱ PAUSE</button><button class="btn" id="stop">■ STOP</button><button class="btn danger" id="panic">PANIC / STOP ALL</button><button class="btn" id="tap">TAP TEMPO</button></div>
+  <div class="hint" style="margin-top:9px">Пробел — старт/стоп · ↑/↓ — BPM · T — tap · M — mute · Shift = шаг 10</div>
+ </div>
+</section>
+<section class="right">
+ <div class="panel">
+  <h2>Звуковой движок</h2>
+  <div class="master"><button class="btn small" id="mute">MUTE</button><label for="master">MASTER</label><input id="master" type="range" min="0" max="100" value="75"><b id="masterVal">75%</b></div>
+  <div class="field" style="margin-top:10px"><label><input id="flashToggle" type="checkbox"> Флэш при акценте</label></div>
+  <div class="sound-row"><b>АКЦЕНТ</b><select id="soundAccent"></select><input id="volAccent" type="range" min="0" max="100" value="100"><button class="btn" data-preview="accent">▶</button></div>
+  <div class="sound-row"><b>ОБЫЧНЫЙ</b><select id="soundNormal"></select><input id="volNormal" type="range" min="0" max="100" value="75"><button class="btn" data-preview="normal">▶</button></div>
+  <div class="sound-row"><b>СЛАБЫЙ</b><select id="soundWeak"></select><input id="volWeak" type="range" min="0" max="100" value="45"><button class="btn" data-preview="weak">▶</button></div>
+  <div class="sound-row"><b>ПОДДОЛЯ</b><select id="soundSub"></select><input id="volSub" type="range" min="0" max="100" value="30"><button class="btn" data-preview="sub">▶</button></div>
+  <div class="sound-row"><b>КАСТОМ</b><select id="soundCustom"></select><input id="volCustom" type="range" min="0" max="100" value="80"><button class="btn" data-preview="custom">▶</button></div>
+  <div class="field"><label for="pitch">ОБЩИЙ PITCH</label><input id="pitch" type="number" min="-24" max="24" value="0" style="width:60px"> <span class="sub">полутона</span></div>
+ </div>
+ <div class="panel">
+  <h2>Паттерны</h2><div class="patterns" id="patterns">
+   <button class="btn small" data-pattern="rock">РОК</button><button class="btn small" data-pattern="waltz">ВАЛЬС</button><button class="btn small" data-pattern="latin">ЛАТИНА</button><button class="btn small" data-pattern="six">6/8</button><button class="btn small" data-pattern="swing">СВИНГ</button><button class="btn small" data-pattern="four">4 НА ПОЛУ</button>
+  </div>
+ </div>
+ <div class="panel wide">
+  <h2>Сохранения и обмен</h2>
+  <div class="presets-row"><input id="presetName" type="text" placeholder="Название пресета" maxlength="32" aria-label="Название пресета"><button class="btn small" id="savePreset">СОХРАНИТЬ</button><select id="presetList" aria-label="Сохранённые пресеты"><option value="">— пресеты —</option></select></div>
+  <div class="patterns" style="margin-top:8px"><button class="btn small" id="loadPreset">ЗАГРУЗИТЬ</button><button class="btn small" id="deletePreset">УДАЛИТЬ</button><button class="btn small" id="exportPreset">ЭКСПОРТ JSON</button><button class="btn small" id="importPreset">ИМПОРТ JSON</button><input class="file-hidden" id="importFile" type="file" accept="application/json,.json"></div>
+ </div>
+</section>
+</div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script>
+/* Все звуки синтезируются локально через Web Audio API. */
+const Presets=(()=>{
+ const sounds={
+  BLIP:{wave:'square',freq:1250,duration:.055,kind:'tone'},
+  KICK:{wave:'sine',freq:150,duration:.16,kind:'kick'},
+  SNARE:{wave:'noise',freq:1800,duration:.13,kind:'snare'},
+  HAT:{wave:'noise',freq:8500,duration:.045,kind:'hat'},
+  CLICK:{wave:'square',freq:2200,duration:.025,kind:'click'},
+  COWBELL:{wave:'cow',freq:560,duration:.12,kind:'cow'},
+  LASER:{wave:'sawtooth',freq:900,duration:.14,kind:'laser'},
+  '8BIT POP':{wave:'triangle',freq:660,duration:.075,kind:'pop'}
+ };
+ const patterns={
+  rock:['accent','normal','weak','normal'],
+  waltz:['accent','weak','weak'],
+  latin:['accent','silent','normal','weak'],
+  six:['accent','weak','weak','normal','weak','weak'],
+  swing:['accent','silent','normal','weak'],
+  four:['accent','normal','normal','normal']
+ };
+ return {sounds,patterns,cycle:['accent','normal','weak','silent','custom']};
+})();
+const Storage=(()=>{
+ const key='pixelMetronome.presets.v1';
+ function all(){try{return JSON.parse(localStorage.getItem(key)||'{}')}catch{return {}}}
+ function write(data){localStorage.setItem(key,JSON.stringify(data))}
+ return {all,save(name,data){const a=all();a[name]=data;write(a)},remove(name){const a=all();delete a[name];write(a)}};
+})();
+const AudioEngine=(()=>{
+ let ctx=null,master=null,muted=false,masterLevel=.75,active=new Set();
+ function init(){
+  if(ctx)return ctx;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)throw new Error('Web Audio API не поддерживается этим браузером');
+  ctx=new AC();master=ctx.createGain();master.gain.value=masterLevel;master.connect(ctx.destination);return ctx;
+ }
+ function setMaster(v){masterLevel=v;if(master)master.gain.setTargetAtTime(muted?0:v,ctx.currentTime,.012)}
+ function setMute(v){muted=v;if(master)master.gain.setTargetAtTime(v?0:masterLevel,ctx.currentTime,.008);return muted}
+ function noiseBuffer(){
+  const b=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.22),ctx.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b;
+ }
+ function envelope(g,t,d,peak){
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+ }
+ function play(name,when=ctx.currentTime,volume=.8,pitch=0){
+  if(!ctx||muted||volume<=0)return;
+  const p=Presets.sounds[name]||Presets.sounds.CLICK,t=when,d=p.duration,ratio=Math.pow(2,pitch/12);
+  const out=ctx.createGain();out.gain.value=1;out.connect(master);active.add(out);
+  const finish=()=>{active.delete(out);try{out.disconnect()}catch{}};
+  if(p.kind==='noise'||p.kind==='snare'||p.kind==='hat'){
+   const src=ctx.createBufferSource();src.buffer=noiseBuffer();
+   const filter=ctx.createBiquadFilter();filter.type=p.kind==='hat'?'highpass':'bandpass';filter.frequency.value=p.freq;filter.Q.value=p.kind==='snare'?.7:1;
+   const g=ctx.createGain();envelope(g,t,d,volume*(p.kind==='hat'?.28:.48));src.connect(filter);filter.connect(g);g.connect(out);src.start(t);src.stop(t+d+.015);src.onended=finish;
+   if(p.kind==='snare'){const osc=ctx.createOscillator(),og=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(190,t);osc.frequency.exponentialRampToValueAtTime(90,t+d);envelope(og,t,d,.32*volume);osc.connect(og);og.connect(out);osc.start(t);osc.stop(t+d+.02)}
+   return;
+  }
+  const makeOsc=(type,freq,amp,detune=0)=>{
+   const osc=ctx.createOscillator(),g=ctx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq*ratio,t);osc.detune.value=detune;
+   if(p.kind==='kick'){osc.frequency.setValueAtTime(155*ratio,t);osc.frequency.exponentialRampToValueAtTime(48*ratio,t+d)}
+   if(p.kind==='laser'){osc.frequency.setValueAtTime(1100*ratio,t);osc.frequency.exponentialRampToValueAtTime(130*ratio,t+d)}
+   envelope(g,t,d,amp*volume);osc.connect(g);g.connect(out);osc.start(t);osc.stop(t+d+.025);osc.onended=finish;
+  };
+  if(p.kind==='cow'){makeOsc('square',p.freq,.24);makeOsc('square',p.freq*1.48,.2,4)}
+  else makeOsc(p.wave,p.freq,p.kind==='kick'?.9:.48);
+ }
+ function panic(){if(!ctx)return;const now=ctx.currentTime;for(const node of active){try{node.gain.cancelScheduledValues(now);node.gain.setTargetAtTime(.0001,now,.002)}catch{}}active.clear()}
+ return {init,play,setMaster,setMute,get muted(){return muted},panic,get context(){return ctx}};
+})();
+const Scheduler=(()=>{
+ let timer=null,running=false,paused=false,nextTime=0,step=0,bar=0,scheduled=[],lookahead=.1,interval=25;
+ const state={bpm:120,beats:4,types:[],sub:1};
+ function beatDuration(){return 60/state.bpm*(4/(state.denominator||4))}
+ function start(){const c=AudioEngine.init();if(c.state==='suspended')c.resume();if(running)return;running=true;paused=false;nextTime=c.currentTime+.05;timer=setInterval(tick,interval);tick();UI.status(true);UI.toast('Метроном запущен')}
+ function tick(){
+  if(!running)return;const c=AudioEngine.context,now=c.currentTime;
+  while(nextTime<now+lookahead){
+   const idx=step%state.beats,type=state.types[idx]||'normal',at=nextTime;
+   scheduled.push({time:at,index:idx,type,bar});
+   if(type!=='silent'){
+    const map={accent:'Accent',normal:'Normal',weak:'Weak',custom:'Custom'};
+    AudioEngine.play(UI.soundFor(map[type]||'Normal'),at,UI.volumeFor(map[type]||'Normal'),UI.pitch());
+   }
+   const divisions=state.sub;
+   if(divisions>1)for(let j=1;j<divisions;j++){
+    const st=at+beatDuration()*j/divisions;
+    AudioEngine.play(UI.soundFor('Sub'),st,UI.volumeFor('Sub'),UI.pitch());
+    scheduled.push({time:st,index:idx,type:'sub',bar,sub:j});
+   }
+   nextTime+=beatDuration();step++;if(step%state.beats===0)bar++;
+  }
+  scheduled=scheduled.filter(x=>x.time>now-.3);
+ }
+ function stop(){if(timer)clearInterval(timer);timer=null;running=false;paused=false;step=0;bar=0;scheduled=[];AudioEngine.panic();UI.status(false);UI.counters(0,0,state.beats);UI.beat(-1);UI.pulseIdle()}
+ function pause(){if(!running)return;const c=AudioEngine.context;const elapsed=Math.max(0,nextTime-c.currentTime-beatDuration());clearInterval(timer);timer=null;running=false;paused=true;AudioEngine.panic();UI.status(false,'PAUSED');UI.toast('Пауза')}
+ function resume(){if(!paused){start();return}const c=AudioEngine.context;running=true;paused=false;nextTime=c.currentTime+.05;timer=setInterval(tick,interval);UI.status(true)}
+ function setTempo(v){state.bpm=Math.max(20,Math.min(300,Math.round(v)))}
+ function setMeter(n,d){state.beats=n;state.denominator=d;state.types=Array.from({length:n},(_,i)=>state.types[i]|| (i===0?'accent':'normal'));step=step%n;UI.renderGrid()}
+ function setTypes(a){state.types=a.slice(0,state.beats);while(state.types.length<state.beats)state.types.push('normal')}
+ function visual(now){
+  if(running){let active=null;for(const b of scheduled){if(b.time<=now+.01&&b.time>=now-.12)active=b}
+   if(active){UI.beat(active.index);UI.counters(active.bar+1,active.index+1,state.beats,active.sub);UI.pulse(active.type)}
+  }
+  requestAnimationFrame(visual);
+ }
+ requestAnimationFrame(visual);
+ return {state,start,stop,pause,resume,setTempo,setMeter,setTypes,get running(){return running},get paused(){return paused},get scheduled(){return scheduled}};
+})();
+const UI=(()=>{
+ const $=id=>document.getElementById(id);let toastTimer=null,taps=[],lastBeat=-1;
+ const soundIds={Accent:'soundAccent',Normal:'soundNormal',Weak:'soundWeak',Sub:'soundSub',Custom:'soundCustom'};
+ const volIds={Accent:'volAccent',Normal:'volNormal',Weak:'volWeak',Sub:'volSub',Custom:'volCustom'};
+ function toast(msg){const el=$('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,2100)}
+ function status(on,txt){$('status').textContent=txt||(on?'RUNNING':'IDLE');$('status').classList.toggle('running',on);$('audioStatus').textContent=AudioEngine.context?'AUDIO READY':'CLICK TO START'}
+ function counters(bar,beat,total,sub){$('barCount').textContent=bar;$('beatCount').textContent=beat+'/'+total+(sub?'.'+sub:'')}
+ function beat(i){$('beatGrid').querySelectorAll('.beat').forEach((b,n)=>b.classList.toggle('current',n===i));lastBeat=i}
+ function pulse(type){const el=$('pulse');el.classList.toggle('accent',type==='accent');el.classList.add('hit');$('beatLabel').textContent=type==='sub'?'SUB BEAT':type.toUpperCase();setTimeout(()=>el.classList.remove('hit'),70);if(type==='accent'&&$('flashToggle').checked){document.body.classList.remove('flash');void document.body.offsetWidth;document.body.classList.add('flash')}}
+ function pulseIdle(){$('pulse').classList.remove('hit','accent');$('beatLabel').textContent='ГОТОВ К СТАРТУ'}
+ function soundFor(k){return $(soundIds[k]||soundIds.Normal).value}
+ function volumeFor(k){return Number($(volIds[k]||volIds.Normal).value)/100}
+ function pitch(){return Math.max(-24,Math.min(24,Number($('pitch').value)||0))}
+ function renderGrid(){const g=$('beatGrid');g.innerHTML='';Scheduler.state.types.forEach((type,i)=>{const b=document.createElement('button');b.className='beat';b.type='button';b.dataset.type=type;b.textContent=String(i+1).padStart(2,'0');b.setAttribute('aria-label','Доля '+(i+1)+', '+type+'; нажмите для смены');b.addEventListener('click',()=>{const arr=Scheduler.state.types,idx=Presets.cycle.indexOf(arr[i]);arr[i]=Presets.cycle[(idx+1)%Presets.cycle.length];b.dataset.type=arr[i];b.setAttribute('aria-label','Доля '+(i+1)+', '+arr[i]);});g.appendChild(b)})}
+ function updateTempo(v){const n=Math.max(20,Math.min(300,Math.round(Number(v)||120)));$('bpm').value=n;$('bpmRange').value=n;$('headerBpm').textContent=n+' BPM';Scheduler.setTempo(n)}
+ function meter(){let n,d;const v=$('meter').value;if(v==='custom'){n=Math.max(1,Math.min(16,Number($('meterNum').value)||4));d=Math.max(2,Math.min(16,Number($('meterDen').value)||4))}else [n,d]=v.split('/').map(Number);Scheduler.setMeter(n,d)}
+ function setPresetPattern(name){let a=Presets.patterns[name].slice();const n=Scheduler.state.beats;Scheduler.setTypes(Array.from({length:n},(_,i)=>a[i%a.length]));renderGrid();toast('Паттерн применён')}
+ function config(){return {bpm:Scheduler.state.bpm,meter:$('meter').value,custom:[Number($('meterNum').value),Number($('meterDen').value)],types:Scheduler.state.types,sub:Number($('subdivision').value),sounds:Object.fromEntries(Object.entries(soundIds).map(([k,id])=>[k,$(id).value])),volumes:Object.fromEntries(Object.entries(volIds).map(([k,id])=>[k,$(id).value])),master:$('master').value,pitch:$('pitch').value}}
+ function apply(c){updateTempo(c.bpm||120);$('meter').value=c.meter||'4/4';if(c.custom){$('meterNum').value=c.custom[0];$('meterDen').value=c.custom[1]}$('customMeter').hidden=$('meter').value!=='custom';meter();if(c.types)Scheduler.setTypes(c.types);$('subdivision').value=c.sub||1;Object.entries(c.sounds||{}).forEach(([k,v])=>{if(soundIds[k]&&Presets.sounds[v])$(soundIds[k]).value=v});Object.entries(c.volumes||{}).forEach(([k,v])=>{if(volIds[k])$(volIds[k]).value=v});$('master').value=c.master||75;$('masterVal').textContent=$('master').value+'%';AudioEngine.setMaster(Number($('master').value)/100);$('pitch').value=c.pitch||0;renderGrid()}
+ function refreshSaved(){const sel=$('presetList'),current=sel.value;sel.innerHTML='<option value="">— пресеты —</option>';Object.keys(Storage.all()).sort().forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)});if(Storage.all()[current])sel.value=current}
+ function bind(){
+  const soundOptions=Object.keys(Presets.sounds);Object.values(soundIds).forEach(id=>{const s=$(id);soundOptions.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o)})});
+  updateTempo(120);meter();
+  $('start').onclick=()=>{try{if(Scheduler.paused)Scheduler.resume();else Scheduler.start();status(true)}catch(e){toast(e.message)}};
+  $('stop').onclick=()=>Scheduler.stop();$('panic').onclick=()=>{Scheduler.stop();AudioEngine.panic();toast('ВСЕ ЗВУКИ ОСТАНОВЛЕНЫ')};
+  $('pause').onclick=()=>Scheduler.paused?Scheduler.resume():Scheduler.pause();
+  $('bpm').onchange=()=>updateTempo($('bpm').value);$('bpmRange').oninput=()=>updateTempo($('bpmRange').value);
+  $('bpmDown').onclick=e=>updateTempo(Scheduler.state.bpm-(e.shiftKey?10:1));$('bpmUp').onclick=e=>updateTempo(Scheduler.state.bpm+(e.shiftKey?10:1));
+  $('tap').onclick=tap;
+  $('meter').onchange=()=>{$('customMeter').hidden=$('meter').value!=='custom';meter()};
+  $('meterNum').onchange=meter;$('meterDen').onchange=meter;$('subdivision').onchange=()=>Scheduler.state.sub=Number($('subdivision').value);
+  $('master').oninput=()=>{$('masterVal').textContent=$('master').value+'%';AudioEngine.setMaster(Number($('master').value)/100)};
+  $('mute').onclick=()=>{$('mute').classList.toggle('active',!AudioEngine.setMute(!AudioEngine.muted));$('mute').textContent=AudioEngine.muted?'UNMUTE':'MUTE'};
+  document.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{try{AudioEngine.init();const k=b.dataset.preview;AudioEngine.play(soundFor(k),AudioEngine.context.currentTime,volumeFor(k),pitch())}catch(e){toast(e.message)}});
+  document.querySelectorAll('[data-pattern]').forEach(b=>b.onclick=()=>setPresetPattern(b.dataset.pattern));
+  $('savePreset').onclick=()=>{const n=$('presetName').value.trim();if(!n){toast('Введи название пресета');return}Storage.save(n,config());refreshSaved();$('presetList').value=n;toast('Пресет сохранён')};
+  $('loadPreset').onclick=()=>{const n=$('presetList').value,c=Storage.all()[n];if(!c){toast('Выбери пресет');return}apply(c);$('presetName').value=n;toast('Пресет загружен')};
+  $('deletePreset').onclick=()=>{const n=$('presetList').value;if(!n)return toast('Выбери пресет');Storage.remove(n);refreshSaved();toast('Пресет удалён')};
+  $('exportPreset').onclick=()=>{const blob=new Blob([JSON.stringify(config(),null,2)],{type:'application/json'});download(blob,'pixel-metronome.json')};
+  $('importPreset').onclick=()=>$('importFile').click();
+  $('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const c=JSON.parse(await f.text());if(!c||typeof c!=='object'||!Array.isArray(c.types))throw Error();apply(c);toast('Конфигурация импортирована')}catch{toast('Некорректный JSON')}e.target.value=''};
+  document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'){e.preventDefault();Scheduler.running?Scheduler.stop():Scheduler.paused?Scheduler.resume():$('start').click()}else if(e.key==='ArrowUp'){e.preventDefault();updateTempo(Scheduler.state.bpm+(e.shiftKey?10:1))}else if(e.key==='ArrowDown'){e.preventDefault();updateTempo(Scheduler.state.bpm-(e.shiftKey?10:1))}else if(e.key.toLowerCase()==='t')tap();else if(e.key.toLowerCase()==='m')$('mute').click()});
+  refreshSaved();renderGrid();
+ }
+ function tap(){const now=performance.now();taps=taps.filter(t=>now-t<2500);taps.push(now);if(taps.length>5)taps.shift();if(taps.length>=2){const gaps=taps.slice(1).map((t,i)=>t-taps[i]);updateTempo(60000/(gaps.reduce((a,b)=>a+b,0)/gaps.length))}toast(taps.length<2?'Ещё один тап…':'Темп измерен')}
+ function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+ return {bind,toast,status,counters,beat,pulse,pulseIdle,renderGrid,soundFor,volumeFor,pitch};
+})();
+Scheduler.state.sub=1;Scheduler.state.denominator=4;Scheduler.state.types=['accent','normal','normal','normal'];UI.bind();
+</script>
+</body>
+</html>
