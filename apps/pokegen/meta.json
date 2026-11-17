@@ -1,0 +1,8 @@
+{
+  "title": "Покеген",
+  "description": "Генератор покевайба",
+  "icon": "icon.png",
+  "ai": "Qwen4-Preview",
+  "platform": "both",
+  "tags": ["game", "relax", "pixel art", "random"]
+}

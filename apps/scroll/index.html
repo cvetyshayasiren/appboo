@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>СКРОЛЛ — симулятор соцсети: тренажёр внимания</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/unbounded@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/golos-text@5/index.css">
+<style>
+/* ═════════════════════ ПАЛИТРА «ночная лента» ═════════════════════ */
+:root{
+  --bg0:#0a0614; --bg1:#120b22;
+  --card:#181028; --card2:#211640; --card3:#2a1c52;
+  --line:rgba(167,139,250,.16); --line2:rgba(167,139,250,.34);
+  --vio:#8b5cf6; --mag:#ff2e97; --cyan:#22d3ee; --lime:#a3e635; --amber:#fbbf24; --orange:#ff8a3d;
+  --ok:#34d399; --bad:#fb4d6d; --warn:#fbbf24; --info:#38bdf8;
+  --tx:#f4efff; --mut:#a79cc4; --dim:#6f6390;
+  --grad:linear-gradient(120deg,#8b5cf6,#ff2e97 55%,#ff8a3d);
+  --hudH:78px;
+  --disp:'Unbounded Variable',system-ui,sans-serif;
+  --body:'Golos Text Variable',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-gutter:stable;overscroll-behavior:none}
+html,body{background:var(--bg0)}
+body{
+  font-family:var(--body);color:var(--tx);min-height:100vh;
+  padding-top:var(--hudH);overflow-x:hidden;overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+}
+/* скроллбары в стиле ленты */
+::-webkit-scrollbar{width:10px;height:8px}
+::-webkit-scrollbar-track{background:#0d0818}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--vio),var(--mag));border-radius:8px;border:2px solid #0d0818}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#a78bfa,#ff5cb1)}
+*{scrollbar-width:thin;scrollbar-color:#8b5cf6 #0d0818}
+::selection{background:rgba(255,46,151,.4)}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font-family:inherit}
+.ic{width:18px;height:18px;flex:none;display:inline-block;vertical-align:-3px}
+
+/* ═════════════════════ ФОН: аврора + зерно ═════════════════════ */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.34}
+.aurora .a1{width:56vw;height:56vw;left:-14vw;top:-18vw;background:radial-gradient(circle,#6d28d9,transparent 65%);animation:drift1 44s ease-in-out infinite alternate}
+.aurora .a2{width:46vw;height:46vw;right:-12vw;top:22vh;background:radial-gradient(circle,#be185d,transparent 65%);animation:drift2 38s ease-in-out infinite alternate}
+.aurora .a3{width:42vw;height:42vw;left:24vw;bottom:-20vh;background:radial-gradient(circle,#0e7490,transparent 65%);animation:drift3 50s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(12vw,10vh) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-10vw,-8vh) scale(.9)}}
+@keyframes drift3{to{transform:translate(-8vw,-12vh) scale(1.2)}}
+body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+
+/* ═════════════════════ ШАПКА-ХАБ ═════════════════════ */
+.hud{position:fixed;top:0;left:0;right:0;z-index:88;background:rgba(10,6,20,.78);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.hud::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--grad);opacity:.6}
+.hud-inner{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;box-shadow:0 4px 18px rgba(255,46,151,.35)}
+.brand-mark svg{width:24px;height:24px}
+.brand-name{font-family:var(--disp);font-weight:900;font-size:19px;letter-spacing:.06em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
+.brand-sub{font-size:10px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
+.hud-stats{display:flex;align-items:center;gap:14px;margin-left:8px;min-width:0}
+.stat{display:flex;flex-direction:column;gap:1px;position:relative}
+.stat .lbl{font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.stat .val{font-family:var(--disp);font-weight:700;font-size:17px;line-height:1.15;white-space:nowrap}
+.stat-score .val{color:var(--amber);font-size:20px;text-shadow:0 0 18px rgba(251,191,36,.4)}
+.stat-score.pulse .val{animation:pulse .45s ease}
+@keyframes pulse{40%{transform:scale(1.22)}}
+.chipstat{display:flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--line);
+  border-radius:999px;padding:5px 10px;font-weight:600;font-size:13px;white-space:nowrap}
+.chipstat.ok{color:var(--ok)} .chipstat.bad{color:var(--bad)}
+.chipstat.fire{color:var(--orange)} .chipstat.fire.hot{border-color:rgba(255,138,61,.55);box-shadow:0 0 14px rgba(255,138,61,.25);animation:pulse .5s ease}
+.lives{display:flex;gap:3px;align-items:center}
+.lives .hp{color:var(--bad);filter:drop-shadow(0 0 6px rgba(251,77,109,.55));transition:.3s}
+.lives .hp svg{width:17px;height:17px}
+.lives .hp.lost{color:#3a2d55;filter:none;opacity:.55;transform:scale(.82)}
+.lives .hp.break{animation:hbreak .6s ease}
+@keyframes hbreak{25%{transform:scale(1.5) rotate(-14deg);color:#ff8ba3}60%{transform:scale(.6) rotate(12deg)}}
+.lvl{display:flex;flex-direction:column;gap:3px}
+.lvl .lvl-t{font-family:var(--disp);font-size:11px;font-weight:700;color:var(--cyan);white-space:nowrap}
+.lvl .lvl-track{width:58px;height:4px;border-radius:4px;background:var(--card3);overflow:hidden}
+.lvl .lvl-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--lime));border-radius:4px;transition:width .5s ease}
+.hud-actions{display:flex;gap:8px;margin-left:auto;align-items:center}
+.ibtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--card2);
+  border:1px solid var(--line);color:var(--mut);transition:.18s;font-weight:800;font-size:16px}
+.ibtn:hover{color:var(--tx);border-color:var(--line2);transform:translateY(-1px);box-shadow:0 6px 16px rgba(139,92,246,.2)}
+.ibtn:active{transform:scale(.94)}
+.ibtn.muted{color:var(--dim)}
+.ibtn.danger:hover{color:var(--bad);border-color:rgba(251,77,109,.5);box-shadow:0 6px 16px rgba(251,77,109,.2)}
+.ibtn .ic{width:19px;height:19px}
+
+/* ═════════════════════ РАСКЛАДКА ═════════════════════ */
+.layout{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,620px);justify-content:center;
+  gap:28px;padding:20px 12px 140px;transition:filter .45s ease}
+body.quizlock{overflow:hidden}
+body.quizlock .layout{filter:blur(14px) brightness(.5) saturate(.7);pointer-events:none;user-select:none}
+.side{display:none}
+@media(min-width:1180px){
+  .layout{grid-template-columns:300px minmax(0,620px)}
+  .side{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(var(--hudH) + 20px);align-self:start;max-height:calc(100vh - var(--hudH) - 40px);overflow-y:auto;padding-bottom:4px}
+}
+.scard{background:linear-gradient(180deg,var(--card),#140d24);border:1px solid var(--line);border-radius:20px;padding:16px}
+.scard h3{font-family:var(--disp);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.scard h3 .ic{color:var(--vio)}
+.prof-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.prof-top .ava{width:46px;height:46px;font-size:16px}
+.prof-name{font-weight:700;font-size:15px}
+.prof-handle{font-size:12px;color:var(--dim)}
+.prof-best{margin-left:auto;text-align:right}
+.prof-best b{font-family:var(--disp);color:var(--amber);font-size:15px;display:block}
+.prof-best span{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prof-cell{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.prof-cell b{font-family:var(--disp);font-size:15px;display:block;color:var(--cyan)}
+.prof-cell span{font-size:10.5px;color:var(--mut)}
+.rules-mini{display:flex;flex-direction:column;gap:10px}
+.rules-mini .rm{display:flex;gap:10px;font-size:12.5px;color:var(--mut);line-height:1.45}
+.rm-n{flex:none;width:22px;height:22px;border-radius:8px;background:var(--grad);color:#fff;font-family:var(--disp);font-size:11px;font-weight:700;display:grid;place-items:center}
+.b-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:12px;font-size:13px;transition:.3s}
+.b-row .b-rank{font-family:var(--disp);font-size:11px;font-weight:700;color:var(--dim);width:16px;text-align:center}
+.b-row:nth-child(1) .b-rank{color:var(--amber)}
+.b-row .ava{width:26px;height:26px;font-size:9px}
+.b-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.b-score{font-family:var(--disp);font-size:12px;font-weight:700;color:var(--tx)}
+.b-row.you{background:linear-gradient(90deg,rgba(139,92,246,.18),rgba(255,46,151,.12));border:1px solid rgba(255,46,151,.35)}
+.b-row.you .b-name{color:var(--tx);font-weight:700}
+.b-row.you .b-score{color:var(--amber)}
+
+/* ═════════════════════ ЛЕНТА ═════════════════════ */
+.feedcol{min-width:0}
+.welcome{background:linear-gradient(var(--card),var(--card)) padding-box,var(--grad) border-box;
+  border:1.5px solid transparent;border-radius:22px;padding:20px;margin-bottom:18px;position:relative;overflow:hidden}
+.welcome::before{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,46,151,.25),transparent 70%);pointer-events:none}
+.welcome h2{font-family:var(--disp);font-size:17px;font-weight:900;margin-bottom:6px}
+.welcome p{font-size:13.5px;color:var(--mut);line-height:1.5;margin-bottom:14px}
+.w-steps{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.w-step{flex:1;min-width:140px;display:flex;gap:9px;align-items:flex-start;background:rgba(139,92,246,.09);
+  border:1px solid var(--line);border-radius:14px;padding:10px}
+.w-step .ic{color:var(--cyan);margin-top:1px}
+.w-step b{display:block;font-size:12.5px;margin-bottom:2px}
+.w-step span{font-size:11.5px;color:var(--mut);line-height:1.4}
+.w-btns{display:flex;gap:10px;flex-wrap:wrap}
+.welcome.hide{animation:wcollapse .45s ease forwards}
+@keyframes wcollapse{to{opacity:0;transform:translateY(-14px) scale(.97);max-height:0;padding:0;margin:0;border-width:0}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;padding:11px 20px;
+  font-weight:700;font-size:14px;transition:.18s;border:1px solid transparent}
+.btn.primary{background:var(--grad);color:#fff;box-shadow:0 6px 22px rgba(255,46,151,.3)}
+.btn.primary:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 10px 28px rgba(255,46,151,.4)}
+.btn.primary:active{transform:scale(.97)}
+.btn.ghost{background:var(--card2);border-color:var(--line);color:var(--mut)}
+.btn.ghost:hover{color:var(--tx);border-color:var(--line2)}
+.btn.danger{background:linear-gradient(120deg,#e11d48,#fb4d6d);color:#fff;box-shadow:0 6px 20px rgba(251,77,109,.3)}
+.btn.danger:hover{filter:brightness(1.1)}
+.btn.big{padding:14px 26px;font-size:15px;border-radius:16px;width:100%}
+
+.post{background:linear-gradient(180deg,#1a1230,#150e26);border:1px solid var(--line);border-radius:20px;
+  margin-bottom:18px;overflow:hidden;animation:rise .55s cubic-bezier(.2,.8,.3,1) both;transition:border-color .25s, box-shadow .25s}
+.post:hover{border-color:var(--line2);box-shadow:0 10px 34px rgba(20,8,50,.6)}
+@keyframes rise{from{opacity:0;transform:translateY(26px) scale(.985)}}
+.post.quizzed{border-color:rgba(251,191,36,.45)}
+.post.shake{animation:shake .4s ease}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.post.hiding{animation:phide .4s ease forwards}
+@keyframes phide{to{opacity:0;transform:scale(.95);max-height:0;margin:0}}
+.p-head{display:flex;align-items:center;gap:11px;padding:14px 16px 10px;position:relative}
+.ava{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.14),0 3px 10px rgba(0,0,0,.35)}
+.p-names{min-width:0;flex:1}
+.p-name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.verified{color:var(--cyan);flex:none}.verified svg{width:14px;height:14px}
+.p-handle{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-time{font-size:11.5px;color:var(--dim);white-space:nowrap;flex:none}
+.p-menu-btn{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--dim);transition:.15s}
+.p-menu-btn:hover{background:var(--card2);color:var(--tx)}
+.p-menu{position:absolute;right:12px;top:48px;z-index:5;background:var(--card3);border:1px solid var(--line2);
+  border-radius:12px;padding:5px;display:none;box-shadow:0 14px 40px rgba(0,0,0,.55);min-width:180px}
+.p-menu.open{display:block;animation:rise .2s ease}
+.p-menu button{display:flex;width:100%;gap:8px;align-items:center;padding:9px 11px;border-radius:9px;font-size:13px;color:var(--mut);text-align:left}
+.p-menu button:hover{background:rgba(139,92,246,.18);color:var(--tx)}
+.quiz-chip{font-size:10px;font-weight:700;letter-spacing:.05em;border-radius:999px;padding:3px 8px;white-space:nowrap;flex:none}
+.quiz-chip.lock{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+.quiz-chip.win{background:rgba(52,211,153,.12);color:var(--ok);border:1px solid rgba(52,211,153,.35)}
+.quiz-chip.lose{background:rgba(251,77,109,.12);color:var(--bad);border:1px solid rgba(251,77,109,.35)}
+.p-text{padding:2px 16px 12px;font-size:14.5px;line-height:1.55;color:#e9e2fa}
+.p-media{position:relative;background:#0d0818}
+.p-canvas{display:block;width:100%;aspect-ratio:16/9;height:auto}
+.p-actions{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line)}
+.act{display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:12px;font-size:13px;font-weight:600;color:var(--mut);transition:.16s}
+.act:hover{background:var(--card2);color:var(--tx)}
+.act:active{transform:scale(.93)}
+.act.liked{color:var(--mag)}
+.act.liked .ic{fill:var(--mag);stroke:var(--mag);animation:lpop .35s ease}
+@keyframes lpop{40%{transform:scale(1.45)}}
+.act .ic{width:18px;height:18px}
+.act.share{margin-left:auto}
+.p-comments{padding:4px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.cmt{display:flex;gap:9px;font-size:13px;animation:rise .3s ease}
+.cmt .ava{width:26px;height:26px;font-size:9px}
+.cmt-body{background:var(--card2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 11px;line-height:1.4;min-width:0}
+.cmt-name{font-weight:700;font-size:11.5px;color:var(--cyan);margin-right:6px}
+.cmt-text{color:#d9d0ef}
+.cmt-form{display:none;gap:8px;padding:0 16px 14px}
+.cmt-form.open{display:flex}
+.cmt-form input{flex:1;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:12px;
+  padding:9px 13px;color:var(--tx);font-size:13px;outline:none;transition:.15s}
+.cmt-form input:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.cmt-form button{flex:none;width:40px;border-radius:12px;background:var(--grad);color:#fff;display:grid;place-items:center}
+.cmt-form button:hover{filter:brightness(1.12)}
+.sentinel{display:flex;align-items:center;justify-content:center;gap:10px;padding:26px 0 8px;color:var(--dim);font-size:13px}
+.sdots{display:flex;gap:5px}
+.sdots i{width:7px;height:7px;border-radius:50%;background:var(--vio);animation:sb 1s ease infinite}
+.sdots i:nth-child(2){background:var(--mag);animation-delay:.15s}
+.sdots i:nth-child(3){background:var(--cyan);animation-delay:.3s}
+@keyframes sb{40%{transform:translateY(-7px);opacity:1}80%{opacity:.4}}
+
+/* ═════════════════════ ЧАТ НЕЗНАКОМЦЕВ ═════════════════════ */
+#scrim{position:fixed;inset:0;z-index:85;background:rgba(6,3,12,.55);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .3s}
+body.dockopen #scrim{opacity:1;pointer-events:auto}
+#bubble{position:fixed;right:20px;bottom:20px;z-index:86;width:60px;height:60px;border-radius:50%;
+  background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 10px 34px rgba(255,46,151,.45);
+  transition:.2s;animation:bfloat 4s ease-in-out infinite}
+#bubble:hover{transform:scale(1.08)}
+#bubble:active{transform:scale(.94)}
+#bubble .ic{width:25px;height:25px}
+@keyframes bfloat{50%{transform:translateY(-5px)}}
+#bubble.gone{display:none}
+#bubbleBadge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:999px;background:var(--bad);
+  color:#fff;font-size:11px;font-weight:800;display:none;place-items:center;padding:0 5px;border:2px solid var(--bg0)}
+#bubbleBadge.on{display:grid;animation:lpop .4s ease}
+#dock{position:fixed;right:20px;bottom:20px;z-index:90;width:392px;max-width:calc(100vw - 24px);
+  background:linear-gradient(180deg,#1d1338,#150d28);border:1px solid var(--line2);border-radius:24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,46,151,.12),0 0 60px rgba(139,92,246,.15);
+  display:none;flex-direction:column;overflow:hidden;max-height:min(640px,calc(100vh - var(--hudH) - 32px))}
+@supports(height:100dvh){#dock{max-height:min(640px,calc(100dvh - var(--hudH) - 32px))}}
+#dock.in{display:flex;animation:dockin .32s cubic-bezier(.2,.9,.3,1.2)}
+#dock.out{animation:dockout .22s ease forwards}
+@keyframes dockin{from{opacity:0;transform:translateY(30px) scale(.94)}}
+@keyframes dockout{to{opacity:0;transform:translateY(24px) scale(.95)}}
+#dock.shake{animation:shake .4s ease}
+.dock-head{display:flex;align-items:center;gap:11px;padding:13px 14px;border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(139,92,246,.14),rgba(255,46,151,.1));flex:none}
+.dock-head .ava{width:38px;height:38px;font-size:12px}
+.dock-title{font-weight:700;font-size:14px;line-height:1.2}
+.dock-status{font-size:11.5px;color:var(--ok);display:flex;align-items:center;gap:5px}
+.dock-status::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.dock-status.typing{color:var(--cyan)}.dock-status.typing::before{background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:sb 1s infinite}
+.dock-min{margin-left:auto;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--dim)}
+.dock-min:hover{background:var(--card3);color:var(--tx)}
+#dock[data-phase="question"] .dock-min,#dock[data-phase="typing"] .dock-min{display:none}
+.dock-body{padding:16px;overflow-y:auto;overscroll-behavior:contain}
+.typing{display:flex;gap:10px;align-items:center;color:var(--mut);font-size:13.5px;padding:8px 2px}
+.tdots{display:flex;gap:5px;background:var(--card2);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:12px 14px}
+.tdots i{width:8px;height:8px;border-radius:50%;background:var(--vio);animation:sb 1s infinite}
+.tdots i:nth-child(2){animation-delay:.15s;background:var(--mag)}
+.tdots i:nth-child(3){animation-delay:.3s;background:var(--cyan)}
+.q-intro{display:flex;gap:9px;margin-bottom:12px}
+.q-intro .ava{width:30px;height:30px;font-size:10px}
+.q-bubble{background:var(--card2);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:10px 13px;font-size:13px;color:var(--mut);line-height:1.45}
+.q-meta{display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+.q-label{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);
+  background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:999px;padding:4px 10px}
+.q-serie{font-size:11px;font-weight:700;color:var(--orange);background:rgba(255,138,61,.1);border:1px solid rgba(255,138,61,.35);border-radius:999px;padding:4px 10px}
+.q-text{font-size:15.5px;font-weight:700;line-height:1.45;margin-bottom:13px}
+.trow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.tbar{flex:1;height:7px;border-radius:6px;background:var(--card3);overflow:hidden}
+.tfill{height:100%;width:100%;border-radius:6px;background:linear-gradient(90deg,var(--ok),var(--lime));transition:width .18s linear}
+.tfill.warn{background:linear-gradient(90deg,var(--warn),var(--orange))}
+.tfill.bad{background:linear-gradient(90deg,var(--bad),var(--mag));animation:tblink .5s ease infinite}
+@keyframes tblink{50%{opacity:.55}}
+.tsec{font-family:var(--disp);font-size:12px;font-weight:700;color:var(--mut);min-width:44px;text-align:right}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opts.long{grid-template-columns:1fr}
+.opt{display:flex;align-items:center;gap:9px;text-align:left;background:var(--card2);border:1px solid var(--line);
+  border-radius:14px;padding:12px 13px;font-size:13.5px;font-weight:600;line-height:1.35;transition:.15s;color:var(--tx)}
+.opt:hover:not(:disabled){border-color:var(--vio);background:var(--card3);transform:translateY(-1px);box-shadow:0 6px 18px rgba(139,92,246,.2)}
+.opt:active:not(:disabled){transform:scale(.97)}
+.opt-key{flex:none;width:22px;height:22px;border-radius:7px;background:rgba(139,92,246,.18);color:var(--vio);
+  font-family:var(--disp);font-size:10.5px;font-weight:700;display:grid;place-items:center}
+.opt.ok{border-color:var(--ok);background:rgba(52,211,153,.14);color:var(--ok)}
+.opt.ok .opt-key{background:var(--ok);color:#08281c}
+.opt.bad{border-color:var(--bad);background:rgba(251,77,109,.13);color:var(--bad)}
+.opt.bad .opt-key{background:var(--bad);color:#3d0a16}
+.opt.dim{opacity:.4}
+.opt:disabled{cursor:default}
+.numform{display:flex;gap:9px}
+.numinput{flex:1;min-width:0;background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:13px 15px;
+  color:var(--tx);font-family:var(--disp);font-size:17px;font-weight:700;outline:none;transition:.15s;letter-spacing:.04em}
+.numinput:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+.numinput.ok{border-color:var(--ok);color:var(--ok)}
+.numinput.bad{border-color:var(--bad);color:var(--bad);animation:shake .4s ease}
+.numform .btn{flex:none}
+.q-note{display:flex;gap:7px;align-items:center;margin-top:13px;font-size:11.5px;color:var(--dim)}
+.q-note .ic{width:14px;height:14px;color:var(--amber)}
+.q-skip{display:block;margin:10px auto 0;font-size:12px;color:var(--dim);text-decoration:underline dotted;padding:4px 8px}
+.q-skip:hover{color:var(--bad)}
+.fb{margin-top:15px;border-top:1px dashed var(--line2);padding-top:15px;animation:rise .4s ease}
+.fb-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.fb-icon{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center}
+.fb-icon .ic{width:24px;height:24px}
+.fb-icon.ok{background:rgba(52,211,153,.15);color:var(--ok);border:1px solid rgba(52,211,153,.45);box-shadow:0 0 24px rgba(52,211,153,.25)}
+.fb-icon.bad{background:rgba(251,77,109,.14);color:var(--bad);border:1px solid rgba(251,77,109,.45);box-shadow:0 0 24px rgba(251,77,109,.2)}
+.fb-title{font-family:var(--disp);font-weight:900;font-size:17px}
+.fb-title.ok{color:var(--ok)}.fb-title.bad{color:var(--bad)}
+.fb-sub{font-size:12px;color:var(--mut);margin-top:2px}
+.fb-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.fb-chip{font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 11px;background:var(--card2);border:1px solid var(--line);color:var(--mut)}
+.fb-chip.gold{color:var(--amber);border-color:rgba(251,191,36,.4)}
+.fb-chip.fire{color:var(--orange);border-color:rgba(255,138,61,.4)}
+.fb-chip.red{color:var(--bad);border-color:rgba(251,77,109,.4)}
+.fb-answer{font-size:13.5px;margin-bottom:11px;color:var(--mut)}
+.fb-answer b{color:var(--tx)}
+.src{display:flex;gap:11px;background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--vio);
+  border-radius:12px;padding:10px;margin-bottom:13px}
+.src img{width:88px;height:50px;object-fit:cover;border-radius:8px;flex:none}
+.src-body{min-width:0;font-size:11.5px;line-height:1.45;color:var(--mut)}
+.src-body b{display:block;color:var(--cyan);font-size:11px;margin-bottom:2px}
+.src-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.fb-continue{position:relative;overflow:hidden;width:100%}
+.auto-line{position:absolute;left:0;bottom:0;height:3px;background:rgba(255,255,255,.55);width:100%;transform-origin:left;animation:autoline 5s linear forwards}
+@keyframes autoline{to{transform:scaleX(0)}}
+.hist{display:flex;flex-direction:column;gap:14px}
+.h-entry{display:flex;flex-direction:column;gap:6px}
+.h-who{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim)}
+.h-who .ava{width:22px;height:22px;font-size:8px}
+.h-who b{color:var(--mut)}
+.h-q{align-self:flex-start;max-width:92%;background:var(--card2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:9px 12px;font-size:12.5px;line-height:1.45;color:#d9d0ef}
+.h-a{align-self:flex-end;max-width:85%;border-radius:14px 4px 14px 14px;padding:8px 12px;font-size:12.5px;font-weight:700}
+.h-a.ok{background:rgba(52,211,153,.13);border:1px solid rgba(52,211,153,.4);color:var(--ok)}
+.h-a.bad{background:rgba(251,77,109,.12);border:1px solid rgba(251,77,109,.4);color:var(--bad)}
+.h-sys{align-self:center;font-size:10.5px;color:var(--dim);letter-spacing:.04em}
+.h-empty{text-align:center;padding:26px 10px;color:var(--dim)}
+.h-empty .ic{width:38px;height:38px;color:var(--card3);margin-bottom:10px}
+.h-empty p{font-size:13px;line-height:1.5}
+
+/* ═════════════════════ МОДАЛКИ / ТОСТЫ / ЭФФЕКТЫ ═════════════════════ */
+.modal{position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:18px;background:rgba(6,3,12,.7);backdrop-filter:blur(8px)}
+.modal.open{display:grid;animation:mfade .25s ease}
+@keyframes mfade{from{opacity:0}}
+.modal-card{width:100%;max-width:480px;max-height:calc(100vh - 60px);overflow-y:auto;
+  background:linear-gradient(var(--card),#140d24) padding-box,var(--grad) border-box;border:1.5px solid transparent;
+  border-radius:26px;padding:26px;position:relative;animation:mpop .35s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes mpop{from{opacity:0;transform:scale(.9) translateY(20px)}}
+.m-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--dim);background:var(--card2)}
+.m-close:hover{color:var(--tx)}
+.m-title{font-family:var(--disp);font-weight:900;font-size:19px;margin-bottom:16px;padding-right:36px}
+.steps{display:flex;flex-direction:column;gap:13px;margin-bottom:18px}
+.step{display:flex;gap:12px;font-size:13.5px;color:var(--mut);line-height:1.5}
+.step b{color:var(--tx)}
+.step-n{flex:none;width:28px;height:28px;border-radius:10px;background:var(--grad);color:#fff;font-family:var(--disp);font-size:13px;font-weight:700;display:grid;place-items:center}
+.score-table{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:12.5px;color:var(--mut);display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.score-table div{display:flex;justify-content:space-between;gap:10px}
+.score-table b{color:var(--amber);white-space:nowrap}
+.keys-hint{font-size:11.5px;color:var(--dim);margin-bottom:16px;line-height:1.6}
+.keys-hint kbd{background:var(--card3);border:1px solid var(--line2);border-radius:6px;padding:1px 7px;font-family:var(--disp);font-size:10px;color:var(--cyan)}
+.m-btns{display:flex;gap:10px}
+.m-btns .btn{flex:1}
+.o-head{text-align:center;margin-bottom:6px}
+.o-skull{font-size:40px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 0 20px rgba(251,77,109,.5))}
+.o-title{font-family:var(--disp);font-weight:900;font-size:21px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.o-sub{font-size:13px;color:var(--mut);margin-top:6px}
+.o-score{text-align:center;margin:18px 0 6px}
+.o-score b{font-family:var(--disp);font-weight:900;font-size:52px;color:var(--amber);text-shadow:0 0 40px rgba(251,191,36,.45);line-height:1}
+.o-score span{display:block;font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-top:6px}
+.o-new{display:none;margin:8px auto 0;width:max-content;background:linear-gradient(120deg,var(--amber),var(--orange));color:#3a2404;
+  font-family:var(--disp);font-weight:700;font-size:12px;border-radius:999px;padding:6px 16px;animation:pulse 1s ease infinite}
+.o-new.on{display:block}
+.o-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.o-cell{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:11px 13px;text-align:center}
+.o-cell b{font-family:var(--disp);font-size:17px;display:block;color:var(--cyan)}
+.o-cell.g b{color:var(--ok)}.o-cell.r b{color:var(--bad)}.o-cell.a b{color:var(--amber)}
+.o-cell span{font-size:10.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.o-best{text-align:center;font-size:12px;color:var(--dim);margin-top:12px}
+#toasts{position:fixed;top:calc(var(--hudH) + 12px);left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+.toast{background:var(--card3);border:1px solid var(--line2);border-left:4px solid var(--info);border-radius:14px;
+  padding:11px 18px;font-size:13px;font-weight:600;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:tin .3s cubic-bezier(.2,.9,.3,1.2);max-width:92vw;text-align:center}
+.toast.ok{border-left-color:var(--ok)}.toast.bad{border-left-color:var(--bad)}.toast.warn{border-left-color:var(--warn)}
+.toast.out{animation:tout .35s ease forwards}
+@keyframes tin{from{opacity:0;transform:translateY(-16px) scale(.92)}}
+@keyframes tout{to{opacity:0;transform:translateY(-12px) scale(.95)}}
+.fly{position:fixed;z-index:130;font-family:var(--disp);font-weight:900;font-size:19px;pointer-events:none;animation:flyup 1s ease forwards;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.fly.ok{color:var(--ok)}.fly.gold{color:var(--amber)}.fly.bad{color:var(--bad)}
+@keyframes flyup{to{transform:translateY(-52px);opacity:0}}
+#fx{position:fixed;inset:0;z-index:125;pointer-events:none}
+#hurt{position:fixed;inset:0;z-index:140;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,transparent 52%,rgba(225,29,72,.5))}
+#hurt.on{animation:hurt .65s ease}
+@keyframes hurt{15%{opacity:1}100%{opacity:0}}
+
+/* ═════════════════════ МОБИЛЬНАЯ АДАПТАЦИЯ ═════════════════════ */
+@media(max-width:900px){
+  :root{--hudH:118px}
+  .hud-inner{padding:8px 12px;gap:6px 10px}
+  .hud-stats{order:3;flex:1 1 100%;margin-left:0;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .hud-stats::-webkit-scrollbar{display:none}
+  .brand-mark{width:32px;height:32px;border-radius:10px}
+  .brand-name{font-size:16px}
+  .brand-sub{display:none}
+  .stat .val{font-size:15px}.stat-score .val{font-size:17px}
+  .chipstat{padding:4px 8px;font-size:12px}
+  .lives .hp svg{width:15px;height:15px}
+  .ibtn{width:34px;height:34px}
+  .layout{padding:14px 10px 130px}
+  #dock{right:10px;left:10px;bottom:10px;width:auto;max-height:min(72vh,600px)}
+  @supports(height:100dvh){#dock{max-height:min(72dvh,600px)}}
+  #bubble{right:14px;bottom:14px;width:56px;height:56px}
+  .opts{grid-template-columns:1fr}
+  .modal-card{padding:20px}
+  .o-score b{font-size:42px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- фоновые слои -->
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+
+<!-- общие градиенты для SVG -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="lgBrand" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#8b5cf6"/><stop offset=".55" stop-color="#ff2e97"/><stop offset="1" stop-color="#ff8a3d"/>
+  </linearGradient>
+</defs></svg>
+
+<!-- ═════════ ШАПКА: очки / серия / верно / ошибки / жизни / уровень ═════════ -->
+<header class="hud">
+  <div class="hud-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">
+          <path d="M6.5 9.5c-2 0-3.5 1.1-3.5 2.5s1.5 2.5 3.5 2.5c3.5 0 7.5-5 11-5 2 0 3.5 1.1 3.5 2.5s-1.5 2.5-3.5 2.5c-3.5 0-7.5-5-11-5z"/>
+        </svg>
+      </span>
+      <div><div class="brand-name">СКРОЛЛ</div><div class="brand-sub">симулятор внимания</div></div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat stat-score" id="scoreStat"><span class="lbl">Очки</span><span class="val" id="scoreVal">0</span></div>
+      <div class="chipstat fire" id="streakStat" title="Серия правильных ответов">🔥 <span id="streakVal">0</span></div>
+      <div class="chipstat ok" title="Правильные ответы">✓ <span id="okVal">0</span></div>
+      <div class="chipstat bad" title="Ошибки">✗ <span id="badVal">0</span></div>
+      <div class="lives" id="livesBox" title="Жизни"></div>
+      <div class="lvl"><span class="lvl-t">УР. <span id="lvlVal">1</span></span><div class="lvl-track"><div class="lvl-fill" id="lvlBar"></div></div></div>
+    </div>
+    <div class="hud-actions">
+      <button class="ibtn" id="btnSound" title="Звук вкл/выкл" aria-pressed="true"></button>
+      <button class="ibtn" id="btnHelp" title="Как играть">?</button>
+      <button class="ibtn danger" id="btnReset" title="Сброс игры"></button>
+    </div>
+  </div>
+</header>
+
+<!-- ═════════ ОСНОВНАЯ РАСКЛАДКА ═════════ -->
+<div class="layout">
+  <aside class="side">
+    <div class="scard">
+      <div class="prof-top">
+        <span class="ava" style="background:linear-gradient(135deg,hsl(268 82% 58%),hsl(320 78% 46%))">ТЫ</span>
+        <div><div class="prof-name">Ты, скроллер</div><div class="prof-handle">@you_scroll</div></div>
+        <div class="prof-best"><b id="profBest">0</b><span>рекорд</span></div>
+      </div>
+      <div class="prof-grid">
+        <div class="prof-cell"><b id="profSeen">0</b><span>постов просмотрено</span></div>
+        <div class="prof-cell"><b id="profMsg">0</b><span>сообщений получено</span></div>
+        <div class="prof-cell"><b id="profStreak">0</b><span>лучшая серия</span></div>
+        <div class="prof-cell"><b id="profAcc">—</b><span>точность</span></div>
+      </div>
+    </div>
+    <div class="scard">
+      <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Как играть</h3>
+      <div class="rules-mini">
+        <div class="rm"><span class="rm-n">1</span><span>Листай ленту и <b>запоминай детали</b>: числа, города, цвета, узоры на картинках.</span></div>
+        <div class="rm"><span class="rm-n">2</span><span>Незнакомец пишет загадку по уже seen-постам. Лента при этом <b>скрывается</b> — только память!</span></div>
+        <div class="rm"><span class="rm-n">3</span><span>Верно — очки и серия ×. Ошибка или таймаут — <b>−1 жизнь</b> из пяти. serie 3 = множитель ×2.</span></div>
+      </div>
+    </div>
+    <div class="scard">
+      <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 5"/><path d="M17 6h3a3 3 0 0 1-3 5"/></svg>Топ недели</h3>
+      <div id="boardList"></div>
+    </div>
+  </aside>
+
+  <section class="feedcol">
+    <div class="welcome" id="welcome">
+      <h2>Добро пожаловать в СКРОЛЛ 👋</h2>
+      <p>Это соцсеть, которая проверяет, что ты <b>реально</b> видишь в ленте. Посты бесконечны и каждый запуск уникален. Скоро тебе напишет незнакомец…</p>
+      <div class="w-steps">
+        <div class="w-step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Смотри внимательно</b><span>числа, места, цвета и узоры картинок</span></div></div>
+        <div class="w-step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><div><b>Отвечай незнакомцам</b><span>лента скроется — работай по памяти</span></div></div>
+        <div class="w-step"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg><div><b>Береги 5 жизней</b><span>серии дают множитель до ×4</span></div></div>
+      </div>
+      <div class="w-btns">
+        <button class="btn primary" id="welcomeGo">Понятно, листаю!</button>
+        <button class="btn ghost" id="welcomeRules">Подробные правила</button>
+      </div>
+    </div>
+    <div id="feed"></div>
+    <div class="sentinel" id="sentinel"><span class="sdots"><i></i><i></i><i></i></span>Подгружаем ещё посты…</div>
+  </section>
+</div>
+
+<!-- ═════════ ЧАТ: пузырь + панель незнакомца ═════════ -->
+<div id="scrim"></div>
+<button id="bubble" title="Сообщения незнакомцев">
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+  <span id="bubbleBadge">0</span>
+</button>
+<div id="dock" data-phase="idle" role="dialog" aria-label="Сообщение незнакомца">
+  <div class="dock-head">
+    <span class="ava" id="dockAva">?</span>
+    <div><div class="dock-title" id="dockName">Незнакомцы</div><div class="dock-status" id="dockStatus">в сети</div></div>
+    <button class="dock-min" id="dockMin" title="Свернуть"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="dock-body" id="dockBody"></div>
+</div>
+
+<!-- ═════════ МОДАЛКИ ═════════ -->
+<div class="modal" id="helpModal">
+  <div class="modal-card">
+    <button class="m-close" data-close="helpModal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    <div class="m-title">Как играть в СКРОЛЛ</div>
+    <div class="steps">
+      <div class="step"><span class="step-n">1</span><span><b>Листай бесконечную ленту.</b> Все посты случайные: события, числа, города, цвета, материалы и процедурные узоры на картинках. Запоминай детали — они пригодятся.</span></div>
+      <div class="step"><span class="step-n">2</span><span><b>Каждые 5–10 постов пишет незнакомец.</b> Его загадка построена из поста, который ты уже видел. Пока отвечаешь, лента скрывается и блокируется — подглядеть нельзя!</span></div>
+      <div class="step"><span class="step-n">3</span><span><b>Отвечай числом или вариантом.</b> На ответ есть время. Пропуск и таймаут считаются ошибкой. Ошибка — минус жизнь из пяти. Ноль жизней — итоги забега.</span></div>
+      <div class="step"><span class="step-n">4</span><span><b>Расти в уровне.</b> Каждые 4 верных ответа — новый уровень: сообщения приходят чаще, времени меньше, вопросы коварнее.</span></div>
+    </div>
+    <div class="score-table">
+      <div><span>Верный ответ</span><b>+100 очков</b></div>
+      <div><span>Бонус за скорость</span><b>до +50</b></div>
+      <div><span>Серия 3 / 6 / 9 верных</span><b>×2 / ×3 / ×4</b></div>
+      <div><span>Ошибка, пропуск, таймаут</span><b>−1 жизнь</b></div>
+    </div>
+    <div class="keys-hint">Горячие клавиши: <kbd>1</kbd>–<kbd>4</kbd> — выбрать вариант · <kbd>Enter</kbd> — отправить число / продолжить · <kbd>Esc</kbd> — закрыть окно. Типы загадок: числа, места, цвета, материалы, детали, узоры картинок, лайки и комментарии.</div>
+    <button class="btn primary big" data-close="helpModal">Листать дальше</button>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="modal-card">
+    <div class="m-title">Сбросить забег?</div>
+    <p style="font-size:13.5px;color:var(--mut);line-height:1.55;margin-bottom:20px">Очки, жизни и лента будут сгенерированы заново. Рекорд сохранится.</p>
+    <div class="m-btns">
+      <button class="btn ghost" data-close="confirmModal">Отмена</button>
+      <button class="btn danger" id="btnConfirmYes">Сбросить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="overModal">
+  <div class="modal-card">
+    <div class="o-head">
+      <div class="o-skull">💀</div>
+      <div class="o-title" id="overTitle">Листатель-новичок</div>
+      <div class="o-sub">Жизни закончились. Лента листается дальше — уже без тебя…</div>
+    </div>
+    <div class="o-score"><b id="overScore">0</b><span>очков за забег</span></div>
+    <div class="o-new" id="overNew">🏆 Новый рекорд!</div>
+    <div class="o-grid" id="overGrid"></div>
+    <button class="btn primary big" id="btnRestart">Начать заново</button>
+    <div class="o-best">Лучший результат: <b id="overBest" style="color:var(--amber)">0</b></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<canvas id="fx"></canvas>
+<div id="hurt"></div>
+
+<script>
+(function(){
+'use strict';
+/* ════════════════════════════════════════════════════════════════════
+   СКРОЛЛ — игра-симулятор соцсети.
+   Как расширять: добавляй элементы в списки (ГОРОДА, ЦВЕТА, …) и новые
+   шаблоны в массив TEMPLATES по схеме:
+   { make(){...слоты}, topic(d){...}, text(d){...}, qs:[ Q.num(...), Q.ch(...) ] }
+   Q.num(метка, вопрос(d), ответ(d))           — вопрос с вводом числа
+   Q.ch (метка, вопрос(d), ответ(d), список)   — вопрос с 4 вариантами
+   Ответ обязан присутствовать в списке вариантов (после фильтрации).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ───────── утилиты ───────── */
+const $=s=>document.querySelector(s);
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;};
+const sample=(a,k)=>shuffle(a).slice(0,k);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=n=>Number(n).toLocaleString('ru-RU');
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pluralRu=(n,one,few,many)=>{const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return one;if(m10>=2&&m10<=4&&(m100<12||m100>14))return few;return many;};
+const hashHue=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h%360;};
+const mulberry32=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+const TR={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+const translit=s=>s.toLowerCase().split('').map(c=>TR[c]!==undefined?TR[c]:c).join('');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ───────── иконки ───────── */
+const IC={
+  heart:'<path fill="currentColor" stroke="none" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>',
+  heartO:'<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>',
+  chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  share:'<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+  dots:'<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+  vol:'<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>',
+  volx:'<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6"/><path d="m22 9-6 6"/>',
+  reset:'<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+  lock:'<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  check:'<path d="m4 12 5 5L20 6"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  zap:'<path d="M13 2 3 14h7l-1 8 11-13h-7z"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  hide:'<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.74 9.74 0 0 0 5.39-1.61"/><path d="m2 2 20 20"/>'
+};
+const icon=(n,st)=>'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(st?' style="'+st+'"':'')+'>'+IC[n]+'</svg>';
+
+/* ════════════════════════════════════════════════════════════════
+   СПИСКИ-ПУЛЫ. Расширяй смело — генераторы подхватят новые значения.
+   ════════════════════════════════════════════════════════════════ */
+const CITIES=[ // города: nom — именительный, prep — «в …», gen — «из/у …»
+  {nom:'Москва',prep:'Москве',gen:'Москвы'},{nom:'Казань',prep:'Казани',gen:'Казани'},
+  {nom:'Сочи',prep:'Сочи',gen:'Сочи'},{nom:'Новосибирск',prep:'Новосибирске',gen:'Новосибирска'},
+  {nom:'Екатеринбург',prep:'Екатеринбурге',gen:'Екатеринбурга'},{nom:'Владивосток',prep:'Владивостоке',gen:'Владивостока'},
+  {nom:'Калининград',prep:'Калининграде',gen:'Калининграда'},{nom:'Иркутск',prep:'Иркутске',gen:'Иркутска'},
+  {nom:'Тула',prep:'Туле',gen:'Тулы'},{nom:'Пермь',prep:'Перми',gen:'Перми'},
+  {nom:'Мурманск',prep:'Мурманске',gen:'Мурманска'},{nom:'Ярославль',prep:'Ярославле',gen:'Ярославля'},
+  {nom:'Дербент',prep:'Дербенте',gen:'Дербента'},{nom:'Выборг',prep:'Выборге',gen:'Выборга'}
+];
+const COUNTRIES=[
+  {nom:'Исландия',prep:'Исландии'},{nom:'Япония',prep:'Японии'},{nom:'Бразилия',prep:'Бразилии'},
+  {nom:'Норвегия',prep:'Норвегии'},{nom:'Непал',prep:'Непале'},{nom:'Италия',prep:'Италии'},
+  {nom:'Кения',prep:'Кении'},{nom:'Перу',prep:'Перу'},{nom:'Монголия',prep:'Монголии'},{nom:'Новая Зеландия',prep:'Новой Зеландии'}
+];
+const PARKS=['Зарядье','Сокольники','Коломенское','Царицыно','Елагин остров','Кусково','Аптекарский огород'];
+const PLACES=['на набережной','в ботаническом саду','на крыше библиотеки','в старом трамвайном депо','на пирсе','в оранжерее','у маяка','в атриуме музея','на смотровой площадке','в заброшенном кинотеатре'];
+const FIRST=['Алиса','Марк','Ева','Тимур','Соня','Глеб','Ника','Артём','Лада','Мирон','Злата','Демид','Аглая','Платон','Иветта','Савва','Таисия','Елисей','Мила','Ратмир'];
+const LAST=['Соловей','Мороз','Кедр','Заря','Вихренко','Север','Искра','Туман','Ветренко','Лис','Волна','Гром'];
+const HANDLE_TAIL=['vibe','wave','nova','pixel','orbit','echo','fox','zen','mira','loop','sky','dash'];
+const MATERIALS=[ // material.gen подставляется после «из»
+  {nom:'стекло',gen:'стекла'},{nom:'лёд',gen:'льда'},{nom:'шоколад',gen:'шоколада'},
+  {nom:'переработанный пластик',gen:'переработанного пластика'},{nom:'бамбук',gen:'бамбука'},
+  {nom:'морская соль',gen:'морской соли'},{nom:'керамика',gen:'керамики'},{nom:'бетон',gen:'бетона'},
+  {nom:'янтарь',gen:'янтаря'},{nom:'картон',gen:'картона'},{nom:'пробка',gen:'пробки'},{nom:'базальт',gen:'базальта'}
+];
+const COLORS=[ // общий пул цветов: и для текстов, и для доминанты картинок
+  {nom:'красный',gen:'красного',h:355},{nom:'оранжевый',gen:'оранжевого',h:28},
+  {nom:'жёлтый',gen:'жёлтого',h:48},{nom:'лаймовый',gen:'лаймового',h:85},
+  {nom:'зелёный',gen:'зелёного',h:135},{nom:'бирюзовый',gen:'бирюзового',h:172},
+  {nom:'голубой',gen:'голубого',h:195},{nom:'синий',gen:'синего',h:225},
+  {nom:'фиолетовый',gen:'фиолетового',h:268},{nom:'розовый',gen:'розового',h:320}
+];
+const ACTIONS=[ // массовые действия: inf — «одновременно …», pres — робот «который …», past — «одновременно …(прош.)»
+  {inf:'петь хором',pres:'поёт хором',past:'пели хором'},
+  {inf:'танцевать брейк-данс',pres:'танцует брейк-данс',past:'танцевали брейк-данс'},
+  {inf:'прыгать через скакалку',pres:'прыгает через скакалку',past:'прыгали через скакалку'},
+  {inf:'собирать оригами',pres:'собирает оригами',past:'собирали оригами'},
+  {inf:'запускать воздушных змеев',pres:'запускает воздушных змеев',past:'запускали воздушных змеев'},
+  {inf:'крутить хула-хуп',pres:'крутит хула-хуп',past:'крутили хула-хуп'},
+  {inf:'жонглировать',pres:'жонглирует',past:'жонглировали'},
+  {inf:'играть в шахматы',pres:'играет в шахматы',past:'играли в шахматы'},
+  {inf:'читать стихи',pres:'читает стихи',past:'читали стихи'},
+  {inf:'отжиматься',pres:'отжимается',past:'отжимались'}
+];
+const ROBOT_ACTS=['варит кофе','гладит котов','поливает цветы','читает сказки','сортирует мусор','играет в шахматы','печёт блины','ловит листья'];
+const BENCH_PROPS=['светится в темноте','поёт при нажатии','заряжает телефоны','вращается на 360°','подогревается от солнца','рассказывает анекдоты','играет джаз','меняет цвет от настроения'];
+const ANIMALS_F=[{nom:'лиса',acc:'лису'},{nom:'сова',acc:'сову'},{nom:'выдра',acc:'выдру'},{nom:'рысь',acc:'рысь'},{nom:'белка',acc:'белку'},{nom:'цапля',acc:'цаплю'}];
+const DEEDS_F=['каталась на скейте','читала газету','играла на скрипке','делала селфи','жонглировала яблоками','спала в гамаке','водила экскурсию','приносила газеты','купалась в фонтане','здоровалась с бегунами'];
+const CREATURES=[{nom:'кот',accM:'кота',parade:'котов'},{nom:'пёс',accM:'пса',parade:'псов'},{nom:'попугай',accM:'попугая',parade:'попугаев'},{nom:'робот',accM:'робота',parade:'роботов'},{nom:'дракон',accM:'дракона',parade:'драконов'},{nom:'единорог',accM:'единорога',parade:'единорогов'},{nom:'кактус',accM:'кактуса',parade:'кактусов'},{nom:'зонтик',accM:'зонтика',parade:'зонтиков'}];
+const BEACH_ITEMS=[{nom:'монета',acc:'монету'},{nom:'ракушка',acc:'ракушку'},{nom:'компас',acc:'компас'},{nom:'якорь',acc:'якорь'},{nom:'бусина',acc:'бусину'},{nom:'фигурка',acc:'фигурку'},{nom:'пластинка',acc:'пластинку'},{nom:'подкова',acc:'подкову'}];
+const LOST_ITEMS=['ключ','телефон','рюкзак','самокат','зонтик','фотоаппарат','скейт','термос'];
+const PHOTO_OBJ=['кактуса','заката','завтрака','кота','велосипеда','торта','дрона','самовара'];
+const COLLECT_ITEMS=['резиновых уток','старых ключей','открыток','кассет','значков','кактусов','чайников','компасов'];
+const SIZE_ITEMS=['футбольный мяч','чемодан','табуретку','микроавтобус','кота','холодильник','пианино'];
+const GROW_OBJ=['помидор','огурец','гриб','лимон','кабачок','баклажан','персик'];
+const CHARACTERS=['банана','динозавра','космонавта','пирата','мухомора','робота','панды','рыцаря'];
+const MUSEUM_THEMES=['сна','пуговиц','дождя','ретрокомпьютеров','шума','запахов','лифтов','эскалаторов'];
+const EXPO_THEMES=['Сны котов','Будущее еды','Города на воде','Музыка тишины','Роботы и цветы','Мода 2100'];
+const DISHES=['плов','борщ','пирог','омлет','бургер','пельмень','пряник','блин','сырник'];
+const PAINT_OBJ=['забор','мост','фонтан','маяк','сцену','лестницу','остановку','катер'];
+const FIGURES=['звезду','сову','пирамиду','чашку','ложку','розу','спираль'];
+const VIDEO_ACTS=['прыгнул','чихнул','подмигнул','сделал кувырок','сказал «мяу»','щёлкнул пальцами','помахал рукой'];
+const STREETS=['Арбате','Невском проспекте','улице Ленина','Покровке','набережной Фонтанки','улице Рубинштейна'];
+const MURAL_OBJ=['китом','самоваром','подсолнухом','осьминогом','матрёшкой','спутником','котом'];
+const PLANTS=['подсолнух','кактус','бамбук','томат','одуванчик','фикус','папоротник'];
+const HOTEL_OBJ=['бочки','ракеты','чайника','улитки','книги','капсулы','тыквы','яйца'];
+const RAIN_ITEMS=['лепестков','конфетти','пуговиц','мыльных пузырей','наклеек','попкорна','семечек'];
+const RAIN_REASONS=['сбоем на фабрике','ветром с карнавала','экспериментом студентов','рекламной акцией','свадебным салютом','шалостью пилотов'];
+const CAKE_OBJ=['замка','ноутбука','кота','вулкана','чемодана','рояля','спутника'];
+const INSTRUMENTS=['скрипке','гитаре','барабане','аккордеоне','балалайке','саксофоне','арфе'];
+const REPAIR_ITEMS=['сундук','самовар','велосипед','дневник','компас','глобус','телефон'];
+const REPAIR_OBJ=['театра','моста','вокзала','библиотеки','пекарни','бани'];
+const TRANSPORT=['велосипеде','самокате','моноколесе','скейте','картинге','снегокате'];
+const PICNIC_OBJ=['пирсе','мосту','плоту','причале','понтоне','волнорезе'];
+const STRAND_OBJ=['мосту','пирсе','плоту','маяке','канатной дороге','скале'];
+const STRAND_REASONS=['тумана','прилива','ледохода','стаи гусей','сломанного лифта','нашествия чаек'];
+const SHOP_GOODS=['велосипеды','торты','гитары','кактусы','скейты','чайники','зонты'];
+const TRICKS=['давать пять','приносить тапочки','выключать свет','открывать дверь','махать лапой','ловить снежки'];
+const TRICK_ANIMALS=['кота','пса','попугая','хорька','енота','хомяка'];
+const BIG_OBJ=['лабиринт','калейдоскоп','конструктор','глобус','пазл','термос'];
+const CAT_OBJ=['фонтана','рояля','киоска','памятника','велосипеда','аквариума','кофейного автомата'];
+// комментарии-шаблоны (короткие — годятся и как варианты ответов)
+const COMMENTS=['Вот это поворот! 😳','Я тоже там был!','Не верю, пруфы?','Красота 😍','Сохранил себе','Это знак!','Хаха, легенда','Кто-то видел вживую?','Срочно туда!','Мой город ❤','Цифры пугают','Лучшее за сегодня','Ну и новости…','Репостнул!','Гениально 🔥'];
+// незнакомцы и их реплики-подводки
+const STRANGERS=['Некто в шляпе','Аноним с чердака','Прохожий №7','Тень подписчика','Сосед по ленте','Хранитель скролла','Девушка без аватарки','Модератор снов','Кот из комментариев','Ботаник без бота','Шёпот алгоритма','Гость из 2007-го'];
+const INTROS=['Привет! Я слежу за твоей лентой 👀 Проверим память?','Ты точно это видел. Вот вопрос:','Тсс… никто не знает, что я тут. Лови загадку:','Хм-м. Листаешь быстро. А помнишь вот что?','Алгоритм шепнул мне, что ты внимательный. Докажи:','Один вопрос — и я исчезну. Итак:','Я коллекционирую чужие воспоминания. Поделишься?'];
+// соперники для «Топа недели»
+const RIVAL_NAMES=['Ника Пиксель','Глеб Орбитов','Соня Неон','Тимур Флеш','Ева Скроллова'];
+
+/* ───────── конструкторы слотов и вопросов ───────── */
+const person=()=>{const f=pick(FIRST),l=pick(LAST);return{first:f,last:l,name:f+' '+l,handle:'@'+translit(f)+pick(['.','_'])+pick(HANDLE_TAIL)};};
+const Q={
+  num:(label,text,ans)=>({kind:'number',label,text,ans}),
+  ch:(label,text,ans,pool)=>({kind:'choice',label,text,ans,pool})
+};
+const noms=a=>a.map(x=>x.nom), gens=a=>a.map(x=>x.gen), preps=a=>a.map(x=>x.prep);
+
+/* ════════════════════════════════════════════════════════════════
+   ШАБЛОНЫ ПОСТОВ (40 шт). Добавляй новые по той же схеме.
+   make() — случайные слоты; text() — текст поста; topic() — краткая
+   тема для формулировок загадок; qs — вопросы из ЭТИХ слотов.
+   ════════════════════════════════════════════════════════════════ */
+const TEMPLATES=[
+{make:()=>({city:pick(CITIES),n:rint(15,90)*10}),topic:d=>'фестиваль уличной еды в '+d.city.nom,
+ text:d=>'В '+d.city.prep+' прошёл фестиваль уличной еды — собрал '+fmt(d.n)+' человек. Очереди за лапшой тянулись на квартал!',
+ qs:[Q.num('Число',d=>'Сколько человек собрал фестиваль уличной еды в '+d.city.nom+'?',d=>d.n),
+     Q.ch('Место',()=>'В каком городе прошёл фестиваль уличной еды?',d=>d.city.nom,noms(CITIES))]},
+{make:()=>({park:pick(PARKS),mat:pick(MATERIALS),n:rint(20,400)*5}),topic:d=>'скульптура из '+d.mat.gen,
+ text:d=>'В парке «'+d.park+'» открыли скульптуру из '+d.mat.gen+' — её посетили '+fmt(d.n)+' гостей. Говорят, на закате она поёт.',
+ qs:[Q.ch('Материал',d=>'Из какого материала была скульптура в парке «'+d.park+'»?',d=>d.mat.gen,gens(MATERIALS)),
+     Q.num('Число',d=>'Сколько гостей посетило скульптуру из '+d.mat.gen+'?',d=>d.n),
+     Q.ch('Место',d=>'В каком парке открыли скульптуру из '+d.mat.gen+'?',d=>d.park,PARKS)]},
+{make:()=>({country:pick(COUNTRIES),n:rint(5,120)*25,act:pick(ACTIONS)}),topic:d=>'рекорд в '+d.country.nom,
+ text:d=>'В '+d.country.prep+' установили рекорд: '+fmt(d.n)+' участников одновременно '+d.act.inf+'. Судьи устали считать.',
+ qs:[Q.num('Число',d=>'Сколько участников установили рекорд в '+d.country.nom+'?',d=>d.n),
+     Q.ch('Действие',d=>'Что одновременно делали '+fmt(d.n)+' участников рекорда в '+d.country.nom+'?',d=>d.act.inf,ACTIONS.map(a=>a.inf)),
+     Q.ch('Место',d=>'В какой стране '+fmt(d.n)+' человек одновременно '+d.act.inf+'?',d=>d.country.nom,noms(COUNTRIES))]},
+{make:()=>({p:person(),obj:pick(PHOTO_OBJ),n:rint(30,900)*10}),topic:d=>'фото '+d.obj+' от '+d.p.first,likesFrom:'n',
+ text:d=>d.p.name+' выложил фото '+d.obj+' — '+fmt(d.n)+' лайков за час. Комментарии закрыты от зависти.',
+ qs:[Q.num('Лайки',d=>'Сколько лайков за час набрало фото '+d.obj+' от '+d.p.first+'?',d=>d.n),
+     Q.ch('Объект',d=>'Фото чего выложил '+d.p.first+' и собрал '+fmt(d.n)+' лайков за час?',d=>d.obj,PHOTO_OBJ)]},
+{make:()=>({p:person(),item:pick(BEACH_ITEMS),age:rint(2,120)*10}),topic:d=>'находка на пляже',
+ text:d=>d.p.name+' нашёл на пляже '+d.item.acc+' возрастом '+fmt(d.age)+' лет. Музей уже нервно звонит.',
+ qs:[Q.ch('Предмет',d=>'Что возрастом '+fmt(d.age)+' лет нашёл на пляже '+d.p.first+'?',d=>d.item.nom,noms(BEACH_ITEMS)),
+     Q.num('Число',d=>'Сколько лет было находке («'+d.item.nom+'») с пляжа?',d=>d.age)]},
+{make:()=>({city:pick(CITIES),color:pick(COLORS)}),topic:d=>'одноцветное кафе в '+d.city.nom,
+ text:d=>'В '+d.city.prep+' открылось кафе, где всё меню — '+d.color.gen+' цвета. Даже вода. Особенно вода.',
+ qs:[Q.ch('Цвет',d=>'Какого цвета было всё меню в необычном кафе в '+d.city.nom+'?',d=>d.color.gen,gens(COLORS)),
+     Q.ch('Место',d=>'В каком городе открылось кафе с меню '+d.color.gen+' цвета?',d=>d.city.nom,noms(CITIES))]},
+{make:()=>({n:rint(10,120)*5,obj:pick(PAINT_OBJ),color:pick(COLORS)}),topic:d=>'покраска в '+d.color.nom+' цвет',
+ text:d=>fmt(d.n)+' волонтёров за один день покрасили '+d.obj+' в '+d.color.nom+' цвет. Краски не хватило только на тени.',
+ qs:[Q.num('Число',d=>'Сколько волонтёров красили '+d.obj+' в '+d.color.nom+' цвет?',d=>d.n),
+     Q.ch('Цвет',d=>'В какой цвет волонтёры покрасили '+d.obj+'?',d=>d.color.nom,noms(COLORS)),
+     Q.ch('Объект',d=>'Что '+fmt(d.n)+' волонтёров покрасили в '+d.color.nom+' цвет?',d=>d.obj,PAINT_OBJ)]},
+{make:()=>({place:pick(PLACES),an:pick(ANIMALS_F),deed:pick(DEEDS_F)}),topic:d=>'странное животное',
+ text:d=>cap(d.place)+' заметили '+d.an.acc+', которая '+d.deed+'. Очевидцы сняли видео, но оно смазалось.',
+ qs:[Q.ch('Животное',d=>'Какое животное заметили '+d.place+', когда оно '+d.deed+'?',d=>d.an.nom,noms(ANIMALS_F)),
+     Q.ch('Действие',d=>'Что делала '+d.an.nom+', замеченная '+d.place+'?',d=>d.deed,DEEDS_F),
+     Q.ch('Место',d=>'Где заметили '+d.an.acc+', которая '+d.deed+'?',d=>d.place,PLACES)]},
+{make:()=>({p:person(),n:rint(15,60)*25,items:pick(COLLECT_ITEMS)}),topic:d=>'коллекция '+d.items,
+ text:d=>d.p.name+' собрал коллекцию из '+fmt(d.n)+' '+d.items+' и выложил фото. Полки уже трещат.',
+ qs:[Q.num('Число',d=>'Сколько '+d.items+' было в коллекции '+d.p.first+'?',d=>d.n),
+     Q.ch('Предметы',d=>'Коллекцию из '+fmt(d.n)+' чего собрал '+d.p.first+'?',d=>d.items,COLLECT_ITEMS)]},
+{make:()=>({city:pick(CITIES),cr:pick(CREATURES),n:rint(20,500)*10}),topic:d=>'парад '+d.cr.parade,
+ text:d=>'В '+d.city.prep+' прошёл парад '+d.cr.parade+' — пришло '+fmt(d.n)+' зрителей. Движение перекрыли на три часа.',
+ qs:[Q.num('Число',d=>'Сколько зрителей пришло на парад '+d.cr.parade+' в '+d.city.nom+'?',d=>d.n),
+     Q.ch('Существа',d=>'Чей парад собрал '+fmt(d.n)+' зрителей в '+d.city.nom+'?',d=>d.cr.parade,CREATURES.map(c=>c.parade))]},
+{make:()=>({city:pick(CITIES),obj:pick(GROW_OBJ),size:pick(SIZE_ITEMS)}),topic:d=>'гигантский '+d.obj,
+ text:d=>'Учёные из '+d.city.gen+' вырастили '+d.obj+' размером с '+d.size+'. Дегустация перенесена на неопределённый срок.',
+ qs:[Q.ch('Объект',d=>'Что учёные из '+d.city.gen+' вырастили размером с '+d.size+'?',d=>d.obj,GROW_OBJ),
+     Q.ch('Размер',d=>'С чем сравнивали '+d.obj+', выращенный учёными из '+d.city.gen+'?',d=>d.size,SIZE_ITEMS),
+     Q.ch('Место',d=>'Учёные из какого города вырастили '+d.obj+' размером с '+d.size+'?',d=>d.city.gen,CITIES.map(c=>c.gen))]},
+{make:()=>({p:person(),ch:pick(CHARACTERS),h:rint(3,9)}),topic:d=>'марафон в костюме '+d.ch,
+ text:d=>d.p.name+' пробежал марафон в костюме '+d.ch+' за '+d.h+' '+pluralRu(d.h,'час','часа','часов')+'. Костюм выжил, гордость — нет.',
+ qs:[Q.num('Число',d=>'За сколько часов '+d.p.first+' пробежал марафон в костюме '+d.ch+'?',d=>d.h),
+     Q.ch('Костюм',d=>'В костюме кого '+d.p.first+' пробежал марафон за '+d.h+' '+pluralRu(d.h,'час','часа','часов')+'?',d=>d.ch,CHARACTERS)]},
+{make:()=>({park:pick(PARKS),prop:pick(BENCH_PROPS)}),topic:d=>'волшебная скамейка',
+ text:d=>'В парке «'+d.park+'» поставили скамейку, которая '+d.prop+'. Очередь на неё длиннее, чем на аттракционы.',
+ qs:[Q.ch('Свойство',d=>'Что умеет скамейка в парке «'+d.park+'»?',d=>d.prop,BENCH_PROPS),
+     Q.ch('Место',d=>'В каком парке поставили скамейку, которая '+d.prop+'?',d=>d.park,PARKS)]},
+{make:()=>({n:rint(10,200)*10,act:pick(ACTIONS),city:pick(CITIES)}),topic:d=>'рекорд на площади',
+ text:d=>fmt(d.n)+' человек одновременно '+d.act.past+' на площади '+d.city.gen+' — попали в книгу рекордов. Дроны сняли всё сверху.',
+ qs:[Q.ch('Действие',d=>'Какой рекорд установили '+fmt(d.n)+' человек на площади '+d.city.gen+'?',d=>d.act.inf,ACTIONS.map(a=>a.inf)),
+     Q.num('Число',d=>'Сколько человек попали в книгу рекордов на площади '+d.city.gen+'?',d=>d.n),
+     Q.ch('Место',d=>'На площади какого города '+fmt(d.n)+' человек одновременно '+d.act.past+'?',d=>d.city.nom,noms(CITIES))]},
+{make:()=>({city:pick(CITIES),theme:pick(MUSEUM_THEMES),price:rint(2,60)*10}),topic:d=>'музей '+d.theme,
+ text:d=>'В '+d.city.prep+' открыли музей '+d.theme+', вход стоит '+d.price+' рублей. Билеты раскупают боты, но смотритель против.',
+ qs:[Q.num('Число',d=>'Сколько рублей стоит вход в музей '+d.theme+' в '+d.city.nom+'?',d=>d.price),
+     Q.ch('Тема',d=>'Музей чего открыли в '+d.city.nom+' со входом за '+d.price+' рублей?',d=>d.theme,MUSEUM_THEMES)]},
+{make:()=>({p:person(),dish:pick(DISHES),kg:rint(5,150)*5}),topic:d=>'гигантский '+d.dish,
+ text:d=>d.p.name+' приготовил '+d.dish+' весом '+fmt(d.kg)+' кг. Съесть обещал сам. Ставки принимаются в комментариях.',
+ qs:[Q.ch('Блюдо',d=>'Какое блюдо весом '+fmt(d.kg)+' кг приготовил '+d.p.first+'?',d=>d.dish,DISHES),
+     Q.num('Число',d=>'Сколько килограммов весил '+d.dish+' от '+d.p.first+'?',d=>d.kg)]},
+{make:()=>({place:pick(PLACES),mat:pick(MATERIALS),h:rint(4,40)}),topic:d=>'дом из '+d.mat.gen,
+ text:d=>cap(d.place)+' построили дом из '+d.mat.gen+' высотой '+d.h+' '+pluralRu(d.h,'метр','метра','метров')+'. Соседи боятся чихать.',
+ qs:[Q.ch('Материал',d=>'Из какого материала был дом высотой '+d.h+' '+pluralRu(d.h,'метр','метра','метров')+'?',d=>d.mat.gen,gens(MATERIALS)),
+     Q.num('Число',d=>'Сколько метров в высоту был дом из '+d.mat.gen+'?',d=>d.h)]},
+{make:()=>({p:person(),item:pick(LOST_ITEMS),place:pick(PLACES),days:rint(3,90)}),topic:d=>'потерянный '+d.item,
+ text:d=>d.p.name+' потерял '+d.item+' '+d.place+', а нашёл его через '+d.days+' '+pluralRu(d.days,'день','дня','дней')+'. Вещь вернулась сама, уверяет он.',
+ qs:[Q.num('Число',d=>'Через сколько дней '+d.p.first+' нашёл потерянный '+d.item+'?',d=>d.days),
+     Q.ch('Предмет',d=>'Что '+d.p.first+' потерял '+d.place+' и нашёл через '+d.days+' '+pluralRu(d.days,'день','дня','дней')+'?',d=>d.item,LOST_ITEMS)]},
+{make:()=>({city:pick(CITIES),cr:pick(CREATURES),winner:person()}),topic:d=>'конкурс на лучшего '+d.cr.accM,
+ text:d=>'В '+d.city.prep+' прошёл конкурс на лучшего '+d.cr.accM+' — победил '+d.winner.first+'. Жюри плакало от умиления.',
+ qs:[Q.ch('Победитель',d=>'Кто победил в конкурсе на лучшего '+d.cr.accM+' в '+d.city.nom+'?',d=>d.winner.first,FIRST),
+     Q.ch('Существо',d=>'Конкурс на лучшего кого прошёл в '+d.city.nom+'?',d=>d.cr.accM,CREATURES.map(c=>c.accM))]},
+{make:()=>({n:rint(7,60),obj:pick(CAT_OBJ),city:pick(CITIES)}),topic:d=>'сходка котов',
+ text:d=>d.n+' '+pluralRu(d.n,'кот','кота','котов')+' собрались у '+d.obj+' в '+d.city.prep+' — очевидцы в шоке. Что они обсуждали — неизвестно.',
+ qs:[Q.num('Число',d=>'Сколько котов собралось у '+d.obj+' в '+d.city.nom+'?',d=>d.n),
+     Q.ch('Объект',d=>'У чего собрались '+d.n+' '+pluralRu(d.n,'кот','кота','котов')+' в '+d.city.nom+'?',d=>d.obj,CAT_OBJ)]},
+{make:()=>({place:pick(PLACES),fig:pick(FIGURES),mat:pick(MATERIALS),h:rint(3,25)}),topic:d=>'гигантская '+d.fig,
+ text:d=>cap(d.place)+' установили гигантскую '+d.fig+' из '+d.mat.gen+' высотой '+d.h+' '+pluralRu(d.h,'метр','метра','метров')+'. Видно с самолёта.',
+ qs:[Q.ch('Фигура',d=>'Какую гигантскую фигуру установили '+d.place+'?',d=>d.fig,FIGURES),
+     Q.ch('Материал',d=>'Из какого материала была гигантская '+d.fig+'?',d=>d.mat.gen,gens(MATERIALS)),
+     Q.num('Число',d=>'Сколько метров в высоту была фигура («'+d.fig+'») из '+d.mat.gen+'?',d=>d.h)]},
+{make:()=>({p:person(),n:rint(15,200),act:pick(VIDEO_ACTS),views:rint(100,9000)*10}),topic:d=>'вирусное видео',
+ text:d=>d.p.name+' снял видео, где '+d.n+' раз '+d.act+' — '+fmt(d.views)+' просмотров. Алгоритм сошёл с ума.',
+ qs:[Q.num('Число',d=>'Сколько раз '+d.p.first+' '+d.act+' в вирусном видео?',d=>d.n),
+     Q.num('Просмотры',d=>'Сколько просмотров набрало видео, где '+d.p.first+' '+d.n+' раз '+d.act+'?',d=>d.views),
+     Q.ch('Действие',d=>'Что '+d.n+' раз делал '+d.p.first+' в видео на '+fmt(d.views)+' просмотров?',d=>d.act,VIDEO_ACTS)]},
+{make:()=>({city:pick(CITIES),n:rint(20,300)*10,act:pick(ACTIONS)}),topic:d=>'флешмоб в '+d.city.nom,
+ text:d=>'В '+d.city.prep+' запустили флешмоб: '+fmt(d.n)+' человек одновременно '+d.act.past+'. Видео с дрона залетело в тренды.',
+ qs:[Q.num('Число',d=>'Сколько человек участвовало во флешмобе в '+d.city.nom+'?',d=>d.n),
+     Q.ch('Действие',d=>'Что одновременно делали участники флешмоба в '+d.city.nom+'?',d=>d.act.inf,ACTIONS.map(a=>a.inf))]},
+{make:()=>({street:pick(STREETS),city:pick(CITIES),obj:pick(MURAL_OBJ),area:rint(20,300)*5}),topic:d=>'мурал с '+d.obj,
+ text:d=>'На '+d.street+' в '+d.city.prep+' появился мурал с '+d.obj+' площадью '+fmt(d.area)+' м². Краску считали вёдрами.',
+ qs:[Q.num('Число',d=>'Сколько м² занимал мурал с '+d.obj+' на '+d.street+'?',d=>d.area),
+     Q.ch('Объект',d=>'С чем был мурал площадью '+fmt(d.area)+' м² в '+d.city.nom+'?',d=>d.obj,MURAL_OBJ),
+     Q.ch('Место',d=>'На какой улице появился мурал с '+d.obj+'?',d=>d.street,STREETS)]},
+{make:()=>({p:person(),plant:pick(PLANTS),cm:rint(80,400),days:rint(30,200)}),topic:d=>'балконный '+d.plant,
+ text:d=>d.p.name+' вырастил '+d.plant+' высотой '+d.cm+' см на балконе за '+d.days+' '+pluralRu(d.days,'день','дня','дней')+'. Соседи снизу против джунглей.',
+ qs:[Q.num('Число',d=>'Сколько сантиметров был '+d.plant+' с балкона '+d.p.first+'?',d=>d.cm),
+     Q.num('Число',d=>'За сколько дней '+d.p.first+' вырастил '+d.plant+' высотой '+d.cm+' см?',d=>d.days),
+     Q.ch('Растение',d=>'Что высотой '+d.cm+' см вырастил на балконе '+d.p.first+'?',d=>d.plant,PLANTS)]},
+{make:()=>({place:pick(PLACES),n:rint(6,40),obj:pick(HOTEL_OBJ)}),topic:d=>'отель в форме '+d.obj,
+ text:d=>cap(d.place)+' открыли необычный отель: '+d.n+' '+pluralRu(d.n,'номер','номера','номеров')+' в форме '+d.obj+'. Бронь на год вперёд.',
+ qs:[Q.num('Число',d=>'Сколько номеров в форме '+d.obj+' было в необычном отеле?',d=>d.n),
+     Q.ch('Форма',d=>'В форме чего были '+d.n+' '+pluralRu(d.n,'номер','номера','номеров')+' в необычном отеле?',d=>d.obj,HOTEL_OBJ)]},
+{make:()=>({n:rint(4,30),city:pick(CITIES),act:pick(ROBOT_ACTS)}),topic:d=>'школьный робот',
+ text:d=>d.n+' '+pluralRu(d.n,'школьник','школьника','школьников')+' из '+d.city.gen+' собрали робота, который '+d.act+'. Родители заказали по одному.',
+ qs:[Q.ch('Действие',d=>'Что делал робот, которого собрали '+d.n+' '+pluralRu(d.n,'школьник','школьника','школьников')+' из '+d.city.gen+'?',d=>d.act,ROBOT_ACTS),
+     Q.num('Число',d=>'Сколько школьников из '+d.city.gen+' собрали робота, который '+d.act+'?',d=>d.n)]},
+{make:()=>({city:pick(CITIES),item:pick(RAIN_ITEMS),reason:pick(RAIN_REASONS)}),topic:d=>'дождь из '+d.item,
+ text:d=>'В '+d.city.prep+' прошёл дождь из '+d.item+' — метеорологи объяснили это '+d.reason+'. Зонты не помогли.',
+ qs:[Q.ch('Предмет',d=>'Дождь из чего прошёл в '+d.city.nom+'?',d=>d.item,RAIN_ITEMS),
+     Q.ch('Причина',d=>'Чем метеорологи объяснили дождь из '+d.item+' в '+d.city.nom+'?',d=>d.reason,RAIN_REASONS)]},
+{make:()=>({p:person(),obj:pick(CAKE_OBJ),kg:rint(5,120)}),topic:d=>'торт в виде '+d.obj,
+ text:d=>d.p.name+' испёк торт в виде '+d.obj+' весом '+d.kg+' кг. Резать жалко, есть невозможно. Классика.',
+ qs:[Q.num('Число',d=>'Сколько кг весил торт в виде '+d.obj+' от '+d.p.first+'?',d=>d.kg),
+     Q.ch('Форма',d=>'В виде чего '+d.p.first+' испёк торт весом '+d.kg+' кг?',d=>d.obj,CAKE_OBJ)]},
+{make:()=>({park:pick(PARKS),an:pick(ANIMALS_F),deed:pick(DEEDS_F)}),topic:d=>'жительница парка',
+ text:d=>'В парке «'+d.park+'» поселилась '+d.an.nom+', которая каждый день '+d.deed+'. Ей поставили табличку с именем.',
+ qs:[Q.ch('Животное',d=>'Кто поселился в парке «'+d.park+'» и каждый день '+d.deed+'?',d=>d.an.nom,noms(ANIMALS_F)),
+     Q.ch('Действие',d=>'Что каждый день делала '+d.an.nom+' из парка «'+d.park+'»?',d=>d.deed,DEEDS_F),
+     Q.ch('Место',d=>'В каком парке поселилась '+d.an.nom+', которая '+d.deed+'?',d=>d.park,PARKS)]},
+{make:()=>({n:rint(12,180),instr:pick(INSTRUMENTS),place:pick(PLACES)}),topic:d=>'оркестр на '+d.instr,
+ text:d=>d.n+' '+pluralRu(d.n,'музыкант','музыканта','музыкантов')+' одновременно сыграли на '+d.instr+' '+d.place+'. Слышали даже рыбы.',
+ qs:[Q.num('Число',d=>'Сколько музыкантов одновременно сыграли на '+d.instr+'?',d=>d.n),
+     Q.ch('Инструмент',d=>'На чём одновременно сыграли '+d.n+' '+pluralRu(d.n,'музыкант','музыканта','музыкантов')+' '+d.place+'?',d=>d.instr,INSTRUMENTS)]},
+{make:()=>({city:pick(CITIES),item:pick(REPAIR_ITEMS),age:rint(5,90)*10,obj:pick(REPAIR_OBJ)}),topic:d=>'находка при ремонте',
+ text:d=>'В '+d.city.prep+' нашли '+d.item+' возрастом '+fmt(d.age)+' лет при ремонте '+d.obj+'. Стройку остановили, археологи довольны.',
+ qs:[Q.num('Число',d=>'Сколько лет было находке («'+d.item+'») при ремонте '+d.obj+' в '+d.city.nom+'?',d=>d.age),
+     Q.ch('Предмет',d=>'Что возрастом '+fmt(d.age)+' лет нашли при ремонте '+d.obj+'?',d=>d.item,REPAIR_ITEMS),
+     Q.ch('Объект',d=>'При ремонте чего в '+d.city.nom+' нашли '+d.item+' возрастом '+fmt(d.age)+' лет?',d=>d.obj,REPAIR_OBJ)]},
+{make:()=>({p:person(),tr:pick(TRANSPORT),km:rint(40,900)}),topic:d=>'заезд без остановки',
+ text:d=>d.p.name+' проехал на '+d.tr+' '+fmt(d.km)+' км без остановки. Ноги отказались комментировать.',
+ qs:[Q.num('Число',d=>'Сколько км проехал '+d.p.first+' на '+d.tr+' без остановки?',d=>d.km),
+     Q.ch('Транспорт',d=>'На чём '+d.p.first+' проехал '+fmt(d.km)+' км без остановки?',d=>d.tr,TRANSPORT)]},
+{make:()=>({place:pick(PLACES),color:pick(COLORS)}),topic:d=>d.color.nom+' снег',
+ text:d=>cap(d.place)+' выпал '+d.color.nom+' снег — местные гадают, что это. Дети уже лепят странного снеговика.',
+ qs:[Q.ch('Цвет',d=>'Какого цвета снег выпал '+d.place+'?',d=>d.color.nom,noms(COLORS)),
+     Q.ch('Место',d=>'Где выпал '+d.color.nom+' снег?',d=>d.place,PLACES)]},
+{make:()=>({n:rint(15,200),obj:pick(PICNIC_OBJ),len:rint(10,300)}),topic:d=>'пикник на '+d.obj,
+ text:d=>d.n+' человек устроили пикник на '+d.obj+' длиной '+d.len+' '+pluralRu(d.len,'метр','метра','метров')+'. Пледы сшили по спецзаказу.',
+ qs:[Q.num('Число',d=>'Сколько человек устроило пикник на '+d.obj+'?',d=>d.n),
+     Q.num('Число',d=>'Сколько метров в длину был '+d.obj+', где пикниковали '+d.n+' человек?',d=>d.len),
+     Q.ch('Место',d=>'Где устроили пикник на '+d.len+' '+pluralRu(d.len,'метр','метра','метров')+'?',d=>d.obj,PICNIC_OBJ)]},
+{make:()=>({city:pick(CITIES),price:rint(1,50)*10,goods:pick(SHOP_GOODS)}),topic:d=>'магазин всё по '+d.price,
+ text:d=>'В '+d.city.prep+' открылся магазин, где всё стоит '+d.price+' рублей — даже '+d.goods+'. Экономисты в панике.',
+ qs:[Q.num('Число',d=>'Сколько рублей стоило всё в необычном магазине в '+d.city.nom+'?',d=>d.price),
+     Q.ch('Товар',d=>'Что продавали за '+d.price+' рублей в магазине в '+d.city.nom+'?',d=>d.goods,SHOP_GOODS),
+     Q.ch('Место',d=>'В каком городе открылся магазин, где даже '+d.goods+' стоят '+d.price+' рублей?',d=>d.city.nom,noms(CITIES))]},
+{make:()=>({p:person(),an:pick(TRICK_ANIMALS),trick:pick(TRICKS),days:rint(3,60)}),topic:d=>'дрессировка: '+d.trick,
+ text:d=>d.p.name+' научил '+d.an+' '+d.trick+' за '+d.days+' '+pluralRu(d.days,'день','дня','дней')+'. Цирк предложил контракт.',
+ qs:[Q.ch('Животное',d=>'Кого '+d.p.first+' научил '+d.trick+' за '+d.days+' '+pluralRu(d.days,'день','дня','дней')+'?',d=>d.an,TRICK_ANIMALS),
+     Q.ch('Трюк',d=>'Чему '+d.p.first+' научил '+d.an+'?',d=>d.trick,TRICKS),
+     Q.num('Число',d=>'За сколько дней '+d.p.first+' научил '+d.an+' '+d.trick+'?',d=>d.days)]},
+{make:()=>({place:pick(PLACES),obj:pick(BIG_OBJ),mat:pick(MATERIALS)}),topic:d=>'самый большой '+d.obj,
+ text:d=>cap(d.place)+' построили самый большой '+d.obj+' из '+d.mat.gen+' в мире. Книга рекордов уже выехала.',
+ qs:[Q.ch('Объект',d=>'Самый большой что в мире построили '+d.place+'?',d=>d.obj,BIG_OBJ),
+     Q.ch('Материал',d=>'Из какого материала был самый большой '+d.obj+' в мире?',d=>d.mat.gen,gens(MATERIALS))]},
+{make:()=>({n:rint(5,80),obj:pick(STRAND_OBJ),reason:pick(STRAND_REASONS)}),topic:d=>'спасение туристов',
+ text:d=>d.n+' туристов застряли на '+d.obj+' из-за '+d.reason+' — всех спасли. Вертолёт взял автографы.',
+ qs:[Q.num('Число',d=>'Сколько туристов застряло на '+d.obj+'?',d=>d.n),
+     Q.ch('Причина',d=>'Из-за чего туристы застряли на '+d.obj+'?',d=>d.reason,STRAND_REASONS),
+     Q.ch('Место',d=>'Где застряли '+d.n+' туристов из-за '+d.reason+'?',d=>d.obj,STRAND_OBJ)]},
+{make:()=>({city:pick(CITIES),theme:pick(EXPO_THEMES),ex:rint(20,400),vis:rint(50,2000)*10}),topic:d=>'выставка «'+d.theme+'»',
+ text:d=>'В '+d.city.prep+' прошла выставка «'+d.theme+'»: '+fmt(d.ex)+' экспонатов, '+fmt(d.vis)+' посетителей. Охрана просит не трогать ничего.',
+ qs:[Q.num('Число',d=>'Сколько экспонатов было на выставке «'+d.theme+'»?',d=>d.ex),
+     Q.num('Число',d=>'Сколько посетителей пришло на выставку «'+d.theme+'» в '+d.city.nom+'?',d=>d.vis),
+     Q.ch('Тема',d=>'Какая выставка в '+d.city.nom+' собрала '+fmt(d.vis)+' посетителей?',d=>d.theme,EXPO_THEMES)]}
+];
+
+/* ───────── процедурные картинки: стили узоров ───────── */
+const SHAPES=[
+  {key:'circles',label:'Круги'},{key:'rings',label:'Кольца'},{key:'waves',label:'Волны'},
+  {key:'grid',label:'Квадраты'},{key:'rays',label:'Лучи'},{key:'tris',label:'Треугольники'},{key:'blobs',label:'Кляксы'}
+];
+function makeArt(){
+  const color=pick(COLORS);
+  const far=COLORS.filter(c=>{const d=Math.abs(c.h-color.h);return Math.min(d,360-d)>=70;});
+  return{seed:rint(1,1e9),style:pick(SHAPES).key,color,colorB:pick(far)};
+}
+/* рисует узор в логических координатах 640×360 на любом canvas */
+function drawArt(cv,art){
+  const ctx=cv.getContext('2d');if(!ctx)return;
+  const rnd=mulberry32(art.seed);
+  const R=(a,b)=>a+rnd()*(b-a);
+  const hA=art.color.h,hB=art.colorB.h;
+  ctx.save();ctx.scale(cv.width/640,cv.height/360);
+  // фон: доминанта + дальний акцент
+  const bg=ctx.createLinearGradient(0,0,640,360);
+  bg.addColorStop(0,'hsl('+hA+' 62% 15%)');bg.addColorStop(.55,'hsl('+hA+' 68% 26%)');bg.addColorStop(1,'hsl('+hB+' 58% 22%)');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,640,360);
+  const glow=ctx.createRadialGradient(R(120,520),R(60,300),20,320,180,420);
+  glow.addColorStop(0,'hsla('+hA+',90%,60%,.32)');glow.addColorStop(1,'transparent');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,640,360);
+  const fillA=(l,a)=>'hsla('+hA+',86%,'+l+'%,'+a+')';
+  const fillB=(l,a)=>'hsla('+hB+',86%,'+l+'%,'+a+')';
+  const st=art.style;
+  if(st==='circles'){
+    const n=Math.floor(R(16,27));
+    for(let i=0;i<n;i++){const x=R(0,640),y=R(0,360),r=R(8,72);
+      if(rnd()<.55){ctx.fillStyle=rnd()<.14?fillB(62,.55):fillA(R(52,72),R(.3,.7));ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+      else{ctx.strokeStyle=fillA(R(60,78),R(.5,.9));ctx.lineWidth=R(2,7);ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();}}
+  }else if(st==='rings'){
+    const n=Math.floor(R(4,8));
+    for(let i=0;i<n;i++){const cx=R(60,580),cy=R(40,320),m=Math.floor(R(4,8)),base=R(10,20),step=R(11,18);
+      for(let j=0;j<m;j++){ctx.strokeStyle=(i===1?fillB(64,.8):fillA(R(56,74),R(.5,.85)));ctx.lineWidth=R(2.5,6);
+        ctx.beginPath();ctx.arc(cx,cy,base+j*step,0,7);ctx.stroke();}}
+  }else if(st==='waves'){
+    const n=Math.floor(R(5,8));
+    for(let k=0;k<n;k++){const baseY=30+k*(310/n)+R(-12,12),amp=R(14,42),freq=R(.008,.02),ph=R(0,6.28);
+      ctx.beginPath();ctx.moveTo(0,baseY);
+      for(let x=0;x<=640;x+=14)ctx.lineTo(x,baseY+Math.sin(x*freq+ph)*amp);
+      ctx.lineTo(640,360);ctx.lineTo(0,360);ctx.closePath();
+      ctx.fillStyle=(k===2?fillB(58,.3):fillA(R(48,68),R(.24,.42)));ctx.fill();
+      ctx.beginPath();for(let x=0;x<=640;x+=14){const y=baseY+Math.sin(x*freq+ph)*amp;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+      ctx.strokeStyle=fillA(R(66,80),.8);ctx.lineWidth=2.4;ctx.stroke();}
+  }else if(st==='grid'){
+    ctx.save();ctx.translate(320,180);ctx.rotate(R(-.28,.28));ctx.translate(-400,-260);
+    const cell=Math.floor(R(30,46));
+    for(let x=0;x<820;x+=cell)for(let y=0;y<540;y+=cell){
+      if(rnd()<.18)continue;const s=cell*.68,jx=R(-3,3),jy=R(-3,3);
+      if(rnd()<.16){ctx.fillStyle=rnd()<.4?fillB(60,.6):fillA(64,.5);ctx.fillRect(x+jx,y+jy,s,s);}
+      else{ctx.strokeStyle=fillA(R(58,76),R(.45,.85));ctx.lineWidth=R(1.6,3.4);ctx.strokeRect(x+jx,y+jy,s,s);}}
+    ctx.restore();
+  }else if(st==='rays'){
+    const cx=R(80,560),cy=R(60,300),n=Math.floor(R(18,30));
+    for(let i=0;i<n;i++){const a0=i/n*6.283+R(-.02,.02),a1=a0+(6.283/n)*R(.4,.62);
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+Math.cos(a0)*900,cy+Math.sin(a0)*900);
+      ctx.lineTo(cx+Math.cos(a1)*900,cy+Math.sin(a1)*900);ctx.closePath();
+      ctx.fillStyle=i%5===0?fillB(62,.5):fillA(R(54,72),i%2?R(.2,.32):R(.4,.55));ctx.fill();}
+    ctx.fillStyle=fillA(82,.95);ctx.beginPath();ctx.arc(cx,cy,R(8,16),0,7);ctx.fill();
+  }else if(st==='tris'){
+    const n=Math.floor(R(18,30));
+    for(let i=0;i<n;i++){const cx=R(0,640),cy=R(0,360),r=R(10,52),rot=R(0,6.28);
+      ctx.beginPath();
+      for(let j=0;j<3;j++){const a=rot+j*2.094;const px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r;j===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+      ctx.closePath();
+      if(rnd()<.6){ctx.fillStyle=rnd()<.15?fillB(62,.55):fillA(R(52,72),R(.3,.65));ctx.fill();}
+      else{ctx.strokeStyle=fillA(R(62,80),.8);ctx.lineWidth=R(2,4.5);ctx.stroke();}}
+  }else{ // blobs
+    const n=Math.floor(R(6,10));
+    for(let i=0;i<n;i++){const cx=R(60,580),cy=R(50,310),base=R(24,70),pts=[];
+      const m=Math.floor(R(5,8));
+      for(let j=0;j<m;j++){const a=j/m*6.283,rr=base*R(.6,1.4);pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]);}
+      ctx.beginPath();
+      let mx=(pts[0][0]+pts[m-1][0])/2,my=(pts[0][1]+pts[m-1][1])/2;ctx.moveTo(mx,my);
+      for(let j=0;j<m;j++){const nx=(pts[j][0]+pts[(j+1)%m][0])/2,ny=(pts[j][1]+pts[(j+1)%m][1])/2;ctx.quadraticCurveTo(pts[j][0],pts[j][1],nx,ny);}
+      ctx.closePath();
+      ctx.fillStyle=rnd()<.18?fillB(60,.5):fillA(R(50,70),R(.35,.6));ctx.fill();
+      ctx.strokeStyle=fillA(76,.55);ctx.lineWidth=2;ctx.stroke();}
+  }
+  // шум + виньетка
+  for(let i=0;i<340;i++){ctx.fillStyle=rnd()<.5?'rgba(255,255,255,'+R(.03,.09)+')':'rgba(0,0,0,'+R(.04,.1)+')';ctx.fillRect(R(0,640),R(0,360),1.3,1.3);}
+  const vg=ctx.createRadialGradient(320,180,140,320,180,430);
+  vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(5,2,10,.5)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,640,360);
+  ctx.restore();
+}
+
+/* ───────── звук (WebAudio, всё процедурное) ───────── */
+const Snd={
+  ctx:null,master:null,on:store.get('scroll_sound','1')!=='0',
+  ensure(){
+    if(!this.ctx){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      this.ctx=new AC();this.master=this.ctx.createGain();this.master.gain.value=this.on?0.5:0;this.master.connect(this.ctx.destination);}catch(e){}}
+    if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();
+  },
+  tone(f,o){o=o||{};if(!this.on||!this.ctx)return;const t=this.ctx.currentTime+(o.t||0),d=o.d||.15;
+    const osc=this.ctx.createOscillator(),g=this.ctx.createGain();
+    osc.type=o.type||'sine';osc.frequency.setValueAtTime(f,t);
+    if(o.slide)osc.frequency.exponentialRampToValueAtTime(o.slide,t+d);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(o.v||.2,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    osc.connect(g);g.connect(this.master);osc.start(t);osc.stop(t+d+.06);},
+  play(n){this.ensure();if(!this.ctx||!this.on)return;
+    if(n==='msg'){this.tone(660,{d:.12,v:.24});this.tone(990,{t:.13,d:.2,v:.2});}
+    else if(n==='ok'){this.tone(523,{d:.14,type:'triangle',v:.22});this.tone(659,{t:.09,d:.14,type:'triangle',v:.22});this.tone(784,{t:.18,d:.16,type:'triangle',v:.22});this.tone(1046,{t:.27,d:.3,type:'triangle',v:.2});}
+    else if(n==='bad'){this.tone(180,{d:.35,type:'sawtooth',v:.22,slide:85});this.tone(70,{t:.05,d:.25,type:'square',v:.12});}
+    else if(n==='like'){this.tone(880,{d:.07,type:'triangle',v:.14});}
+    else if(n==='level'){this.tone(400,{d:.5,type:'sawtooth',v:.14,slide:1200});this.tone(1568,{t:.4,d:.25,type:'triangle',v:.16});}
+    else if(n==='over'){this.tone(392,{d:.3,v:.22});this.tone(311,{t:.25,d:.3,v:.22});this.tone(233,{t:.5,d:.7,v:.24});}
+    else if(n==='click'){this.tone(1400,{d:.045,v:.07});}},
+  setOn(v){this.on=v;store.set('scroll_sound',v?'1':'0');if(this.master)this.master.gain.value=v?0.5:0;}
+};
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev,()=>Snd.ensure(),{once:true,passive:true}));
+
+/* ───────── состояние игры ───────── */
+const LIVES_MAX=5;
+const G={
+  score:0,disp:0,lives:LIVES_MAX,correct:0,wrong:0,streak:0,bestStreak:0,level:1,
+  seen:0,msgCount:0,best:parseInt(store.get('scroll_best','0'),10)||0,
+  posts:[],seenPosts:[],history:[],used:new Set(),lastQPost:null,unread:0,
+  nextAt:4,phase:'idle',q:null,qActive:false,over:false,
+  msgToken:0,typeId:0,tInt:0,autoId:0,tEnd:0,tTotal:1,tPause:null,scoreRaf:0,
+  pid:0,appending:false
+};
+const gapForLevel=()=>{const lo=Math.max(3,6-G.level),hi=Math.max(lo+2,10-G.level);return rint(lo,hi);};
+const timeForLevel=()=>Math.max(18,46-G.level*4);
+const multFor=st=>1+Math.min(3,Math.floor(st/3));
+
+/* ───────── DOM-ссылки ───────── */
+const feedEl=$('#feed'),sentinelEl=$('#sentinel'),dockEl=$('#dock'),dockBody=$('#dockBody'),
+  dockAva=$('#dockAva'),dockName=$('#dockName'),dockStatus=$('#dockStatus'),
+  bubbleEl=$('#bubble'),bubbleBadge=$('#bubbleBadge'),scrimEl=$('#scrim'),
+  scoreVal=$('#scoreVal'),scoreStat=$('#scoreStat'),livesBox=$('#livesBox'),
+  fxCanvas=$('#fx'),fxCtx=fxCanvas.getContext('2d');
+
+/* ───────── аватары ───────── */
+function avaHTML(name,hue,cls){
+  const h=hue===undefined?hashHue(name):hue;
+  const init=name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  return '<span class="ava'+(cls?' '+cls:'')+'" style="background:linear-gradient(135deg,hsl('+h+' 82% 58%),hsl('+((h+45)%360)+' 78% 44%))">'+esc(init)+'</span>';
+}
+
+/* ───────── генерация поста ───────── */
+function makePost(depth){
+  const tpl=pick(TEMPLATES),d=tpl.make(),author=person(),art=makeArt();
+  const likes=tpl.likesFrom?d[tpl.likesFrom]:rint(4,480)*10;
+  // комментарии: 1–3, часть — из шаблонов, часть — привязана к слотам
+  const cN=rint(1,3),cTexts=[];
+  const aware=[];
+  if(d.n)aware.push(fmt(d.n)+' — это мощно!');
+  if(d.color)aware.push(cap(d.color.nom)+' — мой любимый!');
+  if(d.city)aware.push('Привет из '+d.city.gen+'! 👋');
+  const poolC=shuffle(COMMENTS);
+  while(cTexts.length<cN){
+    let t=(aware.length&&Math.random()<.45)?aware.pop():poolC.pop();
+    if(t&&!cTexts.includes(t))cTexts.push(t);
+    if(!t)break;
+  }
+  const comments=cTexts.map(t=>({name:person().name,text:t}));
+  const mins=depth*rint(6,16)+rint(0,6);
+  // миниатюра для карточки-источника в фидбэке
+  const thumbCv=document.createElement('canvas');thumbCv.width=128;thumbCv.height=72;drawArt(thumbCv,art);
+  return{id:'p'+(++G.pid),tpl,d,author,art,likes,liked:false,locked:false,comments,quizComments:cTexts.slice(),
+    text:tpl.text(d),topic:tpl.topic(d),mins,thumb:thumbCv.toDataURL('image/png'),seen:false,node:null,chip:null};
+}
+function timeAgo(m){if(m<1)return'только что';if(m<60)return m+' мин назад';const h=Math.floor(m/60);if(h<24)return h+' ч назад';return Math.floor(h/24)+' дн назад';}
+
+function postNode(p,idx){
+  const el=document.createElement('article');
+  el.className='post';el.dataset.pid=p.id;el.style.animationDelay=(idx*70)+'ms';
+  const verified=Math.random()<.16?'<span class="verified" title="Подтверждённый аккаунт"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 15 5l4-.5.5 4L22 12l-2.5 3.5-.5 4-4-.5L12 22l-3-3-4 .5-.5-4L2 12l2.5-3.5.5-4 4 .5z"/><path d="m9 12 2 2 4-4" stroke="#0a0614" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>':'';
+  el.innerHTML=
+    '<div class="p-head">'+avaHTML(p.author.name)+
+      '<div class="p-names"><div class="p-name">'+esc(p.author.name)+verified+'</div><div class="p-handle">'+esc(p.author.handle)+'</div></div>'+
+      '<span class="quiz-slot"></span><span class="p-time">'+timeAgo(p.mins)+'</span>'+
+      '<button class="p-menu-btn" data-fa="menu" title="Ещё">'+icon('dots')+'</button>'+
+      '<div class="p-menu"><button data-fa="copy">'+icon('copy')+'Скопировать текст</button><button data-fa="hide">'+icon('hide')+'Скрыть пост</button></div>'+
+    '</div>'+
+    '<div class="p-text">'+esc(p.text)+'</div>'+
+    '<div class="p-media"><canvas class="p-canvas" width="640" height="360"></canvas></div>'+
+    '<div class="p-actions">'+
+      '<button class="act like" data-fa="like">'+icon('heartO')+'<span class="like-n">'+fmt(p.likes)+'</span></button>'+
+      '<button class="act" data-fa="cmt">'+icon('chat')+'<span class="cmt-n">'+p.comments.length+'</span></button>'+
+      '<button class="act share" data-fa="share">'+icon('share')+'<span>Поделиться</span></button>'+
+    '</div>'+
+    '<div class="p-comments">'+p.comments.map(c=>'<div class="cmt">'+avaHTML(c.name)+'<div class="cmt-body"><span class="cmt-name">'+esc(c.name.split(' ')[0])+'</span><span class="cmt-text">'+esc(c.text)+'</span></div></div>').join('')+'</div>'+
+    '<form class="cmt-form" data-cform="1"><input type="text" maxlength="120" placeholder="Ответить…" aria-label="Комментарий"><button type="submit" title="Отправить">'+icon('send')+'</button></form>';
+  drawArt(el.querySelector('.p-canvas'),p.art);
+  p.node=el;
+  return el;
+}
+
+/* ───────── бесконечная лента ───────── */
+let seenObserver=null,sentinelObserver=null;
+function initObservers(){
+  if(seenObserver){seenObserver.disconnect();sentinelObserver.disconnect();}
+  if('IntersectionObserver' in window){
+    seenObserver=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){const p=G.posts.find(x=>x.id===en.target.dataset.pid);if(p)markSeen(p);seenObserver.unobserve(en.target);}});},{threshold:.4});
+    sentinelObserver=new IntersectionObserver(es=>{if(es[0].isIntersecting)appendBatch(5);},{rootMargin:'700px 0px'});
+    sentinelObserver.observe(sentinelEl);
+  }else{
+    let tick=false;
+    window.addEventListener('scroll',()=>{if(tick)return;tick=true;setTimeout(()=>{tick=false;
+      if(sentinelEl.getBoundingClientRect().top<innerHeight+700)appendBatch(5);
+      G.posts.forEach(p=>{if(p.node&&!p.seen){const r=p.node.getBoundingClientRect();if(r.top<innerHeight*.6&&r.bottom>innerHeight*.4)markSeen(p);}});
+    },180);},{passive:true});
+  }
+}
+function appendBatch(n){
+  if(G.appending)return;G.appending=true;
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<n;i++){
+    const p=makePost(G.posts.length);
+    G.posts.push(p);
+    const node=postNode(p,i);frag.appendChild(node);
+    if(seenObserver)seenObserver.observe(node);
+  }
+  feedEl.appendChild(frag);
+  // ограничиваем DOM: старые карточки убираем с компенсацией скролла
+  let removedH=0;
+  while(feedEl.children.length>60){
+    const old=feedEl.firstElementChild;
+    removedH+=old.offsetHeight+18;
+    const p=G.posts.find(x=>x.id===old.dataset.pid);
+    if(p){p.node=null;if(seenObserver)seenObserver.unobserve(old);}
+    old.remove();
+  }
+  if(removedH>0&&window.scrollY>removedH)window.scrollBy(0,-removedH);
+  if(G.posts.length>200)G.posts.splice(0,G.posts.length-200);
+  G.appending=false;
+}
+function markSeen(p){
+  if(p.seen||G.over)return;
+  p.seen=true;G.seen++;
+  G.seenPosts.push(p);if(G.seenPosts.length>30)G.seenPosts.shift();
+  hudSync();maybeTrigger();
+}
+
+/* ───────── эффекты: конфетти / вспышка / тосты / fly ───────── */
+let fxParts=[],fxRunning=false;
+function fxSize(){fxCanvas.width=innerWidth;fxCanvas.height=innerHeight;}
+fxSize();window.addEventListener('resize',fxSize);
+const FX_COLORS=['#8b5cf6','#ff2e97','#22d3ee','#a3e635','#fbbf24','#f4efff'];
+function confetti(x,y,n){
+  if(reducedMotion)return;
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,sp=2+Math.random()*7;
+    fxParts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-4,g:.16,r:2+Math.random()*4,rot:Math.random()*6.28,vr:(Math.random()-.5)*.3,c:pick(FX_COLORS),life:1,decay:.008+Math.random()*.012,sq:Math.random()<.6});}
+  if(!fxRunning){fxRunning=true;requestAnimationFrame(fxStep);}
+}
+function fxStep(){
+  fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  fxParts=fxParts.filter(p=>p.life>0);
+  for(const p of fxParts){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.vx*=.99;p.rot+=p.vr;p.life-=p.decay;
+    fxCtx.save();fxCtx.globalAlpha=Math.max(0,p.life);fxCtx.translate(p.x,p.y);fxCtx.rotate(p.rot);fxCtx.fillStyle=p.c;
+    if(p.sq)fxCtx.fillRect(-p.r,-p.r*.6,p.r*2,p.r*1.2);else{fxCtx.beginPath();fxCtx.arc(0,0,p.r*.8,0,7);fxCtx.fill();}
+    fxCtx.restore();
+  }
+  if(fxParts.length)requestAnimationFrame(fxStep);else{fxRunning=false;fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);}
+}
+function hurtFlash(){const h=$('#hurt');h.classList.remove('on');void h.offsetWidth;h.classList.add('on');}
+function toast(msg,type){
+  const box=$('#toasts');
+  while(box.children.length>=4)box.firstElementChild.remove();
+  const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;box.appendChild(t);
+  setTimeout(()=>t.classList.add('out'),2400);setTimeout(()=>t.remove(),2850);
+}
+function flyText(txt,x,y,cls){
+  if(reducedMotion)return;
+  const s=document.createElement('span');s.className='fly '+cls;s.textContent=txt;
+  s.style.left=x+'px';s.style.top=y+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),1050);
+}
+
+/* ───────── HUD ───────── */
+function buildHearts(){
+  livesBox.innerHTML='';
+  for(let i=0;i<LIVES_MAX;i++){const s=document.createElement('span');s.className='hp';s.innerHTML='<svg viewBox="0 0 24 24">'+IC.heart+'</svg>';livesBox.appendChild(s);}
+}
+function hudSync(){
+  // плавный счётчик очков
+  cancelAnimationFrame(G.scoreRaf);
+  const from=G.disp,to=G.score,t0=performance.now();
+  const step=t=>{const k=Math.min(1,(t-t0)/380),e=1-Math.pow(1-k,3);
+    G.disp=Math.round(from+(to-from)*e);scoreVal.textContent=fmt(G.disp);
+    if(k<1)G.scoreRaf=requestAnimationFrame(step);};
+  G.scoreRaf=requestAnimationFrame(step);
+  scoreStat.classList.remove('pulse');void scoreStat.offsetWidth;scoreStat.classList.add('pulse');
+  $('#okVal').textContent=G.correct;$('#badVal').textContent=G.wrong;$('#streakVal').textContent=G.streak;
+  $('#streakStat').classList.toggle('hot',G.streak>=3);
+  $('#lvlVal').textContent=G.level;$('#lvlBar').style.width=((G.correct%4)/4*100)+'%';
+  [...livesBox.children].forEach((h,i)=>{
+    const lost=i>=G.lives;
+    if(lost&&!h.classList.contains('lost')){h.classList.add('lost','break');setTimeout(()=>h.classList.remove('break'),650);}
+    if(!lost)h.classList.remove('lost','break');
+  });
+  $('#profSeen').textContent=fmt(G.seen);$('#profMsg').textContent=G.msgCount;
+  $('#profStreak').textContent=G.bestStreak;
+  const tot=G.correct+G.wrong;$('#profAcc').textContent=tot?Math.round(G.correct/tot*100)+'%':'—';
+  $('#profBest').textContent=fmt(Math.max(G.best,G.score));
+  renderBoard();
+}
+
+/* ───────── «Топ недели» с живыми соперниками ───────── */
+let rivals=[];
+function seedRivals(){rivals=RIVAL_NAMES.map(n=>({name:n,score:rint(200,1500)}));}
+function renderBoard(){
+  const all=rivals.map(r=>({name:r.name,score:r.score,you:false})).concat([{name:'Ты',score:G.score,you:true}]);
+  all.sort((a,b)=>b.score-a.score);
+  const youRank=all.findIndex(r=>r.you)+1;
+  let rows=all.slice(0,6);
+  if(youRank>6)rows=rows.slice(0,5).concat([all[youRank-1]]);
+  $('#boardList').innerHTML=rows.map(r=>{
+    const rank=all.indexOf(r)+1;
+    return '<div class="b-row'+(r.you?' you':'')+'"><span class="b-rank">'+rank+'</span>'+avaHTML(r.name)+'<span class="b-name">'+esc(r.name)+'</span><span class="b-score">'+fmt(r.score)+'</span></div>';
+  }).join('');
+}
+setInterval(()=>{if(document.hidden||G.over)return;rivals.forEach(r=>{if(Math.random()<.7)r.score+=rint(5,110);});renderBoard();},7000);
+
+/* ───────── вопросы: сборка из реальных данных постов ───────── */
+function buildQuestion(post){
+  let base=null;
+  if(Math.random()>=.42&&post.tpl.qs.length)base=pick(post.tpl.qs);
+  if(base){
+    if(base.kind==='choice'){
+      const answer=base.ans(post.d);
+      const pool=base.pool.filter(v=>v!==answer);
+      return{kind:'choice',label:base.label,text:base.text(post.d),answer,options:shuffle([answer].concat(sample(pool,3))),post};
+    }
+    return{kind:'number',label:base.label,text:base.text(post.d),answer:base.ans(post.d),post};
+  }
+  // универсальные вопросы — доступны для любого поста
+  const types=['likes','shape','color'];if(post.quizComments.length)types.push('comment');
+  const t=pick(types);
+  if(t==='likes')return{kind:'number',label:'Лайки',text:'Сколько лайков у поста '+post.author.handle+' про '+post.topic+'?',answer:post.likes,post};
+  if(t==='shape'){const ans=SHAPES.find(s=>s.key===post.art.style).label;
+    return{kind:'choice',label:'Картинка',text:'Какие фигуры преобладали на картинке поста про '+post.topic+'?',answer:ans,options:shuffle([ans].concat(sample(SHAPES.map(s=>s.label).filter(l=>l!==ans),3))),post};}
+  if(t==='color'){const ans=post.art.color.nom;
+    return{kind:'choice',label:'Картинка',text:'Какой цвет преобладал на картинке поста про '+post.topic+'?',answer:ans,options:shuffle([ans].concat(sample(noms(COLORS).filter(c=>c!==ans),3))),post};}
+  const ans=pick(post.quizComments);
+  const pool=COMMENTS.filter(c=>!post.quizComments.includes(c));
+  return{kind:'choice',label:'Комментарий',text:'Какой комментарий был под постом про '+post.topic+'?',answer:ans,options:shuffle([ans].concat(sample(pool,3))),post};
+}
+function pickQuestionPost(){
+  let cand=G.seenPosts.slice(0,-1);if(!cand.length)cand=G.seenPosts.slice();
+  cand=cand.filter(p=>p.id!==G.lastQPost);
+  if(!cand.length)cand=G.seenPosts.slice();
+  if(!cand.length)return null;
+  let fresh=cand.filter(p=>!G.used.has(p.id));
+  if(!fresh.length){G.used.clear();fresh=cand;}
+  return pick(fresh.slice(-14));
+}
+function maybeTrigger(){
+  if(G.over||G.qActive||G.phase!=='idle')return;
+  if(document.querySelector('.modal.open'))return;
+  if(G.seen>=G.nextAt)startMessage();
+}
+
+/* ───────── чат-панель ───────── */
+function setDockHead(name,hue,status,typing){
+  dockAva.outerHTML=avaHTML(name,hue).replace('class="ava"','class="ava" id="dockAva"');
+  // outerHTML заменил узел — обновляем ссылку
+  window.__dockAvaRef=null;
+  dockName.textContent=name;
+  dockStatus.textContent=status;dockStatus.classList.toggle('typing',!!typing);
+}
+function dockAvaEl(){return $('#dockAva');}
+function openDock(phase){
+  dockEl.dataset.phase=phase;
+  dockEl.classList.remove('out');dockEl.classList.add('in');
+  document.body.classList.add('dockopen');
+  bubbleEl.classList.add('gone');
+}
+function hideDock(){
+  dockEl.classList.remove('in');dockEl.classList.add('out');
+  document.body.classList.remove('dockopen');
+  setTimeout(()=>{dockEl.classList.remove('out');dockEl.style.display='';},230);
+  bubbleEl.classList.remove('gone');
+  updateBadge();
+}
+function updateBadge(){
+  bubbleBadge.textContent=G.unread;
+  bubbleBadge.classList.toggle('on',G.unread>0);
+}
+function lockFeed(){document.body.classList.add('quizlock');}
+function unlockFeed(){document.body.classList.remove('quizlock');}
+
+function startMessage(){
+  const post=pickQuestionPost();
+  if(!post){G.nextAt=G.seen+2;return;}
+  G.used.add(post.id);G.lastQPost=post.id;
+  const q=buildQuestion(post);
+  q.stranger=pick(STRANGERS);q.intro=pick(INTROS);q.hue=rint(0,359);
+  G.q=q;G.qActive=true;G.phase='typing';G.msgCount++;
+  post.locked=true;
+  if(post.node){post.node.classList.add('quizzed');setChip(post,'lock','🔒 в загадке');}
+  lockFeed();
+  setDockHead(q.stranger,q.hue,'печатает…',true);
+  dockBody.innerHTML='<div class="typing"><span class="tdots"><i></i><i></i><i></i></span>незнакомец набирает сообщение…</div>';
+  openDock('typing');
+  Snd.play('msg');
+  const token=++G.msgToken;
+  clearTimeout(G.typeId);
+  G.typeId=setTimeout(()=>{if(token!==G.msgToken||G.over)return;showQuestion();},1500);
+}
+function setChip(post,type,text){
+  if(!post.node)return;
+  const slot=post.node.querySelector('.quiz-slot');
+  slot.innerHTML='<span class="quiz-chip '+type+'">'+text+'</span>';
+}
+function showQuestion(){
+  const q=G.q;G.phase='question';
+  setDockHead(q.stranger,q.hue,'в сети',false);
+  const mult=multFor(G.streak);
+  const answersHTML=q.kind==='choice'
+    ?'<div class="opts'+(q.options.some(o=>String(o).length>16)?' long':'')+'">'+q.options.map((o,i)=>'<button class="opt" data-act="opt" data-i="'+i+'"><span class="opt-key">'+(i+1)+'</span><span>'+esc(o)+'</span></button>').join('')+'</div>'
+    :'<form class="numform" data-numform="1"><input class="numinput" id="numInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Число…" aria-label="Ответ числом"><button class="btn primary" type="submit">Ответить</button></form>';
+  dockBody.innerHTML=
+    '<div class="q-intro">'+avaHTML(q.stranger,q.hue)+'<div class="q-bubble">'+esc(q.intro)+'</div></div>'+
+    '<div class="q-meta"><span class="q-label">'+esc(q.label)+'</span>'+(mult>1?'<span class="q-serie">🔥 серия ×'+mult+'</span>':'')+'</div>'+
+    '<div class="q-text">'+esc(q.text)+'</div>'+
+    '<div class="trow"><div class="tbar"><div class="tfill" id="tFill"></div></div><span class="tsec" id="tSec"></span></div>'+
+    answersHTML+
+    '<div class="q-note">'+icon('lock')+'Лента скрыта — отвечай по памяти. Пропуск = −1 жизнь.</div>'+
+    '<button class="q-skip" data-act="skip">Пропустить вопрос (−1 ♥)</button>'+
+    '<div id="fbSlot"></div>';
+  dockEl.dataset.phase='question';
+  dockBody.scrollTop=0;
+  if(q.kind==='number'){const inp=$('#numInput');setTimeout(()=>{try{inp.focus({preventScroll:true});}catch(e){inp.focus();}},80);}
+  startTimer(timeForLevel());
+}
+/* таймер вопроса */
+function startTimer(sec){
+  G.tTotal=sec*1000;G.tEnd=performance.now()+G.tTotal;G.tPause=null;
+  clearInterval(G.tInt);G.tInt=setInterval(tickTimer,160);tickTimer();
+}
+function tickTimer(){
+  if(G.phase!=='question')return;
+  const rem=Math.max(0,G.tEnd-performance.now()),pct=rem/G.tTotal*100;
+  const f=$('#tFill'),s=$('#tSec');
+  if(f){f.style.width=pct+'%';f.className='tfill'+(pct<25?' bad':pct<55?' warn':'');}
+  if(s)s.textContent=Math.ceil(rem/1000)+' с';
+  if(rem<=0){clearInterval(G.tInt);resolveAnswer(null,{timeout:true});}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(G.phase!=='question')return;
+  if(document.hidden){G.tPause=Math.max(0,G.tEnd-performance.now());clearInterval(G.tInt);}
+  else if(G.tPause!==null){G.tEnd=performance.now()+G.tPause;G.tPause=null;clearInterval(G.tInt);G.tInt=setInterval(tickTimer,160);}
+});
+
+/* ───────── проверка ответа и обратная связь ───────── */
+function resolveAnswer(value,meta){
+  meta=meta||{};
+  if(G.phase!=='question')return;
+  const rem=Math.max(0,G.tEnd-performance.now());
+  clearInterval(G.tInt);G.phase='feedback';dockEl.dataset.phase='feedback';
+  const q=G.q;
+  const ok=!(meta.timeout||meta.skip)&&(q.kind==='number'
+    ?parseInt(String(value).replace(/\s/g,''),10)===q.answer
+    :value===q.answer);
+  const correctDisp=q.kind==='number'?fmt(q.answer):q.answer;
+  const userDisp=meta.timeout?'⏱ время вышло':meta.skip?'пропущено':(q.kind==='number'?fmt(parseInt(String(value).replace(/\s/g,''),10)||0):value);
+  // подсветка вариантов / поля
+  if(q.kind==='choice'){
+    dockBody.querySelectorAll('.opt').forEach(b=>{
+      const v=q.options[+b.dataset.i];b.disabled=true;
+      if(v===q.answer)b.classList.add('ok');
+      else if(!ok&&v===value)b.classList.add('bad');
+      else b.classList.add('dim');
+    });
+  }else{
+    const inp=$('#numInput');
+    if(inp){inp.disabled=true;inp.classList.add(ok?'ok':'bad');}
+    const sb=dockBody.querySelector('.numform button');if(sb)sb.disabled=true;
+  }
+  const skipBtn=dockBody.querySelector('.q-skip');if(skipBtn)skipBtn.remove();
+  const f=$('#tFill');if(f)f.style.animation='none';
+  let pts=0,mult=1,bonus=0,leveled=false;
+  if(ok){
+    G.streak++;G.bestStreak=Math.max(G.bestStreak,G.streak);G.correct++;
+    mult=multFor(G.streak);bonus=Math.round(50*rem/G.tTotal);pts=(100+bonus)*mult;
+    G.score+=pts;
+    const nl=1+Math.floor(G.correct/4);
+    if(nl>G.level){G.level=nl;leveled=true;}
+    Snd.play('ok');
+    const r=dockEl.getBoundingClientRect();
+    confetti(r.left+r.width/2,r.top+40,leveled?140:80);
+    const sr=scoreVal.getBoundingClientRect();flyText('+'+fmt(pts),sr.left,sr.bottom+6,'gold');
+    if(leveled){Snd.play('level');toast('⚡ Уровень '+G.level+'! Сообщения чаще, времени меньше','warn');}
+  }else{
+    G.wrong++;G.streak=0;G.lives--;
+    Snd.play('bad');hurtFlash();
+    const lr=livesBox.getBoundingClientRect();flyText('−♥',lr.left+lr.width/2,lr.bottom+6,'bad');
+  }
+  // след на посте-источнике
+  q.post.locked=false;
+  if(q.post.node){q.post.node.classList.remove('quizzed');setChip(q.post,ok?'win':'lose',ok?'загадка ✓':'загадка ✗');}
+  // история переписки
+  G.history.push({name:q.stranger,hue:q.hue,qText:q.text,answer:correctDisp,user:userDisp,ok,pts,at:Date.now()});
+  if(G.history.length>40)G.history.shift();
+  // блок фидбэка
+  const head=meta.timeout?'Время вышло!':meta.skip?'Вопрос пропущен':ok?'Верно!':'Неверно';
+  const sub=ok?'Незнакомец уважительно кивнул и растворился.':'Незнакомец вздохнул и исчез во тьме ленты.';
+  const chips=ok
+    ?'<span class="fb-chip gold">+'+fmt(pts)+' очков</span><span class="fb-chip">база 100</span><span class="fb-chip">темп +'+bonus+'</span>'+(mult>1?'<span class="fb-chip fire">серия ×'+mult+'</span>':'')
+    :'<span class="fb-chip red">−1 жизнь</span>'+(G.lives>0?'<span class="fb-chip">осталось '+G.lives+' ♥</span>':'<span class="fb-chip red">жизни кончились</span>');
+  const ansLine=ok?'':'<div class="fb-answer">Правильный ответ: <b>'+esc(correctDisp)+'</b></div>';
+  const contLabel=G.lives<=0?'Смотреть итоги':'Продолжить листать';
+  $('#fbSlot').innerHTML=
+    '<div class="fb"><div class="fb-head"><span class="fb-icon '+(ok?'ok':'bad')+'">'+icon(ok?'check':'x')+'</span>'+
+    '<div><div class="fb-title '+(ok?'ok':'bad')+'">'+head+'</div><div class="fb-sub">'+sub+'</div></div></div>'+
+    '<div class="fb-chips">'+chips+'</div>'+ansLine+
+    '<div class="src"><img src="'+q.post.thumb+'" alt="Картинка поста"><div class="src-body"><b>'+esc(q.post.author.name)+' · '+timeAgo(q.post.mins)+'</b><p>'+esc(q.post.text)+'</p></div></div>'+
+    '<button class="btn primary fb-continue" data-act="continue">'+contLabel+'<span class="auto-line"></span></button></div>';
+  dockBody.scrollTo({top:dockBody.scrollHeight,behavior:reducedMotion?'auto':'smooth'});
+  hudSync();
+  clearTimeout(G.autoId);
+  G.autoId=setTimeout(continueFlow,G.lives<=0?4500:5200);
+}
+function continueFlow(){
+  if(G.phase!=='feedback')return;
+  clearTimeout(G.autoId);
+  G.phase='idle';G.qActive=false;G.q=null;
+  unlockFeed();hideDock();
+  if(G.lives<=0){gameOver();return;}
+  G.nextAt=G.seen+gapForLevel();
+  hudSync();
+}
+/* история переписки */
+function renderHistory(){
+  G.unread=0;updateBadge();
+  setDockHead('Незнакомцы',268,G.history.length+' '+pluralRu(G.history.length,'сообщение','сообщения','сообщений'),false);
+  if(!G.history.length){
+    dockBody.innerHTML='<div class="h-empty">'+icon('mail')+'<p>Пока тихо. Листай ленту и запоминай детали — незнакомцы скоро напишут…</p></div>';
+  }else{
+    dockBody.innerHTML='<div class="hist">'+G.history.map(h=>{
+      const mins=Math.max(0,Math.round((Date.now()-h.at)/60000));
+      return '<div class="h-entry"><div class="h-who">'+avaHTML(h.name,h.hue)+'<b>'+esc(h.name)+'</b>· '+(mins<1?'только что':mins+' мин назад')+'</div>'+
+        '<div class="h-q">'+esc(h.qText)+'</div>'+
+        '<div class="h-a '+(h.ok?'ok':'bad')+'">'+esc(h.user)+'</div>'+
+        '<div class="h-sys">'+(h.ok?'✓ верно · +'+fmt(h.pts)+' очков':'✗ ошибка · ответ: '+esc(h.answer))+'</div></div>';
+    }).join('')+'</div>';
+  }
+  openDock('history');
+  dockBody.scrollTop=dockBody.scrollHeight;
+}
+
+/* ───────── конец игры / сброс ───────── */
+function gameOver(){
+  G.over=true;clearInterval(G.tInt);clearTimeout(G.autoId);clearTimeout(G.typeId);G.msgToken++;
+  lockFeed();
+  const isRecord=G.score>G.best;
+  if(isRecord){G.best=G.score;store.set('scroll_best',String(G.best));}
+  $('#overTitle').textContent=G.score<300?'Листатель-новичок':G.score<800?'Внимательный скроллер':G.score<1500?'Магистр ленты':'Легенда СКРОЛЛА';
+  $('#overScore').textContent=fmt(G.score);
+  $('#overNew').classList.toggle('on',isRecord);
+  $('#overBest').textContent=fmt(G.best);
+  const tot=G.correct+G.wrong;
+  $('#overGrid').innerHTML=
+    '<div class="o-cell g"><b>'+G.correct+'</b><span>верных</span></div>'+
+    '<div class="o-cell r"><b>'+G.wrong+'</b><span>ошибок</span></div>'+
+    '<div class="o-cell a"><b>'+G.bestStreak+'</b><span>лучшая серия</span></div>'+
+    '<div class="o-cell"><b>'+G.level+'</b><span>уровень</span></div>'+
+    '<div class="o-cell"><b>'+fmt(G.seen)+'</b><span>постов видел</span></div>'+
+    '<div class="o-cell"><b>'+(tot?Math.round(G.correct/tot*100)+'%':'—')+'</b><span>точность</span></div>';
+  $('#overModal').classList.add('open');
+  Snd.play('over');hudSync();
+}
+function resetGame(){
+  G.msgToken++;clearTimeout(G.typeId);clearInterval(G.tInt);clearTimeout(G.autoId);cancelAnimationFrame(G.scoreRaf);
+  Object.assign(G,{score:0,disp:0,lives:LIVES_MAX,correct:0,wrong:0,streak:0,bestStreak:0,level:1,
+    seen:0,msgCount:0,posts:[],seenPosts:[],history:[],used:new Set(),lastQPost:null,unread:0,
+    nextAt:4,phase:'idle',q:null,qActive:false,over:false,appending:false,tPause:null});
+  document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+  unlockFeed();
+  dockEl.classList.remove('in','out');dockEl.style.display='none';
+  setTimeout(()=>{dockEl.style.display='';},0);
+  document.body.classList.remove('dockopen');
+  bubbleEl.classList.remove('gone');updateBadge();
+  feedEl.innerHTML='';
+  initObservers();
+  seedRivals();
+  window.scrollTo({top:0,behavior:'auto'});
+  appendBatch(7);
+  scoreVal.textContent='0';
+  hudSync();
+  toast('🔄 Новая лента сгенерирована. Удачи!','ok');
+}
+
+/* ───────── модальные окна ───────── */
+function openModal(id){$('#'+id).classList.add('open');}
+function closeModal(id){$('#'+id).classList.remove('open');if(id==='confirmModal'||id==='helpModal')setTimeout(maybeTrigger,400);}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{Snd.play('click');closeModal(b.dataset.close);}));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&m.id!=='overModal')closeModal(m.id);}));
+
+/* ───────── события шапки ───────── */
+const btnSound=$('#btnSound');
+function syncSoundBtn(){btnSound.innerHTML=icon(Snd.on?'vol':'volx');btnSound.classList.toggle('muted',!Snd.on);btnSound.setAttribute('aria-pressed',Snd.on);btnSound.title=Snd.on?'Звук включён — выключить':'Звук выключен — включить';}
+btnSound.addEventListener('click',()=>{Snd.setOn(!Snd.on);syncSoundBtn();if(Snd.on)Snd.play('click');toast(Snd.on?'🔊 Звук включён':'🔇 Звук выключен');});
+$('#btnHelp').addEventListener('click',()=>{Snd.play('click');openModal('helpModal');});
+$('#btnReset').innerHTML=icon('reset');
+$('#btnReset').addEventListener('click',()=>{Snd.play('click');openModal('confirmModal');});
+$('#btnConfirmYes').addEventListener('click',()=>{Snd.play('click');resetGame();});
+$('#btnRestart').addEventListener('click',()=>{Snd.play('click');resetGame();});
+$('#welcomeGo').addEventListener('click',()=>{Snd.play('click');const w=$('#welcome');w.classList.add('hide');setTimeout(()=>w.remove(),480);});
+$('#welcomeRules').addEventListener('click',()=>{Snd.play('click');openModal('helpModal');});
+
+/* ───────── события чата (делегирование) ───────── */
+bubbleEl.addEventListener('click',()=>{
+  if(G.over||G.qActive)return;
+  Snd.play('click');renderHistory();
+});
+$('#dockMin').addEventListener('click',()=>{
+  Snd.play('click');
+  if(G.phase==='feedback')continueFlow();
+  else if(G.phase==='history')hideDock();
+});
+scrimEl.addEventListener('click',()=>{
+  if(G.phase==='question'||G.phase==='typing'){dockEl.classList.remove('shake');void dockEl.offsetWidth;dockEl.classList.add('shake');}
+  else if(G.phase==='feedback')continueFlow();
+  else hideDock();
+});
+scrimEl.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+dockEl.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act;
+  if(act==='opt'&&G.phase==='question'){resolveAnswer(G.q.options[+b.dataset.i]);}
+  else if(act==='skip'&&G.phase==='question'){Snd.play('click');resolveAnswer(null,{skip:true});}
+  else if(act==='continue'){Snd.play('click');continueFlow();}
+});
+dockEl.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(G.phase!=='question'||!e.target.matches('[data-numform]'))return;
+  const inp=$('#numInput'),raw=inp.value.replace(/[^\d]/g,'');
+  if(!raw){inp.classList.remove('bad');void inp.offsetWidth;inp.classList.add('bad');setTimeout(()=>inp.classList.remove('bad'),450);return;}
+  resolveAnswer(parseInt(raw,10));
+});
+
+/* ───────── события ленты (лайки / комменты / меню) ───────── */
+feedEl.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-fa]');if(!btn)return;
+  const card=e.target.closest('.post');if(!card)return;
+  const p=G.posts.find(x=>x.id===card.dataset.pid);if(!p)return;
+  const act=btn.dataset.fa;
+  if(act==='like'){
+    if(p.locked){card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');toast('🔒 Пост участвует в загадке — лайки заморожены','warn');return;}
+    p.liked=!p.liked;p.likes+=p.liked?1:-1;
+    btn.classList.toggle('liked',p.liked);
+    btn.querySelector('.like-n').textContent=fmt(p.likes);
+    Snd.play('like');
+    if(p.liked&&!reducedMotion){const r=btn.getBoundingClientRect();confetti(r.left+20,r.top,6);}
+  }else if(act==='cmt'){
+    const form=card.querySelector('.cmt-form');form.classList.toggle('open');
+    if(form.classList.contains('open'))form.querySelector('input').focus();
+    Snd.play('click');
+  }else if(act==='share'||act==='copy'){
+    copyText(p.text+' —via СКРОЛЛ');closeMenus();
+  }else if(act==='menu'){
+    const menu=card.querySelector('.p-menu');const was=menu.classList.contains('open');
+    closeMenus();if(!was)menu.classList.add('open');Snd.play('click');
+  }else if(act==='hide'){
+    closeMenus();
+    if(p.locked){toast('Нельзя скрыть пост в загадке','warn');return;}
+    if(seenObserver)seenObserver.unobserve(card);
+    card.style.maxHeight=card.offsetHeight+'px';card.classList.add('hiding');
+    setTimeout(()=>{card.remove();p.node=null;},420);
+    toast('Пост скрыт из ленты');
+  }
+});
+feedEl.addEventListener('submit',e=>{
+  if(!e.target.matches('[data-cform]'))return;
+  e.preventDefault();
+  const card=e.target.closest('.post'),p=G.posts.find(x=>x.id===card.dataset.pid);if(!p)return;
+  const inp=e.target.querySelector('input'),val=inp.value.trim();if(!val)return;
+  const div=document.createElement('div');div.className='cmt';
+  div.innerHTML=avaHTML('Ты Скроллер',268)+'<div class="cmt-body"><span class="cmt-name">Вы</span><span class="cmt-text"></span></div>';
+  div.querySelector('.cmt-text').textContent=val;
+  card.querySelector('.p-comments').appendChild(div);
+  p.comments.push({name:'Ты',text:val});
+  card.querySelector('.cmt-n').textContent=p.comments.length;
+  inp.value='';Snd.play('like');
+});
+function closeMenus(){document.querySelectorAll('.p-menu.open').forEach(m=>m.classList.remove('open'));}
+document.addEventListener('click',e=>{if(!e.target.closest('.p-menu')&&!e.target.closest('[data-fa="menu"]'))closeMenus();});
+function copyText(t){
+  const done=()=>toast('📋 Скопировано в буфер','ok');
+  const fail=()=>toast('Не удалось скопировать','bad');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fallbackCopy(t)?done():fail());}
+  else fallbackCopy(t)?done():fail();
+}
+function fallbackCopy(t){
+  try{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(e){return false;}
+}
+
+/* ───────── клавиатура ───────── */
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(e.key==='Escape'){
+    if($('#helpModal').classList.contains('open'))closeModal('helpModal');
+    else if($('#confirmModal').classList.contains('open'))closeModal('confirmModal');
+    else if(G.phase==='history')hideDock();
+    return;
+  }
+  if(tag==='input'||tag==='textarea')return;
+  if(G.phase==='question'&&G.q&&G.q.kind==='choice'&&['1','2','3','4'].includes(e.key)){
+    const b=dockBody.querySelector('.opt[data-i="'+(+e.key-1)+'"]');
+    if(b&&!b.disabled){e.preventDefault();resolveAnswer(G.q.options[+e.key-1]);}
+  }else if(G.phase==='feedback'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();continueFlow();}
+  else if(G.over&&e.key==='Enter'&&$('#overModal').classList.contains('open')){e.preventDefault();resetGame();}
+});
+
+/* ───────── старт ───────── */
+buildHearts();
+syncSoundBtn();
+seedRivals();
+initObservers();
+appendBatch(7);
+hudSync();
+updateBadge();
+})();
+</script>
+</body>
+</html>

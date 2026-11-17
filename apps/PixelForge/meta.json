@@ -1,0 +1,8 @@
+{
+  "title": "PixelForge",
+  "description": "Студия пиксель-арта и цветовых палитр",
+  "icon": "icon.png",
+  "ai": "GLM-5.2",
+  "platform": "both",
+  "tags": ["tool", "pixel art", "editor"]
+}

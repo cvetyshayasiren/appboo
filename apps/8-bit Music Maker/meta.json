@@ -1,0 +1,8 @@
+{
+  "title": "8-bit Music Maker",
+  "description": "Редактор 8-bit музыки",
+  "icon": "icon.png",
+  "ai": "Qwen4-Max",
+  "platform": "desktop",
+  "tags": ["tool", "creative", "pixel art", "music"]
+}

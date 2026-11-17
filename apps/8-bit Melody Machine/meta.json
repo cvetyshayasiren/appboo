@@ -1,0 +1,8 @@
+{
+  "title": "8-bit Melody Machine",
+  "description": "Рандомный чиптюн",
+  "icon": "icon.png",
+  "ai": "Qwen4-Max",
+  "platform": "both",
+  "tags": ["game", "music", "random", "pixel art"]
+}

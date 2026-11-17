@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0812">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Фракталбук · бесконечная книга фракталов</title>
+<style>
+/* ============================================================
+   ФРАКТАЛБУК · старинная магическая книга живых фракталов
+   Всё офлайн: системный serif, canvas-гравюры, CSS-переплёт.
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+:root{
+  --safe-t:env(safe-area-inset-top,0px); --safe-r:env(safe-area-inset-right,0px);
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-l:env(safe-area-inset-left,0px);
+  --app-bg:#0a0812; --gold:#c9a86a; --gold-dim:rgba(201,168,106,.32);
+  --accent:#8fb7ff; --glow:rgba(143,183,255,.45); --soft:rgba(143,183,255,.20);
+}
+html,body{height:100%;overflow:hidden;background:var(--app-bg);overscroll-behavior:none}
+body{position:fixed;inset:0;width:100%;
+  font-family:Georgia,"Palatino Linotype","Book Antiqua","Times New Roman",serif;
+  color:#d8c9a8;-webkit-font-smoothing:antialiased}
+#app{position:fixed;inset:0;height:100vh;height:100dvh;overflow:hidden;perspective:1600px;
+  background:radial-gradient(140% 110% at 50% 40%, #110c1e 0%, var(--app-bg) 58%, #050309 100%)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#0b0912}
+::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- сцена и листы книги ---------- */
+#stage{position:absolute;inset:0;z-index:1;perspective:1500px;perspective-origin:50% 50%;cursor:grab}
+body.dragging #stage{cursor:grabbing}
+.leaf{position:absolute;inset:0;overflow:hidden;transform-origin:0 50%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform;
+  border-right:1px solid rgba(214,192,150,.10);
+  background:radial-gradient(120% 92% at 50% 42%, var(--pb2,#151024) 0%, var(--pb1,#0b0816) 58%, #050409 100%)}
+.fractal{position:absolute;inset:0;z-index:1;display:block}
+.veil{position:absolute;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none}
+.edge-hl{position:absolute;top:0;bottom:0;right:0;width:3px;z-index:4;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,244,214,0),rgba(255,244,214,.78))}
+#castShadow{position:absolute;left:0;top:0;bottom:0;width:0;z-index:2;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.42) 72%,rgba(0,0,0,.74) 100%)}
+#spineShadow{position:absolute;left:50%;top:0;bottom:0;width:120px;transform:translateX(-50%);
+  z-index:4;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(0,0,0,.68) 50%,transparent)}
+
+/* ---------- шапка страницы (едет вместе с листом) ---------- */
+.page-head{position:absolute;left:0;right:0;top:calc(var(--safe-t) + clamp(16px,4vh,38px));
+  z-index:2;text-align:center;padding:0 26px;pointer-events:none}
+.pnum{font-size:11px;letter-spacing:.42em;text-indent:.42em;color:rgba(206,186,150,.52);margin-bottom:8px}
+.ptitle{font-weight:400;font-style:italic;font-size:clamp(23px,6.2vw,36px);line-height:1.16;
+  color:var(--ttl,#efe3c8);text-shadow:0 0 22px var(--tglow,rgba(180,160,255,.4)),0 2px 3px rgba(0,0,0,.85);
+  animation:titleBreath 7s ease-in-out infinite alternate}
+@keyframes titleBreath{
+  from{text-shadow:0 0 13px var(--tglow,rgba(180,160,255,.35)),0 2px 3px rgba(0,0,0,.85)}
+  to{text-shadow:0 0 32px var(--tglow,rgba(180,160,255,.55)),0 2px 3px rgba(0,0,0,.85)}}
+.pdiv{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px auto 7px;
+  color:var(--sub,#b9a9d8);font-size:9px;line-height:1}
+.pdiv .ln{display:block;width:min(64px,18vw);height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,168,106,.55))}
+.pdiv .ln:last-child{background:linear-gradient(90deg,rgba(201,168,106,.55),transparent)}
+.psub{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--sub,#b9a9d8);opacity:.85}
+.fresh .pnum{animation:headIn .7s .05s cubic-bezier(.2,.7,.3,1) both}
+.fresh .ptitle{animation:headIn .7s .14s cubic-bezier(.2,.7,.3,1) both,titleBreath 7s ease-in-out 1s infinite alternate}
+.fresh .pdiv{animation:headIn .7s .24s cubic-bezier(.2,.7,.3,1) both}
+.fresh .psub{animation:headIn .7s .32s cubic-bezier(.2,.7,.3,1) both}
+@keyframes headIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+/* ---------- переплёт: обрез страниц, рамка, зерно, виньетка ---------- */
+.edge{position:absolute;top:14%;bottom:14%;width:7px;z-index:6;pointer-events:none;opacity:.55;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
+.edge.l{left:calc(var(--safe-l) + 13px);
+  background:repeating-linear-gradient(90deg,rgba(226,205,168,.14) 0 1px,transparent 1px 3px);
+  box-shadow:-2px 0 6px rgba(0,0,0,.5)}
+.edge.r{right:calc(var(--safe-r) + 13px);
+  background:repeating-linear-gradient(270deg,rgba(226,205,168,.14) 0 1px,transparent 1px 3px);
+  box-shadow:2px 0 6px rgba(0,0,0,.5)}
+.frame{position:absolute;z-index:7;pointer-events:none;
+  inset:calc(var(--safe-t) + 10px) calc(var(--safe-r) + 10px) calc(var(--safe-b) + 10px) calc(var(--safe-l) + 10px);
+  border:1px solid rgba(201,168,106,.30)}
+.frame::before{content:"";position:absolute;inset:5px;border:1px solid rgba(201,168,106,.14)}
+.corner{position:absolute;width:38px;height:38px;color:rgba(201,168,106,.78)}
+.corner.tl{top:-3px;left:-3px}
+.corner.tr{top:-3px;right:-3px;transform:rotate(90deg)}
+.corner.br{bottom:-3px;right:-3px;transform:rotate(180deg)}
+.corner.bl{bottom:-3px;left:-3px;transform:rotate(270deg)}
+.fdiamond{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;line-height:1;
+  color:rgba(201,168,106,.7);background:var(--app-bg);padding:0 7px;font-style:normal}
+.fdiamond.top{top:-6px}.fdiamond.bot{bottom:-6px}
+.grain{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:.55;mix-blend-mode:overlay;
+  background-repeat:repeat;background-size:140px 140px}
+.vignette{position:absolute;inset:0;z-index:9;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(3,2,8,.5),transparent 14%,transparent 86%,rgba(3,2,8,.55)),
+    radial-gradient(130% 100% at 50% 46%,transparent 52%,rgba(2,1,6,.4) 82%,rgba(2,1,6,.78) 100%)}
+#motes,.cover-motes{position:absolute;inset:0;z-index:10;pointer-events:none;overflow:hidden}
+.mote{position:absolute;border-radius:50%;background:var(--soft);filter:blur(1.2px);opacity:0;
+  width:var(--s);height:var(--s);left:var(--mx);top:var(--my);
+  animation:mote var(--dur) ease-in-out var(--del) infinite;transition:background 1s ease}
+@keyframes mote{0%{transform:translate(0,0);opacity:0}25%{opacity:.75}55%{opacity:.35}
+  100%{transform:translate(var(--dx),-72px);opacity:0}}
+
+/* ---------- HUD ---------- */
+.brand{position:absolute;top:calc(var(--safe-t) + 15px);left:calc(var(--safe-l) + 18px);z-index:20;
+  font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:rgba(201,168,106,.62);pointer-events:none}
+.hud-bottom{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + clamp(12px,2.6vh,26px));
+  z-index:20;display:flex;align-items:center;justify-content:center;gap:clamp(14px,5vw,30px);pointer-events:none}
+.chev{width:46px;height:46px;border-radius:50%;border:1px solid var(--gold-dim);pointer-events:auto;
+  background:rgba(16,12,22,.55);color:rgba(222,202,166,.85);font-size:26px;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding-bottom:3px;
+  transition:color .25s,border-color .25s,box-shadow .25s,transform .15s,background .25s}
+.chev:hover{color:var(--accent);border-color:var(--accent);box-shadow:0 0 16px var(--glow);background:rgba(20,15,30,.7)}
+.chev:active{transform:scale(.9)}
+.chev span{display:block}
+.chev.prev span{animation:nudgeL 2.4s ease-in-out infinite}
+.chev.next span{animation:nudgeR 2.4s ease-in-out infinite}
+@keyframes nudgeL{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px)}}
+@keyframes nudgeR{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+.hint{font-size:12px;font-style:italic;letter-spacing:.14em;color:rgba(192,174,142,.62);
+  transition:opacity 1.2s ease;text-align:center;min-width:0}
+.hud-bottom.calm .chev span{animation:none}
+.hud-bottom.calm .hint{opacity:.3}
+#soundBtn{position:absolute;top:calc(var(--safe-t) + 12px);right:calc(var(--safe-r) + 12px);z-index:60;
+  width:42px;height:42px;border-radius:50%;border:1px solid var(--gold-dim);
+  background:rgba(16,12,22,.6);color:#e6d6b4;font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .25s,box-shadow .25s,transform .15s}
+#soundBtn:hover{border-color:var(--accent);box-shadow:0 0 14px var(--glow)}
+#soundBtn:active{transform:scale(.9)}
+
+/* ---------- обложка ---------- */
+#cover{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:0 30px;transform-origin:0 50%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform;cursor:pointer;
+  background:radial-gradient(120% 92% at 50% 38%,#1c1528 0%,#120d1d 46%,#08060f 100%);
+  transition:transform .95s cubic-bezier(.66,0,.34,1),opacity .7s ease .18s}
+#cover.open{transform:rotateY(-100deg);opacity:0;pointer-events:none}
+.cover-frame{position:absolute;pointer-events:none;
+  inset:calc(var(--safe-t) + 12px) calc(var(--safe-r) + 12px) calc(var(--safe-b) + 12px) calc(var(--safe-l) + 12px);
+  border:1px solid rgba(201,168,106,.4)}
+.cover-frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(201,168,106,.16)}
+#cover .grain{z-index:1}
+.cv-top,.cv-title,.cv-sub,.sigil{position:relative;z-index:2}
+.cv-top{position:absolute;top:calc(var(--safe-t) + 30px);left:0;right:0;font-size:10px;
+  letter-spacing:.34em;text-transform:uppercase;color:rgba(201,168,106,.55)}
+.sigil{width:clamp(112px,26vw,150px);height:auto;margin-bottom:20px;color:var(--gold);
+  filter:drop-shadow(0 0 14px rgba(220,180,110,.35))}
+.sg-ring,.sg-orbit,.sg-star{transform-box:view-box;transform-origin:50% 50%}
+.sg-ring{animation:spin 46s linear infinite}
+.sg-star{animation:spinRev 70s linear infinite}
+.sg-orbit{animation:spin 12s linear infinite}
+.sg-core{animation:corePulse 3.4s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinRev{to{transform:rotate(-360deg)}}
+@keyframes corePulse{0%,100%{opacity:.55}50%{opacity:1}}
+.cv-title{font-weight:400;font-size:clamp(34px,9vw,54px);letter-spacing:.03em;color:#e9dabc;
+  text-shadow:0 0 28px rgba(230,190,120,.35),0 2px 4px #000}
+.cv-sub{margin-top:10px;font-style:italic;font-size:13px;letter-spacing:.08em;color:rgba(202,182,150,.68)}
+.cv-hint{position:absolute;z-index:2;left:0;right:0;bottom:calc(var(--safe-b) + 30px);
+  font-size:12px;font-style:italic;letter-spacing:.18em;color:rgba(210,190,155,.7);
+  animation:hintPulse 2.6s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+noscript{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;
+  background:#0a0812;color:#d8c9a8;font-style:italic;padding:30px;text-align:center}
+
+/* ---------- ландшафт / низкие экраны ---------- */
+@media (orientation:landscape) and (max-height:520px){
+  .page-head{top:calc(var(--safe-t) + 8px)}
+  .pnum{font-size:9px;margin-bottom:3px}
+  .ptitle{font-size:clamp(17px,3.8vh,24px)}
+  .pdiv{margin:5px auto 3px}
+  .psub{font-size:8px}
+  .hud-bottom{bottom:calc(var(--safe-b) + 8px)}
+  .chev{width:38px;height:38px;font-size:22px}
+  .hint{font-size:10px}
+  .brand{font-size:9px;top:calc(var(--safe-t) + 10px)}
+  #soundBtn{width:36px;height:36px;font-size:14px;top:calc(var(--safe-t) + 8px)}
+  .sigil{width:82px;margin-bottom:8px}
+  .cv-title{font-size:clamp(24px,6vh,34px)}
+  .cv-sub{margin-top:4px;font-size:11px}
+  .cv-top{top:calc(var(--safe-t) + 14px)}
+  .cv-hint{bottom:calc(var(--safe-b) + 12px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .mote,.chev span,.sg-ring,.sg-star,.sg-orbit,.sg-core,.cv-hint,.ptitle{animation:none !important}
+  .fresh .pnum,.fresh .ptitle,.fresh .pdiv,.fresh .psub{animation:none !important;opacity:1}
+}
+</style>
+</head>
+<body>
+<div id="app" role="application" aria-label="Фракталбук — бесконечная книга фракталов">
+
+  <!-- Сцена: два листа (уходящий и приходящий видны одновременно) -->
+  <div id="stage">
+    <div class="leaf" id="leafA">
+      <canvas class="fractal"></canvas>
+      <div class="page-head">
+        <div class="pnum"></div>
+        <h2 class="ptitle"></h2>
+        <div class="pdiv"><span class="ln"></span><span>✦</span><span class="ln"></span></div>
+        <div class="psub"></div>
+      </div>
+      <div class="veil"></div><div class="edge-hl"></div>
+    </div>
+    <div class="leaf" id="leafB">
+      <canvas class="fractal"></canvas>
+      <div class="page-head">
+        <div class="pnum"></div>
+        <h2 class="ptitle"></h2>
+        <div class="pdiv"><span class="ln"></span><span>✦</span><span class="ln"></span></div>
+        <div class="psub"></div>
+      </div>
+      <div class="veil"></div><div class="edge-hl"></div>
+    </div>
+    <div id="castShadow"></div>
+    <div id="spineShadow"></div>
+  </div>
+
+  <!-- Обрез книжного блока -->
+  <div class="edge l"></div><div class="edge r"></div>
+
+  <!-- Декоративная рамка с уголками -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <g id="cornerArt" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+        <path d="M3 37 L3 12 Q3 3 12 3 L37 3"/>
+        <path d="M9 31 L9 15 Q9 9 15 9 L31 9" stroke-width="1" opacity=".5"/>
+        <path d="M14 21 Q14 14 21 14" stroke-width="1" opacity=".65"/>
+        <circle cx="14.5" cy="14.5" r="1.7" fill="currentColor" stroke="none" opacity=".9"/>
+        <path d="M24 6.5 Q27.5 10 24 13.5 Q20.5 10 24 6.5" fill="currentColor" stroke="none" opacity=".35"/>
+        <path d="M6.5 24 Q10 27.5 13.5 24 Q10 20.5 6.5 24" fill="currentColor" stroke="none" opacity=".35"/>
+      </g>
+    </defs>
+  </svg>
+  <div class="frame" aria-hidden="true">
+    <svg class="corner tl" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+    <svg class="corner tr" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+    <svg class="corner br" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+    <svg class="corner bl" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+    <i class="fdiamond top">✦</i><i class="fdiamond bot">✦</i>
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div id="motes" aria-hidden="true"></div>
+
+  <div class="brand">Фракталбук</div>
+
+  <div class="hud-bottom" id="hudBottom">
+    <button class="chev prev" id="btnPrev" aria-label="Предыдущая страница"><span>‹</span></button>
+    <div class="hint" id="hint">свайпни, чтобы перелистнуть</div>
+    <button class="chev next" id="btnNext" aria-label="Следующая страница"><span>›</span></button>
+  </div>
+
+  <button id="soundBtn" aria-label="Выключить звук" aria-pressed="true" title="Звук (M)"><span id="soundIcon">🔊</span></button>
+  <div class="sr-only" aria-live="polite" id="srLive"></div>
+
+  <!-- Обложка: первый жест открывает книгу и разрешает звук -->
+  <div id="cover" role="button" tabindex="0" aria-label="Открыть книгу">
+    <div class="cover-frame" aria-hidden="true">
+      <svg class="corner tl" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+      <svg class="corner tr" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+      <svg class="corner br" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+      <svg class="corner bl" viewBox="0 0 40 40"><use href="#cornerArt"/></svg>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cover-motes" aria-hidden="true"></div>
+    <div class="cv-top">том ∞ · узоры и колыбельные</div>
+    <svg class="sigil" viewBox="0 0 120 120" aria-hidden="true">
+      <circle class="sg-ring" cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 7" opacity=".8"/>
+      <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" stroke-width=".8" opacity=".35"/>
+      <g class="sg-star" fill="none" stroke="currentColor" stroke-width="1" opacity=".8">
+        <rect x="34" y="34" width="52" height="52"/>
+        <rect x="34" y="34" width="52" height="52" transform="rotate(45 60 60)"/>
+      </g>
+      <g class="sg-orbit"><circle cx="60" cy="10" r="2.4" fill="currentColor"/></g>
+      <text class="sg-core" x="60" y="68" text-anchor="middle" font-size="24" fill="currentColor">✦</text>
+    </svg>
+    <h1 class="cv-title">Фракталбук</h1>
+    <div class="cv-sub">бесконечная книга живых фракталов</div>
+    <div class="cv-hint">коснись, чтобы открыть</div>
+  </div>
+
+  <noscript>Фракталбуку нужен JavaScript — включи его, чтобы открыть книгу.</noscript>
+</div>
+
+<script>
+'use strict';
+/* ================================================================
+   ФРАКТАЛБУК · вся магия на canvas + Web Audio, без единой сети.
+   Структура: 1) ядро (PRNG, палитры, имена, мелодии)
+              2) звук  3) шесть генераторов фракталов
+              4) кэш страниц и листы  5) листание  6) главный цикл
+              7) события и старт
+   ================================================================ */
+
+/* ---------------- 1 · ядро: всё детерминировано сидом ---------------- */
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+
+/* mulberry32 — крошечный детерминированный PRNG */
+function mulberry32(seed){
+  let a=seed>>>0;
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+/* хеш номера страницы → сид (работает и для отрицательных страниц) */
+function hashPage(n){
+  let x=(n|0)^0x9E3779B9;
+  x=Math.imul(x^(x>>>16),0x45d9f3b);
+  x=Math.imul(x^(x>>>16),0x45d9f3b);
+  x=(x^(x>>>16))>>>0;
+  return x||1;
+}
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360; s=clamp(s,0,100)/100; l=clamp(l,0,100)/100;
+  const c=(1-Math.abs(2*l-1))*s, hp=h/60, x=c*(1-Math.abs(hp%2-1)), m=l-c/2;
+  let r=0,g=0,b=0;
+  if(hp<1){r=c;g=x;}else if(hp<2){r=x;g=c;}else if(hp<3){g=c;b=x;}
+  else if(hp<4){g=x;b=c;}else if(hp<5){r=x;b=c;}else{r=c;b=x;}
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
+}
+/* палитра страницы: 3–5 родственных оттенков + чернильный фон */
+function makePalette(r){
+  const h0=r()*360, mode=r();
+  let hs;
+  if(mode<0.55)      hs=[h0,h0+24+r()*16,h0-24-r()*16,h0+48+r()*22,h0-52];
+  else if(mode<0.82) hs=[h0,h0+150+r()*40,h0+28,h0+185+r()*25,h0-30];
+  else               hs=[h0,h0+120+r()*20,h0+240+r()*20,h0+60,h0+300];
+  const n=3+((r()*3)|0), colors=[];
+  for(let i=0;i<n;i++){
+    const h=((hs[i]%360)+360)%360;
+    colors.push({h,s:66+r()*28,l:54+r()*16});
+  }
+  const rgb=colors.map(c=>hslToRgb(c.h,c.s,c.l));
+  const css=colors.map(c=>'hsl('+c.h.toFixed(1)+','+c.s.toFixed(1)+'%,'+c.l.toFixed(1)+'%)');
+  const acc=colors[1]||colors[0];
+  return {
+    h0,colors,rgb,css,
+    bg1:'hsl('+h0.toFixed(1)+',38%,6%)',
+    bg2:'hsl('+((h0+34)%360).toFixed(1)+',46%,11%)',
+    bgRgb:hslToRgb(h0,38,6),
+    ttl:'hsl('+h0.toFixed(1)+',34%,87%)',
+    sub:'hsla('+acc.h.toFixed(1)+',60%,74%,0.8)',
+    tglow:'hsla('+acc.h.toFixed(1)+',90%,64%,0.5)',
+    accent:css[1]||css[0],
+    glow:'hsla('+acc.h.toFixed(1)+',92%,62%,0.45)',
+    soft:'hsla('+acc.h.toFixed(1)+',90%,66%,0.20)',
+    accRgb:rgb[1]||rgb[0]
+  };
+}
+const HEADS=['Спираль','Дыхание','Шёпот','Колыбель','Лабиринт','Сад','Ткань','Вихрь','Память','Эхо',
+  'Песнь','Сердце','Отражение','Плетение','Мерцание','Течение','Кружево','Молчание','Сияние','Древо'];
+const GENS=['Оникса','Кораллов','Янтаря','Луны','Прилива','Тумана','Опала','Нефрита','Зари','Глубин',
+  'Мха','Льда','Пламени','Полночи','Жемчуга','Аметиста','Вереска','Обсидиана','Малахита','Созвездий',
+  'Росы','Грозы','Смолы','Хрусталя','Ирисов','Лаванды','Кедра','Мира','Сна','Вечности'];
+function makeName(r){
+  return HEADS[(r()*HEADS.length)|0]+' '+GENS[(r()*GENS.length)|0];
+}
+const TYPE_LABELS=['логарифмическая спираль','ветвящийся коралл','множество Жюлиа',
+  'клеточный узор','резонанс орбит','поле потока'];
+
+/* мелодия страницы: пентатоника/минор, 5–8 нот, всё из сида */
+function melodySpec(seed){
+  const r=mulberry32(seed^0x51ED270B);
+  const penta=[0,3,5,7,10], minor=[0,2,3,5,7,8,10];
+  const scale=r()<0.6?penta:minor;
+  const roots=[130.81,146.83,164.81,174.61,196.00,220.00];
+  const root=roots[(r()*roots.length)|0];
+  const count=5+((r()*4)|0);
+  const beat=0.30+r()*0.16;
+  const wave=r()<0.7?'sine':'triangle';
+  const steps=[-2,-1,-1,0,1,1,2];
+  let deg=(r()*scale.length)|0, time=0.08;
+  const notes=[];
+  for(let i=0;i<count;i++){
+    const oct=Math.floor(deg/scale.length);
+    const st=scale[deg%scale.length]+12*oct;
+    const f=root*Math.pow(2,st/12);
+    const dur=beat*(r()<0.22?2:1);
+    notes.push({f,t:time,d:dur*0.92,v:0.5+r()*0.4});
+    time+=dur;
+    deg=clamp(deg+steps[(r()*steps.length)|0],0,scale.length+2);
+  }
+  return {notes,root,wave,delay:0.24+r()*0.10,total:time+1.2};
+}
+/* рекурсивное дерево: плоский массив узлов (родитель всегда раньше ребёнка) */
+function buildTreeNodes(rng,maxDepth,maxNodes,len0){
+  const nodes=[];
+  const spreadBase=0.32+rng()*0.34, lenK=0.70+rng()*0.08, curveBase=(rng()-0.5)*0.5;
+  function grow(parent,angle,len,depth){
+    if(nodes.length>=maxNodes||depth>maxDepth||len<2) return;
+    const idx=nodes.length;
+    nodes.push({parent,baseA:angle,len,depth,
+      curve:curveBase*(0.6+rng()*0.8)*(rng()<0.5?-1:1),phase:rng()*6.283,tip:true,x0:0,y0:0,x1:0,y1:0});
+    if(parent>=0) nodes[parent].tip=false;
+    const nKids=(depth<2&&rng()<0.18)?3:2;
+    for(let k=0;k<nKids;k++){
+      const off=(k-(nKids-1)/2)*spreadBase*(0.75+rng()*0.5)+(rng()-0.5)*0.22;
+      grow(idx,angle+off,len*lenK*(0.85+rng()*0.3),depth+1);
+    }
+  }
+  grow(-1,-Math.PI/2+(rng()-0.5)*0.16,len0,0);
+  return nodes;
+}
+/* шаг муравья Лэнгтона на торе (детерминирован, без случайностей) */
+function antStep(a){
+  const i=a.ay*a.g+a.ax, s=a.state[i];
+  a.counts[i]++;
+  a.dir=s?(a.dir+3)&3:(a.dir+1)&3;
+  a.state[i]=s^1;
+  if(a.dir===0)a.ay=(a.ay+a.g-1)%a.g;
+  else if(a.dir===1)a.ax=(a.ax+1)%a.g;
+  else if(a.dir===2)a.ay=(a.ay+1)%a.g;
+  else a.ax=(a.ax+a.g-1)%a.g;
+  return i;
+}
+/* проекция правого края листа при повороте rotateY вокруг левого края */
+function projectEdge(p,W,P){
+  const th=-92*p*Math.PI/180;
+  const xe=W*Math.cos(th), ze=-W*Math.sin(th);
+  const d=Math.max(120,P-ze);
+  return W/2+(xe-W/2)*P/d;
+}
+/* циклическая LUT-палитра для попиксельных фракталов */
+function buildLut(rgbs,size){
+  const out=new Uint8ClampedArray(size*3), n=rgbs.length;
+  for(let i=0;i<size;i++){
+    const t=i/size*n, k=Math.floor(t);
+    let f=t-k; f=f*f*(3-2*f);
+    const a=rgbs[k%n], b=rgbs[(k+1)%n];
+    out[i*3]=a[0]+(b[0]-a[0])*f;
+    out[i*3+1]=a[1]+(b[1]-a[1])*f;
+    out[i*3+2]=a[2]+(b[2]-a[2])*f;
+  }
+  return out;
+}
+/* уровни качества: 0 — слабый телефон, 1 — обычный, 2 — десктоп/ретина */
+const TIERS=[
+  {dpr:1,  juliaRes:160,juliaIter:64, antGrid:88, antSps:650, flowN:55, flowRes:.45,treeDepth:8, treeNodes:900, spiralPts:96, orbitRings:13,orbitPts:60,fps:30},
+  {dpr:1.5,juliaRes:208,juliaIter:80, antGrid:104,antSps:900, flowN:90, flowRes:.55,treeDepth:9, treeNodes:1200,spiralPts:128,orbitRings:18,orbitPts:80,fps:60},
+  {dpr:2,  juliaRes:264,juliaIter:96, antGrid:120,antSps:1150,flowN:130,flowRes:.62,treeDepth:10,treeNodes:1500,spiralPts:160,orbitRings:22,orbitPts:96,fps:60}
+];
+
+/* ---------------- глобальное состояние ---------------- */
+const $=id=>document.getElementById(id);
+const app=$('app'), stage=$('stage'), cast=$('castShadow'), spine=$('spineShadow');
+const hudBottom=$('hudBottom'), cover=$('cover'), srLive=$('srLive');
+const soundBtn=$('soundBtn'), soundIcon=$('soundIcon');
+const rootStyle=document.documentElement.style;
+const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const timeScale=reducedMotion?0.35:1;
+
+const state={page:1,opened:false,sound:true,busy:false};
+try{ state.sound=localStorage.getItem('fractalbook.sound')!=='0'; }catch(e){}
+
+/* стартовый уровень качества — по ядрам/памяти/экрану */
+let tier=(function(){
+  const hc=navigator.hardwareConcurrency||4, mem=navigator.deviceMemory||4;
+  const small=Math.min(screen.width||9999,screen.height||9999)<400;
+  if(hc<=2) return 0;
+  if(hc<=4||mem<=3||small) return 1;
+  return 2;
+})();
+const Q=()=>TIERS[tier];
+const effDpr=()=>Math.min(window.devicePixelRatio||1,Q().dpr);
+
+let stageW=app.clientWidth||window.innerWidth, stageH=app.clientHeight||window.innerHeight;
+let simT=0, lastNow=performance.now(), rafId=0, emaDt=0.016, frameCount=0, lastDown=0, drawTick=0, drawAcc=0;
+let pulse=0, pulseX=0, pulseY=0;
+let flip=null, drag=null, currentIdx=0, preTimer=0;
+
+/* ---------------- 2 · звук: тихая колыбельная из сида ---------------- */
+let actx=null, master=null, echoSend=null, delayNode=null, noiseBuf=null, activeBus=null;
+function unlockAudio(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    if(!actx){
+      actx=new AC();
+      master=actx.createGain(); master.gain.value=state.sound?0.16:0;
+      const comp=actx.createDynamicsCompressor();
+      comp.threshold.value=-20; comp.knee.value=18; comp.ratio.value=4;
+      master.connect(comp); comp.connect(actx.destination);
+      /* мягкое эхо: delay → lowpass → обратная связь */
+      echoSend=actx.createGain(); echoSend.gain.value=0.26;
+      delayNode=actx.createDelay(1.2); delayNode.delayTime.value=0.28;
+      const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1750;
+      const fb=actx.createGain(); fb.gain.value=0.33;
+      echoSend.connect(delayNode); delayNode.connect(lp); lp.connect(fb); fb.connect(delayNode); lp.connect(master);
+      /* буфер шума для «шелеста страницы» */
+      const len=Math.floor(actx.sampleRate*0.35);
+      noiseBuf=actx.createBuffer(1,len,actx.sampleRate);
+      const d=noiseBuf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    }
+    if(actx.state==='suspended') actx.resume().catch(function(){});
+  }catch(e){}
+}
+function playMelody(spec){
+  if(!actx||!state.sound) return;
+  try{
+    const now=actx.currentTime+0.06;
+    if(activeBus){
+      const old=activeBus;
+      old.gain.setTargetAtTime(0.0001,now,0.07);
+      setTimeout(function(){try{old.disconnect();}catch(e){}},900);
+    }
+    delayNode.delayTime.setTargetAtTime(spec.delay,now,0.1);
+    const bus=actx.createGain(); bus.gain.value=1;
+    bus.connect(master); bus.connect(echoSend);
+    activeBus=bus;
+    for(let i=0;i<spec.notes.length;i++){
+      const n=spec.notes[i];
+      const o=actx.createOscillator(); o.type=spec.wave; o.frequency.value=n.f;
+      const o2=actx.createOscillator(); o2.type='sine'; o2.frequency.value=n.f; o2.detune.value=5;
+      const g=actx.createGain(), g2=actx.createGain(); g2.gain.value=0.35;
+      const t0=now+n.t, peak=0.11*n.v, end=t0+n.d+0.9;
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.exponentialRampToValueAtTime(peak,t0+0.035);
+      g.gain.exponentialRampToValueAtTime(0.0001,end);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(bus);
+      o.start(t0); o.stop(end+0.05); o2.start(t0); o2.stop(end+0.05);
+    }
+    /* басовый дрон — тёплая подложка */
+    const b=actx.createOscillator(); b.type='sine'; b.frequency.value=spec.root/2;
+    const bg=actx.createGain(); const tEnd=now+spec.total;
+    bg.gain.setValueAtTime(0.0001,now);
+    bg.gain.linearRampToValueAtTime(0.045,now+0.7);
+    bg.gain.setValueAtTime(0.045,Math.max(now+0.8,tEnd-1.0));
+    bg.gain.linearRampToValueAtTime(0.0001,tEnd);
+    b.connect(bg); bg.connect(bus); b.start(now); b.stop(tEnd+0.1);
+    setTimeout(function(){try{bus.disconnect();}catch(e){}},(spec.total+1.6)*1000);
+  }catch(e){}
+}
+function whoosh(){
+  if(!actx||!state.sound||!noiseBuf) return;
+  try{
+    const now=actx.currentTime;
+    const src=actx.createBufferSource(); src.buffer=noiseBuf;
+    const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=1.1;
+    bp.frequency.setValueAtTime(320,now);
+    bp.frequency.exponentialRampToValueAtTime(1500,now+0.12);
+    bp.frequency.exponentialRampToValueAtTime(480,now+0.28);
+    const g=actx.createGain();
+    g.gain.setValueAtTime(0.0001,now);
+    g.gain.exponentialRampToValueAtTime(0.07,now+0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001,now+0.3);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(now); src.stop(now+0.32);
+  }catch(e){}
+}
+function chime(spec){
+  if(!actx||!state.sound||!spec) return;
+  try{
+    const now=actx.currentTime;
+    const n=spec.notes[(Math.random()*spec.notes.length)|0];
+    const o=actx.createOscillator(); o.type='sine'; o.frequency.value=n.f*2;
+    const g=actx.createGain();
+    g.gain.setValueAtTime(0.0001,now);
+    g.gain.exponentialRampToValueAtTime(0.06,now+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,now+0.8);
+    o.connect(g); g.connect(master); g.connect(echoSend);
+    o.start(now); o.stop(now+0.85);
+  }catch(e){}
+}
+
+/* ---------------- общие помощники рисования ---------------- */
+function mkCanvas(w,h){
+  const c=document.createElement('canvas');
+  c.width=Math.max(2,Math.round(w)); c.height=Math.max(2,Math.round(h));
+  return c;
+}
+/* дешёвое «свечение»: уменьшаем до 1/8 и растягиваем обратно — мягкий blur без фильтра */
+function makeGlow(src){
+  const tw=Math.max(16,Math.round(src.width/8)), th=Math.max(16,Math.round(src.height/8));
+  const tiny=mkCanvas(tw,th);
+  tiny.getContext('2d').drawImage(src,0,0,tw,th);
+  const glow=mkCanvas(Math.max(32,Math.round(src.width/2)),Math.max(32,Math.round(src.height/2)));
+  const gc=glow.getContext('2d');
+  gc.imageSmoothingEnabled=true;
+  gc.drawImage(tiny,0,0,glow.width,glow.height);
+  return glow;
+}
+function rgba(rgb,a){return 'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+a.toFixed(3)+')';}
+
+/* ---------------- 3 · шесть генераторов фракталов ---------------- */
+/* Каждый возвращает {draw(ctx,env), resize(w,h), destroy()} — всё из сида. */
+
+/* 1 · логарифмические спирали с нарастающей плотностью */
+function buildSpiral(base,r){
+  const arms=2+((r()*4)|0), b=0.16+r()*0.09, thMax=(3.2+r()*2.6)*Math.PI;
+  const dir=r()<0.5?-1:1, rotSpd=dir*(0.05+r()*0.09), b2=b*1.28;
+  const sparks=[];
+  for(let i=0;i<22;i++) sparks.push({s:r(),spd:0.03+r()*0.05,arm:(r()*arms)|0});
+  return {
+    draw(ctx,env){
+      const t=env.t, R=env.R, br=0.78+0.22*Math.sin(t*0.5+base.phase);
+      const r0=R/Math.exp(b*thMax), P=Q().spiralPts, rot=t*rotSpd+base.phase;
+      ctx.save(); ctx.translate(env.cx,env.cy); ctx.lineCap='round';
+      for(let a=0;a<arms;a++){
+        const off=a*Math.PI*2/arms, col=base.pal.css[a%base.pal.css.length];
+        const path=new Path2D(), inner=new Path2D();
+        let innerStarted=false;
+        for(let i=0;i<=P;i++){
+          const u=i/P, th=u*thMax;
+          const rr=r0*Math.exp(b*th)*(1+0.03*Math.sin(t*0.8+u*9+base.phase));
+          const ang=th*dir+rot+off;
+          const x=Math.cos(ang)*rr, y=Math.sin(ang)*rr*0.97;
+          if(i===0)path.moveTo(x,y); else path.lineTo(x,y);
+          if(u>0.45){ if(!innerStarted){inner.moveTo(x,y);innerStarted=true;} else inner.lineTo(x,y); }
+        }
+        /* акварельные полупрозрачные слои: ореол → тело → яркое ядро */
+        ctx.strokeStyle=col;
+        ctx.globalAlpha=0.10*br; ctx.lineWidth=5.5; ctx.stroke(path);
+        ctx.globalAlpha=0.5*br;  ctx.lineWidth=1.8; ctx.stroke(path);
+        ctx.globalAlpha=0.85*br; ctx.lineWidth=1;   ctx.stroke(inner);
+        /* призрачный дубль — «расплывание» краски */
+        ctx.save(); ctx.scale(1.07,1.07);
+        ctx.globalAlpha=0.09*br; ctx.lineWidth=2.4;
+        ctx.strokeStyle=base.pal.css[(a+1)%base.pal.css.length]; ctx.stroke(path);
+        ctx.restore();
+        /* светящиеся бусины вдоль рукава */
+        ctx.fillStyle=col;
+        for(let i=9;i<=P;i+=9){
+          const u=i/P, th=u*thMax;
+          const rr=r0*Math.exp(b*th)*(1+0.03*Math.sin(t*0.8+u*9+base.phase));
+          const ang=th*dir+rot+off;
+          const x=Math.cos(ang)*rr, y=Math.sin(ang)*rr*0.97;
+          const pr=1.1+0.7*Math.sin(t*2+i);
+          ctx.globalAlpha=0.12*br; ctx.beginPath(); ctx.arc(x,y,pr*2.6,0,6.283); ctx.fill();
+          ctx.globalAlpha=0.6*br;  ctx.beginPath(); ctx.arc(x,y,pr,0,6.283); ctx.fill();
+        }
+      }
+      /* редкие искры с настоящим shadowBlur (бюджет: 22 шт.) */
+      ctx.shadowBlur=9;
+      for(let i=0;i<sparks.length;i++){
+        const s=sparks[i]; s.s=(s.s+env.dt*s.spd)%1;
+        const th=s.s*thMax, rr=R*Math.exp(b2*(th-thMax));
+        const ang=th*dir+rot+s.arm*Math.PI*2/arms;
+        const col=base.pal.css[i%base.pal.css.length];
+        ctx.shadowColor=col; ctx.fillStyle=col;
+        ctx.globalAlpha=(0.35+0.45*Math.sin(t*3+i))*br;
+        ctx.beginPath(); ctx.arc(Math.cos(ang)*rr,Math.sin(ang)*rr*0.97,1.6,0,6.283); ctx.fill();
+      }
+      ctx.shadowBlur=0; ctx.globalAlpha=1; ctx.restore();
+    },
+    resize(){}, destroy(){}
+  };
+}
+
+/* 2 · ветвящийся коралл: живое покачивание каждой ветви */
+function buildTree(base,r){
+  const seed=base.seed;
+  let nodes=[], maxD=Q().treeDepth;
+  function build(w,h){
+    maxD=Q().treeDepth;
+    const R=Math.min(w*0.42,h*0.30);
+    const len0=Math.min(R*0.46,w*0.16);
+    nodes=buildTreeNodes(mulberry32(seed^0x77A1),maxD,Q().treeNodes,len0);
+  }
+  build(stageW,stageH);
+  return {
+    draw(ctx,env){
+      const t=env.t, br=0.8+0.2*Math.sin(t*0.45+base.phase);
+      const rootX=env.cx, rootY=env.h*0.82;
+      /* пересчёт позиций с покачиванием (родители уже посчитаны) */
+      for(let i=0;i<nodes.length;i++){
+        const nd=nodes[i];
+        const px=nd.parent<0?rootX:nodes[nd.parent].x1;
+        const py=nd.parent<0?rootY:nodes[nd.parent].y1;
+        const a=nd.baseA+Math.sin(t*0.7+nd.phase+nd.depth*0.55)*0.016*nd.depth;
+        nd.x0=px; nd.y0=py;
+        nd.x1=px+Math.cos(a)*nd.len; nd.y1=py+Math.sin(a)*nd.len;
+        nd.a=a;
+      }
+      const paths=[];
+      for(let d=0;d<=maxD;d++) paths.push(new Path2D());
+      for(let i=0;i<nodes.length;i++){
+        const nd=nodes[i], p=paths[nd.depth];
+        const mx=(nd.x0+nd.x1)/2-Math.sin(nd.a)*nd.len*nd.curve*0.5;
+        const my=(nd.y0+nd.y1)/2+Math.cos(nd.a)*nd.len*nd.curve*0.5;
+        p.moveTo(nd.x0,nd.y0); p.quadraticCurveTo(mx,my,nd.x1,nd.y1);
+      }
+      const trunkW=Math.max(3,env.R*0.045), n=base.pal.css.length;
+      ctx.save(); ctx.lineCap='round';
+      for(let d=0;d<=maxD;d++){
+        const k=d/maxD, col=base.pal.css[Math.min(n-1,(k*n)|0)];
+        const w=Math.max(0.6,trunkW*Math.pow(0.74,d));
+        ctx.strokeStyle=col;
+        ctx.globalAlpha=0.08*br; ctx.lineWidth=w*3; ctx.stroke(paths[d]);   /* ореол */
+        ctx.globalAlpha=(0.5+0.45*k)*br; ctx.lineWidth=w; ctx.stroke(paths[d]);
+      }
+      /* светящиеся соцветия на кончиках */
+      const acc=base.pal.accent;
+      for(let i=0;i<nodes.length;i++){
+        const nd=nodes[i];
+        if(!nd.tip||nd.depth<maxD-1) continue;
+        const pr=1.4+0.8*Math.sin(t*1.3+nd.phase);
+        ctx.fillStyle=acc;
+        ctx.globalAlpha=0.12*br; ctx.beginPath(); ctx.arc(nd.x1,nd.y1,pr*2.6,0,6.283); ctx.fill();
+        ctx.globalAlpha=(0.45+0.3*Math.sin(t*1.7+nd.phase))*br;
+        ctx.beginPath(); ctx.arc(nd.x1,nd.y1,pr,0,6.283); ctx.fill();
+      }
+      /* тёплое сердце у корней */
+      const g=ctx.createRadialGradient(rootX,rootY,0,rootX,rootY,env.R*0.14);
+      g.addColorStop(0,rgba(base.pal.accRgb,0.4*br)); g.addColorStop(1,rgba(base.pal.accRgb,0));
+      ctx.globalAlpha=1; ctx.fillStyle=g;
+      ctx.beginPath(); ctx.arc(rootX,rootY,env.R*0.14,0,6.283); ctx.fill();
+      ctx.restore();
+    },
+    resize(w,h){build(w,h);}, destroy(){nodes=[];}
+  };
+}
+
+/* 3 · Жюлиа / Мандельброт: попиксельный рендер в offscreen + дыхание */
+function buildJulia(base,r){
+  const isJulia=r()<0.62;
+  let cRe,cIm,cx0=0,cy0=0,span;
+  if(isJulia){
+    if(r()<0.5){ const phi=r()*Math.PI*2; cRe=0.7885*Math.cos(phi); cIm=0.7885*Math.sin(phi); }
+    else{
+      const gems=[[-0.8,0.156],[-0.7269,0.1889],[0.285,0.01],[-0.4,0.6],[-0.835,-0.2321],[0.355,0.355],[-0.70176,-0.3842]];
+      const g=gems[(r()*gems.length)|0]; cRe=g[0]; cIm=g[1];
+    }
+    span=3.0+r()*0.4;
+  }else{
+    const spots=[[-0.7435,0.1314,0.012],[-0.1011,0.9563,0.02],[0.2869,0.0142,0.02],[-0.7453,0.1127,0.006],[-1.25066,0.02012,0.02]];
+    const s=spots[(r()*spots.length)|0];
+    cx0=s[0]; cy0=s[1]; span=s[2]*(0.7+r()*0.6);
+  }
+  const off=r(), rotSpd=(r()-0.5)*0.12, sparks=[];
+  for(let i=0;i<12;i++) sparks.push({a:r()*6.283,spd:(r()-0.5)*0.5,rr:0.98+r()*0.12});
+  let off_c=null, glow=null, res=0;
+  function build(){
+    res=Q().juliaRes;
+    const M=isJulia?Q().juliaIter:Q().juliaIter+40;
+    off_c=mkCanvas(res,res);
+    const jc=off_c.getContext('2d');
+    const img=jc.createImageData(res,res), data=img.data;
+    const lut=buildLut(base.pal.rgb,256), deep=base.pal.bgRgb;
+    let o=0;
+    for(let py=0;py<res;py++){
+      const y0=(py/res-0.5)*span+cy0;
+      for(let px=0;px<res;px++){
+        const x0=(px/res-0.5)*span+cx0;
+        let zx,zy,cr,ci;
+        if(isJulia){zx=x0;zy=y0;cr=cRe;ci=cIm;}else{zx=0;zy=0;cr=x0;ci=y0;}
+        let x2=zx*zx,y2=zy*zy,i=0;
+        while(x2+y2<=16&&i<M){ zy=2*zx*zy+ci; zx=x2-y2+cr; x2=zx*zx; y2=zy*zy; i++; }
+        if(i>=M){ data[o]=deep[0]; data[o+1]=deep[1]; data[o+2]=deep[2]; }
+        else{
+          let nu=i+1-Math.log2(Math.log(Math.sqrt(x2+y2)));
+          if(!(nu>=0)) nu=0;
+          let tt=(nu*0.045+off)%1; if(tt<0)tt+=1;
+          const li=(tt*256)|0, bright=Math.min(1,0.25+nu/M*1.5);
+          data[o]=lut[li*3]*bright; data[o+1]=lut[li*3+1]*bright; data[o+2]=lut[li*3+2]*bright;
+        }
+        data[o+3]=255; o+=4;
+      }
+    }
+    jc.putImageData(img,0,0);
+    glow=makeGlow(off_c);
+  }
+  build();
+  return {
+    typeLabel:isJulia?'множество Жюлиа':'отражение Мандельброта',
+    draw(ctx,env){
+      const t=env.t, S=env.R*2, br=0.8+0.2*Math.sin(t*0.42+base.phase);
+      const rot=Math.sin(t*0.11+base.phase)*0.06+t*rotSpd*0.15;
+      const sc=1+0.025*Math.sin(t*0.43+base.phase);
+      ctx.save(); ctx.translate(env.cx,env.cy); ctx.rotate(rot); ctx.scale(sc,sc);
+      ctx.globalAlpha=0.45*br;                                  /* мягкий ореол */
+      ctx.drawImage(glow,-S*0.54,-S*0.54,S*1.08,S*1.08);
+      ctx.globalAlpha=0.93;
+      ctx.drawImage(off_c,-S/2,-S/2,S,S);
+      ctx.globalAlpha=0.25*br;                                  /* акварельный дубль со сдвигом */
+      ctx.drawImage(off_c,-S/2+2,-S/2-2,S,S);
+      /* мерцающая вуаль поверх */
+      ctx.globalCompositeOperation='overlay';
+      const g=ctx.createRadialGradient(0,0,0,0,0,S*0.6);
+      g.addColorStop(0,rgba(base.pal.accRgb,0.12+0.08*Math.sin(t*0.6)));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.globalAlpha=1; ctx.fillStyle=g; ctx.fillRect(-S/2,-S/2,S,S);
+      ctx.globalCompositeOperation='source-over';
+      ctx.restore();
+      /* искры-спутники по орбите вокруг множества */
+      ctx.save(); ctx.shadowBlur=10;
+      for(let i=0;i<sparks.length;i++){
+        const s=sparks[i], a=s.a+t*s.spd;
+        const col=base.pal.css[i%base.pal.css.length];
+        ctx.shadowColor=col; ctx.fillStyle=col;
+        ctx.globalAlpha=(0.3+0.4*Math.sin(t*2.2+i))*br;
+        ctx.beginPath();
+        ctx.arc(env.cx+Math.cos(a)*env.R*s.rr,env.cy+Math.sin(a)*env.R*s.rr,1.5,0,6.283);
+        ctx.fill();
+      }
+      ctx.shadowBlur=0; ctx.globalAlpha=1; ctx.restore();
+    },
+    resize(){}, destroy(){off_c=null;glow=null;}
+  };
+}
+
+/* 4 · муравей Лэнгтона: живой клеточный узор, растёт на глазах */
+function buildAnt(base,r){
+  const G=Q().antGrid;
+  const a={g:G,state:new Uint8Array(G*G),counts:new Uint16Array(G*G),
+    ax:G>>1,ay:G>>1,dir:(r()*4)|0};
+  const grid=mkCanvas(G,G), gc=grid.getContext('2d');
+  const img=gc.createImageData(G,G), data=img.data;
+  let glow=makeGlow(grid), stepAcc=0, loopSteps=0, alphaMul=1, phase='run', glowTick=0, dirty=true;
+  const n=base.pal.rgb.length;
+  function flipCell(){
+    const i=antStep(a);
+    const x=i%G, y=(i/G)|0, c=a.counts[i];
+    const col=base.pal.rgb[((c>>2)+((x*7+y*13)>>4))%n];
+    const bright=Math.min(1,0.5+c*0.05);
+    const o=i*4;
+    if(a.state[i]){ data[o]=col[0]*bright; data[o+1]=col[1]*bright; data[o+2]=col[2]*bright; data[o+3]=255; }
+    else{ data[o+3]=0; }
+  }
+  function reset(){
+    a.state.fill(0); a.counts.fill(0); a.ax=G>>1; a.ay=G>>1; a.dir=0;
+    data.fill(0); loopSteps=0; phase='run'; dirty=true;
+  }
+  for(let i=0;i<1600;i++){flipCell();loopSteps++;}   /* страница открывается уже с узором */
+  gc.putImageData(img,0,0); glow=makeGlow(grid);
+  return {
+    draw(ctx,env){
+      const t=env.t, S=env.R*1.9, br=0.82+0.18*Math.sin(t*0.5+base.phase);
+      if(phase==='run'){
+        stepAcc+=env.dt*Q().antSps;
+        let steps=Math.min(80,stepAcc|0); stepAcc-=steps;
+        if(steps>0){
+          while(steps-->0){flipCell();loopSteps++;}
+          dirty=true;
+        }
+        if(loopSteps>=12000) phase='fade';
+      }else{
+        alphaMul-=env.dt/1.1;
+        if(alphaMul<=0){reset();alphaMul=0;}
+      }
+      if(phase==='run'&&alphaMul<1) alphaMul=Math.min(1,alphaMul+env.dt/0.6);
+      if(dirty){gc.putImageData(img,0,0);dirty=false;
+        if((glowTick++%12)===0) glow=makeGlow(grid);}
+      const x=env.cx-S/2, y=env.cy-S/2;
+      ctx.save();
+      ctx.globalAlpha=0.5*br*alphaMul;
+      ctx.drawImage(glow,x-S*0.03,y-S*0.03,S*1.06,S*1.06);
+      ctx.globalAlpha=0.95*alphaMul;
+      ctx.drawImage(grid,x,y,S,S);
+      /* сам муравей — яркая светлячок-точка */
+      if(phase==='run'){
+        const hx=x+(a.ax+0.5)/G*S, hy=y+(a.ay+0.5)/G*S;
+        ctx.shadowBlur=10; ctx.shadowColor=base.pal.accent; ctx.fillStyle=base.pal.accent;
+        ctx.globalAlpha=0.9*alphaMul;
+        ctx.beginPath(); ctx.arc(hx,hy,2,0,6.283); ctx.fill();
+        ctx.shadowBlur=0;
+      }
+      ctx.globalAlpha=1; ctx.restore();
+    },
+    resize(){}, destroy(){}
+  };
+}
+
+/* 5 · резонанс орбит: деформированные окружности с шумом на sin/cos */
+function buildOrbits(base,r){
+  const rings=Q().orbitRings, defs=[];
+  for(let i=0;i<rings;i++){
+    defs.push({m1:3+((r()*7)|0),m2:2+((r()*5)|0),a1:0.05+r()*0.10,a2:0.03+r()*0.07,
+      s1:(r()-0.5)*0.9,s2:(r()-0.5)*0.7,ph:r()*6.283,
+      col:(r()*base.pal.css.length)|0,al:0.3+r()*0.35,w:0.8+r()*1.4});
+  }
+  const rotSpd=(r()-0.5)*0.16, sats=[];
+  const satN=3+((r()*4)|0);
+  for(let i=0;i<satN;i++) sats.push({ring:0.2+r()*0.8,a:r()*6.283,spd:(r()<0.5?-1:1)*(0.15+r()*0.3),
+    size:1.4+r()*1.4,col:(r()*base.pal.css.length)|0});
+  return {
+    draw(ctx,env){
+      const t=env.t, R=env.R, br=0.78+0.22*Math.sin(t*0.48+base.phase);
+      const P=Q().orbitPts, rot=t*rotSpd;
+      ctx.save(); ctx.translate(env.cx,env.cy); ctx.rotate(rot);
+      for(let k=0;k<defs.length;k++){
+        const d=defs[k], baseR=R*(0.16+0.84*Math.pow(k/(defs.length-1),0.9));
+        const col=base.pal.css[d.col];
+        const path=new Path2D();
+        for(let i=0;i<=P;i++){
+          const th=i/P*Math.PI*2;
+          const rr=baseR*(1+d.a1*Math.sin(d.m1*th+t*d.s1+d.ph)+d.a2*Math.sin(d.m2*th-t*d.s2));
+          const x=Math.cos(th)*rr, y=Math.sin(th)*rr;
+          if(i===0)path.moveTo(x,y); else path.lineTo(x,y);
+        }
+        path.closePath();
+        ctx.strokeStyle=col;
+        ctx.globalAlpha=d.al*0.28*br; ctx.lineWidth=d.w*3.4; ctx.stroke(path);
+        ctx.globalAlpha=d.al*br; ctx.lineWidth=d.w; ctx.stroke(path);
+      }
+      ctx.restore();
+      /* пульсирующее сердце */
+      const orbR=R*0.16*(1+0.12*Math.sin(t*0.9+base.phase));
+      const g=ctx.createRadialGradient(env.cx,env.cy,0,env.cx,env.cy,orbR);
+      g.addColorStop(0,rgba(base.pal.accRgb,0.55*br));
+      g.addColorStop(0.55,rgba(base.pal.accRgb,0.16*br));
+      g.addColorStop(1,rgba(base.pal.accRgb,0));
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(env.cx,env.cy,orbR,0,6.283); ctx.fill();
+      /* спутники с хвостами */
+      ctx.save();
+      for(let i=0;i<sats.length;i++){
+        const s=sats[i], rr=R*(0.16+0.84*s.ring), a=s.a+t*s.spd+rot;
+        const col=base.pal.css[s.col];
+        ctx.fillStyle=col;
+        for(let k=5;k>=0;k--){
+          const aa=a-k*0.05*Math.sign(s.spd);
+          ctx.globalAlpha=(k===0?0.85:0.14*(1-k/6))*br;
+          ctx.beginPath();
+          ctx.arc(env.cx+Math.cos(aa)*rr,env.cy+Math.sin(aa)*rr,k===0?s.size:s.size*0.7,0,6.283);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha=1; ctx.restore();
+    },
+    resize(){}, destroy(){}
+  };
+}
+
+/* 6 · поле потока: частицы оставляют светящиеся реки */
+function buildFlow(base,r){
+  const k1=1.5+r()*2.5, k2=1.5+r()*2.5, k3=0.8+r()*1.6;
+  const ph1=r()*6.283, ph2=r()*6.283, ph3=r()*6.283;
+  const w1=(r()-0.5)*0.5, w2=(r()-0.5)*0.5, swirl=0.15+r()*0.35, swirlDir=r()<0.5?-1:1;
+  const spdK=0.06+r()*0.05;
+  const rng=mulberry32(base.seed^0xF10B);
+  let trail=null, tc=null, tw=0, th=0, parts=[];
+  function field(nx,ny,t){
+    let a=Math.sin(nx*k1*6.283+ph1+t*w1)*1.6
+         +Math.cos(ny*k2*6.283+ph2-t*w2)*1.6
+         +Math.sin((nx+ny)*k3*6.283+ph3)*0.8;
+    const sa=Math.atan2(ny-0.5,nx-0.5)+Math.PI/2*swirlDir;
+    return a*(1-swirl)+sa*swirl;
+  }
+  function spawn(p){
+    p.x=rng()*tw; p.y=rng()*th; p.px=p.x; p.py=p.y;
+    p.life=3+rng()*5; p.col=(rng()*base.pal.css.length)|0;
+  }
+  function build(w,h){
+    tw=Math.max(64,Math.round(w*Q().flowRes)); th=Math.max(64,Math.round(h*Q().flowRes));
+    trail=mkCanvas(tw,th); tc=trail.getContext('2d');
+    parts=[];
+    const rr=mulberry32(base.seed^0xF10A);
+    for(let i=0;i<Q().flowN;i++){
+      const p={x:0,y:0,px:0,py:0,life:0,col:0};
+      p.x=rr()*tw; p.y=rr()*th; p.px=p.x; p.py=p.y; p.life=3+rr()*5; p.col=(rr()*base.pal.css.length)|0;
+      parts.push(p);
+    }
+  }
+  build(stageW,stageH);
+  return {
+    draw(ctx,env){
+      const t=env.t, dt=Math.min(0.05,env.dt), br=0.82+0.18*Math.sin(t*0.5+base.phase);
+      /* следы медленно гаснут */
+      tc.globalCompositeOperation='destination-out';
+      tc.fillStyle='rgba(0,0,0,'+Math.min(0.2,dt*2.6).toFixed(3)+')';
+      tc.fillRect(0,0,tw,th);
+      tc.globalCompositeOperation='lighter';
+      tc.lineWidth=1.1; tc.lineCap='round';
+      const spd=tw*spdK;
+      for(let i=0;i<parts.length;i++){
+        const p=parts[i];
+        const a=field(p.x/tw,p.y/th,t);
+        const v=spd*(0.7+0.6*Math.sin(p.x/tw*9+t*0.3));
+        p.px=p.x; p.py=p.y;
+        p.x+=Math.cos(a)*v*dt; p.y+=Math.sin(a)*v*dt;
+        p.life-=dt;
+        if(p.life<=0||p.x<-8||p.x>tw+8||p.y<-8||p.y>th+8){spawn(p);continue;}
+        tc.strokeStyle=base.pal.css[p.col];
+        tc.globalAlpha=0.5;
+        tc.beginPath(); tc.moveTo(p.px,p.py); tc.lineTo(p.x,p.y); tc.stroke();
+      }
+      tc.globalAlpha=1; tc.globalCompositeOperation='source-over';
+      /* переносим реки на страницу с лёгким ореолом */
+      ctx.save();
+      ctx.globalAlpha=0.35*br;
+      ctx.drawImage(trail,-env.w*0.008,-env.h*0.008,env.w*1.016,env.h*1.016);
+      ctx.globalAlpha=0.95;
+      ctx.drawImage(trail,0,0,env.w,env.h);
+      /* растворяем края в бумаге */
+      const g=ctx.createRadialGradient(env.cx,env.cy,env.R*0.55,env.cx,env.cy,Math.max(env.w,env.h)*0.72);
+      g.addColorStop(0,rgba(base.pal.bgRgb,0));
+      g.addColorStop(1,rgba(base.pal.bgRgb,0.92));
+      ctx.globalAlpha=1; ctx.fillStyle=g; ctx.fillRect(0,0,env.w,env.h);
+      /* светлячки-головы частиц */
+      ctx.globalCompositeOperation='lighter';
+      const sx=env.w/tw, sy=env.h/th;
+      for(let i=0;i<parts.length;i++){
+        const p=parts[i], col=base.pal.css[p.col];
+        if(i<20){ctx.shadowBlur=8;ctx.shadowColor=col;}else ctx.shadowBlur=0;
+        ctx.fillStyle=col; ctx.globalAlpha=0.7*br;
+        ctx.beginPath(); ctx.arc(p.x*sx,p.y*sy,1.4,0,6.283); ctx.fill();
+      }
+      ctx.shadowBlur=0; ctx.globalCompositeOperation='source-over';
+      ctx.globalAlpha=1; ctx.restore();
+    },
+    resize(w,h){build(w,h);}, destroy(){trail=null;tc=null;parts=[];}
+  };
+}
+
+const BUILDERS=[buildSpiral,buildTree,buildJulia,buildAnt,buildOrbits,buildFlow];
+
+/* ---------------- 4 · страницы: детерминированы номером ---------------- */
+function createRenderer(pageNum){
+  const seed=hashPage(pageNum);
+  const rShape=mulberry32(seed);
+  const typeIdx=Math.floor(rShape()*6);
+  const pal=makePalette(mulberry32(seed^0xA5F152));
+  const name=makeName(mulberry32(seed^0x1B3C57));
+  const base={seed,page:pageNum,pal,name,typeIdx,
+    typeLabel:TYPE_LABELS[typeIdx],phase:rShape()*Math.PI*2,spec:melodySpec(seed)};
+  const impl=BUILDERS[typeIdx](base,rShape);
+  const r=Object.assign(base,impl);
+  r._w=stageW; r._h=stageH;
+  return r;
+}
+const cache=new Map();
+function ensureCache(pageNum){
+  let r=cache.get(pageNum);
+  if(!r){ r=createRenderer(pageNum); cache.set(pageNum,r); }
+  if(r._w!==stageW||r._h!==stageH){ r.resize(stageW,stageH); r._w=stageW; r._h=stageH; }
+  /* держим только текущую страницу и соседей */
+  const keep=new Set([state.page,state.page-1,state.page+1,flip?flip.target:state.page]);
+  cache.forEach(function(v,k){
+    if(!keep.has(k)){ if(v.destroy)v.destroy(); cache.delete(k); }
+  });
+  return r;
+}
+function schedulePrebuild(){
+  clearTimeout(preTimer);
+  preTimer=setTimeout(function(){
+    try{ ensureCache(state.page+1); ensureCache(state.page-1); }catch(e){}
+  },220);
+}
+
+/* ---------------- листы (два canvas-слоя) ---------------- */
+function makeLeaf(el){
+  const canvas=el.querySelector('.fractal');
+  return {el,canvas,ctx:canvas.getContext('2d',{alpha:true,desynchronized:true}),
+    head:el.querySelector('.page-head'),pnum:el.querySelector('.pnum'),
+    ptitle:el.querySelector('.ptitle'),psub:el.querySelector('.psub'),
+    veil:el.querySelector('.veil'),edge:el.querySelector('.edge-hl'),renderer:null};
+}
+const leaves=[makeLeaf($('leafA')),makeLeaf($('leafB'))];
+function sizeLeaf(L){
+  const dpr=effDpr();
+  L.canvas.width=Math.round(stageW*dpr);
+  L.canvas.height=Math.round(stageH*dpr);
+  L.canvas.style.width=stageW+'px'; L.canvas.style.height=stageH+'px';
+  L.ctx.setTransform(dpr,0,0,dpr,0,0);
+  L.ctx.imageSmoothingEnabled=true;
+  if('imageSmoothingQuality' in L.ctx) L.ctx.imageSmoothingQuality='high';
+}
+function sizeAll(){
+  stageW=app.clientWidth||window.innerWidth;
+  stageH=app.clientHeight||window.innerHeight;
+  sizeLeaf(leaves[0]); sizeLeaf(leaves[1]);
+}
+function fmtPage(n){return n<0?'−'+(-n):''+n;}
+function bindLeaf(L,r){
+  L.renderer=r;
+  L.pnum.textContent='— '+fmtPage(r.page)+' —';
+  L.ptitle.textContent=r.name;
+  L.psub.textContent=r.typeLabel+' · зерно '+r.seed.toString(16).padStart(8,'0').toUpperCase();
+  L.el.style.setProperty('--pb1',r.pal.bg1);
+  L.el.style.setProperty('--pb2',r.pal.bg2);
+  L.el.style.setProperty('--ttl',r.pal.ttl);
+  L.el.style.setProperty('--tglow',r.pal.tglow);
+  L.el.style.setProperty('--sub',r.pal.sub);
+  L.head.classList.remove('fresh');
+  void L.head.offsetWidth;
+  L.head.classList.add('fresh');
+}
+function updateRootPalette(){
+  const pal=leaves[currentIdx].renderer.pal;
+  rootStyle.setProperty('--accent',pal.accent);
+  rootStyle.setProperty('--glow',pal.glow);
+  rootStyle.setProperty('--soft',pal.soft);
+}
+function updateMeta(){
+  const r=leaves[currentIdx].renderer;
+  document.title='Фракталбук · стр. '+fmtPage(r.page);
+  srLive.textContent='Страница '+fmtPage(r.page)+'. '+r.name+'. '+r.typeLabel+'.';
+}
+function resetLeafVisual(L){
+  L.el.style.transform='';
+  L.veil.style.opacity=0;
+  L.edge.style.opacity=0;
+}
+
+/* ---------------- 5 · листание: 3D-переворот вокруг левого края ---------------- */
+function setupFlip(dir){
+  const target=state.page+(dir==='next'?1:-1);
+  flip={dir,target,p:0,tween:null,over:null,under:null};
+  const other=leaves[1-currentIdx];
+  bindLeaf(other,ensureCache(target));
+  if(dir==='next'){ flip.over=leaves[currentIdx]; flip.under=other; }
+  else{ flip.over=other; flip.under=leaves[currentIdx]; }
+  flip.over.el.style.zIndex=3; flip.under.el.style.zIndex=1;
+  flip.over.el.style.visibility='visible'; flip.under.el.style.visibility='visible';
+  /* сразу рисуем приходящий лист, чтобы он был живым под уходящим */
+  drawLeaf(1-currentIdx,makeEnv(0.016));
+  applyFlip(0);
+}
+function applyFlip(p){
+  if(!flip) return;
+  flip.p=p;
+  const q=flip.dir==='next'?p:1-p;
+  const ang=-92*q;
+  flip.over.el.style.transform='rotateY('+ang.toFixed(3)+'deg)';
+  const us=flip.dir==='next'?0.985+0.015*p:1-0.015*p;
+  flip.under.el.style.transform='scale('+us.toFixed(4)+')';
+  flip.over.veil.style.opacity=((flip.dir==='next'?p:1-p)*0.38).toFixed(3);
+  flip.under.veil.style.opacity=((flip.dir==='next'?1-p:p)*0.38).toFixed(3);
+  const s=Math.sin(p*Math.PI);
+  flip.over.edge.style.opacity=(s*0.85).toFixed(3);
+  const ex=Math.max(0,projectEdge(q,stageW,1500));
+  cast.style.width=(ex+26).toFixed(1)+'px';
+  cast.style.opacity=(s*0.8).toFixed(3);
+  spine.style.opacity=(s*0.5).toFixed(3);
+}
+function startTween(from,to,flick){
+  if(!flip) return;
+  const dur=clamp(0.18+0.42*Math.abs(to-from)*(flick?0.55:1),0.2,0.55);
+  flip.tween={from,to,t:0,dur};
+  if(to===1) whoosh();
+}
+function finalizeFlip(commit){
+  if(!flip) return;
+  if(commit){
+    state.page=flip.target;
+    currentIdx=1-currentIdx;
+    updateRootPalette(); updateMeta();
+    hudBottom.classList.add('calm');
+    playMelody(leaves[currentIdx].renderer.spec);
+  }
+  const cur=leaves[currentIdx], oth=leaves[1-currentIdx];
+  resetLeafVisual(cur); resetLeafVisual(oth);
+  cur.el.style.visibility='visible'; cur.el.style.zIndex=1;
+  oth.el.style.visibility='hidden';
+  cast.style.opacity=0; spine.style.opacity=0;
+  flip=null; state.busy=false;
+  schedulePrebuild();
+}
+function flipTo(dir){
+  if(!state.opened||state.busy) return;
+  state.busy=true;
+  unlockAudio();
+  setupFlip(dir);
+  startTween(0,1,false);
+}
+
+/* ---------------- жесты: pointer events (мышь + тач) ---------------- */
+stage.addEventListener('pointerdown',function(e){
+  if(!state.opened||state.busy||drag) return;
+  unlockAudio();
+  drag={id:e.pointerId,x0:e.clientX,y0:e.clientY,t0:performance.now(),
+    dir:null,p:0,lastX:e.clientX,lastT:performance.now(),vx:0,moved:false};
+  try{stage.setPointerCapture(e.pointerId);}catch(err){}
+  document.body.classList.add('dragging');
+});
+stage.addEventListener('pointermove',function(e){
+  if(!drag||e.pointerId!==drag.id) return;
+  const dx=e.clientX-drag.x0, dy=e.clientY-drag.y0;
+  const nowT=performance.now(), dtm=nowT-drag.lastT;
+  if(dtm>0){
+    drag.vx=drag.vx*0.6+((e.clientX-drag.lastX)/dtm)*0.4;
+    drag.lastX=e.clientX; drag.lastT=nowT;
+  }
+  if(!drag.dir){
+    if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.2){
+      state.busy=true;
+      setupFlip(dx<0?'next':'prev');
+      drag.dir=dx<0?'next':'prev';
+    }else if(Math.abs(dy)>14){ drag.dir='vert'; }
+    else return;
+  }
+  if(drag.dir==='vert') return;
+  drag.moved=true;
+  drag.p=clamp((drag.dir==='next'?-dx:dx)/(stageW*0.82),0,1);
+  applyFlip(drag.p);
+});
+function endDrag(e,cancelled){
+  if(!drag||(e.pointerId!==undefined&&e.pointerId!==drag.id)) return;
+  const d=drag; drag=null;
+  document.body.classList.remove('dragging');
+  if(!d.dir||d.dir==='vert'){
+    if(!cancelled&&!d.moved&&performance.now()-d.t0<350) tapPulse(e.clientX,e.clientY);
+    return;
+  }
+  const flick=d.dir==='next'?d.vx<-0.45:d.vx>0.45;
+  const commit=!cancelled&&(d.p>0.34||flick);
+  startTween(d.p,commit?1:0,flick);
+}
+stage.addEventListener('pointerup',function(e){endDrag(e,false);});
+stage.addEventListener('pointercancel',function(e){endDrag(e,true);});
+stage.addEventListener('lostpointercapture',function(e){if(drag)endDrag(e,true);});
+function tapPulse(x,y){
+  pulse=1; pulseX=x; pulseY=y;
+  const r=leaves[currentIdx].renderer;
+  if(r) chime(r.spec);
+}
+
+/* ---------------- 6 · главный цикл ---------------- */
+function makeEnv(dt){
+  return {t:simT,dt,w:stageW,h:stageH,cx:stageW/2,cy:stageH*0.54,
+    R:Math.min(stageW*0.42,stageH*0.30),pulse};
+}
+function drawLeaf(i,env){
+  const L=leaves[i];
+  if(!L.renderer) return;
+  const ctx=L.ctx;
+  ctx.clearRect(0,0,env.w,env.h);
+  try{ L.renderer.draw(ctx,env); }catch(err){ /* кадр пропускаем, книга живёт дальше */ }
+  if(i===currentIdx&&pulse>0.01){
+    const r=leaves[currentIdx].renderer;
+    ctx.save();
+    ctx.strokeStyle=r.pal.accent;
+    ctx.globalAlpha=pulse*0.45;
+    ctx.lineWidth=1.5+pulse*2;
+    ctx.beginPath(); ctx.arc(pulseX,pulseY,(1-pulse)*env.R*1.35+8,0,6.283); ctx.stroke();
+    ctx.globalAlpha=pulse*0.2;
+    ctx.beginPath(); ctx.arc(pulseX,pulseY,(1-pulse)*env.R*0.8+4,0,6.283); ctx.stroke();
+    ctx.restore();
+  }
+}
+function applyQuality(){
+  sizeAll();
+  cache.forEach(function(v){if(v.destroy)v.destroy();});
+  cache.clear();
+  bindLeaf(leaves[currentIdx],ensureCache(state.page));
+  if(flip){ /* редкий случай: аккуратно завершаем перелистывание */
+    resetLeafVisual(leaves[0]); resetLeafVisual(leaves[1]);
+    leaves[currentIdx].el.style.visibility='visible';
+    leaves[1-currentIdx].el.style.visibility='hidden';
+    cast.style.opacity=0; spine.style.opacity=0;
+    flip=null; state.busy=false; drag=null;
+  }
+  schedulePrebuild();
+}
+function frame(now){
+  rafId=requestAnimationFrame(frame);
+  let dt=(now-lastNow)/1000; lastNow=now;
+  if(dt>0.1)dt=0.1; if(dt<=0)dt=0.001;
+  emaDt=emaDt*0.95+dt*0.05; frameCount++;
+  /* адаптивное качество: устойчиво < ~27fps → понижаем уровень */
+  if(frameCount>240&&emaDt>0.037&&tier>0&&!flip&&now-lastDown>4000){
+    tier--; lastDown=now; emaDt=0.016; frameCount=0; applyQuality();
+  }
+  simT+=dt*timeScale;
+  pulse=Math.max(0,pulse-dt*1.6);
+  if(flip&&flip.tween){
+    const tw=flip.tween;
+    tw.t+=dt;
+    const k=Math.min(1,tw.t/tw.dur), e=1-Math.pow(1-k,3);
+    applyFlip(tw.from+(tw.to-tw.from)*e);
+    if(k>=1) finalizeFlip(tw.to===1);
+  }
+  /* на слабом уровне рисуем через кадр (30fps), но трансформации — каждый кадр;
+     накопленный dt keeps скорость симуляции независимой от частоты отрисовки */
+  drawTick++; drawAcc+=dt;
+  if(Q().fps===60||(drawTick&1)===0){
+    const env=makeEnv(drawAcc); drawAcc=0;
+    drawLeaf(currentIdx,env);
+    if(flip) drawLeaf(1-currentIdx,env);
+  }
+}
+
+/* ---------------- 7 · обложка, HUD, прочие события ---------------- */
+function openBook(){
+  if(state.opened) return;
+  state.opened=true;
+  unlockAudio();
+  cover.classList.add('open');
+  playMelody(leaves[currentIdx].renderer.spec);
+  setTimeout(function(){ if(cover.parentNode) cover.parentNode.removeChild(cover); },1000);
+  schedulePrebuild();
+}
+cover.addEventListener('pointerdown',function(e){ e.preventDefault(); openBook(); });
+cover.addEventListener('click',function(){ openBook(); });
+
+function setSound(on){
+  state.sound=on;
+  try{localStorage.setItem('fractalbook.sound',on?'1':'0');}catch(e){}
+  soundIcon.textContent=on?'🔊':'🔇';
+  soundBtn.setAttribute('aria-pressed',on?'true':'false');
+  soundBtn.setAttribute('aria-label',on?'Выключить звук':'Включить звук');
+  if(actx&&master){
+    try{master.gain.setTargetAtTime(on?0.16:0,actx.currentTime,0.04);}catch(e){}
+  }
+}
+soundBtn.addEventListener('click',function(){
+  unlockAudio();
+  setSound(!state.sound);
+  if(state.sound&&state.opened) playMelody(leaves[currentIdx].renderer.spec);
+});
+$('btnPrev').addEventListener('click',function(){flipTo('prev');});
+$('btnNext').addEventListener('click',function(){flipTo('next');});
+
+window.addEventListener('keydown',function(e){
+  if(!state.opened){
+    if(e.key==='Enter'||e.key===' '||e.key==='ArrowLeft'||e.key==='ArrowRight'){
+      e.preventDefault(); openBook();
+    }
+    return;
+  }
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();flipTo('next');}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();flipTo('prev');}
+  else if(e.key==='m'||e.key==='M'||e.key==='ь'||e.key==='Ь'){soundBtn.click();}
+});
+/* колесо/трекпад на десктопе */
+let wheelAcc=0, wheelTimer=0;
+app.addEventListener('wheel',function(e){
+  e.preventDefault();
+  if(!state.opened){openBook();return;}
+  if(state.busy) return;
+  wheelAcc+=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+  clearTimeout(wheelTimer);
+  wheelTimer=setTimeout(function(){wheelAcc=0;},400);
+  if(Math.abs(wheelAcc)>70){
+    flipTo(wheelAcc>0?'next':'prev');
+    wheelAcc=0;
+  }
+},{passive:false});
+/* никакой прокрутки, зума и контекстного меню */
+app.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
+app.addEventListener('dblclick',function(e){e.preventDefault();});
+app.addEventListener('contextmenu',function(e){e.preventDefault();});
+/* повторная попытка разбудить звук при любом касании */
+document.addEventListener('pointerdown',function(){
+  if(actx&&actx.state==='suspended'&&state.sound) actx.resume().catch(function(){});
+});
+/* пауза в неактивной вкладке */
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(rafId){cancelAnimationFrame(rafId);rafId=0;}
+    if(actx) try{actx.suspend();}catch(e){}
+  }else{
+    lastNow=performance.now();
+    if(!rafId) rafId=requestAnimationFrame(frame);
+    if(actx&&state.sound&&state.opened) try{actx.resume();}catch(e){}
+  }
+});
+/* resize / смена ориентации / панели браузера */
+let resizeTimer=0;
+function onResize(){
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(function(){
+    sizeAll();
+    const cur=leaves[currentIdx].renderer;
+    if(cur){cur.resize(stageW,stageH);cur._w=stageW;cur._h=stageH;}
+    if(flip){
+      const oth=leaves[1-currentIdx].renderer;
+      if(oth){oth.resize(stageW,stageH);oth._w=stageW;oth._h=stageH;}
+    }else{
+      /* соседей пересоберём в простое */
+      cache.forEach(function(v,k){if(k!==state.page){if(v.destroy)v.destroy();cache.delete(k);}});
+      schedulePrebuild();
+    }
+    const env=makeEnv(0.016);
+    drawLeaf(currentIdx,env);
+    if(flip) drawLeaf(1-currentIdx,env);
+  },160);
+}
+window.addEventListener('resize',onResize);
+window.addEventListener('orientationchange',onResize);
+if(window.visualViewport) window.visualViewport.addEventListener('resize',onResize);
+
+/* ---------------- фактура бумаги и пылинки ---------------- */
+function buildGrain(){
+  const g=mkCanvas(140,140), gc=g.getContext('2d');
+  const img=gc.createImageData(140,140), d=img.data, r=mulberry32(20261117);
+  for(let i=0;i<d.length;i+=4){
+    const v=(r()*255)|0;
+    d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=(r()*22)|0;
+  }
+  gc.putImageData(img,0,0);
+  const url=g.toDataURL();
+  const els=document.querySelectorAll('.grain');
+  for(let i=0;i<els.length;i++) els[i].style.backgroundImage='url('+url+')';
+}
+function buildMotes(container,count,seed){
+  const r=mulberry32(seed);
+  for(let i=0;i<count;i++){
+    const s=document.createElement('span');
+    s.className='mote';
+    s.style.setProperty('--mx',(4+r()*92).toFixed(1)+'%');
+    s.style.setProperty('--my',(12+r()*80).toFixed(1)+'%');
+    s.style.setProperty('--s',(2+r()*3.4).toFixed(1)+'px');
+    s.style.setProperty('--dur',(9+r()*14).toFixed(1)+'s');
+    s.style.setProperty('--del',(-r()*20).toFixed(1)+'s');
+    s.style.setProperty('--dx',((r()-0.5)*60).toFixed(0)+'px');
+    container.appendChild(s);
+  }
+}
+
+/* ---------------- старт ---------------- */
+buildGrain();
+buildMotes($('motes'),14,777);
+buildMotes(document.querySelector('.cover-motes'),8,888);
+setSound(state.sound);
+sizeAll();
+bindLeaf(leaves[0],ensureCache(1));
+leaves[0].el.style.visibility='visible'; leaves[0].el.style.zIndex=1;
+leaves[1].el.style.visibility='hidden';
+updateRootPalette(); updateMeta();
+drawLeaf(0,makeEnv(0.016));
+lastNow=performance.now();
+rafId=requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1D2B53">
+<meta name="description" content="8-bit Music Maker — чиптюн-секвенсор в браузере: pulse/triangle/noise, piano roll, эффекты, экспорт WAV.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>8-BIT MUSIC MAKER</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5/index.css">
+<style>
+/* ============ ПАЛИТРА / БАЗА ============ */
+:root{
+  --bg0:#0b0e1f; --bg1:#131834; --bg2:#1D2B53; --bg3:#24356b;
+  --line:#35447e; --line2:#4a5da8;
+  --ink:#FFF1E8; --mut:#83769C;
+  --red:#FF004D; --orange:#FFA300; --yellow:#FFEC27; --green:#00E436;
+  --blue:#29ADFF; --pink:#FF77A8; --lav:#83769C; --peach:#FFCCAA;
+  --pxfont:"Press Start 2P",monospace;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  font-family:var(--pxfont);color:var(--ink);background:var(--bg0);
+  background-image:
+    radial-gradient(60% 50% at 88% -10%, rgba(41,173,255,.10), transparent 60%),
+    radial-gradient(50% 60% at -10% 110%, rgba(255,0,77,.08), transparent 60%),
+    radial-gradient(40% 40% at 50% 120%, rgba(0,228,54,.05), transparent 60%);
+  font-size:10px;line-height:1.5;user-select:none;-webkit-user-select:none;
+}
+input,textarea{user-select:text;-webkit-user-select:text}
+button{font-family:var(--pxfont);color:var(--ink);cursor:pointer}
+:focus-visible{outline:2px dashed var(--yellow);outline-offset:2px}
+::-webkit-scrollbar{width:10px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg0);border:2px solid var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--line2);border:2px solid var(--bg0)}
+::-webkit-scrollbar-thumb:hover{background:var(--blue)}
+*{scrollbar-width:thin;scrollbar-color:var(--line2) var(--bg0)}
+
+/* ============ ПИКСЕЛЬНЫЕ КНОПКИ ============ */
+.pbtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-width:34px;min-height:34px;padding:6px 9px;
+  background:var(--bg3);border:2px solid var(--line2);
+  box-shadow:inset -2px -2px 0 rgba(0,0,0,.4),inset 2px 2px 0 rgba(255,255,255,.10),0 3px 0 var(--bg0);
+  font-size:8px;letter-spacing:0;color:var(--ink);
+}
+.pbtn:active{transform:translateY(2px);box-shadow:inset 2px 2px 0 rgba(0,0,0,.45),0 1px 0 var(--bg0)}
+.pbtn.on{background:var(--ac,var(--yellow));color:#10142c;border-color:#0b0e1f;
+  box-shadow:inset -2px -2px 0 rgba(0,0,0,.30),inset 2px 2px 0 rgba(255,255,255,.35),0 3px 0 var(--bg0)}
+.pbtn:disabled{opacity:.35;pointer-events:none}
+.pbtn.sq{padding:6px}
+.pbtn.wide{width:100%}
+.pbtn.danger{color:var(--red);border-color:var(--red)}
+.pbtn svg{flex:none}
+.psel{
+  appearance:none;-webkit-appearance:none;font-family:var(--pxfont);font-size:8px;color:var(--ink);
+  background:var(--bg0) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 3" shape-rendering="crispEdges"><path fill="%23FFEC27" d="M0 0h5v1H0zM1 1h3v1H1zM2 2h1v1H2z"/></svg>') no-repeat right 7px center/10px 6px;
+  border:2px solid var(--line2);padding:9px 24px 9px 8px;min-height:34px;
+}
+.pinput{
+  font-family:var(--pxfont);font-size:9px;color:var(--yellow);background:var(--bg0);
+  border:2px solid var(--line2);padding:9px 8px;width:100%;
+}
+.pinput::placeholder{color:var(--mut)}
+
+/* ============ КАРКАС ============ */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;
+  padding-left:var(--sal);padding-right:var(--sar)}
+#topbar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:calc(8px + var(--sat)) 12px 8px;
+  background:linear-gradient(180deg,var(--bg2),var(--bg1));
+  border-bottom:3px solid var(--line);position:relative;z-index:20;
+}
+#topbar::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;
+  background:repeating-linear-gradient(90deg,var(--red) 0 14px,var(--yellow) 14px 28px,var(--green) 28px 42px,var(--blue) 42px 56px);opacity:.85}
+.logo{font-size:13px;color:var(--yellow);text-shadow:2px 2px 0 var(--red),4px 4px 0 var(--bg0);white-space:nowrap}
+.logo small{display:block;font-size:6px;color:var(--blue);text-shadow:none;margin-top:5px;letter-spacing:1px}
+.hgroup{display:flex;align-items:center;gap:7px}
+.utils{margin-left:auto}
+.bpmbox{display:flex;align-items:center;gap:4px}
+.bpmbox .lab{font-size:6px;color:var(--mut)}
+#bpmInput{width:52px;text-align:center;font-size:10px;padding:8px 2px;color:var(--green)}
+.posbox{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid var(--line);background:var(--bg0);padding:5px 8px;min-width:70px}
+#posDisplay{font-size:10px;color:var(--yellow)}
+#posDisplay.live{color:var(--green)}
+#beatLeds{display:flex;gap:3px}
+#beatLeds i{width:8px;height:8px;background:var(--line);display:block}
+#beatLeds i.on{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+
+#main{flex:1;display:grid;grid-template-columns:232px minmax(0,1fr) 284px;min-height:0;gap:0}
+#tracksPanel{background:var(--bg1);border-right:3px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:2px solid var(--line)}
+.panel-h h2{font-size:8px;color:var(--blue)}
+#tracksList{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px}
+.tcard{border:2px solid var(--line);background:var(--bg2);padding:8px;display:grid;grid-template-columns:8px 1fr auto;gap:8px;align-items:center;cursor:pointer}
+.tcard.sel{border-color:var(--tc,var(--yellow));box-shadow:0 0 0 1px var(--tc,var(--yellow)),0 0 12px -4px var(--tc,var(--yellow))}
+.tcard.sup .tbody{opacity:.45}
+.tcard .cbar{width:8px;height:100%;min-height:30px;background:var(--tc)}
+.tbody{min-width:0}
+.tname{font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmeta{font-size:6px;color:var(--mut);margin-top:5px}
+.tms{display:flex;gap:4px}
+.tms .pbtn{min-width:26px;min-height:26px;padding:3px;font-size:7px}
+.tms .m.on{background:var(--red);color:#fff;border-color:#0b0e1f}
+.tms .s.on{background:var(--yellow);color:#10142c;border-color:#0b0e1f}
+
+#center{display:flex;flex-direction:column;min-width:0;min-height:0}
+#chipsStrip{display:none;gap:8px;overflow-x:auto;padding:8px 10px;background:var(--bg1);border-bottom:2px solid var(--line);flex:none}
+.chip{display:flex;align-items:center;gap:7px;flex:none;height:44px;padding:0 10px;background:var(--bg2);border:2px solid var(--line);font-size:8px}
+.chip.sel{border-color:var(--tc);background:var(--bg3);box-shadow:0 0 10px -4px var(--tc)}
+.chip .dot{width:10px;height:10px;background:var(--tc);flex:none}
+.chip .cm{min-width:32px;min-height:38px;padding:2px;font-size:7px;margin-left:2px}
+.chip .cm.on{background:var(--red);color:#fff;border-color:#0b0e1f}
+.chip.add,.chip.fx{color:var(--yellow)}
+#toolbar{display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--bg1);border-bottom:2px solid var(--line);overflow-x:auto;flex:none}
+#toolbar>*{flex:none}
+.tlab{font-size:6px;color:var(--mut)}
+.tsep{width:2px;height:24px;background:var(--line)}
+.step{display:flex;align-items:center;gap:4px}
+.stepval{min-width:34px;text-align:center;font-size:9px;color:var(--yellow)}
+#zoomVal{min-width:48px;font-size:8px}
+#rollWrap{flex:1;position:relative;min-height:120px;touch-action:none;background:var(--bg0)}
+#rollWrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#rollBase{pointer-events:none}
+#rollOverlay{touch-action:none}
+#hintbar{display:flex;justify-content:space-between;gap:10px;padding:6px 10px calc(6px + var(--sab));font-size:6px;color:var(--mut);background:var(--bg1);border-top:2px solid var(--line)}
+#hintbar b{color:var(--blue);font-weight:normal}
+
+/* ============ FX ПАНЕЛЬ ============ */
+#fxPanel{background:var(--bg1);border-left:3px solid var(--line);overflow-y:auto;padding:12px;min-height:0}
+.sheet-handle,.fxhead,.fxtabs{display:none}
+.fxsec{border:2px solid var(--line);background:var(--bg2);padding:10px;margin-bottom:12px}
+.fxsec h3{font-size:8px;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cdot{width:10px;height:10px;background:var(--yellow);display:inline-block}
+.lab{font-size:6px;color:var(--mut);margin:11px 0 6px}
+.seg4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.seg4 .pbtn{padding:8px 2px;font-size:6px;min-width:0}
+.hintbox{font-size:6px;color:var(--orange);border:2px dashed var(--orange);padding:7px;margin-top:8px;line-height:1.8}
+.srow{display:grid;grid-template-columns:32px 1fr 42px;align-items:center;gap:6px;margin:4px 0}
+.srow label{font-size:6px;color:var(--mut)}
+.sval{font-size:6px;text-align:right;color:var(--ink)}
+.btnrow{display:flex;gap:6px;margin-top:12px}
+.btnrow .pbtn{flex:1}
+#tDelete{margin-top:8px}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:30px;width:100%}
+input[type=range]::-webkit-slider-runnable-track{height:10px;background:var(--bg0);border:2px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;background:var(--ac,var(--yellow));border:2px solid var(--bg0);box-shadow:inset -2px -2px 0 rgba(0,0,0,.35)}
+input[type=range]::-moz-range-track{height:6px;background:var(--bg0);border:2px solid var(--line)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:0;background:var(--ac,var(--yellow));border:2px solid var(--bg0)}
+
+/* ============ ОВЕРЛЕИ ============ */
+#backdrop{position:fixed;inset:0;background:rgba(4,6,16,.62);z-index:40;display:none}
+#backdrop.show{display:block}
+#popup{position:fixed;z-index:70;display:none;min-width:196px;max-width:270px;max-height:70vh;overflow-y:auto;
+  background:var(--bg1);border:3px solid var(--line2);box-shadow:0 6px 0 rgba(0,0,0,.55)}
+#popup.show{display:block}
+#popup .phead{font-size:8px;color:var(--yellow);padding:9px 11px;border-bottom:2px solid var(--line);background:var(--bg2)}
+#popup .pitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;padding:11px;font-size:8px;color:var(--ink)}
+#popup .pitem:hover{background:var(--bg3)}
+#popup .pitem.danger{color:var(--red)}
+#popup hr{border:none;border-top:2px solid var(--line)}
+#popup .prow{display:flex;align-items:center;gap:5px;padding:7px 10px}
+#popup .prow .pl{font-size:6px;color:var(--mut);width:46px;flex:none}
+#popup .prow .pbtn{min-height:32px;min-width:32px;font-size:7px;padding:4px 6px}
+#popup .prow .pv{font-size:7px;color:var(--yellow);min-width:36px;text-align:center}
+#modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(4,6,16,.75);padding:16px}
+#modal.show{display:flex}
+.mbox{width:min(92vw,420px);background:var(--bg1);border:3px solid var(--line2);box-shadow:0 8px 0 rgba(0,0,0,.5);padding:16px}
+.mbox h3{font-size:10px;color:var(--yellow);margin-bottom:12px}
+.mbody{font-size:8px;line-height:1.9;color:var(--ink)}
+.mbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.pbar{height:18px;border:2px solid var(--line2);background:var(--bg0);margin-top:12px;overflow:hidden}
+.pfill{height:100%;width:30%;background:repeating-linear-gradient(90deg,var(--green) 0 8px,#00a52e 8px 16px);animation:pmove 1.1s steps(10) infinite}
+@keyframes pmove{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--sab));z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;max-width:94vw}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--bg1);border:2px solid var(--green);padding:10px 12px;font-size:7px;box-shadow:0 4px 0 rgba(0,0,0,.5);animation:tin .18s steps(4)}
+.toast.warn{border-color:var(--orange)}.toast.err{border-color:var(--red)}.toast.info{border-color:var(--blue)}
+.toast button{background:none;border:none;color:var(--yellow);font-size:7px;text-decoration:underline;padding:4px}
+@keyframes tin{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+#scanlines{position:fixed;inset:0;z-index:100;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(4,6,14,.16) 0 1px,transparent 1px 3px),
+  radial-gradient(120% 100% at 50% 45%,transparent 62%,rgba(4,6,14,.42))}
+
+/* ============ BOOT ============ */
+#boot{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;padding:20px;
+  background:radial-gradient(80% 60% at 50% 0%,#1D2B53 0%,#0b0e1f 70%),var(--bg0);overflow:hidden}
+#boot.off{animation:bootoff .35s steps(6) forwards}
+@keyframes bootoff{to{opacity:0;transform:scale(1.06)}}
+.bstars{position:absolute;inset:0;pointer-events:none}
+.bstars i{position:absolute;width:3px;height:3px;background:var(--ink);animation:tw 2.2s steps(2) infinite}
+@keyframes tw{0%,100%{opacity:.15}50%{opacity:.9}}
+.blogo{font-size:clamp(24px,7vw,44px);color:var(--yellow);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--bg2);position:relative}
+.blogo small{display:block;font-size:clamp(9px,2.6vw,14px);color:var(--blue);text-shadow:2px 2px 0 var(--bg2);margin-top:14px;letter-spacing:2px}
+.beq{display:flex;gap:5px;align-items:flex-end;height:56px}
+.beq i{width:10px;background:var(--green);animation:eq .8s steps(5) infinite alternate}
+@keyframes eq{from{height:12%}to{height:100%}}
+#bootBtn{font-size:12px;padding:18px 26px;--ac:var(--green);background:var(--green);color:#06131f;border-color:#06131f;animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{box-shadow:inset -2px -2px 0 rgba(0,0,0,.3),inset 2px 2px 0 rgba(255,255,255,.35),0 3px 0 var(--bg0),0 0 22px rgba(0,228,54,.55)}}
+#bootSub{font-size:7px;color:var(--mut);line-height:2}
+#bootFresh{background:none;border:none;color:var(--orange);font-size:7px;text-decoration:underline;padding:8px}
+.bfoot{position:absolute;bottom:calc(12px + var(--sab));font-size:6px;color:var(--lav)}
+
+/* ============ АДАПТИВ ============ */
+@media (pointer:coarse){
+  .pbtn{min-width:40px;min-height:40px}
+  .psel{min-height:40px}
+  input[type=range]{height:36px}
+  .tms .pbtn{min-width:30px;min-height:30px}
+}
+@media (max-width:1023px){
+  #main{grid-template-columns:200px minmax(0,1fr)}
+  #fxBtn{display:inline-flex}
+  #fxPanel{position:fixed;top:0;right:0;bottom:0;width:min(320px,92vw);z-index:50;transform:translateX(105%);transition:transform .22s steps(6);
+    border-left:3px solid var(--line2);padding:14px 14px calc(14px + var(--sab));box-shadow:-8px 0 0 rgba(0,0,0,.4)}
+  #fxPanel.open{transform:none}
+  .fxhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .fxtitle{font-size:9px;color:var(--yellow)}
+}
+@media (min-width:1024px){#fxBtn{display:none}}
+@media (max-width:767px){
+  #main{display:flex;flex-direction:column}
+  #tracksPanel{display:none}
+  #chipsStrip{display:flex}
+  .logo{font-size:9px}.logo small{display:none}
+  #topbar{gap:8px;padding:calc(6px + var(--sat)) 8px 7px}
+  .transport{order:2;width:100%;justify-content:space-between}
+  .utils{order:1}
+  #hintbar{display:none}
+  #fxPanel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:min(74vh,560px);max-height:min(74dvh,560px);
+    transform:translateY(105%);border-left:none;border-top:3px solid var(--line2);box-shadow:0 -8px 0 rgba(0,0,0,.4)}
+  #fxPanel.open{transform:none}
+  .sheet-handle{display:block;width:52px;height:5px;background:var(--line2);margin:0 auto 10px}
+  .fxtabs{display:flex;gap:6px;margin-bottom:12px}
+  .fxtabs .pbtn{flex:1}
+  #fxPanel[data-tab="track"] #secMaster{display:none}
+  #fxPanel[data-tab="master"] #secTrack{display:none}
+  #toolbar{padding:7px 8px}
+}
+@media (max-width:1023px) and (orientation:landscape) and (max-height:520px){
+  .logo{display:none}
+  .transport{order:0;width:auto}
+  #topbar{padding-top:calc(4px + var(--sat));padding-bottom:5px;gap:8px}
+  #chipsStrip{padding:5px 8px}
+  .chip{height:40px}
+  #toolbar{padding:5px 8px}
+  #hintbar{display:none}
+  #fxPanel{max-height:92dvh}
+  .posbox{padding:3px 6px;min-width:60px}
+}
+</style>
+</head>
+<body>
+<noscript><div style="padding:30px;font-size:10px">НУЖЕН JAVASCRIPT · PLEASE ENABLE JS</div></noscript>
+
+<div id="app">
+  <header id="topbar">
+    <div class="logo">8-BIT<small>MUSIC MAKER</small></div>
+    <div class="hgroup transport">
+      <button id="playBtn" class="pbtn" style="--ac:var(--green)" title="Играть / Пауза (Space)" aria-label="Играть"></button>
+      <button id="stopBtn" class="pbtn" style="--ac:var(--red)" title="Стоп" aria-label="Стоп"></button>
+      <button id="loopBtn" class="pbtn" style="--ac:var(--blue)" title="Луп" aria-label="Луп"></button>
+      <div class="bpmbox">
+        <span class="lab">BPM</span>
+        <button id="bpmMinus" class="pbtn sq" title="Медленнее" aria-label="BPM минус"></button>
+        <input id="bpmInput" class="pinput" type="text" inputmode="numeric" pattern="[0-9]*" value="128" aria-label="Темп BPM">
+        <button id="bpmPlus" class="pbtn sq" title="Быстрее" aria-label="BPM плюс"></button>
+      </div>
+      <div class="posbox" title="ТАКТ : ДОЛЯ">
+        <div id="posDisplay">01:1</div>
+        <div id="beatLeds"></div>
+      </div>
+    </div>
+    <div class="hgroup utils">
+      <button id="undoBtn" class="pbtn" title="Отменить (Ctrl+Z)" aria-label="Отменить" disabled></button>
+      <button id="muteBtn" class="pbtn" style="--ac:var(--red)" title="Звук вкл/выкл" aria-label="Звук"></button>
+      <button id="fxBtn" class="pbtn" style="--ac:var(--pink)" title="Звук и эффекты" aria-label="Эффекты"></button>
+      <button id="menuBtn" class="pbtn" title="Файл / Меню" aria-label="Меню"></button>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside id="tracksPanel">
+      <div class="panel-h"><h2>ДОРОЖКИ</h2><button id="tracksAdd" class="pbtn sq" style="--ac:var(--green)" title="Добавить дорожку" aria-label="Добавить дорожку"></button></div>
+      <div id="tracksList"></div>
+    </aside>
+
+    <section id="center">
+      <div id="chipsStrip"></div>
+      <div id="toolbar">
+        <div class="hgroup" id="tools">
+          <button class="pbtn tool on" data-tool="draw" title="Рисовать (1)" aria-label="Рисовать"></button>
+          <button class="pbtn tool" data-tool="erase" title="Ластик (2)" aria-label="Ластик"></button>
+          <button class="pbtn tool" data-tool="pan" title="Двигать вид (3)" aria-label="Двигать вид"></button>
+        </div>
+        <div class="tsep"></div>
+        <label class="tlab" for="gridSel">СЕТКА</label>
+        <select id="gridSel" class="psel" title="Шаг сетки">
+          <option value="4">1/4</option><option value="2" selected>1/8</option><option value="1">1/16</option>
+        </select>
+        <label class="tlab" for="meterSel">РАЗМЕР</label>
+        <select id="meterSel" class="psel" title="Тактовый размер">
+          <option value="2">2/4</option><option value="3">3/4</option><option value="4" selected>4/4</option><option value="5">5/4</option>
+        </select>
+        <div class="tsep"></div>
+        <span class="tlab">ТАКТЫ</span>
+        <div class="step">
+          <button id="barsMinus" class="pbtn sq" title="Убрать такт" aria-label="Убрать такт"></button>
+          <span id="barsVal" class="stepval">4</span>
+          <button id="barsPlus" class="pbtn sq" style="--ac:var(--green)" title="Добавить такт" aria-label="Добавить такт"></button>
+        </div>
+        <div class="tsep"></div>
+        <button id="followBtn" class="pbtn on" style="--ac:var(--blue)" title="Следовать за курсором" aria-label="Следование"></button>
+        <div class="step">
+          <button id="zoomMinus" class="pbtn sq" title="Отдалить" aria-label="Отдалить"></button>
+          <span id="zoomVal" class="stepval">100%</span>
+          <button id="zoomPlus" class="pbtn sq" title="Приблизить" aria-label="Приблизить"></button>
+        </div>
+      </div>
+      <div id="rollWrap">
+        <canvas id="rollBase"></canvas>
+        <canvas id="rollOverlay"></canvas>
+      </div>
+      <footer id="hintbar">
+        <span>ТАП — НОТА · ТЯНИ ВПРАВО — ДЛИНА · 2 ПАЛЬЦА — ЗУМ/ПАН · ДОЛГОЕ НАЖАТИЕ — МЕНЮ НОТЫ</span>
+        <span>НОТ: <b id="noteCount">0</b> · ДОРОЖЕК: <b id="trackCount">0</b></span>
+      </footer>
+    </section>
+
+    <aside id="fxPanel" data-tab="track">
+      <div class="sheet-handle"></div>
+      <div class="fxhead"><span class="fxtitle">ЗВУК</span><button id="fxClose" class="pbtn sq" title="Закрыть" aria-label="Закрыть"></button></div>
+      <div class="fxtabs">
+        <button id="tabTrack" class="pbtn on" style="--ac:var(--yellow)">ДОРОЖКА</button>
+        <button id="tabMaster" class="pbtn" style="--ac:var(--pink)">МАСТЕР</button>
+      </div>
+      <section id="secTrack" class="fxsec">
+        <h3><span id="tColorDot" class="cdot"></span>ДОРОЖКА</h3>
+        <input id="tName" class="pinput" maxlength="14" placeholder="ИМЯ ДОРОЖКИ" aria-label="Имя дорожки">
+        <div class="lab">ИНСТРУМЕНТ</div>
+        <div id="tInst" class="seg4">
+          <button class="pbtn" data-inst="pulse" style="--ac:var(--blue)" title="Pulse — чиптюн-лид">PULSE</button>
+          <button class="pbtn" data-inst="triangle" style="--ac:var(--green)" title="Triangle — бас NES">TRI</button>
+          <button class="pbtn" data-inst="noise" style="--ac:var(--red)" title="Noise — барабаны">NOISE</button>
+          <button class="pbtn" data-inst="sawtooth" style="--ac:var(--orange)" title="Sawtooth — пила">SAW</button>
+        </div>
+        <div id="dutyRow">
+          <div class="lab">СКВАЖНОСТЬ · PULSE WIDTH</div>
+          <div id="tDuty" class="seg4">
+            <button class="pbtn" data-duty="0.125">12%</button>
+            <button class="pbtn" data-duty="0.25">25%</button>
+            <button class="pbtn" data-duty="0.5">50%</button>
+            <button class="pbtn" data-duty="0.75">75%</button>
+          </div>
+        </div>
+        <div id="noiseHint" class="hintbox" style="display:none">НИЗ = БОЧКА · СЕРЕДИНА = СНЕЙР · ВЕРХ = ХЭТ</div>
+        <div class="lab">ОГИБАЮЩАЯ · ADSR</div>
+        <div class="srow"><label title="Атака">ATK</label><input type="range" id="sA" min="0" max="0.3" step="0.005"><span class="sval" id="vA"></span></div>
+        <div class="srow"><label title="Спад">DCY</label><input type="range" id="sD" min="0.01" max="0.8" step="0.01"><span class="sval" id="vD"></span></div>
+        <div class="srow"><label title="Сустейн">SUS</label><input type="range" id="sS" min="0" max="1" step="0.05"><span class="sval" id="vS"></span></div>
+        <div class="srow"><label title="Отпускание">REL</label><input type="range" id="sR" min="0.01" max="1.2" step="0.01"><span class="sval" id="vR"></span></div>
+        <div class="lab">МИКШЕР ДОРОЖКИ</div>
+        <div class="srow"><label title="Громкость">VOL</label><input type="range" id="tVol" min="0" max="1" step="0.02" style="--ac:var(--green)"><span class="sval" id="vVol"></span></div>
+        <div class="srow"><label title="Панорама">PAN</label><input type="range" id="tPan" min="-1" max="1" step="0.05" style="--ac:var(--blue)"><span class="sval" id="vPan"></span></div>
+        <div class="srow"><label title="Посыл в эхо">ECHO</label><input type="range" id="tEcho" min="0" max="1" step="0.02" style="--ac:var(--pink)"><span class="sval" id="vEcho"></span></div>
+        <div class="srow"><label title="Посыл в реверб">VERB</label><input type="range" id="tVerb" min="0" max="1" step="0.02" style="--ac:var(--orange)"><span class="sval" id="vVerb"></span></div>
+        <div class="btnrow">
+          <button id="tMute" class="pbtn" style="--ac:var(--red)">MUTE</button>
+          <button id="tSolo" class="pbtn" style="--ac:var(--yellow)">SOLO</button>
+        </div>
+        <button id="tDelete" class="pbtn wide danger">УДАЛИТЬ ДОРОЖКУ</button>
+      </section>
+      <section id="secMaster" class="fxsec">
+        <h3><span class="cdot" style="background:var(--pink)"></span>МАСТЕР-ШИНА</h3>
+        <div class="srow"><label title="Общая громкость">VOL</label><input type="range" id="mVol" min="0" max="1" step="0.02" style="--ac:var(--green)"><span class="sval" id="vMVol"></span></div>
+        <div class="srow"><label title="Мастер-эхо">ECHO</label><input type="range" id="mEcho" min="0" max="1" step="0.02" style="--ac:var(--pink)"><span class="sval" id="vMEcho"></span></div>
+        <div class="srow"><label title="Мастер-реверб">VERB</label><input type="range" id="mVerb" min="0" max="1" step="0.02" style="--ac:var(--orange)"><span class="sval" id="vMVerb"></span></div>
+        <div class="srow"><label title="Обратная связь эхо">FB</label><input type="range" id="mFb" min="0" max="0.85" step="0.05" style="--ac:var(--red)"><span class="sval" id="vMFb"></span></div>
+        <div class="lab">ВРЕМЯ ЭХО (СИНХРО С BPM)</div>
+        <select id="mTime" class="psel" style="width:100%">
+          <option value="2">1/8</option><option value="3" selected>3/16 · DOTTED</option>
+          <option value="4">1/4</option><option value="8">1/2</option>
+        </select>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div id="backdrop"></div>
+<div id="popup"></div>
+<div id="modal"><div class="mbox"><h3 id="modalTitle"></h3><div class="mbody" id="modalBody"></div><div class="mbtns" id="modalBtns"></div></div></div>
+<div id="toasts"></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<div id="scanlines"></div>
+
+<div id="boot">
+  <div class="bstars" id="bstars"></div>
+  <div class="blogo">8-BIT<small>MUSIC MAKER</small></div>
+  <div class="beq" id="beq"></div>
+  <button id="bootBtn" class="pbtn">▶ СТАРТ</button>
+  <div id="bootSub">WEB AUDIO · CHIPTUNE SEQUENCER<br>ЛУЧШЕ В НАУШНИКАХ</div>
+  <button id="bootFresh" style="display:none">СБРОС · ЗАГРУЗИТЬ ДЕМО</button>
+  <div class="bfoot">V1.0 · РАБОТАЕТ ОФЛАЙН · PULSE / TRIANGLE / NOISE / SAW</div>
+</div>
+
+<script>
+"use strict";
+/* ==================================================================
+   8-BIT MUSIC MAKER · один файл, без зависимостей
+   Модули: ICONS · AudioEngine · PianoRoll · UI/App
+================================================================== */
+
+/* ---------- утилиты ---------- */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const uid=()=>'t'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+const pad2=n=>String(n).padStart(2,'0');
+const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const noteName=p=>NOTE_NAMES[p%12]+(Math.floor(p/12)-1);
+const LEN_NAMES={1:'1/16',2:'1/8',3:'3/16',4:'1/4',6:'3/8',8:'1/2',12:'3/4',16:'1/1'};
+const lenName=l=>LEN_NAMES[l]||(l+'/16');
+const pct=v=>Math.round(v*100)+'%';
+const ms=v=>Math.round(v*1000)+'мс';
+const panFmt=v=>Math.abs(v)<0.03?'C':(v<0?'L':'R')+Math.round(Math.abs(v)*100);
+function shade(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function darken(hex,f){const n=parseInt(hex.slice(1),16);return `rgb(${Math.round((n>>16&255)*f)},${Math.round((n>>8&255)*f)},${Math.round((n&255)*f)})`;}
+function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);}
+
+const PAL={bg:'#0b0e1f',bg1:'#131834',bg2:'#1D2B53',bg3:'#24356b',line:'#35447e',line2:'#4a5da8',
+  ink:'#FFF1E8',mut:'#83769C',red:'#FF004D',orange:'#FFA300',yellow:'#FFEC27',green:'#00E436',
+  blue:'#29ADFF',pink:'#FF77A8',lav:'#83769C',peach:'#FFCCAA'};
+const TRACK_COLORS=[PAL.blue,PAL.green,PAL.red,PAL.orange,PAL.pink,PAL.yellow,PAL.lav,PAL.peach];
+
+/* ---------- пиксельные иконки (8×8 битмапы → SVG) ---------- */
+const ICONS={
+play:["XX......","XXXX....","XXXXXX..","XXXXXXXX","XXXXXXXX","XXXXXX..","XXXX....","XX......"],
+pause:["........",".XX..XX.",".XX..XX.",".XX..XX.",".XX..XX.",".XX..XX.",".XX..XX.","........"],
+stop:["........",".XXXXXX.",".XXXXXX.",".XXXXXX.",".XXXXXX.",".XXXXXX.",".XXXXXX.","........"],
+loop:["..XXXX..",".X....X.","X......X","X.....XX","XX.....X","X......X",".X....X.","..XXXX.."],
+pencil:["......XX",".....XXX","....XXX.","...XXX..","..XXX...",".XXX....","XXX.....","XX......"],
+eraser:["........","....XXX.","...XXXXX","..XXXXXX",".XXXXXX.","XXXXXX..","XXXXX...",".XXX...."],
+move:["...XX...","..XXXX..","...XX...","X..XX..X","XXXXXXXX","X..XX..X","..XXXX..","...XX..."],
+eye:["........","..XXXX..",".X....X.","X..XX..X","X..XX..X",".X....X.","..XXXX..","........"],
+undo:["..X.....",".XX.....","XXXXXXX.",".XX....X","..X....X",".......X","X.....X.",".XXXXX.."],
+vol:["....X...","...XX...",".XXXX..X",".XXXX.X.",".XXXX.X.",".XXXX..X","...XX...","....X..."],
+mute:["....X...","...XX...",".XXXX...",".XXXXX.X",".XXXX.X.",".XXXXX.X","...XX...","....X..."],
+floppy:["XXXXXXX.","XX...XXX","XX...XXX","XXXXXXXX","XXXXXXXX","XX....XX","XX....XX","XXXXXXXX"],
+fx:[".X..X..X",".X.XXX.X",".X.XXX.X",".X..X..X","XXX.X..X","XXX.X..X",".X..X..X",".X..X..X"],
+plus:["........","...XX...","...XX...",".XXXXXX.",".XXXXXX.","...XX...","...XX...","........"],
+minus:["........","........","........",".XXXXXX.",".XXXXXX.","........","........","........"],
+close:["XX....XX","XXX..XXX",".XXXXXX.","..XXXX..","..XXXX..",".XXXXXX.","XXX..XXX","XX....XX"],
+trash:["..XXXX..","XXXXXXXX",".XXXXXX.",".X.XX.X.",".X.XX.X.",".X.XX.X.",".X.XX.X.",".XXXXXX."],
+note:["...XXXX.","...X..X.","...X....","...X....","...X....",".XXX....","XXXX....",".XX....."],
+down:["...XX...","...XX...","...XX...","X..XX..X","XX.XX.XX",".XXXXXX.","..XXXX..","XXXXXXXX"],
+up:["...XX...","..XXXX..",".XXXXXX.","XX.XX.XX","X..XX..X","...XX...","...XX...","XXXXXXXX"],
+check:["........","......XX",".....XX.","X...XX..","XX.XX...",".XXXX...","..XX....","........"]
+};
+function icon(name,size=16,color){
+  const rows=ICONS[name]||ICONS.note;let d='';
+  rows.forEach((row,y)=>{let x=0;while(x<8){if(row[x]==='X'){let w=1;while(row[x+w]==='X')w++;d+=`M${x} ${y}h${w}v1h-${w}z`;x+=w;}else x++;}});
+  return `<svg width="${size}" height="${size}" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"${color?` style="color:${color}"`:''}><path fill="currentColor" d="${d}"/></svg>`;
+}
+
+/* ---------- пресеты / демо / валидация ---------- */
+const PRESETS={
+  pulse:{label:'ЛИД',inst:{type:'pulse',duty:0.25,a:0.004,d:0.09,s:0.55,r:0.06},gain:0.75,pan:0,echo:0.2,verb:0.12,color:PAL.blue},
+  triangle:{label:'БАСС',inst:{type:'triangle',duty:0.25,a:0.003,d:0.08,s:0.7,r:0.05},gain:0.85,pan:0,echo:0,verb:0.05,color:PAL.green},
+  noise:{label:'ДРАМ',inst:{type:'noise',duty:0.25,a:0.001,d:0.1,s:0,r:0.05},gain:0.9,pan:0,echo:0.08,verb:0.08,color:PAL.red},
+  sawtooth:{label:'ПИЛА',inst:{type:'sawtooth',duty:0.25,a:0.01,d:0.15,s:0.5,r:0.12},gain:0.6,pan:0,echo:0.25,verb:0.25,color:PAL.orange}
+};
+function makeTrack(key,name,color){
+  const p=PRESETS[key];
+  return {id:uid(),name:name||p.label,color:color||p.color,inst:{...p.inst},gain:p.gain,pan:p.pan,echo:p.echo,verb:p.verb,mute:false,solo:false,notes:[]};
+}
+function makeDemo(){
+  const lead=makeTrack('pulse','ЛИД',PAL.blue);
+  lead.notes=[[0,69,2],[2,72,2],[4,76,4],[8,74,2],[10,72,2],[12,69,4],
+    [16,67,2],[18,71,2],[20,74,4],[24,72,2],[26,71,2],[28,67,4],
+    [32,65,2],[34,69,2],[36,72,4],[40,71,2],[42,69,2],[44,65,4],
+    [48,64,2],[50,67,2],[52,71,2],[54,72,2],[56,74,2],[58,76,4],[62,71,2]]
+    .map(([s,p,l],i)=>({s,p,l,v:i%6===2?1:0.85}));
+  const bass=makeTrack('triangle','БАСС',PAL.green);
+  [45,43,41,40].forEach((root,b)=>{for(let k=0;k<8;k++)bass.notes.push({s:b*16+k*2,p:root+(k%2?12:0),l:2,v:0.9});});
+  const drum=makeTrack('noise','ДРАМ',PAL.red);
+  for(let b=0;b<4;b++){
+    drum.notes.push({s:b*16,p:36,l:1,v:1},{s:b*16+8,p:36,l:1,v:1},
+      {s:b*16+4,p:50,l:1,v:0.9},{s:b*16+12,p:50,l:1,v:0.9});
+    [2,6,10,14].forEach(o=>{if(!(b===3&&o===14))drum.notes.push({s:b*16+o,p:66,l:1,v:0.5});});
+  }
+  [[60,50,0.7],[61,50,0.8],[62,52,0.9],[63,54,1]].forEach(([s,p,v])=>drum.notes.push({s,p,l:1,v}));
+  const arp=makeTrack('pulse','АРП',PAL.yellow);
+  arp.inst.duty=0.125;arp.gain=0.42;arp.pan=0.25;arp.echo=0.3;arp.verb=0.2;
+  [[57,60,64,69],[55,59,62,67],[53,57,60,65],[52,56,59,64]].forEach((ch,b)=>{
+    for(let k=0;k<16;k++)arp.notes.push({s:b*16+k,p:ch[k%4],l:1,v:k%4===0?0.55:0.45});
+  });
+  return {version:1,bpm:128,beats:4,bars:4,grid:2,loop:true,
+    master:{vol:0.85,echo:0.1,verb:0.16,echoTime:3,echoFb:0.35,mute:false},
+    tracks:[lead,bass,drum,arp]};
+}
+function makeEmpty(){
+  return {version:1,bpm:120,beats:4,bars:4,grid:2,loop:true,
+    master:{vol:0.85,echo:0.1,verb:0.16,echoTime:3,echoFb:0.35,mute:false},
+    tracks:[makeTrack('pulse','ЛИД',PAL.blue)]};
+}
+function sanitizeProject(raw){
+  if(!raw||!Array.isArray(raw.tracks)||raw.tracks.length===0)throw new Error('bad');
+  const beats=[2,3,4,5].includes(+raw.beats)?+raw.beats:4;
+  const bars=clamp(Math.round(+raw.bars)||4,1,32);
+  const L=bars*beats*4;
+  const num=(v,d,a,b)=>isFinite(+v)?clamp(+v,a,b):d;
+  const m=raw.master||{};
+  const p={version:1,bpm:clamp(Math.round(+raw.bpm)||120,40,240),beats,bars,
+    grid:[1,2,4].includes(+raw.grid)?+raw.grid:2,loop:raw.loop!==false,
+    master:{vol:num(m.vol,0.85,0,1),echo:num(m.echo,0.1,0,1),verb:num(m.verb,0.16,0,1),
+      echoTime:[2,3,4,8].includes(+m.echoTime)?+m.echoTime:3,echoFb:num(m.echoFb,0.35,0,0.85),mute:!!m.mute},
+    tracks:[]};
+  raw.tracks.slice(0,8).forEach((t,i)=>{
+    if(!t)return;
+    const ti=t.inst||{};
+    const type=['pulse','triangle','noise','sawtooth'].includes(ti.type)?ti.type:'pulse';
+    const tr={id:String(t.id||uid()),name:String(t.name||('ТРЕК '+(i+1))).slice(0,14),
+      color:/^#[0-9a-fA-F]{6}$/.test(t.color)?t.color:TRACK_COLORS[i%8],
+      inst:{type,duty:[0.125,0.25,0.5,0.75].includes(+ti.duty)?+ti.duty:0.25,
+        a:num(ti.a,0.004,0,0.3),d:num(ti.d,0.1,0.01,0.8),s:num(ti.s,0.5,0,1),r:num(ti.r,0.08,0.01,1.2)},
+      gain:num(t.gain,0.8,0,1),pan:num(t.pan,0,-1,1),echo:num(t.echo,0,0,1),verb:num(t.verb,0,0,1),
+      mute:!!t.mute,solo:!!t.solo,notes:[]};
+    (Array.isArray(t.notes)?t.notes:[]).slice(0,512).forEach(n=>{
+      if(!n||!isFinite(+n.s)||!isFinite(+n.p))return;
+      const s=clamp(Math.round(+n.s),0,L-1);
+      tr.notes.push({s,p:clamp(Math.round(+n.p),24,107),l:clamp(Math.round(+n.l)||1,1,L-s),v:num(n.v,0.9,0.1,1)});
+    });
+    p.tracks.push(tr);
+  });
+  if(!p.tracks.length)throw new Error('bad');
+  return p;
+}
+
+/* ==================================================================
+   AUDIO ENGINE · Web Audio: синтез, планировщик, эффекты, WAV
+================================================================== */
+class AudioEngine{
+  constructor(){
+    this.ctx=null;this.graph=null;this.project=null;
+    this.playing=false;this.timer=null;this.voices=[];
+    this.events=[];this.evIdx=0;this.cycle=0;
+    this.anchorStep=0;this.anchorTime=0;this.sp16=60/128/4;
+    this.onEnd=null;
+  }
+  len(){return this.project.bars*this.project.beats*4;}
+  unlock(project){
+    this.project=project;this.sp16=60/project.bpm/4;
+    if(this.ctx){if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});return true;}
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return false;
+    try{this.ctx=new AC({latencyHint:'interactive'});}catch(e){return false;}
+    this.graph=this.buildGraph(this.ctx,project,true);
+    this.applyAll();
+    if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});
+    return true;
+  }
+  /* --- граф: mix → master → comp → out; посылы в delay и convolver --- */
+  buildGraph(ctx,project,live){
+    const nodes=[];const G=n=>{nodes.push(n);return n;};
+    const mix=G(ctx.createGain()),master=G(ctx.createGain()),comp=G(ctx.createDynamicsCompressor());
+    comp.threshold.value=-14;comp.knee.value=8;comp.ratio.value=3.5;comp.attack.value=0.004;comp.release.value=0.18;
+    const delay=G(ctx.createDelay(4)),fb=G(ctx.createGain()),tone=G(ctx.createBiquadFilter()),dRet=G(ctx.createGain());
+    tone.type='lowpass';tone.frequency.value=2800;dRet.gain.value=0.95;
+    const conv=G(ctx.createConvolver()),vRet=G(ctx.createGain());vRet.gain.value=0.9;
+    conv.buffer=this.makeImpulse(ctx);
+    const mEcho=G(ctx.createGain()),mVerb=G(ctx.createGain()),preview=G(ctx.createGain());
+    preview.gain.value=0.5;
+    mix.connect(master);master.connect(comp);comp.connect(ctx.destination);
+    mix.connect(mEcho);mEcho.connect(delay);mix.connect(mVerb);mVerb.connect(conv);
+    delay.connect(tone);tone.connect(fb);fb.connect(delay);
+    delay.connect(dRet);dRet.connect(master);conv.connect(vRet);vRet.connect(master);
+    preview.connect(master);
+    const nb=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+    const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+    const graph={ctx,live,nodes,mix,master,comp,delay,fb,tone,dRet,conv,vRet,mEcho,mVerb,preview,noise:nb,pulse:{},tracks:new Map()};
+    project.tracks.forEach(tr=>this.makeChain(graph,tr));
+    return graph;
+  }
+  makeImpulse(ctx){
+    const len=Math.floor(ctx.sampleRate*1.7),buf=ctx.createBuffer(2,len,ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);let lp=0;
+      for(let i=0;i<len;i++){const x=(Math.random()*2-1)*Math.pow(1-i/len,2.4);lp+=0.45*(x-lp);d[i]=lp*0.9;}}
+    return buf;
+  }
+  makeChain(graph,tr){
+    const ctx=graph.ctx;const G=n=>{graph.nodes.push(n);return n;};
+    const inp=G(ctx.createGain()),g=G(ctx.createGain());
+    const pan=ctx.createStereoPanner?G(ctx.createStereoPanner()):G(ctx.createGain());
+    const echo=G(ctx.createGain()),verb=G(ctx.createGain());
+    inp.connect(g);g.connect(pan);pan.connect(graph.mix);
+    pan.connect(echo);echo.connect(graph.delay);pan.connect(verb);verb.connect(graph.conv);
+    graph.tracks.set(tr.id,{in:inp,g,pan,echo,verb,all:[inp,g,pan,echo,verb]});
+  }
+  ensureTracks(project){
+    if(!this.graph)return;
+    for(const [id,ch] of this.graph.tracks){
+      if(!project.tracks.some(t=>t.id===id)){ch.all.forEach(n=>{try{n.disconnect();}catch(e){}});this.graph.tracks.delete(id);}
+    }
+    project.tracks.forEach(tr=>{if(!this.graph.tracks.has(tr.id))this.makeChain(this.graph,tr);});
+    this.applyAllGains();
+  }
+  effGain(tr){
+    const anySolo=this.project.tracks.some(t=>t.solo);
+    return (tr.mute||(anySolo&&!tr.solo))?0:tr.gain;
+  }
+  applyTrack(tr){
+    if(!this.graph)return;const ch=this.graph.tracks.get(tr.id);if(!ch)return;
+    const now=this.ctx.currentTime;
+    ch.g.gain.setTargetAtTime(this.effGain(tr),now,0.02);
+    if(ch.pan.pan)ch.pan.pan.setTargetAtTime(tr.pan,now,0.02);
+    ch.echo.gain.setTargetAtTime(tr.echo,now,0.03);
+    ch.verb.gain.setTargetAtTime(tr.verb,now,0.03);
+  }
+  applyAllGains(){if(this.project)this.project.tracks.forEach(t=>this.applyTrack(t));}
+  applyMaster(){
+    if(!this.graph)return;const m=this.project.master,now=this.ctx.currentTime,g=this.graph;
+    g.master.gain.setTargetAtTime(m.mute?0:m.vol,now,0.03);
+    g.mEcho.gain.setTargetAtTime(m.echo,now,0.03);
+    g.mVerb.gain.setTargetAtTime(m.verb,now,0.03);
+    g.fb.gain.setTargetAtTime(m.echoFb,now,0.03);
+    g.delay.delayTime.setTargetAtTime(clamp(m.echoTime*this.sp16,0.05,3.9),now,0.12);
+  }
+  applyAll(){if(!this.graph)return;this.ensureTracks(this.project);this.applyMaster();}
+  /* --- голоса --- */
+  getPulse(graph,duty){
+    const key=String(duty);
+    if(!graph.pulse[key]){
+      const N=48,re=new Float32Array(N),im=new Float32Array(N);
+      for(let n=1;n<N;n++){re[n]=(2/(n*Math.PI))*Math.sin(2*Math.PI*n*duty);im[n]=(2/(n*Math.PI))*(1-Math.cos(2*Math.PI*n*duty));}
+      graph.pulse[key]=graph.ctx.createPeriodicWave(re,im,{disableNormalization:false});
+    }
+    return graph.pulse[key];
+  }
+  noiseZone(p){
+    if(p<44)return{type:'lowpass',freq:clamp(110*Math.pow(2,(p-36)/12),60,380),q:1.1,dMul:1.5,kick:true};
+    if(p<60)return{type:'bandpass',freq:clamp(1500*Math.pow(2,(p-50)/12),700,3400),q:0.8,dMul:0.9,kick:false};
+    return{type:'highpass',freq:clamp(6000*Math.pow(2,(p-66)/12),4200,9500),q:0.7,dMul:0.42,kick:false};
+  }
+  voice(graph,tr,n,when,dur,preview=false){
+    const ctx=graph.ctx,inst=tr.inst,v=n.v==null?0.9:n.v;
+    const dest=preview?graph.preview:(graph.tracks.get(tr.id)||{}).in;
+    if(!dest)return;
+    const env=ctx.createGain();env.connect(dest);
+    const a=Math.max(0.002,inst.a),d=Math.max(0.005,inst.d),r=Math.max(0.01,inst.r),s=clamp(inst.s,0,1);
+    const gate=Math.max(0.03,dur*0.92);
+    let src,dMul=1;
+    if(inst.type==='noise'){
+      src=ctx.createBufferSource();src.buffer=graph.noise;src.loop=true;
+      const z=this.noiseZone(n.p),f=ctx.createBiquadFilter();
+      f.type=z.type;f.frequency.value=z.freq;f.Q.value=z.q;
+      src.connect(f);f.connect(env);dMul=z.dMul;
+      if(z.kick){ /* тело бочки: короткий triangle-свип */
+        const o=ctx.createOscillator(),bg=ctx.createGain();
+        o.type='triangle';o.frequency.setValueAtTime(160,when);o.frequency.exponentialRampToValueAtTime(45,when+0.09);
+        bg.gain.setValueAtTime(v*0.9,when);bg.gain.exponentialRampToValueAtTime(0.0001,when+0.13);
+        o.connect(bg);bg.connect(dest);o.start(when);o.stop(when+0.15);
+        if(graph.live)this.trackVoice({src:o,env:bg,when});
+      }
+    }else{
+      src=ctx.createOscillator();
+      if(inst.type==='pulse')src.setPeriodicWave(this.getPulse(graph,inst.duty));
+      else src.type=inst.type==='triangle'?'triangle':'sawtooth';
+      src.frequency.value=440*Math.pow(2,(n.p-69)/12);
+      src.connect(env);
+    }
+    const dd=d*dMul,sus=Math.max(0.0001,v*s);
+    env.gain.setValueAtTime(0.0001,when);
+    env.gain.linearRampToValueAtTime(v,when+a);
+    env.gain.linearRampToValueAtTime(sus,when+a+dd);
+    const relStart=when+Math.max(gate,a+dd+0.005);
+    env.gain.setValueAtTime(sus,relStart);
+    env.gain.linearRampToValueAtTime(0.0001,relStart+r);
+    const end=relStart+r+0.03;
+    if(inst.type==='noise')src.start(when,Math.random()*1.2);else src.start(when);
+    src.stop(end);
+    if(graph.live)this.trackVoice({src,env,when});
+  }
+  trackVoice(h){
+    this.voices.push(h);
+    h.src.onended=()=>{const i=this.voices.indexOf(h);if(i>=0)this.voices.splice(i,1);try{h.env.disconnect();}catch(e){}};
+    if(this.voices.length>34)this.kill(this.voices.shift(),0.02);
+  }
+  kill(h,fade){
+    const now=this.ctx.currentTime;
+    try{h.env.gain.cancelScheduledValues(now);h.env.gain.setTargetAtTime(0.0001,now,fade/3);h.src.stop(now+fade+0.005);}catch(e){}
+  }
+  panic(fade=0.04){this.voices.slice().forEach(h=>this.kill(h,fade));}
+  cancelFuture(){
+    const now=this.ctx.currentTime;
+    this.voices.slice().forEach(h=>{if(h.when>now+0.02)this.kill(h,0.01);});
+  }
+  preview(tr,pitch,dur=0.22){
+    if(!this.graph||!tr)return;
+    this.voice(this.graph,tr,{p:pitch,v:0.9},this.ctx.currentTime+0.01,dur,true);
+  }
+  /* --- планировщик с lookahead --- */
+  rebuildEvents(){
+    const ev=[];
+    this.project.tracks.forEach(tr=>tr.notes.forEach(n=>ev.push({s:n.s,l:n.l,p:n.p,v:n.v,tr})));
+    ev.sort((a,b)=>a.s-b.s);this.events=ev;
+  }
+  lowerBound(step){
+    let lo=0,hi=this.events.length;
+    while(lo<hi){const mid=(lo+hi)>>1;if(this.events[mid].s<step)lo=mid+1;else hi=mid;}
+    return lo;
+  }
+  anchor(step){
+    this.anchorStep=step;this.anchorTime=this.ctx.currentTime+0.05;
+    this.cycle=0;this.evIdx=this.lowerBound(step+1e-4);
+  }
+  play(project,fromStep){
+    if(!this.ctx||this.playing)return;
+    this.project=project;this.sp16=60/project.bpm/4;
+    this.rebuildEvents();this.anchor(clamp(fromStep,0,this.len()-1));
+    this.playing=true;this.tick();
+    this.timer=setInterval(()=>this.tick(),25);
+  }
+  tick(){
+    if(!this.playing)return;
+    const now=this.ctx.currentTime,ahead=now+0.12,L=this.len();
+    if(this.events.length){
+      while(true){
+        if(this.evIdx>=this.events.length){
+          if(this.project.loop){this.cycle++;this.evIdx=0;}else break;
+        }
+        const ev=this.events[this.evIdx];
+        const t=this.anchorTime+(this.cycle*L+ev.s-this.anchorStep)*this.sp16;
+        if(t>ahead)break;
+        if(t>now-0.06)this.voice(this.graph,ev.tr,ev,Math.max(t,now+0.005),ev.l*this.sp16);
+        this.evIdx++;
+      }
+    }
+    if(!this.project.loop){
+      const endT=this.anchorTime+((this.cycle+1)*L-this.anchorStep)*this.sp16;
+      if(now>=endT){
+        this.playing=false;clearInterval(this.timer);this.timer=null;
+        this.panic(0.06);if(this.onEnd)this.onEnd();
+      }
+    }
+  }
+  getStep(){
+    if(!this.playing)return null;
+    const L=this.len();
+    let s=this.anchorStep+(this.ctx.currentTime-this.anchorTime)/this.sp16;
+    if(s<this.anchorStep)s=this.anchorStep;
+    if(this.project.loop)return ((s%L)+L)%L;
+    return s<(this.cycle+1)*L?s%L:L;
+  }
+  pause(){
+    const s=this.getStep();
+    this.playing=false;clearInterval(this.timer);this.timer=null;
+    if(this.ctx)this.panic(0.05);
+    return s==null?0:s;
+  }
+  seek(step){
+    if(!this.playing)return;
+    this.cancelFuture();this.panic(0.03);this.anchor(step);
+  }
+  sync(project){
+    this.project=project;
+    if(!this.ctx)return;
+    this.rebuildEvents();
+    if(this.playing){const cur=this.getStep();this.cancelFuture();this.anchor(cur==null?0:cur);}
+  }
+  setBpm(bpm){
+    const wasPlaying=this.playing;
+    let cur=0;if(wasPlaying){cur=this.getStep()||0;this.cancelFuture();}
+    this.sp16=60/bpm/4;
+    if(wasPlaying)this.anchor(cur);
+    this.applyMaster();
+  }
+  loadProject(p){
+    this.playing=false;clearInterval(this.timer);this.timer=null;
+    this.project=p;this.sp16=60/p.bpm/4;this.events=[];this.evIdx=0;this.cycle=0;
+    if(this.ctx){
+      this.panic(0.02);this.voices=[];
+      if(this.graph)this.graph.nodes.forEach(n=>{try{n.disconnect();}catch(e){}});
+      this.graph=this.buildGraph(this.ctx,p,true);
+      this.applyAll();
+    }
+  }
+  /* --- офлайн-рендер в WAV --- */
+  async renderWav(p){
+    const OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    if(!OC)throw new Error('no offline');
+    const sp16=60/p.bpm/4,L=p.bars*p.beats*4,dur=L*sp16+2.5;
+    const ctx=new OC(2,Math.ceil(dur*44100),44100);
+    const g=this.buildGraph(ctx,p,false);
+    this.sp16=sp16;
+    const savedProj=this.project,savedGraph=this.graph;
+    this.project=p;this.graph=g;this.applyAll();
+    this.project=savedProj;this.graph=savedGraph;
+    const anySolo=p.tracks.some(t=>t.solo);
+    p.tracks.forEach(tr=>{
+      if(tr.mute||(anySolo&&!tr.solo))return;
+      tr.notes.forEach(n=>this.voice(g,tr,n,0.04+n.s*sp16,n.l*sp16));
+    });
+    return await ctx.startRendering();
+  }
+}
+function encodeWav(buffer){
+  const nCh=buffer.numberOfChannels,sr=buffer.sampleRate,len=buffer.length;
+  const bytes=44+len*nCh*2,buf=new ArrayBuffer(bytes),dv=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');dv.setUint32(4,bytes-8,true);ws(8,'WAVE');ws(12,'fmt ');
+  dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,nCh,true);
+  dv.setUint32(24,sr,true);dv.setUint32(28,sr*nCh*2,true);dv.setUint16(32,nCh*2,true);dv.setUint16(34,16,true);
+  ws(36,'data');dv.setUint32(40,len*nCh*2,true);
+  const chans=[];for(let c=0;c<nCh;c++)chans.push(buffer.getChannelData(c));
+  let o=44;
+  for(let i=0;i<len;i++)for(let c=0;c<nCh;c++){
+    const v=clamp(chans[c][i],-1,1);dv.setInt16(o,v<0?v*0x8000:v*0x7FFF,true);o+=2;
+  }
+  return new Blob([buf],{type:'audio/wav'});
+}
+
+/* ==================================================================
+   PIANO ROLL · canvas, pointer-жесты, зум/пан, long-press
+================================================================== */
+class PianoRoll{
+  constructor(wrap,base,overlay){
+    this.wrap=wrap;this.base=base;this.ov=overlay;
+    this.bctx=base.getContext('2d');this.octx=overlay.getContext('2d');
+    this.KW=44;this.RH=26;this.PMIN=24;this.PMAX=107;
+    this.z=(matchMedia&&matchMedia('(pointer:coarse)').matches)?1.25:1;
+    this.cw=16*this.z;this.rh=18*this.z;
+    this.sx=0;this.sy=0;this.W=0;this.H=0;this.dpr=1;
+    this.dirty=true;this.centered=false;this.rect=null;
+    this.ptrs=new Map();this.drag=null;this.gesture=null;this.cooldown=false;
+    this.hover=null;this.keyHeld=null;this.lpTimer=null;this.lastPrev=0;this.lastSeek=0;
+    this.selectedNote=null;this.defaultLen=2;this.zoomT=0;
+    this.ZMIN=0.7;this.ZMAX=2.6;
+    const ro=('ResizeObserver'in window)?new ResizeObserver(()=>this.resize()):null;
+    if(ro)ro.observe(wrap);
+    window.addEventListener('resize',()=>this.resize());
+    overlay.addEventListener('pointerdown',e=>this.onDown(e));
+    overlay.addEventListener('pointermove',e=>this.onMove(e));
+    overlay.addEventListener('pointerup',e=>this.onUp(e));
+    overlay.addEventListener('pointercancel',e=>this.onUp(e));
+    overlay.addEventListener('wheel',e=>this.onWheel(e),{passive:false});
+    overlay.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      const pos=this.local(e),hit=this.hitNote(pos);
+      if(hit){this.selectedNote=hit.note;this.dirty=true;openNoteMenu(hit.note,e.clientX,e.clientY);}
+    });
+    wrap.addEventListener('gesturestart',e=>e.preventDefault());
+    wrap.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+    this.resize();
+  }
+  /* --- координаты --- */
+  xOf(s){return this.KW+s*this.cw-this.sx;}
+  stepAt(x){return (x-this.KW+this.sx)/this.cw;}
+  yOf(p){return this.RH+(this.PMAX-p)*this.rh-this.sy;}
+  pAt(y){return this.PMAX-Math.floor((y-this.RH+this.sy)/this.rh);}
+  gridW(){return this.W-this.KW;}
+  gridH(){return this.H-this.RH;}
+  clampScroll(){
+    const L=patternLen();
+    this.sx=clamp(this.sx,0,Math.max(0,L*this.cw-this.gridW()));
+    this.sy=clamp(this.sy,0,Math.max(0,(this.PMAX-this.PMIN+1)*this.rh-this.gridH()));
+  }
+  centerOn(p){this.sy=clamp((this.PMAX-p)*this.rh-this.gridH()*0.45,0,1e9);this.clampScroll();this.dirty=true;}
+  resize(){
+    const r=this.wrap.getBoundingClientRect();
+    if(r.width<10||r.height<10)return;
+    this.rect=r;this.W=r.width;this.H=r.height;
+    this.dpr=Math.min(2,window.devicePixelRatio||1);
+    [this.base,this.ov].forEach(cv=>{
+      const w=Math.round(this.W*this.dpr),h=Math.round(this.H*this.dpr);
+      if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+    });
+    this.bctx.setTransform(this.dpr,0,0,this.dpr,0,0);
+    this.octx.setTransform(this.dpr,0,0,this.dpr,0,0);
+    if(!this.centered){this.centerOn(64);this.centered=true;}
+    this.clampScroll();this.dirty=true;
+  }
+  local(e){
+    if(!this.rect)this.rect=this.wrap.getBoundingClientRect();
+    return{x:e.clientX-this.rect.left,y:e.clientY-this.rect.top};
+  }
+  zoomAt(z2,cx,cy){
+    z2=clamp(z2,this.ZMIN,this.ZMAX);
+    const cs=this.stepAt(cx),cr=(cy-this.RH+this.sy)/this.rh;
+    this.z=z2;this.cw=16*z2;this.rh=18*z2;
+    this.sx=cs*this.cw-(cx-this.KW);this.sy=cr*this.rh-(cy-this.RH);
+    this.clampScroll();this.dirty=true;this.zoomT=performance.now();
+    $('zoomVal').textContent=Math.round(this.z*100)+'%';
+  }
+  /* --- hit-test --- */
+  hitNote(pos){
+    const tr=selTrack();if(!tr)return null;
+    for(let i=tr.notes.length-1;i>=0;i--){
+      const n=tr.notes[i],x=this.xOf(n.s),w=n.l*this.cw,y=this.yOf(n.p);
+      if(pos.x>=x&&pos.x<x+w&&pos.y>=y&&pos.y<y+this.rh){
+        const hz=w>=26?Math.min(18,Math.max(10,w*0.35)):0;
+        return{note:n,edge:hz>0&&pos.x>=x+w-hz};
+      }
+    }
+    return null;
+  }
+  addBarRect(){
+    const x=this.xOf(patternLen())+10;
+    if(x>this.W-30)return null;
+    return{x,y:this.RH+10,w:106,h:30};
+  }
+  snapFloor(v){return Math.floor(v/project.grid)*project.grid;}
+  /* --- pointer-машина состояний --- */
+  onDown(e){
+    e.preventDefault();
+    this.ov.setPointerCapture(e.pointerId);
+    this.rect=this.wrap.getBoundingClientRect();
+    closePopup();
+    const pos=this.local(e);
+    this.ptrs.set(e.pointerId,pos);
+    if(this.ptrs.size===2){this.startGesture();return;}
+    if(this.cooldown||this.gesture)return;
+    const L=patternLen(),grid=project.grid,tr=selTrack();
+    if(pos.y<this.RH){this.drag={type:'seek'};this.doSeek(pos);return;}
+    if(pos.x<this.KW){this.drag={type:'key',lastP:-1};this.doKey(pos);return;}
+    const abr=this.addBarRect();
+    if(abr&&pos.x>=abr.x&&pos.x<=abr.x+abr.w&&pos.y>=abr.y&&pos.y<=abr.y+abr.h){addBar();return;}
+    const raw=this.stepAt(pos.x),p=this.pAt(pos.y);
+    if(tool==='pan'){this.drag={type:'pan',lx:pos.x,ly:pos.y};this.ov.style.cursor='grabbing';setFollow(false);return;}
+    const hit=this.hitNote(pos);
+    if(tool==='erase'){
+      this.drag={type:'erase',pre:JSON.stringify(project),changed:false};
+      if(hit)this.eraseNote(hit.note);
+      return;
+    }
+    if(hit){
+      this.selectedNote=hit.note;this.dirty=true;
+      this.drag={type:hit.edge?'resize':'move',note:hit.note,pre:JSON.stringify(project),
+        orig:{...hit.note},grab:raw-hit.note.s,startX:pos.x,startY:pos.y,moved:false};
+      this.lpTimer=setTimeout(()=>{
+        if(this.drag&&(this.drag.type==='move'||this.drag.type==='resize')&&!this.drag.moved){
+          const n=this.drag.note;this.drag=null;
+          if(navigator.vibrate)try{navigator.vibrate(25);}catch(err){}
+          openNoteMenu(n,e.clientX,e.clientY);
+        }
+      },480);
+      return;
+    }
+    if(p<this.PMIN||p>this.PMAX||raw<0||raw>=L)return;
+    if(tr.notes.length>=512){toast('ЛИМИТ: 512 НОТ НА ДОРОЖКУ','warn');return;}
+    const s=clamp(this.snapFloor(raw),0,L-1);
+    const l=clamp(Math.max(grid,Math.round(this.defaultLen/grid)*grid),grid,L-s);
+    const note={s,p,l,v:0.9};
+    tr.notes.push(note);this.selectedNote=note;
+    this.drag={type:'create',note,pre:JSON.stringify(project),startX:pos.x,startY:pos.y,moved:false};
+    this.preview(p);this.dirty=true;
+  }
+  onMove(e){
+    const pos=this.local(e);
+    if(this.ptrs.has(e.pointerId))this.ptrs.set(e.pointerId,pos);
+    if(this.gesture&&this.ptrs.size>=2){this.updateGesture();return;}
+    if(!this.drag){
+      if(e.pointerType==='mouse'&&tool==='draw'&&pos.x>=this.KW&&pos.y>=this.RH){
+        const raw=this.stepAt(pos.x),p=this.pAt(pos.y);
+        this.hover=(p>=this.PMIN&&p<=this.PMAX&&raw>=0&&raw<patternLen())?{s:this.snapFloor(raw),p}:null;
+      }else this.hover=null;
+      return;
+    }
+    const d=this.drag,L=patternLen(),grid=project.grid;
+    if(d.startX!=null&&Math.hypot(pos.x-d.startX,pos.y-d.startY)>8&&this.lpTimer){clearTimeout(this.lpTimer);this.lpTimer=null;}
+    const raw=this.stepAt(pos.x),p=this.pAt(pos.y);
+    switch(d.type){
+      case 'pan':
+        this.sx-=pos.x-d.lx;this.sy-=pos.y-d.ly;d.lx=pos.x;d.ly=pos.y;
+        this.clampScroll();this.dirty=true;setFollow(false);break;
+      case 'seek':this.doSeek(pos);break;
+      case 'key':this.doKey(pos);break;
+      case 'erase':{const h=this.hitNote(pos);if(h)this.eraseNote(h.note);break;}
+      case 'create':{
+        d.moved=true;
+        d.note.l=clamp(Math.ceil((raw-d.note.s)/grid)*grid,grid,L-d.note.s);
+        const np=clamp(p,this.PMIN,this.PMAX);
+        if(np!==d.note.p){d.note.p=np;this.preview(np);}
+        this.dirty=true;break;
+      }
+      case 'move':{
+        d.moved=true;
+        const ns=clamp(this.snapFloor(raw-d.grab),0,L-d.note.l);
+        const np=clamp(p,this.PMIN,this.PMAX);
+        if(np!==d.note.p){d.note.p=np;this.preview(np);}
+        d.note.s=ns;this.dirty=true;break;
+      }
+      case 'resize':{
+        d.moved=true;
+        d.note.l=clamp(Math.round((raw-d.note.s)/grid)*grid,grid,L-d.note.s);
+        this.dirty=true;break;
+      }
+    }
+  }
+  onUp(e){
+    this.ptrs.delete(e.pointerId);
+    if(this.gesture){
+      if(this.ptrs.size<2){this.gesture=null;this.cooldown=true;}
+      if(this.ptrs.size===0)this.cooldown=false;
+      return;
+    }
+    if(this.ptrs.size===0)this.cooldown=false;
+    if(this.lpTimer){clearTimeout(this.lpTimer);this.lpTimer=null;}
+    const d=this.drag;this.drag=null;this.ov.style.cursor=this.toolCursor();
+    if(this.keyHeld!=null){this.keyHeld=null;this.dirty=true;}
+    if(!d)return;
+    const tr=selTrack();
+    if(d.type==='create'){
+      if(tr.notes.includes(d.note)){this.defaultLen=d.note.l;commitEdit(d.pre);}
+    }else if(d.type==='move'||d.type==='resize'){
+      const n=d.note,o=d.orig;
+      if(n.s!==o.s||n.p!==o.p||n.l!==o.l){if(d.type==='resize')this.defaultLen=n.l;commitEdit(d.pre);}
+    }else if(d.type==='erase'){
+      if(d.changed)commitEdit(d.pre);
+    }else if(d.type==='seek'){
+      seekTo(cursor,true);
+    }
+  }
+  startGesture(){
+    if(this.lpTimer){clearTimeout(this.lpTimer);this.lpTimer=null;}
+    const d=this.drag;this.drag=null;
+    if(d){
+      const tr=selTrack();
+      if(d.type==='create'){const i=tr.notes.indexOf(d.note);if(i>=0)tr.notes.splice(i,1);this.selectedNote=null;}
+      else if(d.type==='move'||d.type==='resize')Object.assign(d.note,d.orig);
+      else if(d.type==='erase'&&d.changed)commitEdit(d.pre);
+      this.dirty=true;
+    }
+    const [a,b]=[...this.ptrs.values()];
+    const cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;
+    this.gesture={d0:Math.max(20,Math.hypot(a.x-b.x,a.y-b.y)),z0:this.z,
+      cs:this.stepAt(cx),cr:(cy-this.RH+this.sy)/this.rh};
+    setFollow(false);
+  }
+  updateGesture(){
+    const [a,b]=[...this.ptrs.values()];
+    const cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;
+    const dist=Math.max(20,Math.hypot(a.x-b.x,a.y-b.y));
+    const g=this.gesture;
+    this.z=clamp(g.z0*dist/g.d0,this.ZMIN,this.ZMAX);
+    this.cw=16*this.z;this.rh=18*this.z;
+    this.sx=g.cs*this.cw-(cx-this.KW);this.sy=g.cr*this.rh-(cy-this.RH);
+    this.clampScroll();this.dirty=true;this.zoomT=performance.now();
+    $('zoomVal').textContent=Math.round(this.z*100)+'%';
+  }
+  onWheel(e){
+    e.preventDefault();
+    const pos=this.local(e);
+    if(e.ctrlKey||e.metaKey){
+      this.zoomAt(this.z*(e.deltaY<0?1.12:0.89),pos.x,pos.y);
+    }else{
+      if(e.shiftKey&&Math.abs(e.deltaX)<1)this.sx+=e.deltaY;
+      else{this.sx+=e.deltaX;this.sy+=e.deltaY;}
+      this.clampScroll();this.dirty=true;
+    }
+    setFollow(false);
+  }
+  doSeek(pos){
+    const step=clamp(this.snapFloor(this.stepAt(pos.x)),0,patternLen()-1);
+    seekTo(step,false);
+  }
+  doKey(pos){
+    const p=this.pAt(pos.y);
+    if(p>=this.PMIN&&p<=this.PMAX&&p!==this.drag.lastP){
+      this.drag.lastP=p;this.keyHeld=p;this.preview(p);this.dirty=true;
+    }
+  }
+  preview(p){
+    const now=performance.now();
+    if(now-this.lastPrev>70){this.lastPrev=now;previewNote(p);}
+  }
+  eraseNote(n){
+    const tr=selTrack(),i=tr.notes.indexOf(n);
+    if(i>=0){tr.notes.splice(i,1);if(this.selectedNote===n)this.selectedNote=null;this.drag.changed=true;this.dirty=true;}
+  }
+  toolCursor(){return tool==='pan'?'grab':tool==='erase'?'cell':'crosshair';}
+  ensurePitchVisible(p){
+    const y=this.yOf(p);
+    if(y<this.RH||y>this.H-this.rh)this.centerOn(p);
+  }
+  /* --- отрисовка базы --- */
+  drawBase(){
+    this.dirty=false;
+    const c=this.bctx,W=this.W,H=this.H,KW=this.KW,RH=this.RH;
+    if(W<10)return;
+    const L=patternLen(),spb=project.beats*4,grid=project.grid,tr=selTrack();
+    const anySolo=project.tracks.some(t=>t.solo);
+    c.fillStyle=PAL.bg;c.fillRect(0,0,W,H);
+    c.save();c.beginPath();c.rect(KW,RH,W-KW,H-RH);c.clip();
+    const pTop=this.pAt(RH),pBot=this.pAt(H)+1;
+    const noise=tr.inst.type==='noise';
+    for(let p=Math.min(this.PMAX,pTop);p>=Math.max(this.PMIN,pBot-1);p--){
+      const y=this.yOf(p),black=[1,3,6,8,10].includes(p%12);
+      c.fillStyle=p%12===0?'#182046':black?'#0f1430':'#141a3a';
+      c.fillRect(KW,y,W-KW,this.rh);
+      if(noise){
+        c.fillStyle=p<44?shade(PAL.red,.09):p<60?shade(PAL.blue,.09):shade(PAL.yellow,.07);
+        c.fillRect(KW,y,W-KW,this.rh);
+      }
+    }
+    const firstBar=Math.max(0,Math.floor(this.sx/(spb*this.cw)));
+    for(let b=firstBar;b*spb*this.cw-this.sx<W;b++){
+      if(b%2===0){c.fillStyle='rgba(255,255,255,0.015)';c.fillRect(this.xOf(b*spb),RH,spb*this.cw,H-RH);}
+    }
+    c.lineWidth=1;
+    for(let p=Math.min(this.PMAX,pTop);p>=Math.max(this.PMIN,pBot-1);p--){
+      const y=Math.round(this.yOf(p)+this.rh)+0.5;
+      c.strokeStyle=p%12===11?shade(PAL.line2,.8):shade(PAL.line,.35);
+      c.beginPath();c.moveTo(KW,y);c.lineTo(W,y);c.stroke();
+    }
+    const s0=Math.max(0,this.snapFloor(this.stepAt(KW))-grid);
+    for(let s=s0;s<=L;s+=grid){
+      const x=Math.round(this.xOf(s))+0.5;if(x>KW+ (W-KW)+2)break;
+      const bar=s%spb===0,beat=s%4===0;
+      c.strokeStyle=bar?PAL.line2:beat?shade(PAL.line2,.65):shade(PAL.line,.5);
+      c.lineWidth=bar?2:1;
+      c.beginPath();c.moveTo(x,RH);c.lineTo(x,H);c.stroke();
+    }
+    c.lineWidth=1;
+    const xEnd=this.xOf(L);
+    if(xEnd<W){c.fillStyle='rgba(5,7,18,.6)';c.fillRect(Math.max(KW,xEnd),RH,W,H);
+      c.fillStyle=PAL.red;c.fillRect(xEnd-1,RH,2,H-RH);}
+    /* призраки чужих дорожек */
+    project.tracks.forEach(t=>{
+      if(t===tr)return;
+      const audible=!(t.mute||(anySolo&&!t.solo));
+      t.notes.forEach(n=>{
+        const x=this.xOf(n.s),w=n.l*this.cw,y=this.yOf(n.p);
+        if(x+w<KW||x>W||y+this.rh<RH||y>H)return;
+        c.fillStyle=shade(t.color,audible?0.10:0.05);
+        c.fillRect(x+1,y+1,w-2,this.rh-2);
+        c.strokeStyle=shade(t.color,audible?0.35:0.15);
+        c.strokeRect(x+1.5,y+1.5,w-3,this.rh-3);
+      });
+    });
+    /* ноты выбранной дорожки */
+    tr.notes.forEach(n=>{
+      const x=this.xOf(n.s),w=n.l*this.cw,y=this.yOf(n.p);
+      if(x+w<KW||x>W||y+this.rh<RH||y>H)return;
+      this.paintNote(c,n,x,y,w,tr.color,n===this.selectedNote);
+    });
+    /* подсказка на пустой дорожке */
+    if(tr.notes.length===0){
+      c.fillStyle=PAL.mut;c.font='7px "Press Start 2P",monospace';c.textBaseline='top';c.textAlign='center';
+      const cx=KW+(W-KW)/2,cy=RH+(H-RH)/2;
+      c.fillText('ТАП ПО СЕТКЕ = НОТА',cx,cy-14);
+      c.fillText('ТЯНИ ВПРАВО = ДЛИНА',cx,cy+4);
+      c.textAlign='left';
+    }
+    /* кнопка +ТАКТ за концом паттерна */
+    const abr=this.addBarRect();
+    if(abr){
+      c.setLineDash([4,3]);c.strokeStyle=PAL.yellow;c.lineWidth=2;
+      c.strokeRect(abr.x,abr.y,abr.w,abr.h);c.setLineDash([]);
+      c.fillStyle=PAL.yellow;
+      c.fillRect(abr.x+12,abr.y+13,12,4);c.fillRect(abr.x+16,abr.y+9,4,12);
+      c.font='7px "Press Start 2P",monospace';c.textBaseline='top';
+      c.fillText('ТАКТ',abr.x+34,abr.y+11);
+    }
+    c.restore();
+    /* клавиши */
+    c.fillStyle=PAL.bg1;c.fillRect(0,RH,KW,H-RH);
+    for(let p=Math.min(this.PMAX,pTop);p>=Math.max(this.PMIN,pBot-1);p--){
+      const y=this.yOf(p),black=[1,3,6,8,10].includes(p%12);
+      c.fillStyle=black?'#20294f':'#e9e2d0';
+      c.fillRect(0,y+1,KW-3,this.rh-2);
+      if(p===this.keyHeld){c.fillStyle=shade(PAL.yellow,.85);c.fillRect(0,y+1,KW-3,this.rh-2);}
+      if(p%12===0){
+        c.fillStyle=PAL.bg2;c.font='7px "Press Start 2P",monospace';c.textBaseline='top';
+        c.fillText('C'+(Math.floor(p/12)-1),4,y+Math.max(2,(this.rh-8)/2));
+      }
+      if(noise&&(p===36||p===48||p===60)){
+        c.fillStyle=p===36?PAL.red:p===48?PAL.blue:'#8a7a00';
+        c.font='6px "Press Start 2P",monospace';
+        c.fillText(p===36?'БОЧКА':p===48?'СНЕЙР':'ХЭТ',3,y+Math.max(2,(this.rh-7)/2));
+      }
+    }
+    c.fillStyle=PAL.line;c.fillRect(KW-3,RH,3,H-RH);
+    /* линейка тактов */
+    c.fillStyle=PAL.bg2;c.fillRect(0,0,W,RH);
+    c.fillStyle=PAL.line;c.fillRect(0,RH-2,W,2);
+    c.font='8px "Press Start 2P",monospace';c.textBaseline='top';
+    for(let b=firstBar;b<=project.bars;b++){
+      const x=this.xOf(b*spb);
+      if(x>W)break;
+      if(x>=KW-2&&b<project.bars){c.fillStyle=PAL.yellow;c.fillText(String(b+1),Math.max(KW+4,x+5),7);}
+      for(let bt=1;bt<project.beats;bt++){
+        const bx=this.xOf(b*spb+bt*4);
+        if(bx>=KW&&bx<=W){c.fillStyle=PAL.line2;c.fillRect(bx,RH-8,2,6);}
+      }
+    }
+    c.fillStyle=PAL.bg3;c.fillRect(0,0,KW,RH);
+    c.fillStyle=PAL.blue;
+    c.fillRect(20,6,3,12);c.fillRect(23,6,7,3);c.fillRect(14,15,9,5);
+    c.strokeStyle=PAL.line;c.strokeRect(0.5,0.5,KW-1,RH-1);
+  }
+  paintNote(c,n,x,y,w,color,selected){
+    const h=this.rh;
+    c.fillStyle=shade(color,0.3+0.55*n.v);
+    c.fillRect(x+1,y+1,w-2,h-2);
+    c.fillStyle=shade('#ffffff',.22);c.fillRect(x+2,y+2,Math.max(0,w-4),2);
+    c.strokeStyle=selected?PAL.ink:darken(color,0.55);
+    c.lineWidth=selected?2:1;
+    c.strokeRect(x+1.5,y+1.5,w-3,h-3);
+    if(w>=26){
+      c.fillStyle=shade(color,.95);c.fillRect(x+w-6,y+3,3,h-6);
+      c.fillStyle=PAL.bg;c.fillRect(x+w-5,y+h/2-2,1,4);
+    }
+  }
+  /* --- оверлей: курсор, активные ноты, drag-подсказки --- */
+  drawOverlay(st){
+    const c=this.octx,W=this.W,H=this.H,KW=this.KW,RH=this.RH;
+    c.clearRect(0,0,W,H);
+    if(W<10)return;
+    const tr=selTrack(),playing=engine.playing;
+    if(follow&&playing&&st!=null){
+      const x=this.xOf(st);
+      if(x>KW+this.gridW()-60||x<KW){this.sx=clamp(st*this.cw-this.gridW()*0.25,0,1e9);this.clampScroll();this.dirty=true;}
+    }
+    c.save();c.beginPath();c.rect(KW,RH,W-KW,H-RH);c.clip();
+    if(this.hover&&!this.drag&&tool==='draw'){
+      c.strokeStyle=shade(PAL.yellow,.4);c.lineWidth=1;
+      c.strokeRect(this.xOf(this.hover.s)+1.5,this.yOf(this.hover.p)+1.5,project.grid*this.cw-3,this.rh-3);
+    }
+    const dn=this.drag&&(this.drag.note||null);
+    if(dn){
+      c.fillStyle=shade(PAL.yellow,.06);
+      c.fillRect(KW,this.yOf(dn.p),W-KW,this.rh);
+    }
+    if(playing&&st!=null){
+      project.tracks.forEach(t=>{
+        const sel=t===tr;
+        t.notes.forEach(n=>{
+          if(n.s<=st&&st<n.s+n.l){
+            const x=this.xOf(n.s),w=n.l*this.cw,y=this.yOf(n.p);
+            if(x+w<KW||x>W||y+this.rh<RH||y>H)return;
+            c.strokeStyle=shade(t.color,sel?0.9:0.35);c.lineWidth=3;
+            c.strokeRect(x+1,y+1,w-2,this.rh-2);
+            if(sel){c.strokeStyle=PAL.ink;c.lineWidth=1;c.strokeRect(x+2.5,y+2.5,w-5,this.rh-5);}
+          }
+        });
+      });
+    }
+    if(dn){
+      const x=this.xOf(dn.s),w=dn.l*this.cw,y=this.yOf(dn.p);
+      c.setLineDash([4,3]);c.strokeStyle=PAL.ink;c.lineWidth=2;
+      c.strokeRect(x+1,y+1,w-2,this.rh-2);c.setLineDash([]);
+      const label=noteName(dn.p)+' '+lenName(dn.l);
+      c.font='7px "Press Start 2P",monospace';c.textBaseline='top';
+      const tw=c.measureText(label).width+12;
+      const tx=clamp(x,KW,W-tw-4),ty=clamp(y-24,RH+2,H-20);
+      c.fillStyle='rgba(11,14,31,.92)';c.fillRect(tx,ty,tw,18);
+      c.strokeStyle=PAL.yellow;c.lineWidth=2;c.strokeRect(tx+1,ty+1,tw-2,16);
+      c.fillStyle=PAL.yellow;c.fillText(label,tx+6,ty+6);
+    }
+    const cst=playing?st:cursor;
+    if(cst!=null){
+      const x=this.xOf(cst);
+      if(x>=KW-1&&x<=W){
+        c.save();
+        if(playing){c.shadowColor=PAL.yellow;c.shadowBlur=10;}
+        c.fillStyle=playing?PAL.yellow:shade(PAL.yellow,.8);
+        c.fillRect(x-1,RH,2,H-RH);
+        c.restore();
+      }
+    }
+    if(performance.now()-this.zoomT<900){
+      const t='x'+this.z.toFixed(1);
+      c.font='8px "Press Start 2P",monospace';
+      const tw=c.measureText(t).width+12;
+      c.fillStyle='rgba(11,14,31,.85)';c.fillRect(W-tw-8,RH+8,tw,20);
+      c.fillStyle=PAL.blue;c.textBaseline='top';c.fillText(t,W-tw-2,RH+14);
+    }
+    c.restore();
+    if(cst!=null){
+      const x=this.xOf(cst);
+      if(x>=KW&&x<=W){
+        c.fillStyle=playing?PAL.yellow:shade(PAL.yellow,.8);
+        c.fillRect(x-4,0,8,3);c.fillRect(x-3,3,6,3);c.fillRect(x-2,6,4,3);c.fillRect(x-1,9,2,3);
+      }
+    }
+  }
+}
+
+/* ==================================================================
+   APP · состояние, UI, транспорт, персистентность
+================================================================== */
+let project=null,engine=new AudioEngine(),roll=null;
+let selId=null,cursor=0,tool='draw',follow=true,playStart=0;
+let undoStack=[],started=false,exporting=false,saveTimer=null,lastBeatIdx=-1,lastPosStr='';
+const SAVE_KEY='8bit-maker-v1';
+
+const patternLen=()=>project.bars*project.beats*4;
+const selTrack=()=>project.tracks.find(t=>t.id===selId)||project.tracks[0];
+function previewNote(p){engine.preview(selTrack(),p);}
+function autosave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{try{localStorage.setItem(SAVE_KEY,JSON.stringify(project));}catch(e){}},700);
+}
+function flushSave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(project));}catch(e){}}
+function pushUndo(){
+  undoStack.push(JSON.stringify(project));
+  if(undoStack.length>50)undoStack.shift();
+  $('undoBtn').disabled=false;
+}
+function commitEdit(pre){
+  undoStack.push(pre);if(undoStack.length>50)undoStack.shift();
+  $('undoBtn').disabled=false;
+  mutate();
+}
+function mutate(structural=false){
+  roll.dirty=true;
+  engine.sync(project);
+  if(structural){engine.ensureTracks(project);renderTracks();renderFx();}
+  updateCounter();autosave();
+}
+function undoOp(){
+  if(!undoStack.length)return;
+  pauseKeep();
+  project=JSON.parse(undoStack.pop());
+  engine.loadProject(project);
+  if(!project.tracks.some(t=>t.id===selId))selId=project.tracks[0].id;
+  cursor=clamp(cursor,0,patternLen()-1);
+  roll.selectedNote=null;roll.dirty=true;roll.clampScroll();
+  refreshAll();
+  $('undoBtn').disabled=!undoStack.length;
+  toast('ОТМЕНЕНО','info');
+}
+function pauseKeep(){
+  if(engine.playing){cursor=engine.pause();updateTransport();}
+}
+function refreshAll(){
+  renderTracks();renderFx();renderMasterFx();updateTransport();updateToolbar();renderBeatLeds();updateCounter();
+  roll.dirty=true;autosave();
+}
+/* --- транспорт --- */
+function playPause(){
+  if(!engine.ctx){toast('СНАЧАЛА «СТАРТ» — РАЗБЛОКИРУЙ ЗВУК','warn');return;}
+  if(engine.ctx.state==='suspended')engine.ctx.resume().catch(()=>{});
+  if(engine.playing){cursor=engine.pause();}
+  else{playStart=cursor;engine.play(project,cursor);}
+  updateTransport();
+}
+function stopAll(){
+  if(engine.playing){engine.pause();cursor=playStart;}
+  else cursor=0;
+  updateTransport();roll.dirty=true;
+}
+function seekTo(step,force){
+  cursor=step;
+  if(engine.playing){
+    const now=performance.now();
+    if(force||now-roll.lastSeek>90){roll.lastSeek=now;engine.seek(step);}
+  }
+}
+function setBpm(v){
+  v=clamp(Math.round(v)||120,40,240);
+  project.bpm=v;$('bpmInput').value=v;
+  engine.setBpm(v);autosave();
+}
+function setFollow(v){
+  if(follow===v)return;
+  follow=v;$('followBtn').classList.toggle('on',v);
+}
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('#tools .tool').forEach(b=>b.classList.toggle('on',b.dataset.tool===t));
+  roll.ov.style.cursor=roll.toolCursor();roll.hover=null;
+}
+/* --- дорожки / такты --- */
+function selectTrack(id){
+  selId=id;roll.selectedNote=null;roll.dirty=true;
+  renderTracks();renderFx();
+  const tr=selTrack();
+  if(tr.notes.length){
+    const avg=Math.round(tr.notes.reduce((a,n)=>a+n.p,0)/tr.notes.length);
+    roll.ensurePitchVisible(avg);
+  }
+}
+function addTrack(key){
+  if(project.tracks.length>=8){toast('ЛИМИТ: 8 ДОРОЖЕК','warn');return;}
+  pushUndo();
+  const used=project.tracks.map(t=>t.color);
+  const color=TRACK_COLORS.find(c=>!used.includes(c))||TRACK_COLORS[project.tracks.length%8];
+  const count=project.tracks.filter(t=>t.inst.type===PRESETS[key].inst.type).length;
+  const tr=makeTrack(key,PRESETS[key].label+(count?' '+(count+1):''),color);
+  project.tracks.push(tr);selId=tr.id;
+  mutate(true);toast('ДОРОЖКА: '+tr.name,'ok');
+}
+function deleteTrack(id){
+  if(project.tracks.length<=1){toast('НУЖНА ХОТЯ БЫ 1 ДОРОЖКА','warn');return;}
+  pushUndo();
+  const i=project.tracks.findIndex(t=>t.id===id);
+  const name=project.tracks[i].name;
+  project.tracks.splice(i,1);
+  if(selId===id)selId=project.tracks[Math.max(0,i-1)].id;
+  roll.selectedNote=null;
+  mutate(true);toast('УДАЛЕНО: '+name,'err',{label:'ОТМЕНИТЬ',fn:undoOp});
+}
+function toggleMute(id){const t=project.tracks.find(x=>x.id===id);if(!t)return;t.mute=!t.mute;engine.applyAllGains();renderTracks();renderFx();roll.dirty=true;autosave();}
+function toggleSolo(id){const t=project.tracks.find(x=>x.id===id);if(!t)return;t.solo=!t.solo;engine.applyAllGains();renderTracks();renderFx();roll.dirty=true;autosave();}
+function trimNotes(newL){
+  project.tracks.forEach(t=>{
+    t.notes=t.notes.filter(n=>n.s<newL);
+    t.notes.forEach(n=>{n.l=Math.min(n.l,newL-n.s);});
+  });
+}
+function addBar(){
+  if(project.bars>=32){toast('ЛИМИТ: 32 ТАКТА','warn');return;}
+  pushUndo();project.bars++;
+  mutate();updateToolbar();roll.clampScroll();
+}
+function removeBar(){
+  if(project.bars<=1){toast('МИНИМУМ 1 ТАКТ','warn');return;}
+  pushUndo();
+  project.bars--;
+  const L=patternLen(),lost=project.tracks.some(t=>t.notes.some(n=>n.s>=L));
+  trimNotes(L);cursor=clamp(cursor,0,L-1);roll.selectedNote=null;
+  mutate();updateToolbar();roll.clampScroll();
+  if(lost)toast('ТАКТ УДАЛЁН ВМЕСТЕ С НОТАМИ','warn',{label:'ОТМЕНИТЬ',fn:undoOp});
+}
+function setMeter(beats){
+  pushUndo();project.beats=beats;
+  const L=patternLen(),lost=project.tracks.some(t=>t.notes.some(n=>n.s>=L));
+  trimNotes(L);cursor=clamp(cursor,0,L-1);roll.selectedNote=null;
+  mutate();renderBeatLeds();roll.clampScroll();
+  if(lost)toast('НОТЫ ЗА ПРЕДЕЛАМИ РАЗМЕРА УДАЛЕНЫ','warn',{label:'ОТМЕНИТЬ',fn:undoOp});
+}
+/* --- файл / проект --- */
+function exportJson(){
+  const data={...project,version:1,savedAt:new Date().toISOString()};
+  download(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'8bit-project.json');
+  toast('JSON СОХРАНЁН','ok');
+}
+function importJson(file){
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const p=sanitizeProject(JSON.parse(rd.result));
+      pushUndo();pauseKeep();
+      project=p;engine.loadProject(project);
+      selId=project.tracks[0].id;cursor=0;roll.selectedNote=null;
+      roll.centerOn(64);refreshAll();
+      toast('ПРОЕКТ ЗАГРУЖЕН','ok',{label:'ОТМЕНИТЬ',fn:undoOp});
+    }catch(e){showModal('ОШИБКА ФАЙЛА','НЕ УДАЛОСЬ ПРОЧИТАТЬ ПРОЕКТ.<br>НУЖЕН JSON ИЗ 8-BIT MUSIC MAKER.',[{label:'OK',fn:closeModal}]);}
+  };
+  rd.onerror=()=>toast('НЕ ЧИТАЕТСЯ ФАЙЛ','err');
+  rd.readAsText(file);
+}
+async function exportWav(){
+  if(exporting)return;
+  if(!engine.ctx){toast('ЗВУК НЕ РАЗБЛОКИРОВАН','warn');return;}
+  exporting=true;
+  showModal('ЭКСПОРТ WAV','РЕНДЕР ОДНОГО ПРОХОДА ПАТТЕРНА + ХВОСТ ЭФФЕКТОВ…<div class="pbar"><div class="pfill"></div></div>',[]);
+  try{
+    const buf=await engine.renderWav(JSON.parse(JSON.stringify(project)));
+    const blob=encodeWav(buf);
+    download(blob,'8bit-track.wav');
+    closeModal();toast('WAV ГОТОВ · '+(blob.size/1048576).toFixed(1)+' МБ','ok');
+  }catch(e){closeModal();toast('ОШИБКА РЕНДЕРА WAV','err');}
+  exporting=false;
+}
+function loadFresh(p,msg){
+  pushUndo();pauseKeep();
+  project=p;engine.loadProject(project);
+  selId=project.tracks[0].id;cursor=0;playStart=0;roll.selectedNote=null;
+  roll.centerOn(64);refreshAll();
+  toast(msg,'info',{label:'ОТМЕНИТЬ',fn:undoOp});
+}
+
+/* ==================================================================
+   UI · рендер панелей, попапы, тосты, модалки
+================================================================== */
+function renderTracks(){
+  const anySolo=project.tracks.some(t=>t.solo);
+  const instShort={pulse:'PULSE',triangle:'TRI',noise:'NOISE',sawtooth:'SAW'};
+  $('tracksList').innerHTML=project.tracks.map(t=>{
+    const sup=t.mute||(anySolo&&!t.solo);
+    return `<div class="tcard${t.id===selId?' sel':''}${sup?' sup':''}" data-id="${t.id}" style="--tc:${t.color}">
+      <span class="cbar"></span>
+      <div class="tbody"><div class="tname">${esc(t.name)}</div>
+      <div class="tmeta">${instShort[t.inst.type]} · ${t.notes.length} НОТ</div></div>
+      <div class="tms">
+        <button class="pbtn m${t.mute?' on':''}" data-act="mute" title="Mute">M</button>
+        <button class="pbtn s${t.solo?' on':''}" data-act="solo" title="Solo">S</button>
+      </div></div>`;
+  }).join('');
+  $('chipsStrip').innerHTML=project.tracks.map(t=>
+    `<div class="chip${t.id===selId?' sel':''}" data-id="${t.id}" style="--tc:${t.color}">
+      <span class="dot"></span><span>${esc(t.name)}${t.solo?' ·S':''}</span>
+      <button class="pbtn cm${t.mute?' on':''}" data-act="mute" title="Mute">M</button>
+    </div>`).join('')
+    +`<button class="chip add" data-act="add" title="Добавить дорожку">${icon('plus',14)}</button>
+      <button class="chip fx" data-act="fx" title="Настройки звука">${icon('fx',14)}</button>`;
+  $('trackCount').textContent=project.tracks.length;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function updateCounter(){
+  $('noteCount').textContent=project.tracks.reduce((a,t)=>a+t.notes.length,0);
+}
+function renderBeatLeds(){
+  $('beatLeds').innerHTML='<i></i>'.repeat(project.beats);lastBeatIdx=-1;
+}
+function updateTransport(){
+  $('playBtn').innerHTML=icon(engine.playing?'pause':'play',16);
+  $('playBtn').classList.toggle('on',engine.playing);
+  $('loopBtn').classList.toggle('on',project.loop);
+  $('muteBtn').innerHTML=icon(project.master.mute?'mute':'vol',16);
+  $('muteBtn').classList.toggle('on',project.master.mute);
+  $('posDisplay').classList.toggle('live',engine.playing);
+}
+function updateToolbar(){
+  $('gridSel').value=String(project.grid);
+  $('meterSel').value=String(project.beats);
+  $('barsVal').textContent=project.bars;
+  $('bpmInput').value=project.bpm;
+  $('zoomVal').textContent=Math.round(roll.z*100)+'%';
+  $('followBtn').classList.toggle('on',follow);
+}
+function setSlider(id,valId,v,fmt){$(id).value=v;$(valId).textContent=fmt(v);}
+function renderFx(){
+  const t=selTrack();if(!t)return;
+  $('tColorDot').style.background=t.color;
+  if(document.activeElement!==$('tName'))$('tName').value=t.name;
+  document.querySelectorAll('#tInst .pbtn').forEach(b=>b.classList.toggle('on',b.dataset.inst===t.inst.type));
+  $('dutyRow').style.display=t.inst.type==='pulse'?'':'none';
+  $('noiseHint').style.display=t.inst.type==='noise'?'':'none';
+  document.querySelectorAll('#tDuty .pbtn').forEach(b=>b.classList.toggle('on',+b.dataset.duty===t.inst.duty));
+  setSlider('sA','vA',t.inst.a,ms);setSlider('sD','vD',t.inst.d,ms);
+  setSlider('sS','vS',t.inst.s,pct);setSlider('sR','vR',t.inst.r,ms);
+  setSlider('tVol','vVol',t.gain,pct);setSlider('tPan','vPan',t.pan,panFmt);
+  setSlider('tEcho','vEcho',t.echo,pct);setSlider('tVerb','vVerb',t.verb,pct);
+  $('tMute').classList.toggle('on',t.mute);
+  $('tSolo').classList.toggle('on',t.solo);
+}
+function renderMasterFx(){
+  const m=project.master;
+  setSlider('mVol','vMVol',m.vol,pct);setSlider('mEcho','vMEcho',m.echo,pct);
+  setSlider('mVerb','vMVerb',m.verb,pct);setSlider('mFb','vMFb',m.echoFb,pct);
+  $('mTime').value=String(m.echoTime);
+}
+/* --- тосты --- */
+function toast(msg,type='ok',action){
+  const box=$('toasts');
+  while(box.children.length>=3)box.firstChild.remove();
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  const ic=type==='err'?'close':type==='warn'?'minus':type==='info'?'note':'check';
+  el.innerHTML=icon(ic,12)+`<span>${esc(msg)}</span>`;
+  if(action){
+    const b=document.createElement('button');b.textContent=action.label;
+    b.addEventListener('click',()=>{el.remove();action.fn();});
+    el.appendChild(b);
+  }
+  box.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.remove();},action?4200:2600);
+}
+/* --- попапы --- */
+let popupOutside=null;
+function closePopup(){
+  $('popup').classList.remove('show');
+  if(popupOutside){document.removeEventListener('pointerdown',popupOutside,true);popupOutside=null;}
+}
+function showPopupAt(x,y){
+  const p=$('popup');p.classList.add('show');
+  const r=p.getBoundingClientRect();
+  p.style.left=clamp(x,6,window.innerWidth-r.width-6)+'px';
+  p.style.top=clamp(y,6,window.innerHeight-r.height-6)+'px';
+  setTimeout(()=>{
+    popupOutside=e=>{if(!p.contains(e.target))closePopup();};
+    document.addEventListener('pointerdown',popupOutside,true);
+  },0);
+}
+function popupMenu(items,x,y){
+  const p=$('popup');p.innerHTML='';
+  items.forEach(it=>{
+    if(it.div){p.appendChild(document.createElement('hr'));return;}
+    const b=document.createElement('button');
+    b.className='pitem'+(it.danger?' danger':'');
+    b.innerHTML=icon(it.icon,14,it.color||'')+(it.color?`<span style="color:${it.color}">${esc(it.label)}</span>`:`<span>${esc(it.label)}</span>`);
+    b.addEventListener('click',()=>{closePopup();it.fn();});
+    p.appendChild(b);
+  });
+  showPopupAt(x,y);
+}
+function openAddMenu(x,y){
+  popupMenu([
+    {icon:'note',label:'ЛИД · PULSE',color:PAL.blue,fn:()=>addTrack('pulse')},
+    {icon:'note',label:'БАСС · TRIANGLE',color:PAL.green,fn:()=>addTrack('triangle')},
+    {icon:'note',label:'ДРАМ · NOISE',color:PAL.red,fn:()=>addTrack('noise')},
+    {icon:'note',label:'ПИЛА · SAW',color:PAL.orange,fn:()=>addTrack('sawtooth')}
+  ],x,y);
+}
+function openFileMenu(x,y){
+  popupMenu([
+    {icon:'down',label:'СОХРАНИТЬ .JSON',fn:exportJson},
+    {icon:'up',label:'ОТКРЫТЬ .JSON',fn:()=>$('fileInput').click()},
+    {icon:'note',label:'ЭКСПОРТ .WAV',fn:exportWav},
+    {div:true},
+    {icon:'check',label:'ДЕМО-ТРЕК',fn:()=>loadFresh(makeDemo(),'ДЕМО ЗАГРУЖЕНО')},
+    {icon:'trash',label:'НОВЫЙ ПРОЕКТ',danger:true,fn:()=>loadFresh(makeEmpty(),'НОВЫЙ ПРОЕКТ')}
+  ],x,y);
+}
+function openNoteMenu(note,sx,sy){
+  const tr=selTrack();
+  const p=$('popup');p.innerHTML='';
+  const head=document.createElement('div');head.className='phead';
+  const setHead=()=>{head.textContent='НОТА '+noteName(note.p)+' · '+lenName(note.l);};
+  setHead();p.appendChild(head);
+  const apply=()=>{setHead();mutate();};
+  /* длина */
+  const rowL=document.createElement('div');rowL.className='prow';
+  rowL.innerHTML=`<span class="pl">ДЛИНА</span>`;
+  const lm=document.createElement('button');lm.className='pbtn';lm.innerHTML=icon('minus',12);
+  const lv=document.createElement('span');lv.className='pv';
+  const lp=document.createElement('button');lp.className='pbtn';lp.innerHTML=icon('plus',12);
+  const syncL=()=>{lv.textContent=lenName(note.l);};syncL();
+  lm.addEventListener('click',()=>{pushUndo();note.l=Math.max(project.grid,note.l-project.grid);roll.defaultLen=note.l;syncL();apply();});
+  lp.addEventListener('click',()=>{pushUndo();note.l=Math.min(patternLen()-note.s,note.l+project.grid);roll.defaultLen=note.l;syncL();apply();});
+  rowL.append(lm,lv,lp);p.appendChild(rowL);
+  /* velocity */
+  const rowV=document.createElement('div');rowV.className='prow';
+  rowV.innerHTML=`<span class="pl">ГРОМК</span>`;
+  [['ТИХО',0.5],['НОРМ',0.8],['ГРОМ',1]].forEach(([lab,v])=>{
+    const b=document.createElement('button');b.className='pbtn'+(Math.abs(note.v-v)<0.05?' on':'');b.textContent=lab;
+    b.addEventListener('click',()=>{pushUndo();note.v=v;rowV.querySelectorAll('.pbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');apply();});
+    rowV.appendChild(b);
+  });
+  p.appendChild(rowV);
+  p.appendChild(document.createElement('hr'));
+  const item=(ic,label,fn,danger)=>{
+    const b=document.createElement('button');b.className='pitem'+(danger?' danger':'');
+    b.innerHTML=icon(ic,14)+`<span>${label}</span>`;
+    b.addEventListener('click',fn);p.appendChild(b);
+  };
+  item('up','ОКТАВА +12',()=>{pushUndo();note.p=clamp(note.p+12,24,107);previewNote(note.p);apply();});
+  item('down','ОКТАВА −12',()=>{pushUndo();note.p=clamp(note.p-12,24,107);previewNote(note.p);apply();});
+  item('note','ДУБЛИКАТ',()=>{
+    pushUndo();
+    const ns=Math.min(note.s+note.l,patternLen()-note.l);
+    tr.notes.push({...note,s:ns});roll.selectedNote=null;closePopup();mutate();
+  });
+  item('trash','УДАЛИТЬ',()=>{
+    pushUndo();
+    const i=tr.notes.indexOf(note);if(i>=0)tr.notes.splice(i,1);
+    if(roll.selectedNote===note)roll.selectedNote=null;
+    closePopup();mutate();
+  },true);
+  showPopupAt(sx+8,sy-40);
+}
+/* --- модалка / шит --- */
+function showModal(title,bodyHtml,buttons){
+  $('modalTitle').textContent=title;
+  $('modalBody').innerHTML=bodyHtml;
+  const btns=$('modalBtns');btns.innerHTML='';
+  buttons.forEach(b=>{
+    const el=document.createElement('button');el.className='pbtn';el.textContent=b.label;
+    el.addEventListener('click',b.fn);btns.appendChild(el);
+  });
+  $('modal').classList.add('show');
+}
+function closeModal(){$('modal').classList.remove('show');}
+function openFx(tab){
+  $('fxPanel').dataset.tab=tab||'track';
+  $('tabTrack').classList.toggle('on',$('fxPanel').dataset.tab==='track');
+  $('tabMaster').classList.toggle('on',$('fxPanel').dataset.tab==='master');
+  if(window.innerWidth<1024){
+    $('fxPanel').classList.add('open');$('backdrop').classList.add('show');
+  }
+}
+function closeFx(){
+  $('fxPanel').classList.remove('open');$('backdrop').classList.remove('show');
+}
+
+/* ==================================================================
+   INIT · биндинги, boot, PWA, главный цикл
+================================================================== */
+function bindHold(btn,fn){
+  let t=null,iv=null;
+  const stop=()=>{clearTimeout(t);clearInterval(iv);t=iv=null;};
+  btn.addEventListener('pointerdown',e=>{
+    e.preventDefault();btn.setPointerCapture(e.pointerId);
+    fn();t=setTimeout(()=>{iv=setInterval(fn,80);},420);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>btn.addEventListener(ev,stop));
+}
+function bindTrackSlider(id,valId,fmt,set){
+  $(id).addEventListener('input',()=>{
+    const v=parseFloat($(id).value);set(v);
+    $(valId).textContent=fmt(v);autosave();
+  });
+}
+function init(){
+  /* проект: сохранённый или демо */
+  let saved=null;
+  try{const raw=localStorage.getItem(SAVE_KEY);if(raw)saved=sanitizeProject(JSON.parse(raw));}catch(e){saved=null;}
+  project=saved||makeDemo();
+  selId=project.tracks[0].id;
+  /* иконки в статических кнопках */
+  $('playBtn').innerHTML=icon('play',16);
+  $('stopBtn').innerHTML=icon('stop',16);
+  $('loopBtn').innerHTML=icon('loop',16);
+  $('bpmMinus').innerHTML=icon('minus',14);
+  $('bpmPlus').innerHTML=icon('plus',14);
+  $('undoBtn').innerHTML=icon('undo',16);
+  $('muteBtn').innerHTML=icon('vol',16);
+  $('fxBtn').innerHTML=icon('fx',16);
+  $('menuBtn').innerHTML=icon('floppy',16);
+  $('tracksAdd').innerHTML=icon('plus',14);
+  $('fxClose').innerHTML=icon('close',14);
+  $('barsMinus').innerHTML=icon('minus',14);
+  $('barsPlus').innerHTML=icon('plus',14);
+  $('zoomMinus').innerHTML=icon('minus',14);
+  $('zoomPlus').innerHTML=icon('plus',14);
+  $('followBtn').innerHTML=icon('eye',16);
+  document.querySelector('[data-tool="draw"]').innerHTML=icon('pencil',16);
+  document.querySelector('[data-tool="erase"]').innerHTML=icon('eraser',16);
+  document.querySelector('[data-tool="pan"]').innerHTML=icon('move',16);
+  $('tDelete').innerHTML=icon('trash',14)+'<span>УДАЛИТЬ ДОРОЖКУ</span>';
+  /* piano roll */
+  roll=new PianoRoll($('rollWrap'),$('rollBase'),$('rollOverlay'));
+  roll.ov.style.cursor=roll.toolCursor();
+  if(document.fonts&&document.fonts.load){
+    Promise.all([document.fonts.load('8px "Press Start 2P"','ТАПНОТАC3A4'),document.fonts.load('7px "Press Start 2P"','БОЧКА')])
+      .then(()=>{roll.dirty=true;}).catch(()=>{});
+    document.fonts.ready.then(()=>{roll.dirty=true;}).catch(()=>{});
+  }
+  /* транспорт */
+  $('playBtn').addEventListener('click',playPause);
+  $('stopBtn').addEventListener('click',stopAll);
+  $('loopBtn').addEventListener('click',()=>{project.loop=!project.loop;updateTransport();autosave();});
+  bindHold($('bpmMinus'),()=>setBpm(project.bpm-2));
+  bindHold($('bpmPlus'),()=>setBpm(project.bpm+2));
+  $('bpmInput').addEventListener('change',()=>setBpm(parseInt($('bpmInput').value,10)));
+  $('bpmInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('bpmInput').blur();});
+  $('undoBtn').addEventListener('click',undoOp);
+  $('muteBtn').addEventListener('click',()=>{project.master.mute=!project.master.mute;engine.applyMaster();updateTransport();autosave();});
+  $('fxBtn').addEventListener('click',()=>openFx('track'));
+  $('menuBtn').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();openFileMenu(r.right-210,r.bottom+8);});
+  /* инструменты вида */
+  document.querySelectorAll('#tools .tool').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
+  $('gridSel').addEventListener('change',()=>{project.grid=+$('gridSel').value;roll.dirty=true;autosave();});
+  $('meterSel').addEventListener('change',()=>setMeter(+$('meterSel').value));
+  $('barsMinus').addEventListener('click',removeBar);
+  $('barsPlus').addEventListener('click',addBar);
+  $('followBtn').addEventListener('click',()=>setFollow(!follow));
+  $('zoomMinus').addEventListener('click',()=>roll.zoomAt(roll.z*0.82,roll.KW+roll.gridW()/2,roll.RH+roll.gridH()/2));
+  $('zoomPlus').addEventListener('click',()=>roll.zoomAt(roll.z*1.22,roll.KW+roll.gridW()/2,roll.RH+roll.gridH()/2));
+  /* дорожки: делегирование */
+  const trackHandler=e=>{
+    const act=e.target.closest('[data-act]');
+    const card=e.target.closest('[data-id]');
+    if(act){
+      e.stopPropagation();
+      const a=act.dataset.act;
+      if(a==='mute'&&card)toggleMute(card.dataset.id);
+      else if(a==='solo'&&card)toggleSolo(card.dataset.id);
+      else if(a==='add'){const r=act.getBoundingClientRect();openAddMenu(r.left,r.bottom+6);}
+      else if(a==='fx')openFx('track');
+      return;
+    }
+    if(card)selectTrack(card.dataset.id);
+  };
+  $('tracksList').addEventListener('click',trackHandler);
+  $('chipsStrip').addEventListener('click',trackHandler);
+  $('tracksAdd').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();openAddMenu(r.left,r.bottom+6);});
+  /* fx-панель */
+  $('fxClose').addEventListener('click',closeFx);
+  $('backdrop').addEventListener('click',()=>{closeFx();closePopup();});
+  $('tabTrack').addEventListener('click',()=>openFx('track'));
+  $('tabMaster').addEventListener('click',()=>openFx('master'));
+  $('tName').addEventListener('input',()=>{selTrack().name=$('tName').value.slice(0,14);renderTracks();autosave();});
+  document.querySelectorAll('#tInst .pbtn').forEach(b=>b.addEventListener('click',()=>{
+    const t=selTrack();if(t.inst.type===b.dataset.inst)return;
+    pushUndo();
+    t.inst.type=b.dataset.inst;
+    const env=PRESETS[b.dataset.inst].inst;
+    t.inst.a=env.a;t.inst.d=env.d;t.inst.s=env.s;t.inst.r=env.r;
+    renderFx();mutate();
+  }));
+  document.querySelectorAll('#tDuty .pbtn').forEach(b=>b.addEventListener('click',()=>{
+    selTrack().inst.duty=+b.dataset.duty;renderFx();autosave();
+  }));
+  bindTrackSlider('sA','vA',ms,v=>{selTrack().inst.a=v;});
+  bindTrackSlider('sD','vD',ms,v=>{selTrack().inst.d=v;});
+  bindTrackSlider('sS','vS',pct,v=>{selTrack().inst.s=v;});
+  bindTrackSlider('sR','vR',ms,v=>{selTrack().inst.r=v;});
+  bindTrackSlider('tVol','vVol',pct,v=>{const t=selTrack();t.gain=v;engine.applyTrack(t);roll.dirty=true;});
+  bindTrackSlider('tPan','vPan',panFmt,v=>{const t=selTrack();t.pan=v;engine.applyTrack(t);});
+  bindTrackSlider('tEcho','vEcho',pct,v=>{const t=selTrack();t.echo=v;engine.applyTrack(t);});
+  bindTrackSlider('tVerb','vVerb',pct,v=>{const t=selTrack();t.verb=v;engine.applyTrack(t);});
+  $('tMute').addEventListener('click',()=>toggleMute(selId));
+  $('tSolo').addEventListener('click',()=>toggleSolo(selId));
+  $('tDelete').addEventListener('click',()=>deleteTrack(selId));
+  bindTrackSlider('mVol','vMVol',pct,v=>{project.master.vol=v;engine.applyMaster();});
+  bindTrackSlider('mEcho','vMEcho',pct,v=>{project.master.echo=v;engine.applyMaster();});
+  bindTrackSlider('mVerb','vMVerb',pct,v=>{project.master.verb=v;engine.applyMaster();});
+  bindTrackSlider('mFb','vMFb',pct,v=>{project.master.echoFb=v;engine.applyMaster();});
+  $('mTime').addEventListener('change',()=>{project.master.echoTime=+$('mTime').value;engine.applyMaster();autosave();});
+  /* файл */
+  $('fileInput').addEventListener('change',()=>{
+    const f=$('fileInput').files[0];
+    if(f)importJson(f);
+    $('fileInput').value='';
+  });
+  /* клавиатура */
+  document.addEventListener('keydown',e=>{
+    const tag=(e.target.tagName||'').toUpperCase();
+    if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+    if(e.code==='Space'&&!e.repeat){e.preventDefault();if(started)playPause();}
+    else if((e.ctrlKey||e.metaKey)&&e.code==='KeyZ'){e.preventDefault();undoOp();}
+    else if(e.code==='Delete'||e.code==='Backspace'){
+      if(roll.selectedNote){
+        pushUndo();
+        const tr=selTrack(),i=tr.notes.indexOf(roll.selectedNote);
+        if(i>=0)tr.notes.splice(i,1);
+        roll.selectedNote=null;mutate();
+      }
+    }
+    else if(e.code==='Digit1')setTool('draw');
+    else if(e.code==='Digit2')setTool('erase');
+    else if(e.code==='Digit3')setTool('pan');
+    else if(e.code==='Equal')roll.zoomAt(roll.z*1.22,roll.KW+roll.gridW()/2,roll.RH+roll.gridH()/2);
+    else if(e.code==='Minus')roll.zoomAt(roll.z*0.82,roll.KW+roll.gridW()/2,roll.RH+roll.gridH()/2);
+    else if(e.code==='Escape'){closePopup();closeFx();closeModal();}
+  });
+  /* аудио-жизненный цикл */
+  document.addEventListener('pointerdown',()=>{
+    if(engine.ctx&&engine.ctx.state==='suspended')engine.ctx.resume().catch(()=>{});
+  },true);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){
+      if(engine.playing){cursor=engine.pause();updateTransport();}
+      if(engine.ctx)engine.ctx.suspend().catch(()=>{});
+    }else if(engine.ctx&&started){engine.ctx.resume().catch(()=>{});}
+  });
+  window.addEventListener('beforeunload',flushSave);
+  window.addEventListener('resize',()=>{if(window.innerWidth>=1024)closeFx();});
+  engine.onEnd=()=>{cursor=0;updateTransport();roll.dirty=true;};
+  /* boot-экран */
+  const stars=$('bstars');
+  for(let i=0;i<44;i++){
+    const s=document.createElement('i');
+    s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
+    s.style.animationDelay=(Math.random()*2.2)+'s';
+    s.style.background=[PAL.ink,PAL.blue,PAL.yellow,PAL.pink][i%4];
+    stars.appendChild(s);
+  }
+  const beq=$('beq');
+  const eqColors=[PAL.green,PAL.blue,PAL.yellow,PAL.red,PAL.pink,PAL.orange];
+  for(let i=0;i<12;i++){
+    const b=document.createElement('i');
+    b.style.background=eqColors[i%6];
+    b.style.animationDelay=(i*0.09)+'s';
+    b.style.animationDuration=(0.6+Math.random()*0.5)+'s';
+    beq.appendChild(b);
+  }
+  if(saved){
+    $('bootSub').innerHTML='НАЙДЕН СОХРАНЁННЫЙ ПРОЕКТ<br>ОН БУДЕТ ЗАГРУЖЕН И ЗАИГРАЕТ';
+    $('bootFresh').style.display='';
+  }
+  $('bootBtn').addEventListener('click',()=>startApp(false));
+  $('bootFresh').addEventListener('click',()=>startApp(true));
+  /* PWA: манифест + иконки (data URI, без внешних файлов) */
+  buildPwa();
+  /* первый рендер */
+  refreshAll();
+  requestAnimationFrame(frame);
+}
+function startApp(fresh){
+  if(started)return;started=true;
+  if(fresh){project=makeDemo();selId=project.tracks[0].id;refreshAll();}
+  const ok=engine.unlock(project);
+  if(!ok){toast('АУДИО НЕДОСТУПНО В ЭТОМ БРАУЗЕРЕ','err');}
+  else{
+    /* монетка-джингл и автоплей */
+    const jTr={inst:{type:'pulse',duty:0.25,a:0.002,d:0.05,s:0.6,r:0.08}};
+    engine.voice(engine.graph,jTr,{p:83,v:0.7},engine.ctx.currentTime+0.02,0.07,true);
+    engine.voice(engine.graph,jTr,{p:88,v:0.7},engine.ctx.currentTime+0.1,0.3,true);
+    setTimeout(()=>{if(!engine.playing)playPause();},480);
+  }
+  const boot=$('boot');
+  boot.classList.add('off');
+  setTimeout(()=>boot.remove(),420);
+  roll.resize();
+}
+function buildPwa(){
+  try{
+    const mkIcon=size=>{
+      const cv=document.createElement('canvas');cv.width=cv.height=size;
+      const c=cv.getContext('2d');
+      c.fillStyle=PAL.bg2;c.fillRect(0,0,size,size);
+      c.fillStyle=PAL.yellow;
+      const b=Math.round(size*0.05);
+      c.fillRect(0,0,size,b);c.fillRect(0,size-b,size,b);c.fillRect(0,0,b,size);c.fillRect(size-b,0,b,size);
+      const rows=ICONS.note,px=Math.floor(size*0.09),ox=Math.floor((size-px*8)/2),oy=Math.floor((size-px*8)/2);
+      c.fillStyle=PAL.red;
+      rows.forEach((row,y)=>{for(let x=0;x<8;x++)if(row[x]==='X')c.fillRect(ox+x*px+px*0.4,oy+y*px+px*0.4,px,px);});
+      c.fillStyle=PAL.green;
+      rows.forEach((row,y)=>{for(let x=0;x<8;x++)if(row[x]==='X')c.fillRect(ox+x*px,oy+y*px,px,px);});
+      return cv.toDataURL('image/png');
+    };
+    const i192=mkIcon(192),i512=mkIcon(512);
+    const man={name:'8-bit Music Maker',short_name:'8BIT',start_url:'.',display:'standalone',
+      background_color:'#0b0e1f',theme_color:'#1D2B53',
+      icons:[{src:i192,sizes:'192x192',type:'image/png'},{src:i512,sizes:'512x512',type:'image/png'}]};
+    const link=document.createElement('link');link.rel='manifest';
+    link.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(man));
+    document.head.appendChild(link);
+    const apple=document.createElement('link');apple.rel='apple-touch-icon';apple.href=i192;
+    document.head.appendChild(apple);
+    const fav=document.createElement('link');fav.rel='icon';fav.href=mkIcon(64);
+    document.head.appendChild(fav);
+    if('serviceWorker'in navigator&&location.protocol==='https:'){
+      const sw="self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>{e.respondWith(caches.open('bit8-v1').then(c=>c.match(e.request).then(r=>r||fetch(e.request).then(n=>{try{c.put(e.request,n.clone())}catch(x){}return n}).catch(()=>r))))});";
+      navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});
+    }
+  }catch(e){}
+}
+/* --- главный цикл: один rAF на всё --- */
+function frame(){
+  const st=engine.playing?engine.getStep():cursor;
+  if(roll){
+    roll.drawOverlay(st);
+    if(roll.dirty)roll.drawBase();
+  }
+  if(st!=null&&project){
+    const spb=project.beats*4;
+    const bar=Math.floor(st/spb)+1,beat=Math.floor((st%spb)/4)+1;
+    const str=pad2(Math.min(bar,project.bars))+':'+beat;
+    if(str!==lastPosStr){lastPosStr=str;$('posDisplay').textContent=str;}
+    const bi=beat-1;
+    if(bi!==lastBeatIdx){
+      lastBeatIdx=bi;
+      const leds=$('beatLeds').children;
+      for(let i=0;i<leds.length;i++)leds[i].classList.toggle('on',engine.playing&&i===bi);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Стандартная модель · Интерактивная карта элементарных частиц</title>
+<style>
+:root{
+  --bg:#05060f; --bg2:#0a0c1c;
+  --panel:rgba(19,23,46,.66); --panel2:rgba(28,33,62,.72); --overlay:rgba(12,15,32,.9);
+  --line:rgba(150,170,255,.14); --line2:rgba(150,170,255,.24);
+  --text:#eaeefb; --muted:#98a2c8; --dim:#69719a;
+  --quark:#b06bff; --quark-g:#d3a6ff;
+  --lepton:#22e0a3; --lepton-g:#8ff4d4;
+  --gauge:#4c8dff; --gauge-g:#a9c8ff;
+  --scalar:#f6c445; --scalar-g:#ffe39a;
+  --f-strong:#ff6b8b; --f-em:#ffd24a; --f-weak:#56d0ff; --f-higgs:#ff934a;
+  --conn:#9db4ff;
+  --ok:#34d399; --warn:#fbbf24; --danger:#f87171; --info:#60a5fa;
+  --scrim:rgba(3,4,12,.62);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Fira Code",Consolas,"Roboto Mono",monospace;
+  --r:18px; --rs:12px;
+  --top:60px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  position:fixed; inset:0; overflow:hidden;
+  background:radial-gradient(1200px 800px at 78% -8%,#141a3e 0%,transparent 55%),
+             radial-gradient(1100px 900px at 8% 108%,#0e1c34 0%,transparent 52%),
+             linear-gradient(160deg,var(--bg),var(--bg2));
+  color:var(--text); font-family:var(--sans);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  -webkit-tap-highlight-color:transparent;
+}
+canvas#cosmos{position:fixed; inset:0; z-index:0; pointer-events:none}
+.aurora{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; filter:blur(60px); opacity:.5}
+.aurora i{position:absolute; border-radius:50%; mix-blend-mode:screen; animation:drift 26s ease-in-out infinite}
+.aurora .a1{width:44vmax;height:44vmax;left:-10vmax;top:-14vmax;background:radial-gradient(circle,rgba(176,107,255,.5),transparent 62%)}
+.aurora .a2{width:40vmax;height:40vmax;right:-12vmax;top:20vmax;background:radial-gradient(circle,rgba(34,224,163,.32),transparent 62%);animation-delay:-8s}
+.aurora .a3{width:46vmax;height:46vmax;left:22vmax;bottom:-20vmax;background:radial-gradient(circle,rgba(76,141,255,.4),transparent 62%);animation-delay:-14s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(6vmax,4vmax) scale(1.08)}66%{transform:translate(-5vmax,-3vmax) scale(.95)}}
+
+.app{position:relative; z-index:2; height:100dvh; display:flex; flex-direction:column}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  flex:0 0 auto; min-height:var(--top); display:flex; align-items:center; gap:14px;
+  padding:8px clamp(12px,2.4vw,26px);
+  background:linear-gradient(180deg,rgba(10,12,28,.82),rgba(10,12,28,.42));
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0}
+.brand svg{width:32px;height:32px;flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(120,150,255,.5))}
+.brand .atom-orbit{transform-origin:16px 16px; animation:spin 18s linear infinite}
+.brand .atom-orbit:nth-child(2){animation-duration:24s;animation-direction:reverse}
+.brand .atom-orbit:nth-child(3){animation-duration:30s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand b{font-size:15px;letter-spacing:.2px;white-space:nowrap}
+.brand span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.tabs{display:flex; gap:4px; margin:0 auto; padding:4px; background:rgba(8,10,24,.6); border:1px solid var(--line); border-radius:999px}
+.tab{
+  appearance:none; border:0; cursor:pointer; color:var(--muted); background:transparent;
+  font:inherit; font-size:13.5px; font-weight:600; padding:8px 16px; border-radius:999px;
+  transition:.25s; white-space:nowrap;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:#0a0c1c; background:linear-gradient(120deg,var(--gauge-g),var(--lepton-g)); box-shadow:0 4px 18px rgba(90,150,255,.35)}
+.top-actions{display:flex; gap:8px; align-items:center}
+.btn{
+  appearance:none; cursor:pointer; font:inherit; font-weight:600; font-size:13px;
+  color:var(--text); background:var(--panel2); border:1px solid var(--line2);
+  padding:9px 14px; border-radius:11px; display:inline-flex; align-items:center; gap:8px;
+  transition:.2s;
+}
+.btn:hover{border-color:var(--gauge); box-shadow:0 0 0 3px rgba(76,141,255,.14); transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn svg{width:16px;height:16px}
+.btn.icon{padding:9px}
+
+/* ---------- Stage / panels ---------- */
+.stage{flex:1 1 auto; min-height:0; position:relative}
+.panel{position:absolute; inset:0; display:none; flex-direction:column; min-height:0}
+.panel.active{display:flex; animation:panelIn .45s ease}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- Map toolbar ---------- */
+.toolbar{
+  flex:0 0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;
+  padding:12px clamp(12px,2.4vw,26px); border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(12,15,32,.5),transparent);
+}
+.tool-group{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.tool-label{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-right:2px}
+.chip{
+  appearance:none; cursor:pointer; font:inherit; font-size:12.5px; font-weight:600;
+  color:var(--muted); background:rgba(10,13,30,.6); border:1px solid var(--line);
+  padding:7px 13px; border-radius:999px; transition:.2s; display:inline-flex; align-items:center; gap:7px;
+}
+.chip:hover{color:var(--text); border-color:var(--line2)}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--cc,var(--muted));box-shadow:0 0 8px var(--cc)}
+.chip.active{color:var(--text); border-color:var(--cc,var(--gauge)); background:color-mix(in srgb,var(--cc,var(--gauge)) 16%,transparent); box-shadow:0 0 0 2px color-mix(in srgb,var(--cc,var(--gauge)) 22%,transparent)}
+.search{position:relative; margin-left:auto; display:flex; align-items:center}
+.search svg{position:absolute; left:11px; width:15px; height:15px; color:var(--dim); pointer-events:none}
+.search input{
+  font:inherit; font-size:13px; color:var(--text); width:210px; max-width:46vw;
+  background:rgba(8,10,24,.7); border:1px solid var(--line); border-radius:11px;
+  padding:9px 12px 9px 34px; transition:.2s;
+}
+.search input:focus{outline:none; border-color:var(--gauge); box-shadow:0 0 0 3px rgba(76,141,255,.16); width:240px}
+.search input::placeholder{color:var(--dim)}
+.count{font-size:11.5px; color:var(--dim); font-family:var(--mono); white-space:nowrap}
+
+/* ---------- Workspace ---------- */
+.workspace{flex:1 1 auto; min-height:0; display:flex}
+.map-scroll{flex:1 1 auto; min-width:0; overflow:auto; -webkit-overflow-scrolling:touch; padding:clamp(12px,2vw,24px)}
+.map-inner{position:relative; min-height:100%}
+svg.connections{position:absolute; left:0; top:0; pointer-events:none; z-index:1; overflow:visible}
+.conn-path{fill:none; stroke-linecap:round; transition:stroke-dashoffset .6s ease, opacity .3s}
+.conn-dot{transition:opacity .3s}
+.map{position:relative; z-index:2; display:flex; gap:clamp(12px,2vw,26px); align-items:stretch}
+.matter{flex:3 1 0; min-width:0; display:flex; flex-direction:column; gap:10px}
+.forces{flex:2 1 0; min-width:0; display:flex; flex-direction:column; gap:10px}
+.gen-head{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.gen-head span{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); text-align:center; padding:2px 0}
+.group-label{font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px; margin-top:2px}
+.group-label::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--line2),transparent)}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(8px,1.2vw,14px)}
+.grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:clamp(8px,1.2vw,14px)}
+
+/* ---------- Tile ---------- */
+.tile{
+  position:relative; cursor:pointer; appearance:none; text-align:center; font:inherit; color:var(--text);
+  background:linear-gradient(165deg,color-mix(in srgb,var(--c) 16%,rgba(16,20,40,.82)),rgba(12,15,32,.82));
+  border:1px solid color-mix(in srgb,var(--c) 40%,var(--line));
+  border-radius:var(--r); padding:12px 8px 11px; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  min-height:clamp(104px,13.5vh,148px); justify-content:center;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .3s, opacity .35s, border-color .3s, filter .35s;
+  animation:tileIn .5s both; animation-delay:var(--d,0ms);
+}
+@keyframes tileIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+.tile::before{content:""; position:absolute; inset:0; background:radial-gradient(120px 90px at 50% 22%,color-mix(in srgb,var(--c) 30%,transparent),transparent 70%); opacity:.7; pointer-events:none}
+.tile:hover{transform:translateY(-4px); border-color:var(--c); box-shadow:0 10px 34px color-mix(in srgb,var(--c) 34%,transparent), 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent)}
+.tile:focus-visible{outline:none; border-color:var(--c); box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent)}
+.tile-gen{position:absolute; top:8px; left:10px; font:600 10px/1 var(--mono); letter-spacing:.06em; color:color-mix(in srgb,var(--c) 70%,var(--muted)); opacity:.9}
+.tile-tag{position:absolute; top:8px; right:10px; font:600 8.5px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+.orb{
+  position:relative; width:clamp(42px,6vw,58px); height:clamp(42px,6vw,58px); border-radius:50%;
+  display:grid; place-items:center; margin-bottom:1px;
+  background:radial-gradient(circle at 35% 30%,#fff,color-mix(in srgb,var(--c) 92%,#fff) 26%,var(--c) 58%,color-mix(in srgb,var(--c) 40%,#000) 100%);
+  box-shadow:0 0 18px color-mix(in srgb,var(--c) 65%,transparent), inset 0 0 12px color-mix(in srgb,var(--c) 60%,#000);
+}
+.orb::after{content:""; position:absolute; inset:-6px; border-radius:50%; border:1px solid color-mix(in srgb,var(--c) 50%,transparent); opacity:.5; animation:orbPulse 3.4s ease-in-out infinite; animation-delay:var(--d,0ms)}
+@keyframes orbPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.16);opacity:0}}
+.sym{font:700 clamp(17px,2.4vw,23px)/1 var(--mono); color:#0a0c1c; text-shadow:0 1px 1px rgba(255,255,255,.35)}
+.sym sub{font-size:.6em; font-weight:700} .sym sup{font-size:.6em; font-weight:700}
+.tile-name{font-size:12px; font-weight:600; line-height:1.15; max-width:100%}
+.tile-mass{font:600 11px/1 var(--mono); color:color-mix(in srgb,var(--c) 60%,var(--text))}
+.tile-props{display:flex; gap:8px; font:600 10px/1 var(--mono); color:var(--muted)}
+.tile-props b{color:color-mix(in srgb,var(--c) 55%,var(--muted)); font-weight:700}
+.tile.is-selected{border-color:var(--c); box-shadow:0 0 0 2px var(--c), 0 12px 40px color-mix(in srgb,var(--c) 45%,transparent); transform:translateY(-3px)}
+.tile.is-selected .orb{box-shadow:0 0 30px var(--c), inset 0 0 12px color-mix(in srgb,var(--c) 60%,#000)}
+.tile.is-related{border-color:color-mix(in srgb,var(--c) 70%,var(--line2)); box-shadow:0 0 22px color-mix(in srgb,var(--c) 30%,transparent)}
+.tile.is-carrier{border-color:var(--cc); box-shadow:0 0 0 2px var(--cc),0 0 26px color-mix(in srgb,var(--cc) 45%,transparent)}
+.tile.is-dim{opacity:.34; filter:saturate(.6)}
+.tile.is-filtered{opacity:.1; filter:grayscale(.6); pointer-events:none}
+.tile.higgs{grid-column:1 / -1; flex-direction:row; justify-content:flex-start; gap:14px; padding:14px 18px; min-height:auto; text-align:left}
+.tile.higgs .tile-info{display:flex; flex-direction:column; gap:4px; align-items:flex-start}
+.tile.higgs .orb{margin:0}
+
+/* ---------- Detail ---------- */
+.detail{
+  flex:0 0 clamp(340px,30vw,404px); width:clamp(340px,30vw,404px);
+  border-left:1px solid var(--line); background:linear-gradient(180deg,rgba(13,16,36,.78),rgba(10,12,28,.86));
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  display:flex; flex-direction:column; min-height:0;
+}
+.detail-body{flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:20px 20px 28px}
+.detail-fade{animation:detailIn .4s ease}
+@keyframes detailIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+.d-head{display:flex; gap:14px; align-items:flex-start; margin-bottom:16px}
+.d-orb{
+  position:relative; flex:0 0 auto; width:72px; height:72px; border-radius:50%; display:grid; place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff,color-mix(in srgb,var(--c) 92%,#fff) 26%,var(--c) 58%,color-mix(in srgb,var(--c) 40%,#000) 100%);
+  box-shadow:0 0 30px color-mix(in srgb,var(--c) 65%,transparent), inset 0 0 16px color-mix(in srgb,var(--c) 55%,#000);
+}
+.d-orb::after{content:""; position:absolute; inset:-8px; border-radius:50%; border:1px solid color-mix(in srgb,var(--c) 50%,transparent); animation:orbPulse 3.4s ease-in-out infinite}
+.d-orb .sym{font-size:28px}
+.d-title{min-width:0; flex:1}
+.d-title h2{margin:0; font-size:20px; line-height:1.15}
+.d-title .en{font:500 12px/1.3 var(--mono); color:var(--muted); margin-top:3px}
+.d-badges{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px}
+.badge{font:600 10.5px/1 var(--sans); letter-spacing:.04em; padding:5px 9px; border-radius:999px; border:1px solid color-mix(in srgb,var(--c) 45%,var(--line)); color:color-mix(in srgb,var(--c) 70%,var(--text)); background:color-mix(in srgb,var(--c) 12%,transparent)}
+.badge.neutral{--c:var(--muted)}
+.d-nav{display:flex; gap:6px; margin-left:auto; flex-direction:column}
+.d-nav .btn{padding:7px}
+.d-close{display:none}
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:18px}
+.stat{background:rgba(10,13,30,.6); border:1px solid var(--line); border-radius:var(--rs); padding:11px 12px}
+.stat .k{font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+.stat .v{font:700 15px/1.2 var(--mono); margin-top:5px; color:color-mix(in srgb,var(--c) 45%,var(--text))}
+.d-section{margin-top:18px}
+.d-section h3{margin:0 0 10px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px}
+.d-section h3::before{content:""; width:14px; height:2px; border-radius:2px; background:var(--c)}
+.prop{display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:13px}
+.prop:last-child{border-bottom:0}
+.prop .k{color:var(--muted); flex:0 0 auto}
+.prop .v{text-align:right; font-family:var(--mono); font-size:12.5px; color:var(--text)}
+.d-desc{font-size:13.5px; line-height:1.6; color:#cdd4ee}
+.int-chips{display:flex; flex-wrap:wrap; gap:7px}
+.int-chip{cursor:pointer; font:600 11.5px/1 var(--sans); padding:7px 11px; border-radius:999px; border:1px solid color-mix(in srgb,var(--cc) 50%,var(--line)); color:color-mix(in srgb,var(--cc) 78%,var(--text)); background:color-mix(in srgb,var(--cc) 12%,transparent); display:inline-flex; align-items:center; gap:7px; transition:.2s}
+.int-chip:hover{background:color-mix(in srgb,var(--cc) 24%,transparent)}
+.int-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--cc);box-shadow:0 0 7px var(--cc)}
+.int-chip.on{box-shadow:0 0 0 2px color-mix(in srgb,var(--cc) 40%,transparent)}
+.anti{display:flex; align-items:center; gap:12px; background:rgba(10,13,30,.55); border:1px solid var(--line); border-radius:var(--rs); padding:12px}
+.anti .mini{flex:0 0 auto; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 35% 30%,#fff,color-mix(in srgb,var(--c) 80%,#fff) 30%,color-mix(in srgb,var(--c) 55%,#111) 100%); box-shadow:0 0 16px color-mix(in srgb,var(--c) 45%,transparent)}
+.anti .mini .sym{font-size:17px}
+.anti .info{min-width:0}
+.anti .info b{font-size:13.5px} .anti .info span{display:block; font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.4}
+.facts-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+.facts-list li{position:relative; padding:11px 12px 11px 30px; background:rgba(10,13,30,.5); border:1px solid var(--line); border-radius:var(--rs); font-size:13px; line-height:1.5; color:#cdd4ee}
+.facts-list li::before{content:""; position:absolute; left:12px; top:15px; width:8px; height:8px; border-radius:50%; background:var(--c); box-shadow:0 0 8px var(--c)}
+.rel-chips{display:flex; flex-wrap:wrap; gap:7px}
+.rel-chip{cursor:pointer; font:600 12px/1 var(--mono); padding:7px 11px; border-radius:10px; border:1px solid color-mix(in srgb,var(--rc) 45%,var(--line)); color:color-mix(in srgb,var(--rc) 70%,var(--text)); background:color-mix(in srgb,var(--rc) 10%,transparent); transition:.2s}
+.rel-chip:hover{transform:translateY(-1px); background:color-mix(in srgb,var(--rc) 22%,transparent)}
+.note{font-size:12px; color:var(--warn); background:color-mix(in srgb,var(--warn) 10%,transparent); border:1px solid color-mix(in srgb,var(--warn) 30%,transparent); padding:9px 11px; border-radius:10px; line-height:1.45}
+
+/* intro / legend */
+.intro h2{margin:0 0 6px; font-size:19px}
+.intro p.lead{font-size:13px; line-height:1.6; color:var(--muted); margin:0 0 16px}
+.legend{display:flex; flex-direction:column; gap:8px}
+.legend .row{display:flex; align-items:center; gap:11px; padding:9px 11px; background:rgba(10,13,30,.5); border:1px solid var(--line); border-radius:var(--rs)}
+.legend .sw{width:26px;height:26px;border-radius:8px;flex:0 0 auto; background:radial-gradient(circle at 35% 30%,#fff,var(--c) 60%,color-mix(in srgb,var(--c) 40%,#000)); box-shadow:0 0 12px color-mix(in srgb,var(--c) 55%,transparent)}
+.legend .row b{font-size:13px} .legend .row span{display:block; font-size:11.5px; color:var(--muted); margin-top:2px}
+.notation{margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.notation div{background:rgba(10,13,30,.5); border:1px solid var(--line); border-radius:10px; padding:9px 11px; font-size:12px; color:var(--muted)}
+.notation b{color:var(--text); font-family:var(--mono)}
+.mini-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px}
+.mini-stats div{text-align:center; background:rgba(10,13,30,.5); border:1px solid var(--line); border-radius:10px; padding:10px 4px}
+.mini-stats b{display:block; font:700 18px/1 var(--mono); color:var(--gauge-g)}
+.mini-stats span{font-size:9.5px; color:var(--dim); letter-spacing:.04em}
+
+/* ---------- Facts ---------- */
+.scroll-panel{flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:clamp(16px,3vw,34px)}
+.wrap{max-width:1120px; margin:0 auto}
+.facts-head{display:flex; flex-wrap:wrap; align-items:flex-end; gap:14px; margin-bottom:20px}
+.facts-head h1{margin:0; font-size:clamp(22px,3.4vw,32px)}
+.facts-head p{margin:6px 0 0; color:var(--muted); font-size:14px; max-width:560px; line-height:1.5}
+.facts-filters{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 22px}
+.facts-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px}
+.fact{
+  position:relative; overflow:hidden; background:linear-gradient(165deg,color-mix(in srgb,var(--c) 12%,rgba(16,20,40,.7)),rgba(12,15,32,.72));
+  border:1px solid color-mix(in srgb,var(--c) 30%,var(--line)); border-radius:var(--r); padding:18px;
+  transition:.28s; animation:tileIn .5s both; animation-delay:var(--d,0ms);
+}
+.fact:hover{transform:translateY(-4px); border-color:var(--c); box-shadow:0 14px 40px color-mix(in srgb,var(--c) 26%,transparent)}
+.fact::before{content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--c) 40%,transparent),transparent 70%); opacity:.6}
+.fact .cat{font:600 10px/1 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:color-mix(in srgb,var(--c) 75%,var(--text)); display:inline-flex; align-items:center; gap:7px}
+.fact .cat .dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.fact h3{margin:11px 0 8px; font-size:16.5px; line-height:1.25; position:relative}
+.fact p{margin:0; font-size:13.5px; line-height:1.6; color:#c8cfe9; position:relative}
+.fact .goto{margin-top:13px; cursor:pointer; font:600 11.5px/1 var(--mono); color:color-mix(in srgb,var(--c) 70%,var(--text)); background:transparent; border:1px solid color-mix(in srgb,var(--c) 40%,var(--line)); padding:7px 11px; border-radius:999px; display:inline-flex; gap:6px; align-items:center; transition:.2s; position:relative}
+.fact .goto:hover{background:color-mix(in srgb,var(--c) 18%,transparent)}
+
+/* ---------- About ---------- */
+.hero{position:relative; overflow:hidden; border:1px solid var(--line); border-radius:24px; padding:clamp(22px,4vw,44px); margin-bottom:26px;
+  background:radial-gradient(700px 400px at 88% -20%,rgba(176,107,255,.28),transparent 60%),radial-gradient(600px 400px at 0% 120%,rgba(34,224,163,.2),transparent 60%),linear-gradient(160deg,rgba(18,22,46,.8),rgba(10,12,28,.8))}
+.hero .eyebrow{font:600 11px/1 var(--sans); letter-spacing:.22em; text-transform:uppercase; color:var(--gauge-g)}
+.hero h1{margin:12px 0 10px; font-size:clamp(28px,5vw,50px); line-height:1.03; letter-spacing:-.5px;
+  background:linear-gradient(110deg,#fff,var(--quark-g) 40%,var(--lepton-g) 70%,var(--scalar-g)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero p{margin:0; max-width:640px; font-size:clamp(14px,1.6vw,16px); line-height:1.65; color:#cdd4ee}
+.hero-stats{display:flex; flex-wrap:wrap; gap:12px; margin-top:24px}
+.hero-stats div{background:rgba(8,10,24,.55); border:1px solid var(--line); border-radius:14px; padding:12px 18px}
+.hero-stats b{display:block; font:700 24px/1 var(--mono); background:linear-gradient(120deg,var(--gauge-g),var(--lepton-g)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero-stats span{font-size:11px; color:var(--muted); letter-spacing:.04em}
+.sec-title{font-size:clamp(18px,2.6vw,24px); margin:34px 0 6px}
+.sec-sub{color:var(--muted); font-size:14px; margin:0 0 18px; line-height:1.5}
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px}
+.card{position:relative; overflow:hidden; border:1px solid color-mix(in srgb,var(--c) 30%,var(--line)); border-radius:var(--r); padding:18px; background:linear-gradient(165deg,color-mix(in srgb,var(--c) 11%,rgba(16,20,40,.72)),rgba(12,15,32,.74)); transition:.26s}
+.card.click{cursor:pointer}
+.card.click:hover{transform:translateY(-4px); border-color:var(--c); box-shadow:0 14px 40px color-mix(in srgb,var(--c) 24%,transparent)}
+.card .ic{width:42px;height:42px;border-radius:12px; display:grid; place-items:center; margin-bottom:12px; background:color-mix(in srgb,var(--c) 18%,transparent); border:1px solid color-mix(in srgb,var(--c) 40%,var(--line)); color:color-mix(in srgb,var(--c) 80%,#fff); font:700 18px/1 var(--mono)}
+.card h3{margin:0 0 7px; font-size:16px}
+.card p{margin:0; font-size:13px; line-height:1.6; color:#c6cde8}
+.card .meta{margin-top:12px; display:flex; flex-wrap:wrap; gap:6px}
+.card .meta em{font-style:normal; font:600 10.5px/1 var(--mono); color:color-mix(in srgb,var(--c) 72%,var(--text)); border:1px solid color-mix(in srgb,var(--c) 35%,var(--line)); padding:5px 8px; border-radius:999px}
+.card .arrow{position:absolute; right:16px; top:16px; color:color-mix(in srgb,var(--c) 70%,var(--text)); opacity:0; transition:.26s}
+.card.click:hover .arrow{opacity:1; transform:translateX(3px)}
+.split{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.cosmos-bar{border:1px solid var(--line); border-radius:var(--r); padding:20px; background:rgba(12,15,32,.6)}
+.cosmos-bar h3{margin:0 0 14px; font-size:15px}
+.bar{height:26px; border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--line)}
+.bar i{display:block; height:100%}
+.bar-legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:12.5px; color:var(--muted)}
+.bar-legend span{display:inline-flex; align-items:center; gap:7px}
+.bar-legend .dot{width:11px;height:11px;border-radius:3px}
+.timeline{position:relative; margin:6px 0 0; padding-left:26px}
+.timeline::before{content:""; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:linear-gradient(180deg,var(--quark),var(--gauge),var(--lepton),var(--scalar))}
+.tl{position:relative; padding:0 0 16px}
+.tl::before{content:""; position:absolute; left:-22px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--c,var(--gauge)); box-shadow:0 0 10px var(--c,var(--gauge)); border:2px solid var(--bg2)}
+.tl b{font:700 13px/1 var(--mono); color:color-mix(in srgb,var(--c,var(--gauge)) 60%,var(--text))}
+.tl span{display:block; font-size:13px; color:#c6cde8; margin-top:4px; line-height:1.45}
+.foot{margin:30px 0 6px; padding-top:18px; border-top:1px solid var(--line); font-size:12px; color:var(--dim); line-height:1.6}
+
+/* ---------- Scrim / mobile sheet ---------- */
+.scrim{position:fixed; inset:0; z-index:30; background:var(--scrim); backdrop-filter:blur(3px); opacity:0; visibility:hidden; transition:.3s}
+.scrim.show{opacity:1; visibility:visible}
+.sheet-handle{display:none}
+.legend-fab{display:none}
+
+/* scrollbars */
+.map-scroll,.detail-body,.scroll-panel{scrollbar-width:thin; scrollbar-color:rgba(120,140,255,.4) transparent}
+.map-scroll::-webkit-scrollbar,.detail-body::-webkit-scrollbar,.scroll-panel::-webkit-scrollbar{width:10px;height:10px}
+.map-scroll::-webkit-scrollbar-track,.detail-body::-webkit-scrollbar-track,.scroll-panel::-webkit-scrollbar-track{background:rgba(10,13,30,.4); border-radius:10px}
+.map-scroll::-webkit-scrollbar-thumb,.detail-body::-webkit-scrollbar-thumb,.scroll-panel::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gauge),var(--quark)); border-radius:10px; border:2px solid rgba(10,13,30,.6)}
+.map-scroll::-webkit-scrollbar-thumb:hover,.detail-body::-webkit-scrollbar-thumb:hover,.scroll-panel::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gauge-g),var(--quark-g))}
+
+@media (max-width:960px){
+  :root{--top:56px}
+  .brand span{display:none}
+  .tabs{margin:0}
+  .tab{padding:8px 12px; font-size:13px}
+  .top-actions .btn span{display:none}
+  .top-actions .btn{padding:9px}
+  .search{margin-left:0; order:5; flex:1 1 100%}
+  .search input,.search input:focus{width:100%; max-width:none}
+  .toolbar{gap:8px 12px}
+  .map{flex-direction:column}
+  .matter,.forces{flex:1 1 auto}
+  .detail{
+    position:fixed; left:0; right:0; bottom:0; z-index:40; width:auto; flex:none;
+    max-height:88dvh; border-left:0; border-top:1px solid var(--line2);
+    border-radius:22px 22px 0 0; transform:translateY(102%); transition:transform .4s cubic-bezier(.2,.85,.25,1);
+    box-shadow:0 -20px 60px rgba(0,0,0,.5);
+  }
+  .detail.open{transform:translateY(0)}
+  .sheet-handle{display:block; flex:0 0 auto; padding:10px 0 4px; cursor:grab; touch-action:none}
+  .sheet-handle::before{content:""; display:block; width:42px; height:5px; border-radius:3px; margin:0 auto; background:var(--line2)}
+  .d-close{display:inline-flex}
+  .d-nav{flex-direction:row}
+  .legend-fab{display:inline-flex; position:fixed; z-index:20; right:14px; bottom:16px; box-shadow:0 8px 26px rgba(0,0,0,.4)}
+  .split{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .brand b{font-size:13px}
+  .tile{min-height:98px; padding:10px 5px}
+  .tile-name{font-size:11px}
+  .mini-stats{grid-template-columns:repeat(2,1fr)}
+  .notation{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .gen-head span{font-size:9.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important; animation-iteration-count:1 !important}
+  .conn-path{transition:none}
+}
+</style>
+</head>
+<body>
+<canvas id="cosmos"></canvas>
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke-width="1.4">
+          <ellipse class="atom-orbit" cx="16" cy="16" rx="13" ry="5.4" stroke="#4c8dff"/>
+          <ellipse class="atom-orbit" cx="16" cy="16" rx="13" ry="5.4" stroke="#22e0a3" transform="rotate(60 16 16)"/>
+          <ellipse class="atom-orbit" cx="16" cy="16" rx="13" ry="5.4" stroke="#b06bff" transform="rotate(120 16 16)"/>
+        </g>
+        <circle cx="16" cy="16" r="3.4" fill="#f6c445"/>
+      </svg>
+      <div><b>Стандартная модель</b><span>Карта частиц</span></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="map" role="tab">Карта</button>
+      <button class="tab" data-tab="facts" role="tab">Факты</button>
+      <button class="tab" data-tab="about" role="tab">Модель</button>
+    </nav>
+    <div class="top-actions">
+      <button class="btn" id="randomBtn" title="Случайная частица">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        <span>Случайная</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <!-- MAP -->
+    <section class="panel active" id="panel-map">
+      <div class="toolbar">
+        <div class="tool-group" id="groupChips">
+          <span class="tool-label">Группы</span>
+          <button class="chip active" data-group="all">Все</button>
+          <button class="chip" data-group="quark" style="--cc:var(--quark)"><i class="dot"></i>Кварки</button>
+          <button class="chip" data-group="lepton" style="--cc:var(--lepton)"><i class="dot"></i>Лептоны</button>
+          <button class="chip" data-group="boson" style="--cc:var(--gauge)"><i class="dot"></i>Бозоны</button>
+        </div>
+        <div class="tool-group" id="modeChips">
+          <span class="tool-label">Связи</span>
+          <button class="chip active" data-mode="generation" style="--cc:var(--conn)">Поколение</button>
+          <button class="chip" data-mode="strong" style="--cc:var(--f-strong)">Сильное</button>
+          <button class="chip" data-mode="em" style="--cc:var(--f-em)">ЭМ</button>
+          <button class="chip" data-mode="weak" style="--cc:var(--f-weak)">Слабое</button>
+          <button class="chip" data-mode="higgs" style="--cc:var(--f-higgs)">Хиггс</button>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" type="search" placeholder="Поиск частицы…" autocomplete="off" spellcheck="false">
+        </div>
+        <span class="count" id="countLabel">17 / 17</span>
+      </div>
+      <div class="workspace">
+        <div class="map-scroll" id="mapScroll">
+          <div class="map-inner" id="mapInner">
+            <svg class="connections" id="connSvg" aria-hidden="true"></svg>
+            <div class="map" id="mapGrid"></div>
+          </div>
+        </div>
+        <aside class="detail" id="detail" aria-live="polite">
+          <div class="sheet-handle" id="sheetHandle"></div>
+          <div class="detail-body" id="detailBody"></div>
+        </aside>
+      </div>
+      <button class="btn legend-fab" id="legendFab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Легенда
+      </button>
+    </section>
+
+    <!-- FACTS -->
+    <section class="panel" id="panel-facts">
+      <div class="scroll-panel">
+        <div class="wrap">
+          <div class="facts-head">
+            <div>
+              <h1>Интересные факты</h1>
+              <p>Удивительное о частицах, взаимодействиях и границах Стандартной модели. Нажмите «показать на карте», чтобы перейти к частице.</p>
+            </div>
+          </div>
+          <div class="facts-filters" id="factsFilters"></div>
+          <div class="facts-grid" id="factsGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="panel" id="panel-about">
+      <div class="scroll-panel">
+        <div class="wrap">
+          <div class="hero">
+            <div class="eyebrow">Физика элементарных частиц</div>
+            <h1>Стандартная модель</h1>
+            <p>Лучшая на сегодня теория микромира: она описывает все известные элементарные частицы и три из четырёх фундаментальных взаимодействий — сильное, электромагнитное и слабое. Из 17 частиц, как из кирпичиков, построено всё видимое вещество Вселенной.</p>
+            <div class="hero-stats">
+              <div><b>17</b><span>фундаментальных частиц</span></div>
+              <div><b>3</b><span>поколения материи</span></div>
+              <div><b>3+1</b><span>взаимодействия + поле Хиггса</span></div>
+              <div><b>~5%</b><span>Вселенной объясняет</span></div>
+            </div>
+          </div>
+
+          <h2 class="sec-title">Что описывает модель</h2>
+          <p class="sec-sub">Каждое взаимодействие переносится своими частицами-бозонами. Нажмите на карточку, чтобы увидеть её участников на карте.</p>
+          <div class="cards">
+            <div class="card click" data-force="strong" style="--c:var(--f-strong)">
+              <div class="ic">g</div><span class="arrow">→</span>
+              <h3>Сильное</h3>
+              <p>Связывает кварки в протоны и нейтроны, а нуклоны — в ядра. Самая мощная сила, но действует лишь на ничтожных расстояниях.</p>
+              <div class="meta"><em>переносчик: глюон</em><em>радиус ~10⁻¹⁵ м</em></div>
+            </div>
+            <div class="card click" data-force="em" style="--c:var(--f-em)">
+              <div class="ic">γ</div><span class="arrow">→</span>
+              <h3>Электромагнитное</h3>
+              <p>Действует между заряженными частицами. Отвечает за свет, электричество, магнетизм и всю химию — связи электронов с ядрами.</p>
+              <div class="meta"><em>переносчик: фотон</em><em>радиус ∞</em></div>
+            </div>
+            <div class="card click" data-force="weak" style="--c:var(--f-weak)">
+              <div class="ic">W·Z</div><span class="arrow">→</span>
+              <h3>Слабое</h3>
+              <p>Управляет радиоактивным бета-распадом и превращениями ароматов кварков. Запускает термоядерные реакции в недрах звёзд.</p>
+              <div class="meta"><em>переносчики: W, Z</em><em>радиус ~10⁻¹⁸ м</em></div>
+            </div>
+            <div class="card click" data-force="higgs" style="--c:var(--f-higgs)">
+              <div class="ic">H</div><span class="arrow">→</span>
+              <h3>Поле Хиггса</h3>
+              <p>Заполняет всю Вселенную. Взаимодействуя с ним, элементарные частицы приобретают массу. Квант этого поля — бозон Хиггса.</p>
+              <div class="meta"><em>бозон: H</em><em>открыт в 2012</em></div>
+            </div>
+          </div>
+
+          <h2 class="sec-title">Чего модель НЕ описывает</h2>
+          <p class="sec-sub">Стандартная модель невероятно точна, но неполна — она умалчивает о большем.</p>
+          <div class="cards">
+            <div class="card" style="--c:var(--info)"><div class="ic">↧</div><h3>Гравитация</h3><p>Четвёртое взаимодействие не входит в модель. Квантовой теории гравитации до сих пор нет.</p></div>
+            <div class="card" style="--c:var(--quark)"><div class="ic">◍</div><h3>Тёмная материя</h3><p>~27% Вселенной — невидимая масса, удерживающая галактики. Ни одна частица модели ей не соответствует.</p></div>
+            <div class="card" style="--c:var(--f-strong)"><div class="ic">⇣</div><h3>Тёмная энергия</h3><p>~68% Вселенной — загадочная сила, ускоряющая расширение пространства. Вне модели.</p></div>
+            <div class="card" style="--c:var(--lepton)"><div class="ic">ν</div><h3>Массы нейтрино</h3><p>Осцилляции доказали, что нейтрино имеют массу, — а исходная модель считала их безмассовыми.</p></div>
+            <div class="card" style="--c:var(--scalar)"><div class="ic">±</div><h3>Асимметрия материи</h3><p>Почему во Вселенной вещество, а не равная ему антиматерия? Модель не даёт полного ответа.</p></div>
+          </div>
+
+          <h2 class="sec-title">Из чего состоит модель</h2>
+          <p class="sec-sub">Все частицы делятся на фермионы (кирпичики материи) и бозоны (переносчики сил).</p>
+          <div class="split">
+            <div class="card" style="--c:var(--quark)">
+              <div class="ic">½</div><h3>Фермионы — материя</h3>
+              <p>Спин ½, подчиняются принципу запрета Паули. Делятся на <b>кварки</b> (чувствуют сильную силу) и <b>лептоны</b> (нет). Каждый повторяется в трёх поколениях — всё более тяжёлых копиях.</p>
+              <div class="meta"><em>6 кварков</em><em>6 лептонов</em><em>3 поколения</em></div>
+            </div>
+            <div class="card" style="--c:var(--gauge)">
+              <div class="ic">1·0</div><h3>Бозоны — силы</h3>
+              <p>Целый спин, могут «накапливаться» в одном состоянии. Калибровочные бозоны (спин 1) переносят взаимодействия, а скалярный бозон Хиггса (спин 0) даёт массу.</p>
+              <div class="meta"><em>глюон · фотон</em><em>W · Z</em><em>Хиггс</em></div>
+            </div>
+          </div>
+
+          <div class="split" style="margin-top:16px">
+            <div class="cosmos-bar">
+              <h3>Из чего состоит Вселенная</h3>
+              <div class="bar">
+                <i style="width:5%;background:var(--lepton)"></i>
+                <i style="width:27%;background:var(--quark)"></i>
+                <i style="width:68%;background:linear-gradient(90deg,var(--gauge),#1a2350)"></i>
+              </div>
+              <div class="bar-legend">
+                <span><i class="dot" style="background:var(--lepton)"></i>Обычная материя — 5%</span>
+                <span><i class="dot" style="background:var(--quark)"></i>Тёмная материя — 27%</span>
+                <span><i class="dot" style="background:var(--gauge)"></i>Тёмная энергия — 68%</span>
+              </div>
+              <p style="margin:14px 0 0;font-size:12.5px;color:var(--muted);line-height:1.55">Стандартная модель описывает лишь эти 5%. Всё остальное — величайшая загадка современной физики.</p>
+            </div>
+            <div class="cosmos-bar">
+              <h3>Как читать карту</h3>
+              <div class="legend">
+                <div class="row" style="--c:var(--quark)"><div class="sw"></div><div><b>Кварки</b><span>u d · c s · t b — основа ядерной материи</span></div></div>
+                <div class="row" style="--c:var(--lepton)"><div class="sw"></div><div><b>Лептоны</b><span>e μ τ и три нейтрино</span></div></div>
+                <div class="row" style="--c:var(--gauge)"><div class="sw"></div><div><b>Калибровочные бозоны</b><span>переносчики сил</span></div></div>
+                <div class="row" style="--c:var(--scalar)"><div class="sw"></div><div><b>Бозон Хиггса</b><span>даёт массу</span></div></div>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="sec-title">Хроника открытий</h2>
+          <p class="sec-sub">Более века физики собирали эту мозаику — частица за частицей.</p>
+          <div class="timeline" id="timeline"></div>
+
+          <p class="foot">Значения масс, зарядов и времён жизни приведены по данным Particle Data Group и округлены. Массы лёгких кварков даны в схеме MS-bar; для нейтрино указаны экспериментальные верхние пределы. Приложение работает полностью офлайн.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<script>
+"use strict";
+(function(){
+  const C={quark:'var(--quark)',lepton:'var(--lepton)',gauge:'var(--gauge)',scalar:'var(--scalar)'};
+  const FORCES={
+    strong:{name:'Сильное',carriers:['gluon'],color:'var(--f-strong)'},
+    em:{name:'Электромагнитное',carriers:['photon'],color:'var(--f-em)'},
+    weak:{name:'Слабое',carriers:['W','Z'],color:'var(--f-weak)'},
+    higgs:{name:'Хиггсовское',carriers:['higgs'],color:'var(--f-higgs)'}
+  };
+  const FKEYS=['strong','em','weak','higgs'];
+
+  const P=[
+    {id:'up',type:'quark',gen:1,sym:'u',name:'Верхний кварк',en:'Up quark',mass:'2.16 МэВ/c²',massMeV:2.16,charge:'+⅔',spin:'½',flavor:'Верхний (up)',life:'Стабилен в адронах',forms:'Протон (uud), нейтрон (udd), π⁺ (ud̄)',anti:{sym:'ū',name:'Верхний антикварк',charge:'−⅔'},year:1968,by:'SLAC (глубоко неупругое рассеяние); модель кварков — Гелл-Ман и Цвайг, 1964',inter:['strong','em','weak','higgs'],
+      desc:'Самый лёгкий кварк и один из двух «кирпичиков» обычной материи. Вместе с нижним кварком образует протоны и нейтроны, а значит — почти всю видимую массу Вселенной.',
+      facts:['В каждом протоне два верхних кварка (uud), в нейтроне — один (udd).','Масса кварка всего ~2 МэВ, но протон весит ~938 МэВ: 99% даёт энергия глюонного поля.']},
+    {id:'down',type:'quark',gen:1,sym:'d',name:'Нижний кварк',en:'Down quark',mass:'4.67 МэВ/c²',massMeV:4.67,charge:'−⅓',spin:'½',flavor:'Нижний (down)',life:'Стабилен в адронах',forms:'Протон (uud), нейтрон (udd), π⁻ (dū)',anti:{sym:'d̄',name:'Нижний антикварк',charge:'+⅓'},year:1968,by:'SLAC; модель кварков — Гелл-Ман и Цвайг, 1964',inter:['strong','em','weak','higgs'],
+      desc:'Второй «кирпичик» ядерной материи. Чуть тяжелее верхнего кварка, что делает нейтрон тяжелее протона и определяет стабильность атомов и ход ядерных реакций.',
+      facts:['Именно разница масс нижнего и верхнего кварков делает нейтрон нестабильным, а протон — стабильным.','Свободный нейтрон живёт ~15 минут и распадается в протон через превращение d → u.']},
+    {id:'charm',type:'quark',gen:2,sym:'c',name:'Очарованный кварк',en:'Charm quark',mass:'1.27 ГэВ/c²',massMeV:1270,charge:'+⅔',spin:'½',flavor:'Очарованный (charm)',life:'~10⁻¹² с (D-адроны)',forms:'D-мезоны, J/ψ (cc̄), очарованные барионы',anti:{sym:'c̄',name:'Очарованный антикварк',charge:'−⅔'},year:1974,by:'SLAC (Б. Рихтер) и BNL (С. Тинг) — J/ψ-мезон',inter:['strong','em','weak','higgs'],
+      desc:'Кварк второго поколения, более тяжёлый аналог верхнего. Открытие J/ψ-мезона в 1974 году («ноябрьская революция» в физике) убедило сообщество в реальности кварков.',
+      facts:['J/ψ-мезон (cc̄) открыли одновременно в двух лабораториях — редкое двойное открытие, Нобелевская премия 1976 года.','Очарованные адроны живут около триллионной доли секунды.']},
+    {id:'strange',type:'quark',gen:2,sym:'s',name:'Странный кварк',en:'Strange quark',mass:'93.4 МэВ/c²',massMeV:93.4,charge:'−⅓',spin:'½',flavor:'Странный (strange)',life:'~10⁻¹⁰ с (K-адроны)',forms:'Каоны (K), Λ-, Σ-гипероны',anti:{sym:'s̄',name:'Странный антикварк',charge:'+⅓'},year:1947,by:'Дж. Рочестер и К. Батлер (K-мезоны в космических лучах)',inter:['strong','em','weak','higgs'],
+      desc:'Первый открытый «необычный» кварк. Странные частицы поражали физиков аномально долгим временем жизни — отсюда и название «странность».',
+      facts:['Странные частицы рождаются быстро (сильное взаимодействие), а распадаются медленно (слабое) — это и назвали странностью.','Каоны со странным кварком помогли открыть нарушение CP-симметрии в 1964 году.']},
+    {id:'top',type:'quark',gen:3,sym:'t',name:'Истинный кварк',en:'Top quark',mass:'172.7 ГэВ/c²',massMeV:172700,charge:'+⅔',spin:'½',flavor:'Истинный (top)',life:'~5×10⁻²⁵ с',forms:'Не образует адронов — распадается раньше',anti:{sym:'t̄',name:'Истинный антикварк',charge:'−⅔'},year:1995,by:'Fermilab, коллаборации CDF и DØ',inter:['strong','em','weak','higgs'],
+      desc:'Самая тяжёлая известная элементарная частица — почти как целый атом золота. Настолько массивен, что распадается раньше, чем успевает образовать адрон.',
+      facts:['Масса топ-кварка ~173 ГэВ сравнима с массой атома вольфрама — и вся сосредоточена в одной точечной частице.','Это единственный кварк, распадающийся «голым», без образования адронов.']},
+    {id:'bottom',type:'quark',gen:3,sym:'b',name:'Прелестный кварк',en:'Bottom quark',mass:'4.18 ГэВ/c²',massMeV:4180,charge:'−⅓',spin:'½',flavor:'Прелестный (bottom)',life:'~1.5×10⁻¹² с (B-адроны)',forms:'B-мезоны, Υ (bb̄), b-барионы',anti:{sym:'b̄',name:'Прелестный антикварк',charge:'+⅓'},year:1977,by:'Fermilab, группа Л. Ледермана (E288) — Υ-мезон',inter:['strong','em','weak','higgs'],
+      desc:'Кварк третьего поколения, аналог нижнего. B-мезоны с b-кварком — главная лаборатория для изучения нарушения CP-симметрии и различий материи и антиматерии.',
+      facts:['Открытие b-кварка (Υ-мезон) в 1977 году указало на существование третьего поколения.','Эксперименты BaBar и Belle на B-мезонах подтвердили механизм Кобаяси–Маскавы (Нобелевская премия 2008).']},
+
+    {id:'electron',type:'lepton',gen:1,sym:'e<sup>−</sup>',name:'Электрон',en:'Electron',mass:'0.511 МэВ/c²',massMeV:0.511,charge:'−1',spin:'½',flavor:'Электронный',life:'Стабилен (>6.6×10²⁸ лет)',forms:'Электронные оболочки атомов',anti:{sym:'e<sup>+</sup>',name:'Позитрон',charge:'+1'},year:1897,by:'Дж. Дж. Томсон',inter:['em','weak','higgs'],
+      desc:'Первая открытая элементарная частица и носитель электрического тока. Электроны образуют оболочки атомов и определяют всю химию.',
+      facts:['Электрон открыли в 1897 году — задолго до появления самого понятия «Стандартная модель».','Он абсолютно стабилен: нижняя граница времени жизни превышает 6.6×10²⁸ лет.']},
+    {id:'muon',type:'lepton',gen:2,sym:'μ<sup>−</sup>',name:'Мюон',en:'Muon',mass:'105.7 МэВ/c²',massMeV:105.7,charge:'−1',spin:'½',flavor:'Мюонный',life:'2.2×10⁻⁶ с (2.2 мкс)',forms:'Мюонные атомы, мюоний (μ⁺e⁻)',anti:{sym:'μ<sup>+</sup>',name:'Анимюон',charge:'+1'},year:1936,by:'К. Андерсон и С. Неддермейер',inter:['em','weak','higgs'],
+      desc:'«Тяжёлый электрон» второго поколения — в ~207 раз массивнее. Нестабилен, распадается за микросекунды, но постоянно рождается в атмосфере от космических лучей.',
+      facts:['Открытие мюона озадачило физиков: «А кто это заказывал?» — воскликнул Раби о лишнем поколении.','Благодаря релятивистскому замедлению времени мюоны космических лучей долетают до поверхности Земли.']},
+    {id:'tau',type:'lepton',gen:3,sym:'τ<sup>−</sup>',name:'Тау-лептон',en:'Tau lepton',mass:'1776.9 МэВ/c²',massMeV:1776.9,charge:'−1',spin:'½',flavor:'Тау-лептонный',life:'2.9×10⁻¹³ с',forms:'Распадается на лёгкие частицы и адроны',anti:{sym:'τ<sup>+</sup>',name:'Антитау-лептон',charge:'+1'},year:1975,by:'М. Перл (SLAC)',inter:['em','weak','higgs'],
+      desc:'Самый тяжёлый заряженный лептон, почти вдвое тяжелее протона. Третье поколение материи; живёт ничтожные доли пикосекунды.',
+      facts:['Тау-лептон открыл Мартин Перл в 1975 году (Нобелевская премия 1995).','Это единственный лептон, достаточно тяжёлый, чтобы распадаться на адроны (например, на пионы).']},
+    {id:'nu_e',type:'lepton',gen:1,sym:'ν<sub>e</sub>',name:'Электронное нейтрино',en:'Electron neutrino',mass:'< 0.8 эВ/c²',massMeV:0.0000008,charge:'0',spin:'½',flavor:'Электронный',life:'Стабильно (осциллирует)',forms:'Свободно распространяется',anti:{sym:'ν̄<sub>e</sub>',name:'Электронное антинейтрино',charge:'0',note:'Природа (Дирака или Майораны) не установлена'},year:1956,by:'К. Коуэн и Ф. Райнес',inter:['weak'],
+      desc:'Электрически нейтральный, почти безмассовый спутник электрона. Участвует только в слабом взаимодействии, поэтому пронизывает материю почти беспрепятственно.',
+      facts:['Каждую секунду сквозь каждый см² вашего тела пролетает ~6×10¹⁰ солнечных нейтрино.','Осцилляции доказали, что нейтрино имеют крошечную массу — это выходит за рамки исходной модели.']},
+    {id:'nu_mu',type:'lepton',gen:2,sym:'ν<sub>μ</sub>',name:'Мюонное нейтрино',en:'Muon neutrino',mass:'< 0.17 МэВ/c²',massMeV:0.17,charge:'0',spin:'½',flavor:'Мюонный',life:'Стабильно (осциллирует)',forms:'Свободно распространяется',anti:{sym:'ν̄<sub>μ</sub>',name:'Мюонное антинейтрино',charge:'0',note:'Природа (Дирака или Майораны) не установлена'},year:1962,by:'Л. Ледерман, М. Шварц, Дж. Стейнбергер (BNL)',inter:['weak'],
+      desc:'Нейтрино второго поколения, рождающееся вместе с мюоном. Как и другие нейтрино, способно менять «аромат» в полёте — квантовые осцилляции.',
+      facts:['Атмосферные мюонные нейтрино помогли открыть осцилляции (Super-Kamiokande, 1998; Нобелевская премия 2015).','Осцилляции — первое надёжное свидетельство физики за пределами Стандартной модели.']},
+    {id:'nu_tau',type:'lepton',gen:3,sym:'ν<sub>τ</sub>',name:'Тау-нейтрино',en:'Tau neutrino',mass:'< 18.2 МэВ/c²',massMeV:18.2,charge:'0',spin:'½',flavor:'Тау-лептонный',life:'Стабильно (осциллирует)',forms:'Свободно распространяется',anti:{sym:'ν̄<sub>τ</sub>',name:'Тау-антинейтрино',charge:'0',note:'Природа (Дирака или Майораны) не установлена'},year:2000,by:'Коллаборация DONUT (Fermilab)',inter:['weak'],
+      desc:'Самый неуловимый лептон: тау-нейтрино поймали напрямую лишь в 2000 году. Третье поколение нейтрино.',
+      facts:['Тау-нейтрино стало последней непосредственно зарегистрированной частицей модели (DONUT, 2000).','За годы работы детектор нашёл лишь несколько событий его взаимодействия.']},
+
+    {id:'gluon',type:'gauge',gen:0,sym:'g',name:'Глюон',en:'Gluon',mass:'0 (безмассовый)',massMeV:0,charge:'0',spin:'1',flavor:'—',life:'Стабилен (конфайнмент)',forms:'Переносчик сильного взаимодействия',anti:{sym:'g',name:'Собственная античастица',charge:'0',self:true},year:1979,by:'DESY (трёхструйные события: TASSO и др.)',inter:['strong'],
+      desc:'Переносчик сильного взаимодействия, «клей» кварков. Сам несёт цветной заряд, поэтому взаимодействует и с другими глюонами — это приводит к конфайнменту.',
+      facts:['Существует 8 типов глюонов — разные комбинации цвета и антицвета.','Из-за самодействия глюонов кварки нельзя разделить: энергия струны рождает новые пары кварк–антикварк.']},
+    {id:'photon',type:'gauge',gen:0,sym:'γ',name:'Фотон',en:'Photon',mass:'0 (безмассовый)',massMeV:0,charge:'0',spin:'1',flavor:'—',life:'Стабилен',forms:'Переносчик электромагнитного взаимодействия',anti:{sym:'γ',name:'Собственная античастица',charge:'0',self:true},year:1905,by:'А. Эйнштейн (кванты света); термин «фотон» — Г. Льюис, 1926',inter:['em'],
+      desc:'Квант электромагнитного поля и переносчик электромагнитного взаимодействия. Безмассов, поэтому дальнодействие электромагнетизма бесконечно.',
+      facts:['Фотон не имеет массы и заряда и движется со скоростью света в вакууме.','Вся химия и свет вокруг нас — это фотоны, связывающие электроны с ядрами.']},
+    {id:'Z',type:'gauge',gen:0,sym:'Z<sup>0</sup>',name:'Z-бозон',en:'Z boson',mass:'91.19 ГэВ/c²',massMeV:91190,charge:'0',spin:'1',flavor:'—',life:'~3×10⁻²⁵ с',forms:'Переносчик нейтральных слабых токов',anti:{sym:'Z<sup>0</sup>',name:'Собственная античастица',charge:'0',self:true},year:1983,by:'CERN, UA1 и UA2 (К. Руббиа, С. ван дер Меер)',inter:['weak','higgs'],
+      desc:'Нейтральный переносчик слабого взаимодействия. Вместе с W-бозонами отвечает за радиоактивные распады и термоядерные реакции в звёздах.',
+      facts:['Z-бозон тяжелее атома железа (~91 ГэВ) — поэтому слабое взаимодействие короткодействующее.','Открыт в 1983 году на CERN; Нобелевская премия Руббиа и ван дер Меера — 1984.']},
+    {id:'W',type:'gauge',gen:0,sym:'W<sup>±</sup>',name:'W-бозон',en:'W boson',mass:'80.4 ГэВ/c²',massMeV:80400,charge:'±1',spin:'1',flavor:'—',life:'~3×10⁻²⁵ с',forms:'Переносчик заряженных слабых токов',anti:{sym:'W<sup>∓</sup>',name:'W⁻ — античастица W⁺',charge:'∓1'},year:1983,by:'CERN, UA1 и UA2 (К. Руббиа, С. ван дер Меер)',inter:['weak','em','higgs'],
+      desc:'Заряженный (±1) переносчик слабого взаимодействия. Именно W превращает один аромат кварка в другой и запускает бета-распад.',
+      facts:['W-бозон — единственная частица-переносчик с электрическим зарядом (±1).','Через обмен W идёт первый шаг протон-протонного цикла, зажигающего Солнце.']},
+    {id:'higgs',type:'scalar',gen:0,sym:'H<sup>0</sup>',name:'Бозон Хиггса',en:'Higgs boson',mass:'125.1 ГэВ/c²',massMeV:125100,charge:'0',spin:'0',flavor:'—',life:'~1.6×10⁻²² с',forms:'Квант поля Хиггса',anti:{sym:'H<sup>0</sup>',name:'Собственная античастица',charge:'0',self:true},year:2012,by:'CERN, ATLAS и CMS (БАК); теория — Хиггс, Энглерт и др., 1964',inter:['weak','higgs'],
+      desc:'Квант поля Хиггса, которое заполняет всю Вселенную. Взаимодействуя с ним, элементарные частицы приобретают массу. Открытие в 2012 году замкнуло Стандартную модель.',
+      facts:['Бозон Хиггса предсказали в 1964 году, а нашли спустя 48 лет — на Большом адронном коллайдере.','Хиггс даёт массу элементарным частицам, но не протону: его масса — в основном энергия глюонов.']}
+  ];
+  const BY={}; P.forEach(p=>BY[p.id]=p);
+  const ORDER=['up','down','charm','strange','top','bottom','electron','muon','tau','nu_e','nu_mu','nu_tau','gluon','photon','Z','W','higgs'];
+  const TYPE_LABEL={quark:'Кварк',lepton:'Лептон',gauge:'Калибровочный бозон',scalar:'Скалярный бозон'};
+  const ROMAN=['','I','II','III'];
+
+  const FACTS=[
+    {t:'17 частиц — и почти всё вокруг',x:'Стандартная модель описывает всего 17 фундаментальных частиц, из которых, как из кирпичиков, построено всё видимое вещество Вселенной.',cat:'Материя',c:'var(--quark)'},
+    {t:'99% массы — это энергия',x:'Масса протона и нейтрона почти целиком состоит из энергии глюонного поля, а не из масс кварков. E=mc² в действии.',cat:'Материя',c:'var(--f-strong)',goto:'gluon'},
+    {t:'Три поколения материи',x:'Материя повторяется в трёх поколениях, каждое тяжелее предыдущего. Обычное вещество — лишь первое. Зачем природа сделала три — неизвестно.',cat:'Загадки',c:'var(--lepton)'},
+    {t:'Нейтрино-призраки',x:'Триллионы нейтрино пролетают сквозь вас каждую секунду, почти не взаимодействуя. Для них Земля почти прозрачна.',cat:'Материя',c:'var(--lepton)',goto:'nu_e'},
+    {t:'Антиматерия реальна',x:'У каждой частицы материи есть античастица. Позитроны (антиэлектроны) ежедневно используются в медицине — ПЭТ-сканерах.',cat:'Материя',c:'var(--quark)',goto:'electron'},
+    {t:'Самая тяжёлая — топ',x:'Топ-кварк весит примерно как атом золота, хотя считается точечной частицей без внутренней структуры.',cat:'Рекорды',c:'var(--scalar)',goto:'top'},
+    {t:'Хиггс — не вся масса',x:'Поле Хиггса даёт массу элементарным частицам, но не основную массу атомов: та рождается из энергии сильного взаимодействия.',cat:'Взаимодействия',c:'var(--f-higgs)',goto:'higgs'},
+    {t:'Модель объясняет лишь 5%',x:'Обычная материя — около 5% Вселенной. Тёмная материя (~27%) и тёмная энергия (~68%) в модель не входят.',cat:'Загадки',c:'var(--gauge)'},
+    {t:'Гравитации в списке нет',x:'Стандартная модель не включает гравитацию — четвёртое фундаментальное взаимодействие. Квантовой теории гравитации пока нет.',cat:'Загадки',c:'var(--info)'},
+    {t:'Нейтрино ломают правила',x:'Ненюлевая масса нейтрино, доказанная осцилляциями, требует расширения Стандартной модели — первое надёжное свидетельство новой физики.',cat:'Загадки',c:'var(--lepton)',goto:'nu_mu'},
+    {t:'Точность до 12 знаков',x:'Аномальный магнитный момент электрона совпадает с предсказанием теории с точностью лучше одной части на триллион — триумф модели.',cat:'Рекорды',c:'var(--f-em)',goto:'electron'},
+    {t:'48 лет ожидания',x:'Бозон Хиггса предсказали в 1964 году, а открыли лишь в 2012-м. Нобелевскую премию Хиггс и Энглерт получили в 2013-м.',cat:'История',c:'var(--scalar)',goto:'higgs'},
+    {t:'Мюоны ливнем с неба',x:'Космические мюоны живут 2.2 мкс, но благодаря релятивистскому замедлению времени успевают долететь до поверхности Земли.',cat:'Материя',c:'var(--lepton)',goto:'muon'},
+    {t:'Кварки нельзя вытащить',x:'Из-за конфайнмента одиночный кварк получить невозможно: при попытке разделить их энергия рождает новые пары кварк–антикварк.',cat:'Взаимодействия',c:'var(--f-strong)',goto:'gluon'},
+    {t:'Заряженный переносчик',x:'W-бозон — единственная частица-переносчик взаимодействия, несущая электрический заряд (±1).',cat:'Рекорды',c:'var(--f-weak)',goto:'W'},
+    {t:'Первая элементарная частица',x:'Электрон открыл Дж. Дж. Томсон в 1897 году — за 70 лет до того, как Стандартная модель оформилась как теория.',cat:'История',c:'var(--quark)',goto:'electron'}
+  ];
+  const TIMELINE=[
+    {y:1897,t:'Электрон — Дж. Дж. Томсон',c:'var(--lepton)'},
+    {y:1905,t:'Квант света (фотон) — А. Эйнштейн',c:'var(--f-em)'},
+    {y:1936,t:'Мюон — Андерсон и Неддермейер',c:'var(--lepton)'},
+    {y:1947,t:'Странные частицы в космических лучах',c:'var(--quark)'},
+    {y:1956,t:'Электронное нейтрино — Коуэн и Райнес',c:'var(--lepton)'},
+    {y:1964,t:'Кварковая модель и механизм Хиггса',c:'var(--scalar)'},
+    {y:1968,t:'Кварки подтверждены (SLAC)',c:'var(--quark)'},
+    {y:1974,t:'Очарованный кварк — J/ψ-мезон',c:'var(--quark)'},
+    {y:1975,t:'Тау-лептон — М. Перл',c:'var(--lepton)'},
+    {y:1977,t:'Прелестный кварк — Fermilab',c:'var(--quark)'},
+    {y:1979,t:'Глюон — DESY',c:'var(--f-strong)'},
+    {y:1983,t:'W- и Z-бозоны — CERN',c:'var(--f-weak)'},
+    {y:1995,t:'Истинный кварк — Fermilab',c:'var(--quark)'},
+    {y:2000,t:'Тау-нейтрино — DONUT',c:'var(--lepton)'},
+    {y:2012,t:'Бозон Хиггса — БАК (CERN)',c:'var(--scalar)'}
+  ];
+
+  const state={tab:'map',selected:null,mode:'generation',group:'all',search:'',filter:new Set(ORDER),rel:null,factsCat:'Все',sheet:false};
+  const $=s=>document.querySelector(s);
+  const mapGrid=$('#mapGrid'), mapInner=$('#mapInner'), connSvg=$('#connSvg'), detailBody=$('#detailBody'),
+        detail=$('#detail'), scrim=$('#scrim'), mapScroll=$('#mapScroll');
+  const isMobile=()=>window.matchMedia('(max-width:960px)').matches;
+
+  /* ---------- Build map ---------- */
+  function tileHTML(p,i){
+    const c=C[p.type];
+    const gen=p.gen?`<span class="tile-gen">${ROMAN[p.gen]}</span>`:`<span class="tile-tag">${p.type==='scalar'?'скаляр':'бозон'}</span>`;
+    const props=`<span class="tile-props"><span><b>q</b> ${p.charge}</span><span><b>s</b> ${p.spin}</span></span>`;
+    if(p.id==='higgs'){
+      return `<button class="tile higgs" data-id="${p.id}" style="--c:${c};--d:${i*35}ms">
+        ${gen}<span class="orb"><span class="sym">${p.sym}</span></span>
+        <span class="tile-info"><span class="tile-name">${p.name}</span><span class="tile-mass">${p.mass}</span>${props}</span>
+      </button>`;
+    }
+    return `<button class="tile" data-id="${p.id}" style="--c:${c};--d:${i*35}ms">
+      ${gen}<span class="orb"><span class="sym">${p.sym}</span></span>
+      <span class="tile-name">${p.name}</span><span class="tile-mass">${p.mass}</span>${props}
+    </button>`;
+  }
+  function buildMap(){
+    const g=id=>tileHTML(BY[id],ORDER.indexOf(id));
+    mapGrid.innerHTML=`
+      <div class="matter">
+        <div class="gen-head"><span>Поколение I</span><span>Поколение II</span><span>Поколение III</span></div>
+        <div class="group-label">Кварки</div>
+        <div class="grid3">${g('up')}${g('charm')}${g('top')}${g('down')}${g('strange')}${g('bottom')}</div>
+        <div class="group-label">Лептоны</div>
+        <div class="grid3">${g('electron')}${g('muon')}${g('tau')}${g('nu_e')}${g('nu_mu')}${g('nu_tau')}</div>
+      </div>
+      <div class="forces">
+        <div class="group-label">Калибровочные бозоны</div>
+        <div class="grid2">${g('gluon')}${g('photon')}${g('Z')}${g('W')}</div>
+        <div class="group-label">Скалярный бозон</div>
+        <div class="grid2">${g('higgs')}</div>
+      </div>`;
+  }
+
+  /* ---------- Filter & related ---------- */
+  function computeFilter(){
+    const q=state.search.trim().toLowerCase();
+    const set=new Set();
+    P.forEach(p=>{
+      const grp=p.type==='quark'?'quark':p.type==='lepton'?'lepton':'boson';
+      const okG=state.group==='all'||state.group===grp;
+      const okQ=!q||(p.name.toLowerCase().includes(q)||p.en.toLowerCase().includes(q)||p.id.includes(q)||p.sym.replace(/<[^>]+>/g,'').toLowerCase().includes(q));
+      if(okG&&okQ) set.add(p.id);
+    });
+    state.filter=set;
+  }
+  function computeRelated(){
+    const id=state.selected;
+    if(!id){state.rel=null;return;}
+    const p=BY[id], mode=state.mode, set=new Set(), carriers=new Set(), lines=[]; let color='var(--conn)',note='';
+    if(mode==='generation'){
+      if(p.gen){
+        P.forEach(o=>{if(o.gen===p.gen&&o.id!==id){set.add(o.id);lines.push([id,o.id]);}});
+        color='var(--conn)';
+      }else{
+        const uni=new Set();
+        p.inter.forEach(f=>P.forEach(o=>{if(o.inter.includes(f)&&o.id!==id)uni.add(o.id);}));
+        uni.forEach(o=>{set.add(o);lines.push([id,o]);});
+        color='var(--conn)'; note='У бозонов нет поколения — показаны частицы, с которыми он взаимодействует.';
+      }
+    }else{
+      const f=FORCES[mode]; color=f.color;
+      const parts=P.filter(o=>o.inter.includes(mode)).map(o=>o.id);
+      f.carriers.forEach(c=>carriers.add(c));
+      parts.forEach(o=>set.add(o)); f.carriers.forEach(c=>set.add(c));
+      set.delete(id);
+      if(p.inter.includes(mode)){
+        parts.forEach(o=>{if(o!==id)lines.push([id,o]);});
+      }else{
+        note=`${p.name} не участвует в этом взаимодействии. Показаны его участники.`;
+        f.carriers.forEach(c=>parts.forEach(o=>{if(!f.carriers.includes(o))lines.push([c,o]);}));
+      }
+    }
+    state.rel={set,carriers,lines,color,note};
+  }
+
+  /* ---------- Tile states ---------- */
+  function applyTiles(){
+    const sel=state.selected, rel=state.rel;
+    mapGrid.querySelectorAll('.tile').forEach(t=>{
+      const id=t.dataset.id;
+      t.classList.remove('is-selected','is-related','is-carrier','is-dim','is-filtered');
+      t.style.removeProperty('--cc');
+      if(!state.filter.has(id)){t.classList.add('is-filtered');return;}
+      if(sel){
+        if(id===sel) t.classList.add('is-selected');
+        else if(rel&&rel.set.has(id)){
+          t.classList.add('is-related');
+          if(rel.carriers.has(id)){t.classList.add('is-carrier');t.style.setProperty('--cc',rel.color);}
+        } else t.classList.add('is-dim');
+      }
+    });
+    $('#countLabel').textContent=`${state.filter.size} / 17`;
+  }
+
+  /* ---------- Connections ---------- */
+  let drawRAF=0;
+  function scheduleDraw(){cancelAnimationFrame(drawRAF);drawRAF=requestAnimationFrame(drawConnections);}
+  function drawConnections(){
+    connSvg.innerHTML='';
+    const rel=state.rel; if(!rel||!rel.lines.length) return;
+    const w=mapInner.scrollWidth, h=mapInner.scrollHeight;
+    connSvg.setAttribute('width',w); connSvg.setAttribute('height',h);
+    connSvg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+    const ir=mapInner.getBoundingClientRect();
+    const tiles={}; mapGrid.querySelectorAll('.tile').forEach(t=>tiles[t.dataset.id]=t);
+    const center=id=>{const el=tiles[id];if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left-ir.left+r.width/2,y:r.top-ir.top+r.height/2};};
+    const NS='http://www.w3.org/2000/svg';
+    rel.lines.forEach((ln,i)=>{
+      const [a,b]=ln;
+      if(!state.filter.has(a)||!state.filter.has(b))return;
+      const p1=center(a),p2=center(b); if(!p1||!p2)return;
+      const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2, dx=p2.x-p1.x, dy=p2.y-p1.y;
+      const len=Math.hypot(dx,dy)||1, off=Math.min(38,len*0.16);
+      const cx=mx-dy/len*off, cy=my+dx/len*off;
+      const d=`M ${p1.x} ${p1.y} Q ${cx} ${cy} ${p2.x} ${p2.y}`;
+      const glow=document.createElementNS(NS,'path');
+      glow.setAttribute('d',d);glow.setAttribute('class','conn-path');
+      glow.setAttribute('stroke',rel.color);glow.setAttribute('stroke-width','5');glow.setAttribute('opacity','0.12');
+      const path=document.createElementNS(NS,'path');
+      path.setAttribute('d',d);path.setAttribute('class','conn-path');
+      path.setAttribute('stroke',rel.color);path.setAttribute('stroke-width','1.8');path.setAttribute('opacity','0.9');
+      path.style.filter=`drop-shadow(0 0 4px ${rel.color})`;
+      const L=Math.hypot(p2.x-p1.x,p2.y-p1.y)+off;
+      path.style.strokeDasharray=L;path.style.strokeDashoffset=L;
+      connSvg.appendChild(glow);connSvg.appendChild(path);
+      const dot=document.createElementNS(NS,'circle');
+      dot.setAttribute('cx',p2.x);dot.setAttribute('cy',p2.y);dot.setAttribute('r','3.4');
+      dot.setAttribute('fill',rel.color);dot.setAttribute('class','conn-dot');dot.setAttribute('opacity','0');
+      dot.style.filter=`drop-shadow(0 0 5px ${rel.color})`;
+      connSvg.appendChild(dot);
+      requestAnimationFrame(()=>{path.style.strokeDashoffset='0';setTimeout(()=>dot.setAttribute('opacity','0.95'),260+i*20);});
+    });
+  }
+
+  /* ---------- Detail ---------- */
+  function intChips(p){
+    return p.inter.map(f=>`<button class="int-chip ${state.mode===f?'on':''}" data-force="${f}" style="--cc:${FORCES[f].color}"><i class="dot"></i>${FORCES[f].name}</button>`).join('');
+  }
+  function relChips(p){
+    if(!p.gen) return '';
+    const mates=P.filter(o=>o.gen===p.gen&&o.id!==p.id);
+    return `<div class="d-section"><h3>Одно поколение (${ROMAN[p.gen]})</h3><div class="rel-chips">${mates.map(o=>`<button class="rel-chip" data-goto="${o.id}" style="--rc:${C[o.type]}">${o.sym} · ${o.name}</button>`).join('')}</div></div>`;
+  }
+  function renderDetail(id){
+    if(!id){detailBody.innerHTML=introHTML();detailBody.classList.remove('detail-fade');void detailBody.offsetWidth;detailBody.classList.add('detail-fade');return;}
+    const p=BY[id],c=C[p.type];
+    const genBadge=p.gen?`<span class="badge">${p.gen} поколение</span>`:`<span class="badge neutral">${p.type==='scalar'?'Спин 0':'Спин 1'}</span>`;
+    const stat=p.spin==='½'?'Фермион (Ферми–Дирака)':'Бозон (Бозе–Эйнштейна)';
+    const antiSelf=p.anti.self;
+    const anti=`<div class="anti"><div class="mini"><span class="sym">${p.anti.sym}</span></div><div class="info"><b>${p.anti.name}</b><span>${antiSelf?'Частица совпадает со своей античастицей.':`Заряд: ${p.anti.charge} · остальные квантовые числа противоположны.`}${p.anti.note?' '+p.anti.note+'.':''}</span></div></div>`;
+    const note=state.rel&&state.rel.note?`<div class="d-section"><div class="note">${state.rel.note}</div></div>`:'';
+    detailBody.innerHTML=`<div style="--c:${c}">
+      <div class="d-head">
+        <div class="d-orb"><span class="sym">${p.sym}</span></div>
+        <div class="d-title">
+          <h2>${p.name}</h2><div class="en">${p.en}</div>
+          <div class="d-badges"><span class="badge">${TYPE_LABEL[p.type]}</span>${genBadge}</div>
+        </div>
+        <div class="d-nav">
+          <button class="btn icon d-close" data-close title="Закрыть">✕</button>
+          <button class="btn icon" data-nav="-1" title="Предыдущая">‹</button>
+          <button class="btn icon" data-nav="1" title="Следующая">›</button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Масса</div><div class="v">${p.mass}</div></div>
+        <div class="stat"><div class="k">Заряд</div><div class="v">${p.charge}</div></div>
+        <div class="stat"><div class="k">Спин</div><div class="v">${p.spin}</div></div>
+        <div class="stat"><div class="k">${p.gen?'Поколение':'Тип'}</div><div class="v">${p.gen?ROMAN[p.gen]:(p.type==='scalar'?'Скаляр':'Вектор')}</div></div>
+      </div>
+      ${note}
+      <div class="d-section"><h3>Характеристики</h3>
+        <div class="prop"><span class="k">Статистика</span><span class="v">${stat}</span></div>
+        <div class="prop"><span class="k">Аромат</span><span class="v">${p.flavor}</span></div>
+        <div class="prop"><span class="k">Время жизни</span><span class="v">${p.life}</span></div>
+        <div class="prop"><span class="k">Состав</span><span class="v">Фундаментальная</span></div>
+        <div class="prop"><span class="k">Образует</span><span class="v">${p.forms}</span></div>
+        <div class="prop"><span class="k">Год открытия</span><span class="v">${p.year}</span></div>
+        <div class="prop"><span class="k">Кто открыл</span><span class="v" style="max-width:64%">${p.by}</span></div>
+      </div>
+      <div class="d-section"><h3>Взаимодействия</h3><div class="int-chips">${intChips(p)}</div></div>
+      <div class="d-section"><h3>Античастица</h3>${anti}</div>
+      <div class="d-section"><h3>Описание</h3><p class="d-desc">${p.desc}</p></div>
+      <div class="d-section"><h3>Интересные факты</h3><ul class="facts-list">${p.facts.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+      ${relChips(p)}
+    </div>`;
+    detailBody.classList.remove('detail-fade');void detailBody.offsetWidth;detailBody.classList.add('detail-fade');
+    detailBody.scrollTop=0;
+  }
+  function introHTML(){
+    return `<div class="intro">
+      <h2>Карта Стандартной модели</h2>
+      <p class="lead">Нажмите на любую частицу, чтобы увидеть её свойства, античастицу и связи. Переключайте режим «Связи», чтобы подсветить поколения или участников взаимодействия.</p>
+      <div class="legend">
+        <div class="row" style="--c:var(--quark)"><div class="sw"></div><div><b>Кварки</b><span>6 ароматов · чувствуют все силы</span></div></div>
+        <div class="row" style="--c:var(--lepton)"><div class="sw"></div><div><b>Лептоны</b><span>e, μ, τ и три нейтрино</span></div></div>
+        <div class="row" style="--c:var(--gauge)"><div class="sw"></div><div><b>Калибровочные бозоны</b><span>переносчики взаимодействий</span></div></div>
+        <div class="row" style="--c:var(--scalar)"><div class="sw"></div><div><b>Бозон Хиггса</b><span>квант поля, дающего массу</span></div></div>
+      </div>
+      <div class="notation">
+        <div><b>q</b> — электрический заряд</div>
+        <div><b>s</b> — спин</div>
+        <div><b>I–III</b> — поколение</div>
+        <div><b>ū</b> — античастица</div>
+      </div>
+      <div class="mini-stats">
+        <div><b>6</b><span>КВАРКОВ</span></div>
+        <div><b>6</b><span>ЛЕПТОНОВ</span></div>
+        <div><b>4</b><span>КАЛИБР. Б.</span></div>
+        <div><b>1</b><span>ХИГГС</span></div>
+      </div>
+      <div class="d-section"><button class="btn" data-random style="width:100%;justify-content:center">🎲 Случайная частица</button></div>
+    </div>`;
+  }
+
+  /* ---------- Selection ---------- */
+  function setSelected(id){
+    state.selected=id;
+    computeRelated();
+    renderDetail(id);
+    applyTiles();
+    scheduleDraw();
+    if(isMobile()){ if(id) openSheet(); else closeSheet(); }
+  }
+  function setMode(m){
+    state.mode=m;
+    document.querySelectorAll('#modeChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.mode===m));
+    computeRelated();
+    if(state.selected){renderDetail(state.selected);}
+    applyTiles();scheduleDraw();
+  }
+  function openSheet(){state.sheet=true;detail.classList.add('open');scrim.classList.add('show');}
+  function closeSheet(){state.sheet=false;detail.classList.remove('open');scrim.classList.remove('show');}
+
+  /* ---------- Tabs ---------- */
+  function switchTab(t){
+    state.tab=t;
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
+    if(t==='map'){scheduleDraw();}
+    else{closeSheet();}
+  }
+
+  /* ---------- Facts ---------- */
+  function buildFacts(){
+    const cats=['Все',...Array.from(new Set(FACTS.map(f=>f.cat)))];
+    $('#factsFilters').innerHTML=cats.map(c=>`<button class="chip ${c===state.factsCat?'active':''}" data-fcat="${c}">${c}</button>`).join('');
+    const list=FACTS.filter(f=>state.factsCat==='Все'||f.cat===state.factsCat);
+    $('#factsGrid').innerHTML=list.map((f,i)=>`<article class="fact" style="--c:${f.c};--d:${i*40}ms">
+      <div class="cat"><i class="dot"></i>${f.cat}</div>
+      <h3>${f.t}</h3><p>${f.x}</p>
+      ${f.goto?`<button class="goto" data-goto="${f.goto}">Показать на карте →</button>`:''}
+    </article>`).join('');
+  }
+  function buildTimeline(){
+    $('#timeline').innerHTML=TIMELINE.map(e=>`<div class="tl" style="--c:${e.c}"><b>${e.y}</b><span>${e.t}</span></div>`).join('');
+  }
+
+  /* ---------- Events ---------- */
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+  $('#groupChips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;
+    state.group=b.dataset.group;
+    document.querySelectorAll('#groupChips .chip').forEach(c=>c.classList.toggle('active',c===b));
+    computeFilter();applyTiles();scheduleDraw();
+  });
+  $('#modeChips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;setMode(b.dataset.mode);});
+  $('#searchInput').addEventListener('input',e=>{state.search=e.target.value;computeFilter();applyTiles();scheduleDraw();});
+  mapGrid.addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t||t.classList.contains('is-filtered'))return;setSelected(t.dataset.id);});
+  $('#randomBtn').addEventListener('click',()=>{switchTab('map');setSelected(ORDER[Math.floor(Math.random()*ORDER.length)]);});
+  $('#legendFab').addEventListener('click',()=>{state.selected=null;computeRelated();renderDetail(null);applyTiles();scheduleDraw();openSheet();});
+  scrim.addEventListener('click',()=>setSelected(null));
+
+  detailBody.addEventListener('click',e=>{
+    const g=e.target.closest('[data-goto]'); if(g){setSelected(g.dataset.goto);return;}
+    const f=e.target.closest('[data-force]'); if(f){setMode(f.dataset.force);return;}
+    const nav=e.target.closest('[data-nav]'); if(nav){const i=ORDER.indexOf(state.selected);const n=(i+ +nav.dataset.nav+ORDER.length)%ORDER.length;setSelected(ORDER[n]);return;}
+    if(e.target.closest('[data-close]')){setSelected(null);return;}
+    if(e.target.closest('[data-random]')){setSelected(ORDER[Math.floor(Math.random()*ORDER.length)]);return;}
+  });
+  document.getElementById('panel-facts').addEventListener('click',e=>{
+    const c=e.target.closest('[data-fcat]'); if(c){state.factsCat=c.dataset.fcat;buildFacts();return;}
+    const g=e.target.closest('[data-goto]'); if(g){switchTab('map');setSelected(g.dataset.goto);}
+  });
+  document.getElementById('panel-about').addEventListener('click',e=>{
+    const fc=e.target.closest('[data-force]');
+    if(fc){const f=fc.dataset.force;switchTab('map');setMode(f);setSelected(FORCES[f].carriers[0]);}
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){setSelected(null);}
+    else if(state.selected&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+      const i=ORDER.indexOf(state.selected);const n=(i+(e.key==='ArrowRight'?1:-1)+ORDER.length)%ORDER.length;setSelected(ORDER[n]);
+    } else if(e.key==='/'&&document.activeElement!==$('#searchInput')){e.preventDefault();switchTab('map');$('#searchInput').focus();}
+  });
+
+  // swipe-to-close sheet
+  (function(){
+    const h=$('#sheetHandle'); let sy=0,dy=0,drag=false;
+    h.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;dy=0;detail.style.transition='none';h.setPointerCapture(e.pointerId);});
+    h.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);detail.style.transform=`translateY(${dy}px)`;});
+    const end=()=>{if(!drag)return;drag=false;detail.style.transition='';detail.style.transform='';if(dy>90)setSelected(null);};
+    h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
+  })();
+
+  const ro=new ResizeObserver(()=>scheduleDraw());
+  ro.observe(mapInner);
+  window.addEventListener('resize',()=>{scheduleDraw();resizeCanvas();if(!isMobile())closeSheet();});
+  mapScroll.addEventListener('scroll',()=>{},{passive:true});
+
+  /* ---------- Cosmos background ---------- */
+  const cv=$('#cosmos'), ctx=cv.getContext('2d');
+  let W=0,H=0,DPR=1,stars=[],motes=[],run=true;
+  const PAL=['#b06bff','#22e0a3','#4c8dff','#f6c445','#ff6b8b','#56d0ff'];
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function resizeCanvas(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth;H=window.innerHeight;
+    cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    const nStars=Math.min(150,Math.round(W*H/9000));
+    stars=Array.from({length:nStars},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.2,tw:Math.random()*Math.PI*2,sp:Math.random()*.02+.004}));
+    const nMotes=reduce?8:18;
+    motes=Array.from({length:nMotes},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,r:Math.random()*2.4+1.4,c:PAL[Math.floor(Math.random()*PAL.length)],ph:Math.random()*Math.PI*2}));
+  }
+  function frame(){
+    if(!run)return;
+    ctx.clearRect(0,0,W,H);
+    for(const s of stars){s.tw+=s.sp;const a=.35+Math.sin(s.tw)*.3;ctx.globalAlpha=Math.max(0,a);ctx.fillStyle='#cdd6ff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();}
+    ctx.globalAlpha=1;
+    for(let i=0;i<motes.length;i++){
+      const m=motes[i];
+      if(!reduce){m.x+=m.vx;m.y+=m.vy;m.ph+=.01;}
+      if(m.x<-20)m.x=W+20;if(m.x>W+20)m.x=-20;if(m.y<-20)m.y=H+20;if(m.y>H+20)m.y=-20;
+      for(let j=i+1;j<motes.length;j++){
+        const o=motes[j],dx=m.x-o.x,dy=m.y-o.y,d=Math.hypot(dx,dy);
+        if(d<150){ctx.globalAlpha=(1-d/150)*.10;ctx.strokeStyle=m.c;ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(o.x,o.y);ctx.stroke();}
+      }
+    }
+    ctx.globalAlpha=1;
+    for(const m of motes){
+      const pr=m.r*(1+Math.sin(m.ph)*.25);
+      const g=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,pr*7);
+      g.addColorStop(0,m.c);g.addColorStop(.25,m.c+'88');g.addColorStop(1,'transparent');
+      ctx.globalAlpha=.5;ctx.fillStyle=g;ctx.beginPath();ctx.arc(m.x,m.y,pr*7,0,7);ctx.fill();
+      ctx.globalAlpha=.95;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(m.x,m.y,pr*.6,0,7);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange',()=>{run=!document.hidden;if(run)requestAnimationFrame(frame);});
+
+  /* ---------- Init ---------- */
+  buildMap();buildFacts();buildTimeline();
+  computeFilter();renderDetail(null);applyTiles();
+  resizeCanvas();requestAnimationFrame(frame);
+  requestAnimationFrame(()=>scheduleDraw());
+})();
+</script>
+</body>
+</html>

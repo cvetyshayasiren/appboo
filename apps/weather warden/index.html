@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ПОГОДНЫЙ СТРАЖ — пиксель-арт веб-игра: управляй погодой над островом, поливай поля, лови молнии и доживи до рассвета.">
+<title>ПОГОДНЫЙ СТРАЖ — управление погодой</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%233fa34d'/><rect x='3' y='4' width='9' height='6' fill='%23dfe7f2'/><rect x='6' y='11' width='3' height='2' fill='%23ffd23f'/></svg>">
+</head>
+<body>
+<div id="app">
+
+  <header id="top">
+    <div class="logo"><span class="logo-sun"></span>ПОГОДНЫЙ СТРАЖ</div>
+    <div class="stats">
+      <div class="stat"><i>ДЕНЬ</i><b id="s-day">1/6</b></div>
+      <div class="stat"><i>ВРЕМЯ</i><b id="s-clock">08:00</b></div>
+      <div class="stat"><i>ТЕМПЕРАТУРА</i><b id="s-temp">18°</b></div>
+      <div class="stat"><i>ПОЧВА</i><b id="s-water">55%</b></div>
+      <div class="stat"><i>МАГИЯ</i><b id="s-mana">60</b></div>
+      <div class="stat"><i>НАСТРОЕНИЕ</i><b id="s-happy">70%</b></div>
+      <div class="stat"><i>УРОЖАЙ</i><b id="s-harv">0/5</b></div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div id="canvasWrap">
+      <canvas id="screen" width="320" height="176"></canvas>
+      <div id="tooltip"></div>
+    </div>
+
+    <aside id="side">
+      <div class="panel">
+        <h3>ЗАДАЧИ</h3>
+        <ul id="obj">
+          <li><b>Дожить</b> до конца 6-го дня</li>
+          <li><b>Собрать 5 урожаев</b> — клик по созревшей грядке</li>
+          <li><b>Ловить молнии</b> — клик по облаку с разрядом</li>
+          <li><b>Не дать</b> настроению упасть до нуля</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>СОБЫТИЯ</h3>
+        <div id="logs"></div>
+      </div>
+      <div class="panel keys">
+        <h3>УПРАВЛЕНИЕ</h3>
+        <p><kbd>1</kbd>…<kbd>6</kbd> — погода &nbsp; <kbd>Space</kbd> — пауза &nbsp; <kbd>R</kbd> — заново &nbsp; <kbd>M</kbd> — звук</p>
+        <p>Клик по грядке — урожай. Клик по облаку с молнией — магия.</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer id="bar">
+    <div id="wbtns"></div>
+    <div class="ctrls">
+      <button id="btn-pause" type="button">ПАУЗА</button>
+      <button id="btn-mute" type="button">ЗВУК: ВКЛ</button>
+      <button id="btn-restart" type="button">ЗАНОВО</button>
+    </div>
+  </footer>
+
+</div>
+
+<div id="overlay" class="show">
+  <div class="ov-card" id="ov-card"></div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

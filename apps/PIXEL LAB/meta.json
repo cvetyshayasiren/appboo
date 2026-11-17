@@ -1,0 +1,8 @@
+{
+  "title": "PIXEL LAB",
+  "description": "Пиксель-арт редактор",
+  "icon": "icon.png",
+  "ai": "Qwen4-Max",
+  "platform": "both",
+  "tags": ["tool", "pixel art", "create", "editor"]
+}

@@ -1,0 +1,8 @@
+{
+  "title": "KOLaGEN",
+  "description": "Генератор кольев",
+  "icon": "icon.png",
+  "ai": "Qwen4-Preview",
+  "platform": "both",
+  "tags": ["game", "fun", "pixel art", "random"]
+}

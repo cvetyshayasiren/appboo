@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Карта Стандартной модели элементарных частиц</title>
+<style>
+:root{
+  --bg0:#05060e; --bg1:#0b0e1e; --bg2:#11152b;
+  --panel:rgba(16,20,42,.86); --panel-border:rgba(120,140,255,.16);
+  --text:#e8ecff; --muted:#8b93b8; --dim:#5a6185;
+  --quark:#ff7a59; --quark-glow:rgba(255,122,89,.35);
+  --lepton:#4ade80; --lepton-glow:rgba(74,222,128,.30);
+  --boson:#60a5fa; --boson-glow:rgba(96,165,250,.32);
+  --higgs:#fbbf24; --higgs-glow:rgba(251,191,36,.38);
+  --accent:#7c8cff; --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--text); background:
+    radial-gradient(1200px 800px at 80% -10%, rgba(80,60,180,.22), transparent 60%),
+    radial-gradient(1000px 700px at -10% 110%, rgba(20,80,160,.18), transparent 60%),
+    radial-gradient(ellipse at 50% 50%, var(--bg1), var(--bg0) 75%);
+  height:100dvh; display:flex; flex-direction:column;
+}
+#app{height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+/* ---------- stars ---------- */
+#stars{position:absolute;inset:0;pointer-events:none;z-index:0}
+/* ---------- header ---------- */
+header{
+  position:relative;z-index:3;padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 10px;
+  display:flex;flex-direction:column;gap:10px;flex-shrink:0;
+}
+.title-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(18px,2.6vw,28px);font-weight:800;letter-spacing:.5px;
+  background:linear-gradient(90deg,#c7d2ff,#8f9dff 45%,#c77dff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.subtitle{font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{
+  padding:7px 16px;border-radius:999px;border:1px solid var(--panel-border);
+  background:rgba(255,255,255,.03);color:var(--muted);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .25s ease;user-select:none;
+}
+.tab:hover{color:var(--text);border-color:rgba(124,140,255,.45)}
+.tab.active{color:#fff;background:linear-gradient(135deg,rgba(124,140,255,.25),rgba(199,125,255,.18));
+  border-color:rgba(124,140,255,.6);box-shadow:0 0 18px rgba(124,140,255,.25)}
+.legend-btn{margin-left:auto}
+/* ---------- main ---------- */
+main{flex:1;min-height:0;position:relative;z-index:2}
+.view{position:absolute;inset:0;padding:6px 20px 20px;overflow-y:auto;overflow-x:hidden;
+  opacity:0;transform:translateY(14px) scale(.995);pointer-events:none;
+  transition:opacity .35s ease,transform .35s ease;scrollbar-width:thin;scrollbar-color:rgba(124,140,255,.3) transparent}
+.view.active{opacity:1;transform:none;pointer-events:auto}
+.view::-webkit-scrollbar{width:8px}
+.view::-webkit-scrollbar-thumb{background:rgba(124,140,255,.25);border-radius:8px}
+/* ---------- particle grid ---------- */
+.group{margin-bottom:26px}
+.group-title{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+.group-title h2{font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.group-title .dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 12px currentColor}
+.group-title .count{font-size:11.5px;color:var(--dim);font-weight:500;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px}}
+.card{
+  position:relative;border-radius:var(--radius);padding:14px 13px 12px;cursor:pointer;
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid var(--panel-border);
+  transition:transform .28s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s ease,border-color .3s ease,opacity .3s;
+  overflow:hidden;user-select:none;
+}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity .3s;
+  background:radial-gradient(120px 90px at 30% 15%,var(--glow,rgba(124,140,255,.25)),transparent 70%)}
+.card:hover,.card:focus-visible{transform:translateY(-4px) scale(1.03);border-color:var(--edge,rgba(124,140,255,.55));
+  box-shadow:0 8px 30px -6px var(--glow,rgba(124,140,255,.35));outline:none}
+.card:hover::before,.card:focus-visible::before{opacity:1}
+.card .symbol{font-size:30px;font-weight:800;line-height:1;color:var(--pc,#9aa7ff);text-shadow:0 0 18px var(--glow,rgba(124,140,255,.6))}
+.card .name{font-size:13.5px;font-weight:700;margin-top:6px}
+.card .rname{font-size:11px;color:var(--muted);font-style:italic}
+.card .meta{margin-top:9px;display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--dim)}
+.card .meta b{color:var(--muted);font-weight:600}
+.card .gen-badge{position:absolute;top:9px;right:10px;font-size:9.5px;color:var(--dim);
+  border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:2px 6px}
+.card.related{border-color:var(--edge);box-shadow:0 0 22px -2px var(--glow);transform:translateY(-2px)}
+.card.dimmed{opacity:.35;filter:saturate(.4)}
+.card.selected{border-color:var(--edge);box-shadow:0 0 0 2px var(--edge),0 0 30px -2px var(--glow);transform:translateY(-4px) scale(1.04)}
+.card.quark{--pc:var(--quark);--edge:rgba(255,122,89,.6);--glow:var(--quark-glow)}
+.card.lepton{--pc:var(--lepton);--edge:rgba(74,222,128,.55);--glow:var(--lepton-glow)}
+.card.boson{--pc:var(--boson);--edge:rgba(96,165,250,.6);--glow:var(--boson-glow)}
+.card.higgs{--pc:var(--higgs);--edge:rgba(251,191,36,.65);--glow:var(--higgs-glow)}
+#links-svg{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .4s}
+#links-svg.on{opacity:1}
+#links-svg line{stroke:rgba(160,175,255,.4);stroke-width:1.5;stroke-dasharray:5 6;animation:dashmove 1.2s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-22}}
+/* ---------- detail modal ---------- */
+#overlay{position:fixed;inset:0;background:rgba(3,4,12,.6);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .3s;z-index:10}
+#overlay.on{opacity:1;pointer-events:auto}
+#detail{
+  position:fixed;z-index:11;left:50%;top:50%;transform:translate(-50%,-46%) scale(.94);
+  width:min(680px,calc(100vw - 24px));max-height:min(84dvh,720px);
+  background:linear-gradient(170deg,#141832,#0c0f22);border:1px solid var(--edge,rgba(124,140,255,.4));
+  border-radius:20px;box-shadow:0 30px 80px -20px rgba(0,0,0,.8),0 0 60px -10px var(--glow,rgba(124,140,255,.25));
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;transition:opacity .32s ease,transform .32s cubic-bezier(.2,.9,.3,1.15);
+}
+#detail.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.d-head{padding:18px 20px 14px;display:flex;gap:16px;align-items:center;border-bottom:1px solid rgba(255,255,255,.07);
+  background:radial-gradient(300px 120px at 15% 0%,var(--glow,rgba(124,140,255,.15)),transparent 70%);flex-shrink:0}
+.d-symbol{font-size:46px;font-weight:800;color:var(--pc,#9aa7ff);text-shadow:0 0 26px var(--glow);line-height:1;min-width:56px;text-align:center}
+.d-titles h3{font-size:20px;font-weight:800}
+.d-titles .latin{font-size:13px;color:var(--muted);font-style:italic}
+.d-titles .type-chip{display:inline-block;margin-top:6px;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--pc,#9aa7ff);border:1px solid var(--edge);border-radius:999px;padding:3px 10px}
+#d-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);color:var(--muted);font-size:17px;cursor:pointer;transition:all .2s;line-height:1}
+#d-close:hover{color:#fff;border-color:rgba(255,255,255,.4);transform:rotate(90deg)}
+.d-body{padding:16px 20px 22px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(124,140,255,.3) transparent}
+.d-body::-webkit-scrollbar{width:8px}
+.d-body::-webkit-scrollbar-thumb{background:rgba(124,140,255,.25);border-radius:8px}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-bottom:16px}
+.spec{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:9px 11px}
+.spec .k{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim)}
+.spec .v{font-size:13.5px;font-weight:650;margin-top:3px}
+.d-section h4{font-size:11.5px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:14px 0 7px}
+.d-section p{font-size:13.5px;line-height:1.6;color:#c9cfe8}
+.fact{display:flex;gap:9px;font-size:13px;line-height:1.55;color:#c9cfe8;margin-top:7px;
+  background:rgba(124,140,255,.06);border-left:2px solid var(--accent);border-radius:0 9px 9px 0;padding:9px 11px}
+.fact .fi{color:var(--pc,#9aa7ff);flex-shrink:0}
+.d-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.link-chip{font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--edge);color:var(--pc);
+  cursor:pointer;background:transparent;transition:all .2s;font-family:inherit}
+.link-chip:hover{background:var(--glow)}
+/* ---------- facts view ---------- */
+.article{max-width:860px;margin:0 auto;padding-bottom:40px}
+.article h2{font-size:19px;margin:22px 0 10px;color:#cdd6ff}
+.article h3{font-size:15px;margin:16px 0 8px;color:#aeb9f0}
+.article p,.article li{font-size:13.5px;line-height:1.65;color:#c2c8e2}
+.article ul{padding-left:20px;display:flex;flex-direction:column;gap:5px;margin:6px 0}
+.article .fact-card{background:rgba(255,255,255,.035);border:1px solid var(--panel-border);border-radius:13px;
+  padding:13px 15px;margin:10px 0;display:flex;gap:11px;align-items:flex-start;transition:all .25s}
+.article .fact-card:hover{border-color:rgba(124,140,255,.45);transform:translateX(4px);box-shadow:0 4px 20px -8px rgba(124,140,255,.4)}
+.article .fact-card .n{font-weight:800;color:var(--accent);font-size:15px;min-width:26px}
+.article .fact-card p{margin:0}
+.callout{border-radius:13px;padding:13px 15px;margin:12px 0;font-size:13px;line-height:1.6;
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);color:#e8d9ae}
+/* ---------- legend ---------- */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 14px}
+.lg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:5px 12px}
+.lg i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 9px currentColor}
+/* ---------- footer hint ---------- */
+.hint{text-align:center;font-size:11.5px;color:var(--dim);padding:10px 0 4px;flex-shrink:0;position:relative;z-index:2}
+@media (max-width:640px){
+  header{padding-left:14px;padding-right:14px}
+  .view{padding:4px 12px 16px}
+  .d-symbol{font-size:36px;min-width:44px}
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="app">
+  <canvas id="stars"></canvas>
+  <header>
+    <div class="title-row">
+      <h1>Стандартная модель</h1>
+      <span class="subtitle">интерактивная карта элементарных частиц</span>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-view="map">🗺 Карта частиц</button>
+      <button class="tab" data-view="facts">✨ Интересные факты и теория</button>
+      <button class="tab legend-btn" id="legend-toggle">Легенда</button>
+    </div>
+  </header>
+  <main>
+    <section class="view active" id="view-map">
+      <div class="legend" id="legend" style="display:none">
+        <span class="lg"><i style="color:var(--quark);background:var(--quark)"></i>Кварки (сильное взаимодействие)</span>
+        <span class="lg"><i style="color:var(--lepton);background:var(--lepton)"></i>Лептоны (без цвета)</span>
+        <span class="lg"><i style="color:var(--boson);background:var(--boson)"></i>Калибровочные бозоны (переносчики сил)</span>
+        <span class="lg"><i style="color:var(--higgs);background:var(--higgs)"></i>Бозон Хиггса (скаляр)</span>
+      </div>
+      <svg id="links-svg"></svg>
+      <div id="map-container"></div>
+    </section>
+    <section class="view" id="view-facts">
+      <div class="article" id="facts-content"></div>
+    </section>
+  </main>
+  <div class="hint">Нажмите на частицу, чтобы увидеть подробности и связи · I, II, III — поколения</div>
+</div>
+
+<div id="overlay"></div>
+<div id="detail" role="dialog" aria-modal="true">
+  <button id="d-close" aria-label="Закрыть">✕</button>
+  <div class="d-head">
+    <div class="d-symbol" id="d-symbol"></div>
+    <div class="d-titles">
+      <h3 id="d-name"></h3>
+      <div class="latin" id="d-latin"></div>
+      <span class="type-chip" id="d-type"></span>
+    </div>
+  </div>
+  <div class="d-body" id="d-body"></div>
+</div>
+
+<script>
+"use strict";
+/* ================= ДАННЫЕ ================= */
+const P = {
+  /* --- Кварки, I поколение --- */
+  u:{name:"Ап-кварк",latin:"up quark",symbol:"u",cat:"quark",gen:1,flavor:"ап (верхний)",
+    mass:"≈ 2,16 МэВ/с²",charge:"+2/3",spin:"1/2",lifetime:"стабилен*",
+    comp:"— (фундаментальный)",anti:"антикуарк ū",year:"1964 (теория) / 1968 (эксперимент)",by:"М. Гелл-Манн, Дж. Цвейг / эксп. на SLAC",
+    desc:"Самый лёгкий из всех кварков. Протон состоит из двух ап-кварков и одного даун-кварка. Несмотря на «массу», ап-кварк никогда не существует свободно — он всегда заперт внутри адронов.",
+    facts:["Ап-кварк был открыт косвенно: эксперименты по глубоконеупругому рассеянию электронов на протонах в SLAC (1968) показали внутреннюю точечную структуру нуклонов.",
+             "Квинтэссенция обычной материи: ап- и даун-кварки составляют ~99,97% массы видимого вещества Вселенной."],
+    inter:["strong","em","weak"],rel:["d","ubar"]},
+  d:{name:"Даун-кварк",latin:"down quark",symbol:"d",cat:"quark",gen:1,flavor:"даун (нижний)",
+    mass:"≈ 4,67 МэВ/с²",charge:"−1/3",spin:"1/2",lifetime:"стабилен*",
+    comp:"— (фундаментальный)",anti:"антикварк đ",year:"1964 (теория) / 1968 (эксперимент)",by:"М. Гелл-Манн, Дж. Цвейг / эксп. на SLAC",
+    desc:"Второй кварк первого поколения. Вместе с ап-кварком образует протоны и нейтроны — строительные блоки атомных ядер.",
+    facts:["Нейтрон = ddu, протон = uud. Бета-распад нейтрона — это превращение даун-кварка в ап-кварк с испусканием виртуального W⁻-бозона.",
+             "Даун-кварк тяжелее ап-кварка — поэтому свободный нейтрон нестабилен и распадается за ~880 секунд."],
+    inter:["strong","em","weak"],rel:["u","dbar"]},
+  /* --- Кварки, II поколение --- */
+  c:{name:"Чарм-кварк",latin:"charm quark",symbol:"c",cat:"quark",gen:2,flavor:"чарм (очарованный)",
+    mass:"≈ 1,27 ГэВ/с²",charge:"+2/3",spin:"1/2",lifetime:"~10⁻¹³ с (до адронизации)",
+    comp:"— (фундаментальный)",anti:"антикварк č",year:"1974",by:"Группы SLAC (Б. Рихтер) и BNL (С. Тинг) одновременно",
+    desc:"Кварк второго поколения. Его открытие в 1974 году в виде связанного состояния J/ψ (пара чарм–античарм) подтвердило кварковую модель и кварки тяжелее странного.",
+    facts:["«Ноябрьская революция»: J/ψ-мезон был открыт одновременно двумя независимыми группами — его назвали ψ в SLAC и J в BNL, отсюда двойное имя.",
+             "Чарм-кварк — единственная частица, открытие которой официально приписывается сразу двум группам, получившим Нобелевскую премию 1976 года (Рихтер и Тинг)."],
+    inter:["strong","em","weak"],rel:["s","cbar"]},
+  s:{name:"Странный кварк",latin:"strange quark",symbol:"s",cat:"quark",gen:2,flavor:"странность",
+    mass:"≈ 93,5 МэВ/с²",charge:"−1/3",spin:"1/2",lifetime:"~10⁻⁸–10⁻¹³ с",
+    comp:"— (фундаментальный)",anti:"антикварк š",year:"1947 (косвенно)",by:"Дж. Рочестер, К. Батлер (V-частицы / каоны)",
+    desc:"Кварк со «странностью» — квантовым числом, сохраняющимся в сильном взаимодействии. Образует K-мезоны и гипероны.",
+    facts:["Название «странный» родилось из-за необычно длинного времени жизни новых частиц — они вели себя «странно» по сравнению с пионами.",
+             "K⁰-мезон (ds̄) — одна из первых частиц, где наблюдали нарушение CP-симметрии (1964)."],
+    inter:["strong","em","weak"],rel:["c","sbar"]},
+  /* --- Кварки, III поколение --- */
+  t:{name:"Топ-кварк",latin:"top quark",symbol:"t",cat:"quark",gen:3,flavor:"топ (верхний истинный)",
+    mass:"≈ 172,7 ГэВ/с²",charge:"+2/3",spin:"1/2",lifetime:"~5×10⁻²⁵ с",
+    comp:"— (фундаментальный)",anti:"антикварк t̄",year:"1995",by:"CDF и DØ, коллайдер Тэватрон (Фермилаб)",
+    desc:"Самая тяжёлая известная элементарная частица. Столь нестабилен, что распадается раньше, чем успевает образовать адрон — это позволяет изучать его «голым».",
+    facts:["Масса топ-кварка близка к массе атома золота (~173 ГэВ) — при этом он точечный, без внутренней структуры.",
+             "Время жизни топа настолько мало, что сильное взаимодействие не успевает «запереть» его в адрон — единственный кварк, который наблюдается свободным."],
+    inter:["strong","em","weak"],rel:["b","tbar"]},
+  b:{name:"Боттом-кварк",latin:"bottom quark",symbol:"b",cat:"quark",gen:3,flavor:"боттом (нижний истинный)",
+    mass:"≈ 4,18 ГэВ/с²",charge:"−1/3",spin:"1/2",lifetime:"~1,5×10⁻¹² с",
+    comp:"— (фундаментальный)",anti:"антикварк b̄",year:"1977",by:"Л. Ледерман и др. (Fermilab, Υ-мезон)",
+    desc:"Самый тяжёлый из кварков, образующих относительно стабильные адроны. B-мезоны (с b-кварком) — лаборатория изучения нарушения CP-симметрии и антиматерии.",
+    facts:["B-мезоны (bū, bd̄) детально изучаются на коллайдерах, чтобы проверить кварковый сектор CKM-матрицы и природу асимметрии материи и антиматерии.",
+             "Υ-мезон (bb̄) был открыт в 1977 году — его узкий пик в спектре намекнул на существование пятого кварка задолго до топа."],
+    inter:["strong","em","weak"],rel:["t","bbar"]},
+  /* --- Лептоны --- */
+  e:{name:"Электрон",latin:"electron",symbol:"e⁻",cat:"lepton",gen:1,flavor:"электронный",
+    mass:"0,511 МэВ/с²",charge:"−1",spin:"1/2",lifetime:"стабилен (>6,6×10²⁸ лет)",
+    comp:"точечный",anti:"позитрон e⁺",year:"1897",by:"Дж. Дж. Томсон",
+    desc:"Первый открытый элементарный лептон — его обнаружение в 1897 году положило начало физике элементарных частиц. Определяет химию, электричество и всю структуру вещества. Лёгкая стабильная частица с отрицательным зарядом.",
+    facts:["Открыт Томсоном как «корпускулы» в катодных лучах; термин «электрон» ввёл Дж. Стоуни в 1891 году.",
+             "Теория электрона П. Дирака (1928) предсказала существование позитрона — античастицы электрона, открытого в 1932 году Андерсоном в космических лучах."],
+    inter:["em","weak"],rel:["ve","p"]},
+  ve:{name:"Электронное нейтрино",latin:"electron neutrino",symbol:"νₑ",cat:"lepton",gen:1,flavor:"электронный",
+    mass:"< 0,12 эВ/с² (не равна нулю)",charge:"0",spin:"1/2",lifetime:"стабилен",
+    comp:"точечный",anti:"антинейтрино ν̄ₑ",year:"1956",by:"Ф. Райнес, К. Коуэн (реакторный эксперимент)",
+    desc:"Практически невидимый нейтральный лептон, рождённый вместе с электроном в бета-распадах. Пронизывает тело человека в триллионах штук каждую секунду, практически не взаимодействуя.",
+    facts:["Нейтрино обнаружены экспериментально лишь в 1956 году — до этого их существование предсказал В. Паули в 1930-м, «спасая» закон сохранения энергии в бета-распаде.",
+             "Солнце испускает ~6×10¹⁰ нейтрино на квадратный сантиметр вашей кожи каждую секунду."],
+    inter:["weak"],rel:["e"]},
+  mu:{name:"Мюон",latin:"muon",symbol:"μ⁻",cat:"lepton",gen:2,flavor:"мюонный",
+    mass:"105,66 МэВ/с²",charge:"−1",spin:"1/2",lifetime:"2,197 мкс",
+    comp:"точечный",anti:"антимюон μ⁺",year:"1936",by:"К. Андерсон, С. Неддермайер (космические лучи)",
+    desc:"Тяжёлый «двойник» электрона второго поколения. Рождается в верхних слоях атмосферы от космических лучей и долетает до поверхности Земли благодаря релятивистскому замедлению времени.",
+    facts:["Физик И. Раби, услышав о мюоне, воскликнул: «Кто его заказывал?» — тяжёлый лептон не ожидался ни одной теорией.",
+             "Мюон — идеальная «рентгеновская лампа» для археологии и геологии: мюография сканирует пирамиды и вулканы."],
+    inter:["em","weak"],rel:["vmu"]},
+  vmu:{name:"Мюонное нейтрино",latin:"muon neutrino",symbol:"ν_μ",cat:"lepton",gen:2,flavor:"мюонный",
+    mass:"< 0,12 эВ/с²",charge:"0",spin:"1/2",lifetime:"стабилен",
+    comp:"точечный",anti:"антинейтрино ν̄_μ",year:"1962",by:"Дж. Дейнвиц, Л. Ледерман, М. Шварц, Дж. Стейнбергер",
+    desc:"Нейтрино, сопровождающее мюоны. Именно эксперимент с мюонными нейтрино в Брукхейвене (1962) доказало, что нейтрино бывают разных «вкусов».",
+    facts:["Эксперимент 1962 года показал: рождающиеся с мюонами частицы — не те, что рождаются с электронами. Это открыло «поколения» нейтрино.",
+             "Осцилляции ν_μ → ν_τ были подтверждены на детекторе OPERA в 2010 году — прямое доказательство, что нейтрино имеют массу."],
+    inter:["weak"],rel:["mu"]},
+  tau:{name:"Тау-лептон",latin:"tau lepton",symbol:"τ⁻",cat:"lepton",gen:3,flavor:"тау-лептонный",
+    mass:"1,777 ГэВ/с²",charge:"−1",spin:"1/2",lifetime:"2,9×10⁻¹³ с",
+    comp:"точечный",anti:"антитау τ⁺",year:"1975",by:"М. Перл (SLAC, SPEAR)",
+    desc:"Третий и самый тяжёлый заряженный лептон. Успевает распасться на множество частиц, иногда образуя даже мезоны.",
+    facts:["Открыт Мартином Перлом в 1975 году; Нобелевская премия 1995 года. Его фамилия навсегда связана с открытием «третьего поколения».",
+             "Тау может распадаться более чем на десяток каналов — из-за большой массы его распады подобны распадам адронов."],
+    inter:["em","weak"],rel:["vtau"]},
+  vtau:{name:"Тау-нейтрино",latin:"tau neutrino",symbol:"ν_τ",cat:"lepton",gen:3,flavor:"тау-неутрино",
+    mass:"< 0,12 эВ/с²",charge:"0",spin:"1/2",lifetime:"стабилен",
+    comp:"точечный",anti:"антинейтрино ν̄_τ",year:"2000",by:"DONUT (Fermilab) — прямое обнаружение",
+    desc:"Самое позднее открытое фундаментальное фермионное нейтрино. Обнаружено в 2000 году, когда ν_τ взаимодействовало в эмульсии и родило тау-лептон.",
+    facts:["ν_τ стало последней из 17 частиц Стандартной модели, открытой экспериментально — косвенно её существование знали десятилетиями, но прямо увидели лишь в 2000 году.",
+             "Нейтрино всех трёх поколений пролетели сквозь вас с момента начала чтения этого текста."],
+    inter:["weak"],rel:["tau"]},
+  /* --- Бозоны --- */
+  g:{name:"Глюон",latin:"gluon",symbol:"g",cat:"boson",gen:0,flavor:"переносчик сильного взаимодействия",
+    mass:"0 (теоретически)",charge:"0 (восемь цветовых зарядов)",spin:"1",lifetime:"стабилен (виртуален)",
+    comp:"— (калибровочный бозон)",anti:"сам себе (8 видов)",year:"1979 (косвенно)",by:"Эксперименты на PETRA (DESY) — трёхструйные события",
+    desc:"Переносчик сильного взаимодействия — самой мощной из известных сил. В отличие от фотона, глюоны сами несут «цветовой» заряд, поэтому «клеят» кварки и сами себя.",
+    facts:["Существует 8 типов глюонов — по одному для каждой комбинации цветовых зарядов кварков.",
+             "Из-за самодействия глюонов возникает «запирание» (confinement): ни один кварк не существует свободно — сила растёт с расстоянием."],
+    inter:["strong","em","weak"],rel:["u","d","c","s","t","b"]},
+  gamma:{name:"Фотон",latin:"photon",symbol:"γ",cat:"boson",gen:0,flavor:"переносчик электромагнитного взаимодействия",
+    mass:"0 (точно)",charge:"0",spin:"1",lifetime:"стабилен (бесконечен)",
+    comp:"— (калибровочный бозон)",anti:"сам себе",year:"1905 (теория) / 1923 (Compton)",by:"А. Эйнштейн / А. Комптон",
+    desc:"Квант электромагнитного поля — видимый свет, радиоволны, рентген. Не имеет массы, движется со скоростью света в вакууме. Несёт информацию почти обо всём, что мы видим.",
+    facts:["Термин «фотон» ввёл физик-химик Гилберт Льюис в 1926 году.",
+             "Фотон — единственный элементарный объект, который мы воспринимаем непосредственно: каждая картинка, которую вы видите, — поток фотонов."],
+    inter:["em"],rel:["e","mu","tau","Z"]},
+  W:{name:"W-бозон",latin:"W boson",symbol:"W⁺, W⁻",cat:"boson",gen:0,flavor:"переносчик слабого взаимодействия",
+    mass:"80,38 ГэВ/с²",charge:"±1",spin:"1",lifetime:"~3×10⁻²⁵ с",
+    comp:"— (калибровочный бозон)",anti:"W⁺ ↔ W⁻ (взаимные античастицы)",year:"1983",by:"UA1 и UA2 (CERN, SPS, p̄p-коллайдер)",
+    desc:"Очень тяжёлый переносчик слабого взаимодействия — единственная известная сила, меняющая «вкус» кварков (распады, синтез звёзд). W-бозоны нарушают зеркальную симметрию (P-симметрию).",
+    facts:["Открытие W и Z в 1983 году на CERN подтвердило электрослабую теорию Глашоу–Вайнберга–Салама — Нобелевская премия 1984 года (Руббиа и ван дер Мер).",
+             "Солнце светит благодаря слабому взаимодействию: реакция p+p→d+e⁺+ν_e возможна лишь через обмен W-бозоном."],
+    inter:["em","weak"],rel:["Z","e","mu","tau"]},
+  Z:{name:"Z-бозон",latin:"Z boson",symbol:"Z⁰",cat:"boson",gen:0,flavor:"нейтральный переносчик слабого взаимодействия",
+    mass:"91,19 ГэВ/с²",charge:"0",spin:"1",lifetime:"~2,6×10⁻²⁵ с",
+    comp:"— (калибровочный бозон)",anti:"сам себе",year:"1983",by:"UA1 и UA2 (CERN)",
+    desc:"Нейтральный носитель слабого взаимодействия. В отличие от W, Z действует без изменения заряда — например, в «нейтринных распадах» и рассеянии нейтрино.",
+    facts:["Z-бозон «вкушает» все фермионы — он чувствует все виды материи, кроме… самого себя? Нет — и себя тоже (через самодействие).",
+             "Ширина резонанса Z позволила точно посчитать число лептонных поколений: их ровно три — больше нет места для «четвёртого нейтрино» со Стандартной моделью."],
+    inter:["em","weak"],rel:["W","g"]},
+  higgs:{name:"Бозон Хиггса",latin:"Higgs boson",symbol:"H",cat:"higgs",gen:0,flavor:"скалярный бозон (бозон Бога)",
+    mass:"125,1 ГэВ/с²",charge:"0",spin:"0",lifetime:"~1,6×10⁻²² с",
+    comp:"— (фундаментальный скаляр)",anti:"сам себе",year:"2012",by:"ATLAS и CMS (LHC, CERN)",
+    desc:"Единственный фундаментальный скаляр (спин 0). Его поле пронизывает Вселенную и придаёт массу W-, Z-бозонам и фермионам через механизм Хиггса. Последняя открытая частица Стандартной модели.",
+    facts:["Открытие 4 июля 2012 года на LHC стало триумфом физики: масса была предсказана косвенно с точностью до нескольких ГэВ.",
+             "«Бозон Бога» — журналистское прозвище Леона Ледермана из его книги 1993 года; в науке он называется просто бозоном Хиггса."],
+    inter:["em","weak"],rel:["W","Z"]},
+  /* античастицы (для связей) */
+  ubar:{name:"Анти-ап-кварк",latin:"anti-up",symbol:"ū",cat:"quark",gen:1,flavor:"антивкус",mass:"≈ 2,16 МэВ/с²",charge:"−2/3",spin:"1/2",lifetime:"—",comp:"—",anti:"ап-кварк u",year:"—",by:"—",desc:"Античастица ап-кварка.",facts:[],inter:["strong","em","weak"],rel:["u"],hidden:true},
+  dbar:{name:"Анти-даун-кварк",latin:"anti-down",symbol:"đ",cat:"quark",gen:1,flavor:"антивкус",mass:"≈ 4,67 МэВ/с²",charge:"+1/3",spin:"1/2",lifetime:"—",comp:"—",anti:"даун-кварк d",year:"—",by:"—",desc:"Античастица даун-кварка.",facts:[],inter:["strong","em","weak"],rel:["d"],hidden:true},
+  cbar:{name:"Анти-чарм-кварк",latin:"anti-charm",symbol:"č",cat:"quark",gen:2,flavor:"антивкус",mass:"≈ 1,27 ГэВ/с²",charge:"−2/3",spin:"1/2",lifetime:"—",comp:"—",anti:"чарм-кварк c",year:"—",by:"—",desc:"Античастица чарм-кварка.",facts:[],inter:["strong","em","weak"],rel:["c"],hidden:true},
+  sbar:{name:"Анти-странный кварк",latin:"anti-strange",symbol:"š",cat:"quark",gen:2,flavor:"антистранность",mass:"≈ 93,5 МэВ/с²",charge:"+1/3",spin:"1/2",lifetime:"—",comp:"—",anti:"странный кварк s",year:"—",by:"—",desc:"Античастица странного кварка.",facts:[],inter:["strong","em","weak"],rel:["s"],hidden:true},
+  tbar:{name:"Анти-топ-кварк",latin:"anti-top",symbol:"t̄",cat:"quark",gen:3,flavor:"антивкус",mass:"≈ 172,7 ГэВ/с²",charge:"−2/3",spin:"1/2",lifetime:"—",comp:"—",anti:"топ-кварк t",year:"—",by:"—",desc:"Античастица топ-кварка.",facts:[],inter:["strong","em","weak"],rel:["t"],hidden:true},
+  bbar:{name:"Анти-боттом-кварк",latin:"anti-bottom",symbol:"b̄",cat:"quark",gen:3,flavor:"антивкус",mass:"≈ 4,18 ГэВ/с²",charge:"+1/3",spin:"1/2",lifetime:"—",comp:"—",anti:"боттом-кварк b",year:"—",by:"—",desc:"Античастица боттом-кварка.",facts:[],inter:["strong","em","weak"],rel:["b"],hidden:true},
+  p:{name:"Позитрон",latin:"positron",symbol:"e⁺",cat:"lepton",gen:1,flavor:"антилептон",mass:"0,511 МэВ/с²",charge:"+1",spin:"1/2",lifetime:"стабилен",comp:"—",anti:"электрон e⁻",year:"1932",by:"К. Андерсон",desc:"Античастица электрона, предсказанная теорией Дирака. Открыта в космических лучах в 1932 году.",facts:["Аннигиляция e⁺e⁻ — самое эффективное превращение массы в энергию: основа ПЭТ-сканирования в медицине."],inter:["em","weak"],rel:["e"],hidden:true},
+};
+
+const GROUPS = [
+  {id:"quarks", title:"Кварки", sub:"сильное взаимодействие · заряды ±1/3, ±2/3 · никогда не свободны", cat:"quark",
+   items:["u","d","c","s","t","b"]},
+  {id:"leptons", title:"Лептоны", sub:"без цвета · электрон, мюон, тау и три нейтрино", cat:"lepton",
+   items:["e","ve","mu","vmu","tau","vtau"]},
+  {id:"bosons", title:"Калибровочные бозоны", sub:"переносчики фундаментальных взаимодействий", cat:"boson",
+   items:["g","gamma","W","Z"]},
+  {id:"higgs", title:"Скалярный сектор", sub:"поле Хиггса — источник массы частиц", cat:"higgs", items:["higgs"]},
+];
+
+const INTERACTIONS = {strong:"Сильное", em:"Электромагнитное", weak:"Слабое"};
+
+/* ================= ПОСТРОЕНИЕ КАРТЫ ================= */
+const mapEl = document.getElementById("map-container");
+function cardHTML(id){
+  const p = P[id];
+  const gen = p.gen>0 ? `<span class="gen-badge">${["","I поколение","II поколение","III поколение"][p.gen]}</span>` : "";
+  return `<div class="card ${p.cat}" tabindex="0" role="button" data-id="${id}" aria-label="${p.name}">
+    ${gen}
+    <div class="symbol">${p.symbol}</div>
+    <div class="name">${p.name}</div>
+    <div class="rname">${p.latin}</div>
+    <div class="meta">
+      <span><b>Масса:</b> ${p.mass}</span>
+      <span><b>Заряд:</b> ${p.charge} · <b>Спин:</b> ${p.spin}</span>
+    </div></div>`;
+}
+mapEl.innerHTML = GROUPS.map(g=>`
+  <div class="group">
+    <div class="group-title">
+      <span class="dot" style="color:var(--${g.cat});background:var(--${g.cat})"></span>
+      <h2>${g.title}</h2>
+      <span class="count">${g.sub}</span>
+    </div>
+    <div class="grid">${g.items.map(cardHTML).join("")}</div>
+  </div>`).join("");
+
+/* ================= ЗВЁЗДЫ ================= */
+const cvs=document.getElementById("stars"),ctx=cvs.getContext("2d");
+let stars=[];
+function initStars(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  cvs.width=innerWidth*dpr;cvs.height=innerHeight*dpr;
+  cvs.style.width=innerWidth+"px";cvs.style.height=innerHeight+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const n=Math.round(innerWidth*innerHeight/14000);
+  stars=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+    r:Math.random()*1.3+.3,tw:Math.random()*6.28,sp:.5+Math.random()*1.5}));
+}
+function drawStars(t){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  for(const s of stars){
+    const a=.25+.55*(0.5+0.5*Math.sin(t*.001*s.sp+s.tw));
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);
+    ctx.fillStyle=`rgba(200,210,255,${a})`;ctx.fill();
+  }
+  requestAnimationFrame(drawStars);
+}
+addEventListener("resize",initStars);
+initStars();requestAnimationFrame(drawStars);
+
+/* ================= ДЕТАЛИ ================= */
+const detail=document.getElementById("detail"),overlay=document.getElementById("overlay");
+const dBody=document.getElementById("d-body");
+let selectedId=null;
+
+function openDetail(id){
+  const p=P[id]; if(!p) return;
+  selectedId=id;
+  detail.className=p.cat;
+  document.getElementById("d-symbol").textContent=p.symbol;
+  document.getElementById("d-name").textContent=p.name;
+  document.getElementById("d-latin").textContent=p.latin;
+  document.getElementById("d-type").textContent={quark:"Кварк",lepton:"Лептон",boson:"Калибровочный бозон",higgs:"Скалярный бозон"}[p.cat];
+  const specs=[["Масса",p.mass],["Электрический заряд",p.charge],["Спин",p.spin],
+    ["Время жизни",p.lifetime],["Поколение",p.gen>0?["—","I","II","III"][p.gen]:"—"],
+    ["Аромат / роль",p.flavor],["Кварковый состав",p.comp],["Античастица",p.anti],
+    ["Год открытия",p.year],["Кто открыл",p.by]];
+  const interChips=p.inter.map(i=>`<span class="lg" style="font-size:12px"><i style="color:var(--accent);background:var(--accent);width:8px;height:8px"></i>${INTERACTIONS[i]}</span>`).join(" ");
+  dBody.innerHTML=`
+    <div class="spec-grid">${specs.map(s=>`<div class="spec"><div class="k">${s[0]}</div><div class="v">${s[1]}</div></div>`).join("")}</div>
+    <div class="d-section"><h4>Участвует во взаимодействиях</h4><div style="display:flex;gap:8px;flex-wrap:wrap">${interChips}</div></div>
+    <div class="d-section"><h4>Описание</h4><p>${p.desc}</p></div>
+    ${p.facts.length?`<div class="d-section"><h4>Интересные факты</h4>${p.facts.map(f=>`<div class="fact"><span class="fi">✦</span><span>${f}</span></div>`).join("")}</div>`:""}
+    <div class="d-section"><h4>Связанные частицы</h4>
+      <div class="d-links">${p.rel.map(r=>P[r]?`<button class="link-chip" data-goto="${r}">${P[r].symbol} · ${P[r].name}</button>`:"").join("")}</div>
+    </div>`;
+  detail.classList.add("on");overlay.classList.add("on");
+  highlightMap(id);
+}
+function closeDetail(){
+  selectedId=null;
+  detail.classList.remove("on");overlay.classList.remove("on");
+  clearHighlight();
+}
+overlay.addEventListener("click",closeDetail);
+document.getElementById("d-close").addEventListener("click",closeDetail);
+dBody.addEventListener("click",e=>{
+  const b=e.target.closest("[data-goto]");if(b) openDetail(b.dataset.goto);
+});
+addEventListener("keydown",e=>{if(e.key==="Escape")closeDetail();});
+
+/* ================= ПОДСВЕТКА СВЯЗЕЙ ================= */
+const svg=document.getElementById("links-svg");
+function highlightMap(id){
+  const p=P[id];
+  const rel=new Set(p.rel);
+  // та же группа/поколение — мягкая подсветка
+  const cards=[...document.querySelectorAll(".card")];
+  cards.forEach(c=>{
+    const cid=c.dataset.id;
+    c.classList.toggle("selected",cid===id);
+    c.classList.toggle("related",rel.has(cid));
+    c.classList.toggle("dimmed",cid!==id && !rel.has(cid));
+  });
+  // линии к связанным
+  const mapRect=document.getElementById("view-map").getBoundingClientRect();
+  svg.setAttribute("viewBox",`0 0 ${mapRect.width} ${mapRect.height}`);
+  const from=document.querySelector(`.card[data-id="${id}"]`);
+  if(!from){svg.classList.remove("on");return;}
+  const fr=from.getBoundingClientRect();
+  const cx=fr.left-mapRect.left+fr.width/2, cy=fr.top-mapRect.top+fr.height/2;
+  let lines="";
+  rel.forEach(rid=>{
+    const to=document.querySelector(`.card[data-id="${rid}"]`);if(!to)return;
+    const tr=to.getBoundingClientRect();
+    const tx=tr.left-mapRect.left+tr.width/2, ty=tr.top-mapRect.top+tr.height/2;
+    lines+=`<line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}"/>`;
+  });
+  svg.innerHTML=lines;svg.classList.toggle("on",lines.length>0);
+}
+function clearHighlight(){
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected","related","dimmed"));
+  svg.classList.remove("on");svg.innerHTML="";
+}
+mapEl.addEventListener("click",e=>{
+  const c=e.target.closest(".card");if(c)openDetail(c.dataset.id);
+});
+mapEl.addEventListener("keydown",e=>{
+  if(e.key==="Enter"||e.key===" "){const c=e.target.closest(".card");if(c){e.preventDefault();openDetail(c.dataset.id);}}
+});
+
+/* ================= ЛЕГЕНДА ================= */
+document.getElementById("legend-toggle").addEventListener("click",()=>{
+  const lg=document.getElementById("legend");
+  lg.style.display=lg.style.display==="none"?"flex":"none";
+});
+
+/* ================= ВКЛАДКИ ================= */
+document.querySelectorAll(".tab[data-view]").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab[data-view]").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("view-map").classList.toggle("active",t.dataset.view==="map");
+    document.getElementById("view-facts").classList.toggle("active",t.dataset.view==="facts");
+    clearHighlight();
+  });
+});
+
+/* ================= КОНТЕНТ: ТЕОРИЯ + ФАКТЫ ================= */
+document.getElementById("facts-content").innerHTML=`
+<h2>Что такое Стандартная модель?</h2>
+<p>Стандартная модель (СтМ) — квантовая теория, описывающая все известные элементарные частицы и три из четырёх фундаментальных взаимодействия. Это одна из самых точных теорий в истории науки: предсказание магнитного момента электрона совпадает с экспериментом до 12 знаков после запятой.</p>
+<p>СтМ — калибровочная квантовая теория поля с группой симметрии <b>SU(3)×SU(2)×U(1)</b>: кварки и лептоны (фермионы, спин 1/2) взаимодействуют через обмен бозонами-переносчиками (спин 1), а массы частиц возникают за счёт взаимодействия с полем Хиггса.</p>
+<h3>Взаимодействия, которые описывает СтМ</h3>
+<ul>
+<li><b>Сильное</b> — квантовая хромодинамика (кварки, глюоны); держит ядра атомов. Действует на «цветовой» заряд.</li>
+<li><b>Электромагнитное</b> — квантовая электродинамика (заряженные частицы, фотоны); отвечает за химию, свет, электричество.</li>
+<li><b>Слабое</b> — электрослабая теория (все фермионы, W- и Z-бозоны); отвечает за радиоактивность и горение звёзд.</li>
+</ul>
+<h3>Чего Стандартная модель НЕ описывает</h3>
+<ul>
+<li><b>Гравитацию</b> — четвёртое взаимодействие; объединение с общей теорией относительности — главная открытая проблема физики.</li>
+<li><b>Тёмную материю и тёмную энергию</b> — ~95% содержимого Вселенной лежат за пределами модели.</li>
+<li><b>Массы нейтрино</b> — в базовой версии нейтрино безмассовы; осцилляции доказали обратное (нужны нейтринные массы и, возможно, правосторонние нейтрино).</li>
+<li><b>Барионную асимметрию Вселенной</b> — почему материи осталось больше, чем антиматерии, модель не объясняет в полной мере.</li>
+<li><b>Сильную CP-проблему</b> — почему сильное взаимодействие не нарушает CP-симметрию.</li>
+</ul>
+<div class="callout">⚠️ Несмотря на название «стандартная», модель признаётся неполной. Физики называют её «теорией почти всего» — и ищут то, что за её пределами: суперсимметрию, новые частицы, квантовую гравитацию.</div>
+
+<h2>Интересные факты о частицах</h2>
+<div id="fact-list"></div>`;
+
+const FACTS=[
+["17 частиц","В Стандартной модели ровно 17 фундаментальных частиц: 6 кварков, 6 лептонов, 4 калибровочных бозона и бозон Хиггса. С античастицами — 34."],
+["Топ самый тяжёлый","Масса топ-кварка (~173 ГэВ) примерно равна массе атома золота, но он точечный — без внутренней структуры."],
+["Нейтрино сквозь нас","Триллионы нейтрино пролетают сквозь ваше тело каждую секунду — почти не взаимодействуя. Детектор объёмом в олимпийский бассейн ловит лишь несколько в день."],
+["Ноябрьская революция","J/ψ-мезон (чарм + античарм) открыли одновременно SLAC и BNL в 1974 году — это дважды подтвердило кварковую модель и породило двойное название."],
+["Масса Хиггса из вакуума","Нобелевская премия по физике 2013 года (Энглерт и Хиггс) — за механизм придания массы, экспериментально подтверждённый открытием бозона на LHC в 2012-м."],
+["Электрон стабилен","Электрон считается абсолютно стабильным: эксперименты ставят нижнюю границу его времени жизни свыше 6,6×10²⁸ лет — в квадриллион раз больше возраста Вселенной."],
+["Сила в бутылке","Сильное взаимодействие в 100 раз мощнее электромагнитного на расстояниях размера ядра, но действует лишь до ~10⁻¹⁵ м — поэтому мы его не чувствуем."],
+["Поколения — ровно три","Измерения ширины резонанса Z-бозона на LEP показали: лептонных поколений ровно три. Четвёртое «тяжёлое нейтрино» исключено."],
+["Паули и нейтрино","Вольфганг Паули предсказал нейтрино в 1930 году в письме, назвав его «неуловимой частицей», которая «никогда не будет обнаружена». Экспериментальное открытие — в 1956-м."],
+["Антиматерия и PET","Позитрон (античастица электрона) ежедневно спасает жизни: в медицинских PET-сканерах аннигиляция позитронов даёт сигнал для построения 3D-изображений."],
+["Замедление времени","Мюоны, рождённые в атмосфере на высоте ~15 км и живущие всего 2 мкс, всё же долетают до земли — благодаря релятивистскому замедлению времени при скоростях, близких к световой."],
+["Бозон Бога — журналистика","Прозвище «бозон Бога» придумал нобелевский лауреат Леон Ледерман для своей книги 1993 года — редактор не разрешил назвать её «Чёртову частицу»."],
+["Хиггс предсказал до эксперимента","Масса бозона Хиггса (~125 ГэВ) была угадана за годы до LHC косвенными радиоправками электрослабой теории."],
+["Мир без Хиггса","Если бы поле Хиггса исчезло, электроны потеряли бы массу, атомы разлетелись бы, а Вселенная превратилась в холодный равномерный суп частиц."],
+];
+document.getElementById("fact-list").innerHTML=FACTS.map((f,i)=>`<div class="fact-card"><span class="n">${String(i+1).padStart(2,"0")}</span><p><b>${f[0]}.</b> ${f[1]}</p></div>`).join("");
+</script>
+</body>
+</html>

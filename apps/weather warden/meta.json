@@ -1,0 +1,8 @@
+{
+  "title": "Погодный страж",
+  "description": "Хранитель погоды над маленьким островом",
+  "icon": "🌤️⛅",
+  "ai": "MiniMax M3.1-Flash",
+  "platform": "both",
+  "tags": ["game"]
+}
