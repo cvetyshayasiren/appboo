@@ -1,0 +1,8 @@
+{
+  "title": "Эмодзиатор",
+  "description": "Пикер эмодзи",
+  "icon": "🥰",
+  "ai": "GLM-5.3",
+  "platform": "both",
+  "tags": ["tool"]
+}
