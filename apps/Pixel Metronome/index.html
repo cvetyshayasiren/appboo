@@ -36,6 +36,43 @@ h1{font-size:clamp(17px,3vw,27px);letter-spacing:1px;margin:0;color:var(--yellow
 .file-hidden{display:none}
 @media(max-width:850px){.main{grid-template-columns:1fr}.stage{min-height:170px}.app{padding:10px}.right{display:grid;grid-template-columns:1fr 1fr}.right .wide{grid-column:1/-1}}
 @media(max-width:560px){header{align-items:flex-start}.status{width:100%;justify-content:flex-start}.right{display:flex}.controls-grid{grid-template-columns:1fr}.beat-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.sound-row{grid-template-columns:64px minmax(75px,1fr) 42px 38px}.tempo{grid-template-columns:1fr}.tempo-value{justify-content:center}.hint{text-align:left}}
+
+/* Современный пиксельный интерфейс и полноэкранная компоновка */
+:root{--bg:#111323;--panel:#1b2035;--panel2:#252d49;--ink:#f5f7ff;--muted:#929bb9;--red:#ff5470;--yellow:#ffd866;--blue:#56c8ff;--green:#8bf0b2;--pink:#ff8fca;--purple:#a99bff;--line:#3b496b;--shadow:#080b18}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background-color:var(--bg);background-image:radial-gradient(#34405e 1px,transparent 1px);background-size:18px 18px}
+.app{width:100%;max-width:none;height:100svh;min-height:0;padding:10px 14px;gap:9px}
+.panel{background:var(--panel);border-color:var(--line);box-shadow:3px 3px 0 var(--shadow),inset 1px 1px 0 #ffffff12;padding:10px}
+header{flex:0 0 auto;background:#202640}
+.logo{background:var(--yellow);color:#171a2c;border:0;box-shadow:3px 3px 0 var(--red);font-size:25px}
+h1{color:var(--ink);text-shadow:2px 2px 0 #5d5ce2;letter-spacing:2px}
+h2{color:var(--yellow);font-size:11px}
+.pill{background:#151a2c;border-color:#455477}.bpm-chip{color:var(--yellow)}
+.main{min-height:0;grid-template-columns:minmax(0,1.25fr) minmax(330px,.85fr);gap:9px}
+.left,.right{min-height:0;gap:9px}
+.stage{min-height:150px;flex:1 1 150px;padding-bottom:38px;background:#202640;position:relative}
+.pulse{background:var(--purple);border:6px solid var(--blue);box-shadow:6px 6px 0 #080b18,inset -6px -6px 0 #6c5cc6}
+.pulse.hit{background:var(--yellow)}.pulse.accent{background:var(--red);border-color:var(--yellow)}
+.counter{background:#151a2c;border-color:#394769}.counter strong{color:var(--green)}
+.beat-walk{position:absolute;left:24%;right:24%;bottom:12px;height:18px;display:flex;align-items:center;justify-content:space-between;border-top:2px solid #475575}
+.walk-node{width:9px;height:9px;background:#596889;border:2px solid #151a2c;transform:translateY(-1px);z-index:1}
+.walk-node.active{background:var(--yellow);box-shadow:0 0 0 2px #ffd86633}
+.walker{position:absolute;left:0;top:-8px;width:13px;height:13px;background:var(--pink);border:2px solid white;box-shadow:2px 2px 0 #080b18;transform:translateX(-50%);transition:left 55ms steps(1,end);z-index:2}
+.beat-grid{gap:6px}.beat{box-shadow:2px 2px 0 #080b18;transition:transform 60ms steps(1,end),outline 60ms steps(1,end)}
+.beat.current{outline:2px solid var(--green);outline-offset:1px;transform:translateY(-2px)}
+.btn{background:#2a3453;border-color:#52658d;box-shadow:2px 2px 0 #080b18}.btn.primary{background:var(--green);border-color:#d2ffe0;color:#101727}.btn.danger{background:var(--red);border-color:#ffb3c0}
+.field input[type=number],.field input[type=text],select,.presets-row input,.presets-row select,.tempo-value input{background:#12172a;border-color:#3f4e73}
+.sound-row{margin:6px 0}.sound-row b{font-size:10px;color:var(--muted)}
+.control-box{background:#12172a}
+.toast{background:var(--yellow);border-color:white}
+@media(min-width:851px) and (max-height:760px){
+ .app{padding:7px 10px;gap:6px}.panel{padding:7px}.main,.left,.right{gap:6px}.stage{min-height:125px}.pulse{width:78px;height:78px}.sound-row{margin:4px 0}.transport{margin-top:7px!important}.legend{margin-top:6px}
+}
+@media(max-width:850px){
+ html,body{height:auto;min-height:100%;overflow:auto}.app{height:auto;min-height:100svh;padding:10px}.main{grid-template-columns:1fr}.left,.right{min-height:auto}.stage{min-height:190px;flex:none}
+}
+@media(max-width:560px){.beat-walk{left:15%;right:15%}}
+
 </style>
 </head>
 <body>
@@ -49,6 +86,7 @@ h1{font-size:clamp(17px,3vw,27px);letter-spacing:1px;margin:0;color:var(--yellow
  <div class="panel stage">
   <div class="pulse-wrap"><div class="pulse" id="pulse" aria-label="Визуальный пульс"></div><div class="pulse-label" id="beatLabel">ГОТОВ К СТАРТУ</div></div>
   <div class="counters"><div class="counter"><strong id="barCount">0</strong><span>ТАКТ</span></div><div class="counter"><strong id="beatCount">0/4</strong><span>ДОЛЯ</span></div></div>
+ <div class="beat-walk" id="beatWalk" aria-label="Шагающий индикатор долей"><span class="walker" id="walker"></span></div>
  </div>
  <div class="panel">
   <h2>Ритмическая сетка</h2>
@@ -212,13 +250,13 @@ const UI=(()=>{
  function toast(msg){const el=$('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,2100)}
  function status(on,txt){$('status').textContent=txt||(on?'RUNNING':'IDLE');$('status').classList.toggle('running',on);$('audioStatus').textContent=AudioEngine.context?'AUDIO READY':'CLICK TO START'}
  function counters(bar,beat,total,sub){$('barCount').textContent=bar;$('beatCount').textContent=beat+'/'+total+(sub?'.'+sub:'')}
- function beat(i){$('beatGrid').querySelectorAll('.beat').forEach((b,n)=>b.classList.toggle('current',n===i));lastBeat=i}
+ function beat(i){$('beatGrid').querySelectorAll('.beat').forEach((b,n)=>b.classList.toggle('current',n===i));const n=Scheduler.state.beats,walk=$('beatWalk');walk.querySelectorAll('.walk-node').forEach((el,k)=>el.classList.toggle('active',k===i));$('walker').style.left=(n<=1?50:(i/(n-1))*100)+'%';lastBeat=i}
  function pulse(type){const el=$('pulse');el.classList.toggle('accent',type==='accent');el.classList.add('hit');$('beatLabel').textContent=type==='sub'?'SUB BEAT':type.toUpperCase();setTimeout(()=>el.classList.remove('hit'),70);if(type==='accent'&&$('flashToggle').checked){document.body.classList.remove('flash');void document.body.offsetWidth;document.body.classList.add('flash')}}
- function pulseIdle(){$('pulse').classList.remove('hit','accent');$('beatLabel').textContent='ГОТОВ К СТАРТУ'}
+ function pulseIdle(){$('pulse').classList.remove('hit','accent');$('beatLabel').textContent='ГОТОВ К СТАРТУ';$('walker').style.left='0%';$('beatWalk').querySelectorAll('.walk-node').forEach(el=>el.classList.remove('active'))}
  function soundFor(k){return $(soundIds[k]||soundIds.Normal).value}
  function volumeFor(k){return Number($(volIds[k]||volIds.Normal).value)/100}
  function pitch(){return Math.max(-24,Math.min(24,Number($('pitch').value)||0))}
- function renderGrid(){const g=$('beatGrid');g.innerHTML='';Scheduler.state.types.forEach((type,i)=>{const b=document.createElement('button');b.className='beat';b.type='button';b.dataset.type=type;b.textContent=String(i+1).padStart(2,'0');b.setAttribute('aria-label','Доля '+(i+1)+', '+type+'; нажмите для смены');b.addEventListener('click',()=>{const arr=Scheduler.state.types,idx=Presets.cycle.indexOf(arr[i]);arr[i]=Presets.cycle[(idx+1)%Presets.cycle.length];b.dataset.type=arr[i];b.setAttribute('aria-label','Доля '+(i+1)+', '+arr[i]);});g.appendChild(b)})}
+ function renderGrid(){const g=$('beatGrid');g.innerHTML='';const walk=$('beatWalk');walk.querySelectorAll('.walk-node').forEach(el=>el.remove());Scheduler.state.types.forEach((type,i)=>{const node=document.createElement('span');node.className='walk-node';node.setAttribute('aria-hidden','true');walk.appendChild(node);const b=document.createElement('button');b.className='beat';b.type='button';b.dataset.type=type;b.textContent=String(i+1).padStart(2,'0');b.setAttribute('aria-label','Доля '+(i+1)+', '+type+'; нажмите для смены');b.addEventListener('click',()=>{const arr=Scheduler.state.types,idx=Presets.cycle.indexOf(arr[i]);arr[i]=Presets.cycle[(idx+1)%Presets.cycle.length];b.dataset.type=arr[i];b.setAttribute('aria-label','Доля '+(i+1)+', '+arr[i]);});g.appendChild(b)});const walker=$('walker');if(walker)walk.appendChild(walker)}
  function updateTempo(v){const n=Math.max(20,Math.min(300,Math.round(Number(v)||120)));$('bpm').value=n;$('bpmRange').value=n;$('headerBpm').textContent=n+' BPM';Scheduler.setTempo(n)}
  function meter(){let n,d;const v=$('meter').value;if(v==='custom'){n=Math.max(1,Math.min(16,Number($('meterNum').value)||4));d=Math.max(2,Math.min(16,Number($('meterDen').value)||4))}else [n,d]=v.split('/').map(Number);Scheduler.setMeter(n,d)}
  function setPresetPattern(name){let a=Presets.patterns[name].slice();const n=Scheduler.state.beats;Scheduler.setTypes(Array.from({length:n},(_,i)=>a[i%a.length]));renderGrid();toast('Паттерн применён')}
