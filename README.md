@@ -34,6 +34,7 @@
 | Pixel Metronome | Ретро-метроном с чиптюн-звуками и ритмическими паттернами | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/Pixel%20Metronome/) |
 | WeatherGotchi | Карманный погодный питомец с живой погодой и пиксельной графикой | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/WeatherGotchi/) |
 | WikiRand | Случайные статьи из Википедии по разделам | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/WikiRand/) |
+| Обогреватель | Пиксельная новелла: греем батареи в панельке до приезда ремонтной бригады | [Открыть](https://cvetyshayasiren.github.io/appboo/apps/heater/) |
 
 ## Как устроен проект
 
