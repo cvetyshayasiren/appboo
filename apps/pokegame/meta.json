@@ -1,0 +1,8 @@
+{
+  "title": "Покемоны Пороховых",
+  "description": "Лови, сражайся, собирай",
+  "icon": "ПП",
+  "ai": "Qwen3.7-Plus",
+  "platform": "both",
+  "tags": ["game"]
+}
