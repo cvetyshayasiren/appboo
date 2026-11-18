@@ -6,5 +6,8 @@
   "color": "#3366cc",
   "ai": "GLM-5.3",
   "platform": "both",
-  "tags": ["Tool", "Random", "Education"]
+  "tags": [
+    "Tool",
+    "Education"
+  ]
 }
