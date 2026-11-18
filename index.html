@@ -671,49 +671,6 @@ main {
 }
 .empty.error { color: var(--danger); border-color: var(--danger); }
 
-/* --- Модальное окно с iframe на весь экран --- */
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: var(--bg);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-.modal.open { opacity: 1; pointer-events: auto; }
-.modal-iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
-}
-/* Единственный элемент интерфейса поверх iframe — кнопка закрытия */
-.modal-close {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 1001;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: 1.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-  transition: background 0.18s, transform 0.18s;
-}
-.modal-close:hover { background: var(--danger); transform: scale(1.08); }
-.modal-close:active { transform: scale(1); }
-
 /* --- Подвал --- */
 .app-footer {
   text-align: center;
@@ -736,7 +693,6 @@ main {
   .toolbar-row > .filter-group { width: 100%; }
   .toolbar-row .seg, .toolbar-row .sort-select { width: 100%; }
   .btn-reset { margin-left: 0; width: 100%; text-align: center; }
-  .modal-close { top: 10px; right: 10px; width: 42px; height: 42px; }
 }
 </style>
 </head>
@@ -745,7 +701,7 @@ main {
 <header class="app-header">
   <div class="header-inner">
     <a class="logo" href="./" aria-label="appboo">
-      <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFD447" stroke="#E9B52E" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg></span>
       <span class="logo-text">app<span class="logo-accent">boo</span></span>
     </a>
     <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему" title="Переключить тему">
@@ -807,14 +763,6 @@ main {
 </main>
 
 <footer class="app-footer">appboo — коллекция мини-приложений</footer>
-
-<!-- Модальное окно: iframe на весь экран + кнопка закрытия -->
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Просмотр приложения">
-  <button class="modal-close" id="modal-close" title="Закрыть / Вернуться к плееру" aria-label="Закрыть / Вернуться к плееру">✕</button>
-  <iframe id="modal-iframe" class="modal-iframe" src="about:blank"
-    allow="autoplay; fullscreen; clipboard-read; clipboard-write; encrypted-media; picture-in-picture"
-    allowfullscreen></iframe>
-</div>
 
 <script>
 "use strict";
@@ -1075,8 +1023,7 @@ function renderCard(app) {
       ${metaHtml}
       ${tagsWrap}
       <div class="card-actions">
-        <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}" target="_blank" rel="noopener noreferrer">Перейти</a>
-        <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">Окно</button>
+        <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}">Перейти</a>
       </div>
     </div>
   </article>`;
@@ -1172,24 +1119,6 @@ function resetFilters() {
   updateResetBtn();
 }
 
-/* --- Модальное окно с iframe --- */
-function openIframe(url) {
-  const modal = document.getElementById("modal");
-  const iframe = document.getElementById("modal-iframe");
-  iframe.src = url;
-  modal.classList.add("open");
-  document.body.style.overflow = "hidden"; // блокируем прокрутку фона
-}
-
-function closeIframe() {
-  const modal = document.getElementById("modal");
-  const iframe = document.getElementById("modal-iframe");
-  modal.classList.remove("open");
-  // Очищаем src, чтобы остановить приложение внутри iframe
-  iframe.src = "about:blank";
-  document.body.style.overflow = "";
-}
-
 /* --- Тема: ручное переключение с запоминанием в localStorage --- */
 function initTheme() {
   const saved = localStorage.getItem("appboo-theme");
@@ -1272,15 +1201,8 @@ function bindEvents() {
   // Сброс
   document.getElementById("reset-btn").addEventListener("click", resetFilters);
 
-  // Клик по карточке, тегу, нейросети или кнопке «Окно»
+  // Клик по карточке открывает приложение напрямую; элементы фильтра остаются интерактивными
   document.getElementById("grid").addEventListener("click", e => {
-    const iframeBtn = e.target.closest("[data-iframe]");
-    if (iframeBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      openIframe(iframeBtn.dataset.iframe);
-      return;
-    }
     const tagBtn = e.target.closest("[data-tag]");
     if (tagBtn) {
       e.preventDefault();
@@ -1298,15 +1220,7 @@ function bindEvents() {
     const action = e.target.closest(".card-actions");
     if (action) return;
     const card = e.target.closest(".card[data-open]");
-    if (card) openIframe(card.dataset.open);
-  });
-
-  // Закрытие модалки
-  document.getElementById("modal-close").addEventListener("click", closeIframe);
-  // Клик по фону модалки (вне iframe — по краям не выйдет, iframe покрывает всё,
-  // но Esc закрывает)
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeIframe();
+    if (card) window.location.href = card.dataset.open;
   });
 
   // Переключение темы
