@@ -74,6 +74,7 @@ body {
   background-size: 240% 100%;
   animation: sheenSweep 26s linear infinite;
   will-change: background-position;
+  pointer-events: none;
 }
 
 /* Зернистость плёнки: тайл шума из SVG feTurbulence + дрожание */
@@ -1067,6 +1068,10 @@ body, .panel, .drum, .cell, .band, .readout, .themes, .theme-btn,
     padding: 10px 14px 6px;
     align-items: center;
   }
+  .board { gap: 10px; padding: 8px 10px 12px; }
+  .panel-head { padding: 8px 10px; }
+  .drums-wrap { padding: 6px 0; }
+  .panel-foot { padding: 5px 10px; }
   .brand-sub { display: none; }
   .readout { max-width: 34vw; padding: 4px 8px; }
   .theme-btn { padding: 5px 6px; }
@@ -1457,7 +1462,12 @@ function attachDrumListeners(sys, d) {
 
   // Касание/указатель: прерываем программные анимации, помечаем «палец
   // на барабане» (чтобы лечение позиций не подсекло барабан под пальцем)
-  d.drum.addEventListener("pointerdown", () => {
+  d.drum.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") return; // touch отслеживаем до touchend, не pointercancel
+    d.touchDown = true;
+    interruptDrum(sys, d);
+  }, { passive: true });
+  d.drum.addEventListener("touchstart", () => {
     d.touchDown = true;
     d.lastTouchAt = Date.now();
     interruptDrum(sys, d);
@@ -1468,8 +1478,14 @@ function attachDrumListeners(sys, d) {
     // запускаем обычное ожидание остановки (инерция продолжит слать scroll).
     if (d.userScrolled) scheduleSettle(sys);
   };
-  d.drum.addEventListener("pointerup", release, { passive: true });
-  d.drum.addEventListener("pointercancel", release, { passive: true });
+  d.drum.addEventListener("pointerup", (e) => {
+    if (e.pointerType !== "touch") release();
+  }, { passive: true });
+  d.drum.addEventListener("pointercancel", (e) => {
+    if (e.pointerType !== "touch") release();
+  }, { passive: true });
+  d.drum.addEventListener("touchend", release, { passive: true });
+  d.drum.addEventListener("touchcancel", release, { passive: true });
 
   // Клавиатура: стрелки/PageUp/PageDown/Home/End — как вращение барабана
   d.drum.addEventListener("keydown", (e) => onDrumKey(sys, d, e));
