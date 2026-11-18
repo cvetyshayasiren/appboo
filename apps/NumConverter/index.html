@@ -597,6 +597,9 @@ body {
   scroll-snap-align: center;
   display: grid;
   place-items: center;
+  /* Небольшая оптическая поправка: глифы моноширинного шрифта визуально
+     сидят чуть выше геометрического центра ячейки. Расчёт позиции учитывает её. */
+  transform: translateY(1.5px);
   font-family: var(--font-mono);
   font-size: var(--digit-size);
   font-weight: 700;
