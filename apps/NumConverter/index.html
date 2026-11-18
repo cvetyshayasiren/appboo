@@ -1280,9 +1280,22 @@ function toast(msg) {
 function cellIndex(d) {
   return (d.drum.scrollTop - d.padTop) / d.cellH + d.half;
 }
-// scrollTop, при котором цифра digit встаёт ровно в центр окна
+// scrollTop, при котором выбранная ячейка окажется точно в центре
+// видимой внутренней области барабана. Смещение вычисляется по реальной
+// геометрии DOM, а не по CSS-переменным/предположительной высоте ячейки:
+// правки шрифта, рамки, padding и адаптивных размеров не накапливают ошибку.
 function topFor(sys, d, digit) {
-  return d.padTop + (MID * sys.base + digit - d.half) * d.cellH;
+  const index = MID * sys.base + digit;
+  const cell = d.strip.children[index];
+  if (!cell) return 0;
+
+  const drumRect = d.drum.getBoundingClientRect();
+  const cellRect = cell.getBoundingClientRect();
+  const viewportCenter =
+    drumRect.top + d.drum.clientTop + d.drum.clientHeight / 2;
+  const cellCenter = cellRect.top + cellRect.height / 2;
+
+  return d.drum.scrollTop + cellCenter - viewportCenter;
 }
 // Замер высоты ячейки, «холостого» поля сверху и полу-окна (в ячейках)
 function measureDrum(d) {
