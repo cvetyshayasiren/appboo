@@ -738,14 +738,18 @@ main {
           <button class="seg-btn" data-platform="mobile">📱 Mobile</button>
         </div>
       </div>
-      <div class="filter-group">
-        <span class="filter-label">Сортировка</span>
-        <select id="sort-select" class="sort-select" aria-label="Сортировка">
-          <option value="default">По умолчанию</option>
-          <option value="az">По алфавиту (А–Я)</option>
-          <option value="za">По алфавиту (Я–А)</option>
-        </select>
-      </div>
+      <section class="filter-group filter-accordion" data-accordion="sort">
+        <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="sort-panel">
+          <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">По умолчанию</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+        </button>
+        <div class="filter-accordion-panel" id="sort-panel" aria-hidden="true"><div class="filter-accordion-inner">
+          <div class="tag-filters sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
+            <button class="tag tag-filter sort-option active" type="button" data-sort="default">По умолчанию</button>
+            <button class="tag tag-filter sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
+            <button class="tag tag-filter sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
+          </div>
+        </div></div>
+      </section>
       <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
     </div>
     <section class="filter-group filter-accordion" data-accordion="tags">
@@ -1165,7 +1169,7 @@ function bindEvents() {
       const panel = document.getElementById(button.getAttribute("aria-controls"));
       if (panel) panel.setAttribute("aria-hidden", String(!isOpen));
       const summary = section.querySelector(".filter-summary");
-      if (summary) summary.textContent = isOpen ? "Скрыть фильтры" : "Показать фильтры";
+      if (summary && section.dataset.accordion !== "sort") summary.textContent = isOpen ? "Скрыть фильтры" : "Показать фильтры";
     });
   });
 
@@ -1196,9 +1200,15 @@ function bindEvents() {
     updateResetBtn();
   });
 
-  // Сортировка
-  document.getElementById("sort-select").addEventListener("change", e => {
-    sortMode = e.target.value;
+  // Сортировка в том же раскрывающемся стиле, что теги и нейросети
+  document.getElementById("sort-options").addEventListener("click", e => {
+    const btn = e.target.closest("[data-sort]");
+    if (!btn) return;
+    sortMode = btn.dataset.sort;
+    document.querySelectorAll(".sort-option").forEach(option =>
+      option.classList.toggle("active", option === btn));
+    const labels = { default: "По умолчанию", az: "По алфавиту (А–Я)", za: "По алфавиту (Я–А)" };
+    document.getElementById("sort-summary").textContent = labels[sortMode];
     render();
     updateResetBtn();
   });
