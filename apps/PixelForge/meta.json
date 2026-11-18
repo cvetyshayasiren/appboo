@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "GLM-5.2",
   "platform": "both",
-  "tags": ["Creative", "Pixel Art", "Editor", "Color"]
+  "tags": [
+    "Creative",
+    "Pixel Art"
+  ]
 }
