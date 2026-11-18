@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "AppBoo",
+  "short_name": "AppBoo",
+  "description": "Каталог мини-приложений AppBoo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#86C26B",
+  "icons": [
+    {
+      "src": "./appboo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
