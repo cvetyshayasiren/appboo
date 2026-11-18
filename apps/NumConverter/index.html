@@ -1276,26 +1276,34 @@ function toast(msg) {
 }
 
 /* ---------------- Измерения барабана -------------------------------- */
-// Абсолютный индекс ячейки, чей ЦЕНТР совпадает с центром окна барабана
-function cellIndex(d) {
-  return (d.drum.scrollTop - d.padTop) / d.cellH + d.half;
+// Геометрический центр видимой внутренней области рамки барабана.
+function drumViewportCenter(d) {
+  const rect = d.drum.getBoundingClientRect();
+  return rect.top + d.drum.clientTop + d.drum.clientHeight / 2;
 }
-// scrollTop, при котором выбранная ячейка окажется точно в центре
-// видимой внутренней области барабана. Смещение вычисляется по реальной
-// геометрии DOM, а не по CSS-переменным/предположительной высоте ячейки:
-// правки шрифта, рамки, padding и адаптивных размеров не накапливают ошибку.
+
+// Абсолютный индекс ячейки, чей ЦЕНТР совпадает с центром окна барабана.
+// Измеряем фактическое положение первой ячейки — без padTop/half,
+// которые устаревают при изменении размеров, шрифта или рамок.
+function cellIndex(d) {
+  const first = d.strip.firstElementChild;
+  if (!first || !d.cellH) return 0;
+  const rect = first.getBoundingClientRect();
+  const firstCenter = rect.top + rect.height / 2;
+  return (drumViewportCenter(d) - firstCenter) / d.cellH;
+}
+
+// scrollTop, при котором центр нужной ячейки совпадёт с центром рамки.
+// Смещение каждый раз пересчитывается от текущей геометрии DOM, поэтому
+// погрешность не накапливается при последовательных переключениях.
 function topFor(sys, d, digit) {
   const index = MID * sys.base + digit;
   const cell = d.strip.children[index];
-  if (!cell) return 0;
+  if (!cell) return d.drum.scrollTop || 0;
 
-  const drumRect = d.drum.getBoundingClientRect();
-  const cellRect = cell.getBoundingClientRect();
-  const viewportCenter =
-    drumRect.top + d.drum.clientTop + d.drum.clientHeight / 2;
-  const cellCenter = cellRect.top + cellRect.height / 2;
-
-  return d.drum.scrollTop + cellCenter - viewportCenter;
+  const rect = cell.getBoundingClientRect();
+  const cellCenter = rect.top + rect.height / 2;
+  return d.drum.scrollTop + cellCenter - drumViewportCenter(d);
 }
 // Замер высоты ячейки, «холостого» поля сверху и полу-окна (в ячейках)
 function measureDrum(d) {
