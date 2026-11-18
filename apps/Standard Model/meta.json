@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["Sci", "Physics", "Education", "Interactive"]
+  "tags": [
+    "Education",
+    "Science"
+  ]
 }
