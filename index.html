@@ -655,6 +655,30 @@ main {
   margin-top: auto;
   padding-top: 10px;
 }
+.btn-copy {
+  flex: 0 0 38px;
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+}
+.btn-copy:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-copy:active { transform: translateY(0); }
+.btn-copy.copied { color: var(--accent); border-color: var(--accent); }
+.btn-copy svg { width: 17px; height: 17px; display: block; }
 .btn {
   flex: 1;
   text-align: center;
@@ -1089,6 +1113,12 @@ function renderCard(app) {
       <div class="card-actions">
         <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}">Перейти</a>
         <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">Окно</button>
+        <button class="btn-copy" type="button" data-copy="${escapeAttr(appUrl(app.id))}" aria-label="Скопировать ссылку" title="Скопировать ссылку">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+            <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </article>`;
@@ -1272,8 +1302,47 @@ function bindEvents() {
   // Сброс
   document.getElementById("reset-btn").addEventListener("click", resetFilters);
 
-  // Кнопка «Окно» открывает iframe; клик по остальной карточке переходит напрямую
-  document.getElementById("grid").addEventListener("click", e => {
+  // Копирование прямой ссылки на приложение из карточки
+  document.getElementById("grid").addEventListener("click", async e => {
+    const copyBtn = e.target.closest("[data-copy]");
+    if (copyBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const link = new URL(copyBtn.dataset.copy, document.baseURI).href;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(link);
+        } else {
+          const field = document.createElement("textarea");
+          field.value = link;
+          field.setAttribute("readonly", "");
+          field.style.position = "fixed";
+          field.style.opacity = "0";
+          document.body.appendChild(field);
+          field.select();
+          const copied = document.execCommand("copy");
+          field.remove();
+          if (!copied) throw new Error("Не удалось скопировать ссылку");
+        }
+        const originalTitle = "Скопировать ссылку";
+        copyBtn.classList.add("copied");
+        copyBtn.title = "Ссылка скопирована";
+        copyBtn.setAttribute("aria-label", "Ссылка скопирована");
+        copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>';
+        window.setTimeout(() => {
+          if (!copyBtn.isConnected) return;
+          copyBtn.classList.remove("copied");
+          copyBtn.title = originalTitle;
+          copyBtn.setAttribute("aria-label", originalTitle);
+          copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>';
+        }, 1600);
+      } catch (error) {
+        copyBtn.title = "Не удалось скопировать";
+        copyBtn.setAttribute("aria-label", "Не удалось скопировать ссылку");
+      }
+      return;
+    }
+
     const iframeBtn = e.target.closest("[data-iframe]");
     if (iframeBtn) {
       e.preventDefault();
