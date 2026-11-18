@@ -63,14 +63,17 @@ body {
   animation: fogDrift 26s ease-in-out infinite alternate;
 }
 
-/* Диагональный блик, периодически проходящий по "стеклу" */
+/* Редкий быстрый блик ограничен шапкой и не перекрывает рабочую область. */
 .fx-sheen {
-  z-index: 85;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   opacity: var(--sheen);
   background: linear-gradient(112deg,
     transparent 40%, rgba(255,255,255,.85) 50%, transparent 60%);
   background-size: 240% 100%;
-  animation: sheenSweep 9s linear infinite;
+  animation: sheenSweep 26s linear infinite;
+  will-change: background-position;
 }
 
 /* Зернистость плёнки: тайл шума из SVG feTurbulence + дрожание */
@@ -126,6 +129,7 @@ body {
 .app-head {
   position: relative;
   z-index: 5;
+  overflow: hidden;
   flex: 0 0 auto;
   display: flex;
   align-items: flex-end;
@@ -135,6 +139,11 @@ body {
 }
 
 /* Название стилизуется под тему через переменные */
+.brand-block, .head-right {
+  position: relative;
+  z-index: 1;
+}
+
 .brand {
   font-family: var(--font-display);
   font-weight: var(--brand-weight, 800);
@@ -278,8 +287,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 12px;
-  padding: 10px clamp(12px, 4vw, 32px) 14px;
+  gap: 14px;
+  padding: 12px clamp(14px, 4vw, 32px) 16px;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -360,7 +369,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 9px 12px 8px 14px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -486,7 +495,7 @@ body {
 
 .panel-foot {
   flex: 0 0 auto;
-  padding: 5px 14px;
+  padding: 6px 14px;
   border-top: 1px solid var(--border);
   font-family: var(--font-mono);
   font-size: .56rem;
@@ -505,7 +514,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 7px 0;
+  padding: 9px 0;
 }
 
 /* Горизонтальный контейнер барабанов (края растворяются — имитация ГРИП).
@@ -516,7 +525,9 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior: contain;
-  touch-action: pan-x;
+  /* Разрешаем оба направления на контейнере: вложенный .drum
+     самостоятельно принимает вертикальный жест, а ряд — горизонтальный. */
+  touch-action: pan-x pan-y;
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
   mask-image: linear-gradient(90deg,
@@ -1108,9 +1119,8 @@ body, .panel, .drum, .cell, .band, .readout, .themes, .theme-btn,
   100% { transform: translate3d(5px, 5px, 0); }
 }
 @keyframes sheenSweep {
-  0%   { background-position: 210% 0; }
-  62%  { background-position: -110% 0; }
-  100% { background-position: -110% 0; }
+  0%, 85% { background-position: 210% 0; }
+  92%, 100% { background-position: -110% 0; }
 }
 @keyframes fogDrift {
   0%   { transform: translate3d(-2.5%, -1.5%, 0) scale(1); }
@@ -1160,6 +1170,7 @@ body, .panel, .drum, .cell, .band, .readout, .themes, .theme-btn,
       </div>
       <button class="m-add" id="mAdd" aria-label="Добавить систему счисления">+</button>
     </div>
+    <div class="fx-sheen" aria-hidden="true"></div>
   </header>
 
   <!-- Доска систем счисления: панели генерируются скриптом -->
@@ -1174,7 +1185,6 @@ body, .panel, .drum, .cell, .band, .readout, .themes, .theme-btn,
   <!-- Слои постобработки -->
   <div class="fx fx-lines" aria-hidden="true"></div>
   <div class="fx fx-fog" aria-hidden="true"></div>
-  <div class="fx fx-sheen" aria-hidden="true"></div>
   <div class="fx fx-grain" aria-hidden="true"></div>
   <div class="fx fx-scan" aria-hidden="true"></div>
   <div class="fx fx-scratch" aria-hidden="true"></div>
@@ -1449,13 +1459,15 @@ function attachDrumListeners(sys, d) {
   // на барабане» (чтобы лечение позиций не подсекло барабан под пальцем)
   d.drum.addEventListener("pointerdown", () => {
     d.touchDown = true;
-    interruptDrum(sys, d);
-  }, { passive: true });
-  d.drum.addEventListener("touchstart", () => {
     d.lastTouchAt = Date.now();
     interruptDrum(sys, d);
   }, { passive: true });
-  const release = () => { d.touchDown = false; };
+  const release = () => {
+    d.touchDown = false;
+    // Не завершаем вращение, пока палец на экране; после отпускания
+    // запускаем обычное ожидание остановки (инерция продолжит слать scroll).
+    if (d.userScrolled) scheduleSettle(sys);
+  };
   d.drum.addEventListener("pointerup", release, { passive: true });
   d.drum.addEventListener("pointercancel", release, { passive: true });
 
@@ -1611,7 +1623,7 @@ function onDrumScroll(sys, d) {
   scheduleSettle(sys);
 }
 
-let settleDelay = 150;
+let settleDelay = 220;
 function scheduleSettle(sys) {
   clearTimeout(sys.settleTimer);
   sys.settleTimer = setTimeout(() => settleSys(sys), settleDelay);
@@ -1620,6 +1632,12 @@ function scheduleSettle(sys) {
 // Прокрутка остановилась: считаем щелчки и коммитим значение
 function settleSys(sys) {
   if (sys._inSettle) return;
+  // На мобильном браузер может ненадолго приостановить scroll-события
+  // прямо во время удержания пальца. Не коммитим промежуточную цифру.
+  if (sys.drums.some((d) => d.touchDown)) {
+    scheduleSettle(sys);
+    return;
+  }
   sys._inSettle = true;
   try {
     clearTimeout(sys.settleTimer);
