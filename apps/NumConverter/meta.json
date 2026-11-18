@@ -1,13 +1,13 @@
 {
-"title": "NumConverter",
-"description": "Механический конвертер систем счисления: барабаны-одометры для любой базы от 2 до 36. Крутите цифры свайпом или колёсиком, вводите значение кликом по табло, меняйте основание кликом по шапке карточки — остальные системы пересчитываются синхронно через BigInt без потери точности. Три темы: Cyberpunk Neon, Steampunk Brass, Nordic Minimal.",
-"info": "Автор кода — GLM-5.3-Flash.",
-"icon": "icon.svg",
-"color": "#22d3ee",
-"ai": "GLM-5.3-Flash",
-"platform": "both",
-"tags": [
-"Tool",
-"Education"
-]
+  "title": "NumConverter",
+  "description": "Механический конвертер систем счисления от 2 до 36 с барабанами-одометрами и тремя темами оформления.",
+  "info": "Автор кода — GLM-5.3-Flash. Правки интерфейса и мобильного управления — GPT-6.",
+  "icon": "icon.svg",
+  "color": "#22d3ee",
+  "ai": "GLM-5.3-Flash",
+  "platform": "both",
+  "tags": [
+    "Tool",
+    "Education"
+  ]
 }
