@@ -1276,10 +1276,13 @@ function toast(msg) {
 }
 
 /* ---------------- Измерения барабана -------------------------------- */
-// Геометрический центр видимой внутренней области рамки барабана.
+// Геометрический центр общей выделяющей рамки.
+// Цифры выравниваются именно по ней, а не по высоте барабана:
+ // это сохраняет точное совпадение, даже если рамка или её отступы меняются.
 function drumViewportCenter(d) {
-  const rect = d.drum.getBoundingClientRect();
-  return rect.top + d.drum.clientTop + d.drum.clientHeight / 2;
+  const target = d.bandEl || d.drum;
+  const rect = target.getBoundingClientRect();
+  return rect.top + rect.height / 2;
 }
 
 // Абсолютный индекс ячейки, чей ЦЕНТР совпадает с центром окна барабана.
@@ -1428,7 +1431,7 @@ function makeDrum(sys, k, digit) {
   slot.querySelector(".drum-btn.up").addEventListener("click", () => commitDelta(sys, k, -1));
   slot.querySelector(".drum-btn.down").addEventListener("click", () => commitDelta(sys, k, 1));
 
-  const d = { slot, drum, strip, cellH: 44, padTop: 0, half: 1, digit, progTarget: null, progAt: 0,
+  const d = { slot, drum, strip, bandEl: sys.bandEl, cellH: 44, padTop: 0, half: 1, digit, progTarget: null, progAt: 0,
               userScrolled: false, startCell: 0, lastScrollAt: 0, lastTouchAt: 0, touchDown: false,
               wheelActive: false, wheelDelta: 0, wheelBaseCellIdx: 0, k, base: sys.base };
   measureDrum(d);
