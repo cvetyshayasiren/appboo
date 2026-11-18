@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Kimi K3",
   "platform": "both",
-  "tags": ["Sci", "Physics", "Education", "Interactive"]
+  "tags": [
+    "Education",
+    "Science"
+  ]
 }
