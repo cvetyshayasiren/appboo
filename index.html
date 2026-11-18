@@ -740,11 +740,12 @@ main {
       </div>
       <section class="filter-group filter-accordion" data-accordion="sort">
         <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="sort-panel">
-          <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">По умолчанию</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">Последние</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
         </button>
         <div class="filter-accordion-panel" id="sort-panel" aria-hidden="true"><div class="filter-accordion-inner">
           <div class="tag-filters sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
-            <button class="tag tag-filter sort-option active" type="button" data-sort="default">По умолчанию</button>
+            <button class="tag tag-filter sort-option active" type="button" data-sort="default">Последние</button>
+            <button class="tag tag-filter sort-option" type="button" data-sort="first">Первые</button>
             <button class="tag tag-filter sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
             <button class="tag tag-filter sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
           </div>
@@ -797,7 +798,7 @@ let allApps = [];                 // массив загруженных при�
 let activeTagFilter = "";         // выбранный тег (один)
 let activeAiFilter = "";          // выбранная нейросеть (одна)
 let activePlatform = "all";       // "all" | "desktop" | "mobile"
-let sortMode = "default";         // "default" | "az" | "za"
+let sortMode = "default";         // "default" (последние) | "first" | "az" | "za"
 let catalogSearch = "";
 let tagSearch = "";
 let aiSearch = "";
@@ -1086,8 +1087,8 @@ function render() {
     list.sort((a, b) => a.title.localeCompare(b.title, "ru"));
   } else if (sortMode === "za") {
     list.sort((a, b) => b.title.localeCompare(a.title, "ru"));
-  } else {
-    list.reverse();
+  } else if (sortMode === "default") {
+    list.reverse(); // Последние добавленные — сверху
   }
 
   if (list.length === 0) {
@@ -1207,7 +1208,7 @@ function bindEvents() {
     sortMode = btn.dataset.sort;
     document.querySelectorAll(".sort-option").forEach(option =>
       option.classList.toggle("active", option === btn));
-    const labels = { default: "По умолчанию", az: "По алфавиту (А–Я)", za: "По алфавиту (Я–А)" };
+    const labels = { default: "Последние", first: "Первые", az: "По алфавиту (А–Я)", za: "По алфавиту (Я–А)" };
     document.getElementById("sort-summary").textContent = labels[sortMode];
     render();
     updateResetBtn();
