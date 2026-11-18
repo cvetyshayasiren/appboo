@@ -559,20 +559,18 @@ body {
   width: var(--drum-w);
   height: var(--drum-h);
   flex: 0 0 auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scroll-snap-type: y mandatory;  /* механическая фиксация цифры в центре */
-  touch-action: pan-y;            /* вертикальный жест ведёт барабан */
+  overflow: hidden;               /* барабан — только визуальный индикатор */
+  overscroll-behavior: auto;
+  scroll-snap-type: none;
+  touch-action: pan-y;            /* вертикальный жест проходит к общей доске */
   scrollbar-width: none;
-  cursor: grab;
+  cursor: default;
   border: 1px solid var(--border);
   background:
     linear-gradient(180deg, rgba(0,0,0,.34), transparent 26%, transparent 74%, rgba(0,0,0,.4)),
     var(--drum-face);
   outline: none;
 }
-.drum::-webkit-scrollbar { display: none; }
-.drum:active { cursor: grabbing; }
 .drum:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 /* Стрипа с цифрами: сверху/снизу «холостые» поля для центровки крайних цифр */
@@ -1371,9 +1369,9 @@ function buildPanel(sys) {
 function makeDrum(sys, k, digit) {
   const drum = document.createElement("div");
   drum.className = "drum";
-  drum.tabIndex = 0;
-  drum.setAttribute("role", "spinbutton");
-  drum.setAttribute("aria-label", sysName(sys.base) + " · разряд " + (k + 1));
+  // Цифры меняются только кнопками; сам барабан не перехватывает свайпы.
+  drum.tabIndex = -1;
+  drum.setAttribute("aria-hidden", "true");
 
   const strip = document.createElement("div");
   strip.className = "strip";
@@ -1443,52 +1441,8 @@ function updateDrumAria(d, digit) {
 
 /* ---------------- Слушатели барабана -------------------------------- */
 function attachDrumListeners(sys, d) {
-  // Прокрутка: различаем программную (синхронизация) и пользовательскую
-  d.drum.addEventListener("scroll", () => onDrumScroll(sys, d), { passive: true });
-
-  // scrollend — точный сигнал остановки (Chrome/FF/Safari 16.4+)
-  if ("onscrollend" in window) {
-    d.drum.addEventListener("scrollend", () => {
-      if (d.progTarget === null && d.userScrolled) settleSys(sys);
-    }, { passive: true });
-  }
-
-  // Колесо берём под полный контроль: нативная «пружина» Chrome конфликтует
-  // с подсчётом щелчков, поэтому крутим ленту сами (rAF + сетка ячеек).
-  d.drum.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    onDrumWheel(sys, d, e);
-  }, { passive: false });
-
-  // Касание/указатель: прерываем программные анимации, помечаем «палец
-  // на барабане» (чтобы лечение позиций не подсекло барабан под пальцем)
-  d.drum.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "touch") return; // touch отслеживаем до touchend, не pointercancel
-    d.touchDown = true;
-    interruptDrum(sys, d);
-  }, { passive: true });
-  d.drum.addEventListener("touchstart", () => {
-    d.touchDown = true;
-    d.lastTouchAt = Date.now();
-    interruptDrum(sys, d);
-  }, { passive: true });
-  const release = () => {
-    d.touchDown = false;
-    // Не завершаем вращение, пока палец на экране; после отпускания
-    // запускаем обычное ожидание остановки (инерция продолжит слать scroll).
-    if (d.userScrolled) scheduleSettle(sys);
-  };
-  d.drum.addEventListener("pointerup", (e) => {
-    if (e.pointerType !== "touch") release();
-  }, { passive: true });
-  d.drum.addEventListener("pointercancel", (e) => {
-    if (e.pointerType !== "touch") release();
-  }, { passive: true });
-  d.drum.addEventListener("touchend", release, { passive: true });
-  d.drum.addEventListener("touchcancel", release, { passive: true });
-
-  // Клавиатура: стрелки/PageUp/PageDown/Home/End — как вращение барабана
-  d.drum.addEventListener("keydown", (e) => onDrumKey(sys, d, e));
+  // Никаких scroll/touch/wheel-обработчиков: вращение доступно через
+  // кнопки-степперы, а свайпы над барабаном прокручивают общую доску.
 }
 
 /* Схлопывание колесного оффсета В СЕРЕДИНЕ жеста (тач прервал колесо):
