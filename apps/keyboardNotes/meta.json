@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Qwen3.8-Max",
   "platform": "both",
-  "tags": ["Tool", "Productivity", "Notes", "Keyboard"]
+  "tags": [
+    "Productivity",
+    "Notes"
+  ]
 }
