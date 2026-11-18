@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["Game", "Memory", "Puzzle", "ASCII"]
+  "tags": [
+    "Game",
+    "Puzzle"
+  ]
 }
