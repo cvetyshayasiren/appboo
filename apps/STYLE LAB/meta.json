@@ -4,6 +4,9 @@
   "info": "Надо исправить полосу справа",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["Creative", "Design", "CSS", "Experiments"],
+  "tags": [
+    "Creative",
+    "Design"
+  ],
   "icon": "icon.svg"
 }
