@@ -3,6 +3,9 @@
   "description": "Браузерный конвертер на ffmpeg.wasm. Всё работает локально в браузере",
   "ai": "Kimi K2.8 Preview",
   "platform": "both",
-  "tags": ["Tool", "Video", "Audio", "Converter"],
+  "tags": [
+    "Tool",
+    "Media"
+  ],
   "icon": "icon.svg"
 }
