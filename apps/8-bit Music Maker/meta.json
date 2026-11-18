@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "desktop",
-  "tags": ["Creative", "Music", "Chiptune", "Editor"]
+  "tags": [
+    "Music",
+    "Editor"
+  ]
 }
