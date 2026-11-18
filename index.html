@@ -1132,7 +1132,13 @@ function resetFilters() {
   activePlatform = "all";
   sortMode = "default";
   catalogSearch = "";
+  tagSearch = "";
+  aiSearch = "";
   document.getElementById("catalog-search").value = "";
+  document.getElementById("tag-search").value = "";
+  document.getElementById("ai-search").value = "";
+  buildTagFilters();
+  buildAiFilters();
   document.querySelectorAll(".seg-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.platform === "all"));
   document.querySelectorAll(".tag-filter").forEach(b => b.classList.remove("active"));
