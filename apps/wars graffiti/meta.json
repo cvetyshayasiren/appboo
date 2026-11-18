@@ -4,5 +4,8 @@
   "icon": "icon.svg",
   "ai": "Qwen4-Max",
   "platform": "both",
-  "tags": ["Game", "Arcade", "Graffiti", "Territory"]
+  "tags": [
+    "Game",
+    "Strategy"
+  ]
 }
