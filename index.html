@@ -300,6 +300,47 @@ main {
 .filter-search::placeholder,.catalog-search-input::placeholder { color:var(--text-dim); }
 .filter-accordion.open .filter-accordion-inner { padding-bottom: 14px; }
 .filter-accordion .tag-filters { gap: 10px 8px; }
+.sort-options {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.sort-options .sort-option {
+  display: block;
+  width: 100%;
+  padding: 5px 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: .84rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+}
+.sort-options .sort-option:hover {
+  transform: none;
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.sort-options .sort-option.active {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  font-weight: 650;
+}
+:root[data-theme="light"] .sort-options .sort-option.active {
+  color: var(--text);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .sort-options .sort-option.active {
+    color: var(--text);
+  }
+}
 .filter-accordion .tag-filters:empty { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .filter-accordion-panel, .accordion-chevron { transition: none; }
@@ -743,11 +784,11 @@ main {
           <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">Последние</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
         </button>
         <div class="filter-accordion-panel" id="sort-panel" aria-hidden="true"><div class="filter-accordion-inner">
-          <div class="tag-filters sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
-            <button class="tag tag-filter sort-option active" type="button" data-sort="default">Последние</button>
-            <button class="tag tag-filter sort-option" type="button" data-sort="first">Первые</button>
-            <button class="tag tag-filter sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
-            <button class="tag tag-filter sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
+          <div class="sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
+            <button class="sort-option active" type="button" data-sort="default">Последние</button>
+            <button class="sort-option" type="button" data-sort="first">Первые</button>
+            <button class="sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
+            <button class="sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
           </div>
         </div></div>
       </section>
