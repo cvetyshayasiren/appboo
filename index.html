@@ -196,6 +196,10 @@ main {
   gap: 14px;
   box-shadow: var(--shadow);
 }
+.catalog-search-wrap { position:relative; width:100%; }
+.catalog-search-input { width:100%; min-width:0; padding:12px 44px 12px 42px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); font:inherit; font-size:.96rem; outline:none; transition:border-color .18s,box-shadow .18s; }
+.search-icon { position:absolute; left:14px; top:50%; transform:translateY(-54%); color:var(--text-muted); font-size:1.45rem; line-height:1; pointer-events:none; }
+.search-hint { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-dim); border:1px solid var(--border); border-radius:6px; padding:1px 6px; font:inherit; font-size:.72rem; pointer-events:none; }
 .toolbar-row {
   display: flex;
   flex-wrap: wrap;
@@ -268,7 +272,11 @@ main {
   transition: grid-template-rows .28s ease;
 }
 .filter-accordion.open .filter-accordion-panel { grid-template-rows: 1fr; }
-.filter-accordion-inner { min-height: 0; overflow: hidden; padding: 12px 14px 0; }
+.filter-accordion-inner { min-height: 0; overflow: hidden; padding: 0 14px; transition: padding .28s ease; }
+.filter-accordion.open .filter-accordion-inner { padding: 12px 14px 14px; }
+.filter-search { width:100%; min-width:0; margin:0 0 10px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elevated); color:var(--text); font:inherit; font-size:.9rem; outline:none; }
+.filter-search:focus,.catalog-search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.filter-search::placeholder,.catalog-search-input::placeholder { color:var(--text-dim); }
 .filter-accordion.open .filter-accordion-inner { padding-bottom: 14px; }
 .filter-accordion .tag-filters { gap: 10px 8px; }
 .filter-accordion .tag-filters:empty { display: none; }
@@ -698,7 +706,12 @@ main {
 @media (max-width: 600px) {
   .header-inner { padding: 12px 16px; }
   main { padding: 16px 14px 40px; }
-  .toolbar { padding: 12px; }
+  .toolbar { padding: 12px; gap:12px; }
+  .catalog-search-input { padding:11px 38px; font-size:.92rem; }
+  .search-hint { display:none; }
+  .filter-accordion-toggle { padding:11px 12px; }
+  .filter-accordion-inner { padding-left:12px; padding-right:12px; }
+  .filter-accordion.open .filter-accordion-inner { padding:10px 12px 12px; }
   .btn-reset { margin-left: 0; width: 100%; text-align: center; }
   .modal-close { top: 10px; right: 10px; width: 42px; height: 42px; }
 }
@@ -722,6 +735,11 @@ main {
 <main>
   <!-- Панель фильтров и сортировки -->
   <div class="toolbar">
+    <div class="catalog-search-wrap">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input id="catalog-search" class="catalog-search-input" type="search" placeholder="Найти приложение по названию, описанию или тегу…" autocomplete="off" aria-label="Поиск по мини-приложениям">
+      <kbd class="search-hint">⌕</kbd>
+    </div>
     <div class="toolbar-row">
       <div class="filter-group">
         <span class="filter-label">Платформа</span>
@@ -746,6 +764,7 @@ main {
         <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
       <div class="filter-accordion-panel" id="tag-panel" aria-hidden="true"><div class="filter-accordion-inner">
+        <input id="tag-search" class="filter-search" type="search" placeholder="Поиск по тегам…" autocomplete="off" aria-label="Поиск по тегам">
         <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
       </div></div>
     </section>
@@ -754,6 +773,7 @@ main {
         <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
       <div class="filter-accordion-panel" id="ai-panel" aria-hidden="true"><div class="filter-accordion-inner">
+        <input id="ai-search" class="filter-search" type="search" placeholder="Поиск по нейросетям…" autocomplete="off" aria-label="Поиск по нейросетям">
         <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
       </div></div>
     </section>
@@ -785,6 +805,9 @@ let activeTagFilter = "";         // выбранный тег (один)
 let activeAiFilter = "";          // выбранная нейросеть (одна)
 let activePlatform = "all";       // "all" | "desktop" | "mobile"
 let sortMode = "default";         // "default" | "az" | "za"
+let catalogSearch = "";
+let tagSearch = "";
+let aiSearch = "";
 
 /* --- Утилиты --- */
 
@@ -929,7 +952,8 @@ function buildTagFilters() {
   const container = document.getElementById("tag-filters");
   const allTags = new Set();
   allApps.forEach(app => (app.tags || []).forEach(t => allTags.add(t)));
-  const tags = [...allTags].sort((a, b) => a.localeCompare(b, "ru"));
+  const tags = [...allTags].sort((a, b) => a.localeCompare(b, "ru"))
+    .filter(t => t.toLocaleLowerCase("ru").includes(tagSearch.toLocaleLowerCase("ru")));
   container.innerHTML = tags.map(t => {
     const hue = hueFor(t);
     const active = t === activeTagFilter ? " active" : "";
@@ -942,7 +966,8 @@ function buildAiFilters() {
   const container = document.getElementById("ai-filters");
   const allAi = new Set();
   allApps.forEach(app => { if (app.ai && app.ai.trim()) allAi.add(app.ai.trim()); });
-  const names = [...allAi].sort((a, b) => a.localeCompare(b, "ru"));
+  const names = [...allAi].sort((a, b) => a.localeCompare(b, "ru"))
+    .filter(name => name.toLocaleLowerCase("ru").includes(aiSearch.toLocaleLowerCase("ru")));
   container.innerHTML = names.map(name => {
     const hue = hueFor(name);
     const active = name === activeAiFilter ? " active" : "";
@@ -1045,6 +1070,12 @@ function render() {
 
   let list = allApps.slice();
 
+  // Общий поиск по каталогу
+  if (catalogSearch) {
+    const q = catalogSearch.toLocaleLowerCase("ru");
+    list = list.filter(app => [app.title, app.description, app.info, app.ai, app.id, ...(app.tags || [])]
+      .some(value => String(value || "").toLocaleLowerCase("ru").includes(q)));
+  }
   // Фильтр по одному тегу
   if (activeTagFilter) {
     list = list.filter(app => (app.tags || []).includes(activeTagFilter));
@@ -1076,7 +1107,7 @@ function render() {
 
 /* --- Управление состоянием кнопки «Сбросить фильтры» --- */
 function updateResetBtn() {
-  const show = !!activeTagFilter || !!activeAiFilter || activePlatform !== "all" || sortMode !== "default";
+  const show = !!catalogSearch || !!activeTagFilter || !!activeAiFilter || activePlatform !== "all" || sortMode !== "default";
   document.getElementById("reset-btn").style.display = show ? "" : "none";
 }
 
@@ -1101,6 +1132,8 @@ function resetFilters() {
   activeAiFilter = "";
   activePlatform = "all";
   sortMode = "default";
+  catalogSearch = "";
+  document.getElementById("catalog-search").value = "";
   document.querySelectorAll(".seg-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.platform === "all"));
   document.querySelectorAll(".tag-filter").forEach(b => b.classList.remove("active"));
@@ -1157,6 +1190,22 @@ function bindEvents() {
       const summary = section.querySelector(".filter-summary");
       if (summary) summary.textContent = isOpen ? "Скрыть фильтры" : "Показать фильтры";
     });
+  });
+
+  // Поиск по всему каталогу
+  document.getElementById("catalog-search").addEventListener("input", e => {
+    catalogSearch = e.target.value.trim();
+    render();
+    updateResetBtn();
+  });
+  // Локальный поиск внутри списков тегов и нейросетей
+  document.getElementById("tag-search").addEventListener("input", e => {
+    tagSearch = e.target.value;
+    buildTagFilters();
+  });
+  document.getElementById("ai-search").addEventListener("input", e => {
+    aiSearch = e.target.value;
+    buildAiFilters();
   });
 
   // Фильтр по платформе
