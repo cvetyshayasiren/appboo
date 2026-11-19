@@ -84,6 +84,62 @@
   }
 }
 
+/* Переходные темы — выбираются вручную в меню тем, от светлой к тёмной */
+:root[data-theme="dawn"] {
+  --bg: #e4e9db;
+  --bg-elevated: #eef2e4;
+  --card: #f4f7ee;
+  --card-hover: #ecf1e2;
+  --border: #d2d9c5;
+  --border-strong: #c0c8b1;
+  --text: #1f2618;
+  --text-muted: #525a48;
+  --text-dim: #868e7a;
+  --accent: #86C26B;
+  --accent-hover: #5F9D47;
+  --accent-soft: rgba(134, 194, 107, 0.18);
+  --sk-color: #dde3cf;
+  --shadow: 0 6px 24px rgba(38, 46, 30, 0.10);
+  --shadow-hover: 0 12px 34px rgba(38, 46, 30, 0.16);
+  color-scheme: light;
+}
+:root[data-theme="overcast"] {
+  --bg: #99a392;
+  --bg-elevated: #a5af9d;
+  --card: #b0baa7;
+  --card-hover: #bac4b1;
+  --border: #7e8873;
+  --border-strong: #69735d;
+  --text: #141a10;
+  --text-muted: #38402f;
+  --text-dim: #58614c;
+  --accent: #86C26B;
+  --accent-hover: #5F9D47;
+  --accent-soft: rgba(134, 194, 107, 0.26);
+  --sk-color: #a9b39f;
+  --shadow: 0 6px 24px rgba(16, 22, 10, 0.18);
+  --shadow-hover: 0 12px 34px rgba(16, 22, 10, 0.26);
+  color-scheme: light;
+}
+:root[data-theme="dusk"] {
+  --bg: #161b16;
+  --bg-elevated: #1b211b;
+  --card: #20271f;
+  --card-hover: #262e25;
+  --border: #2c352b;
+  --border-strong: #3a4537;
+  --text: #e4e8e2;
+  --text-muted: #9aa398;
+  --text-dim: #6e786c;
+  --accent: #86C26B;
+  --accent-hover: #6FB356;
+  --accent-soft: rgba(134, 194, 107, 0.16);
+  --sk-color: #2a332a;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; padding: 0; }
@@ -145,25 +201,66 @@ body {
 .logo-mark svg { display:block; width:32px; height:32px; }
 .logo-accent { color: var(--accent); }
 
+/* --- Выпадающее меню тем (иконка + название) --- */
+.theme-menu-wrap { position: relative; flex: 0 0 auto; }
 .theme-toggle {
-  width: 40px;
-  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
   cursor: pointer;
-  font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
   transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
 .theme-toggle:hover { background: var(--card-hover); border-color: var(--border-strong); transform: translateY(-1px); }
 .theme-toggle:active { transform: translateY(0); }
-.theme-toggle .theme-icon-light { display: none; }
-:root[data-theme="light"] .theme-toggle .theme-icon-dark { display: none; }
-:root[data-theme="light"] .theme-toggle .theme-icon-light { display: inline; }
+.theme-toggle .theme-menu-icon { font-size: 1.05rem; line-height: 1; }
+.theme-toggle .accordion-chevron { flex: 0 0 16px; }
+.theme-toggle .accordion-chevron svg { width: 15px; height: 15px; }
+.theme-menu-wrap.open .theme-toggle .accordion-chevron { transform: rotate(180deg); }
+.theme-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 172px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-hover);
+  z-index: 60;
+  display: none;
+}
+.theme-menu.open { display: block; }
+.theme-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+.theme-menu button:hover { background: var(--accent-soft); }
+.theme-menu button[aria-checked="true"] { background: var(--accent-soft); font-weight: 700; }
+.theme-menu .theme-menu-icon { font-size: 1rem; line-height: 1; }
+.theme-menu .theme-check { margin-left: auto; color: var(--accent); font-weight: 800; visibility: hidden; }
+.theme-menu button[aria-checked="true"] .theme-check { visibility: visible; }
 :root[data-theme="light"] .card-icon {
   background-color: #e8f3e1;
   background-image:
@@ -172,9 +269,8 @@ body {
 }
 :root[data-theme="light"] .icon-img { filter: none; }
 :root[data-theme="light"] .icon-mask { background: #3f6f2e; }
+:root[data-theme="light"] .icon-glyph { color: #3f6f2e; text-shadow: none; }
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme]) .theme-toggle .theme-icon-dark { display: none; }
-  :root:not([data-theme]) .theme-toggle .theme-icon-light { display: inline; }
   :root:not([data-theme]) .card-icon {
     background-color: #e8f3e1;
     background-image:
@@ -183,7 +279,27 @@ body {
   }
   :root:not([data-theme]) .icon-img { filter: none; }
   :root:not([data-theme]) .icon-mask { background: #3f6f2e; }
+  :root:not([data-theme]) .icon-glyph { color: #3f6f2e; text-shadow: none; }
 }
+/* Переходные темы: блок иконки — та же зелёная гамма, светлые темы светлее, сумерки — как тёмная */
+:root[data-theme="dawn"] .card-icon {
+  background-color: #d3decc;
+  background-image:
+    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.32), transparent 52%),
+    linear-gradient(180deg, #d8e3cb, #c2d2b0);
+}
+:root[data-theme="dawn"] .icon-mask { background: #3f6f2e; }
+:root[data-theme="dawn"] .icon-glyph { color: #3f6f2e; text-shadow: none; }
+:root[data-theme="dawn"] .icon-img { filter: none; }
+:root[data-theme="overcast"] .card-icon {
+  background-color: #8ba06c;
+  background-image:
+    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.30), transparent 52%),
+    linear-gradient(180deg, #9fb184, #7e915f);
+}
+:root[data-theme="overcast"] .icon-mask { background: #2c4a1f; }
+:root[data-theme="overcast"] .icon-glyph { color: #2c4a1f; text-shadow: none; }
+:root[data-theme="overcast"] .icon-img { filter: none; }
 
 /* --- Основной контейнер --- */
 main {
@@ -208,25 +324,68 @@ main {
 .catalog-search-input { width:100%; min-width:0; padding:12px 44px 12px 42px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); font:inherit; font-size:.96rem; outline:none; transition:border-color .18s,box-shadow .18s; }
 .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-54%); color:var(--text-muted); font-size:1.45rem; line-height:1; pointer-events:none; }
 .search-hint { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-dim); border:1px solid var(--border); border-radius:6px; padding:1px 6px; font:inherit; font-size:.72rem; pointer-events:none; }
-.toolbar-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* Шапка панели: поиск всегда виден, фильтры скрываются под кнопкой */
+.toolbar-head {
+  display: flex;
   align-items: stretch;
+  gap: 10px;
+}
+.toolbar-head .catalog-search-wrap { flex: 1 1 auto; min-width: 0; }
+.toolbar-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background 0.18s, border-color 0.18s;
+}
+.toolbar-toggle:hover { background: var(--card-hover); border-color: var(--border-strong); }
+.toolbar-toggle .accordion-chevron { flex: 0 0 16px; }
+.toolbar-toggle .accordion-chevron svg { width: 15px; height: 15px; }
+.toolbar-toggle[aria-expanded="true"] .accordion-chevron { transform: rotate(180deg); }
+.filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.filters-count[hidden] { display: none; }
+/* Сворачиваемое тело панели (тот же механизм, что у секций-аккордеонов) */
+.toolbar-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .3s ease;
+}
+.toolbar-body.open { grid-template-rows: 1fr; }
+.toolbar-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
-.toolbar-row > .filter-group {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 7px;
+.toolbar-body.open .toolbar-body-inner { padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-body, .toolbar-body-inner { transition: none; }
 }
-.toolbar-row > .filter-group .filter-label { min-width: 0; }
-.toolbar-row .seg { display:flex; width:100%; min-width:0; }
-.toolbar-row .seg-btn { flex:1 1 0; min-width:0; padding-left:8px; padding-right:8px; }
-.toolbar-row .sort-select { display:block; width:100%; min-width:0; min-height:40px; }
-.toolbar-row > .btn-reset { grid-column: 1 / -1; justify-self: end; }
+/* Секция платформы внутри аккордеона: сегмент на всю ширину, как на мобильных */
+.filter-accordion .seg { display: flex; width: 100%; min-width: 0; }
+.filter-accordion .seg-btn { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; }
 .filter-group {
   display: flex;
   align-items: center;
@@ -333,7 +492,9 @@ main {
   color: #fff;
   font-weight: 650;
 }
-:root[data-theme="light"] .sort-options .sort-option.active {
+:root[data-theme="light"] .sort-options .sort-option.active,
+:root[data-theme="dawn"] .sort-options .sort-option.active,
+:root[data-theme="overcast"] .sort-options .sort-option.active {
   color: var(--text);
 }
 @media (prefers-color-scheme: light) {
@@ -372,20 +533,6 @@ main {
   color: #fff;
   box-shadow: 0 2px 8px var(--accent-soft);
 }
-/* Выпадающий список сортировки */
-.sort-select {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-}
-.sort-select:hover { border-color: var(--border-strong); }
-.sort-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 /* Кнопка сброса */
 .btn-reset {
   margin-left: auto;
@@ -507,15 +654,17 @@ main {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-hover);
 }
-/* Блок иконки: цветная подложка + img поверх (если задан путь) */
+/* Блок иконки: цветная подложка + img поверх (если задан путь)
+   Тёмная тема — глубокий однотонный зелёный градиент (#2e451f → #223319)
+   с лёгкой подсветкой угла, свето-зелёные иконки (#d7ebcc); в светлой наоборот. */
 .card-icon {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: #1c2619;
+  background-color: #223319;
   background-image:
-    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.28), transparent 52%),
-    linear-gradient(180deg, #24331f, #151c13);
+    radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.14), transparent 55%),
+    linear-gradient(180deg, #2e451f, #223319);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -524,7 +673,7 @@ main {
 .icon-glyph {
   font-size: clamp(2rem, 7vw, 3rem);
   font-weight: 800;
-  color: #fff;
+  color: #d7ebcc;
   line-height: 1;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
   max-width: 86%;
@@ -549,7 +698,7 @@ main {
   margin: auto;
   width: 46%;
   height: 46%;
-  background: #ffffff;
+  background: #d7ebcc;
   -webkit-mask: var(--icon-src) center / contain no-repeat;
   mask: var(--icon-src) center / contain no-repeat;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
@@ -793,6 +942,33 @@ main {
 .modal-frame { flex:1; width:100%; height:100%; min-height:0; border:0; background:#fff; }
 @media (max-width:600px) { .modal-toolbar { top:10px; right:10px; } .modal-close { width:36px; height:36px; } }
 
+/* --- Фоновые «водяные» иконки приложений — только в переходных темах --- */
+#bg-decor {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+}
+:root[data-theme="dawn"] #bg-decor,
+:root[data-theme="overcast"] #bg-decor,
+:root[data-theme="dusk"] #bg-decor { display: block; }
+.bg-decor-item {
+  position: absolute;
+  color: var(--text-muted);
+}
+.bg-decor-item svg { display: block; width: 100%; height: 100%; }
+.bg-decor-item svg path { fill: currentColor; stroke: currentColor; }
+/* SVG-иконка мини-приложения: силуэт перекрашивается в цвет темы через маску */
+.bg-decor-item.bg-decor-mask {
+  background: var(--text-muted);
+  -webkit-mask: var(--icon-src) center / contain no-repeat;
+  mask: var(--icon-src) center / contain no-repeat;
+}
+/* Растровая иконка: показываем как есть (на будущее, сейчас у всех SVG) */
+.bg-decor-item .bg-decor-img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
 /* --- Подвал --- */
 .app-footer {
   text-align: center;
@@ -803,17 +979,15 @@ main {
 
 /* --- Адаптивность --- */
 @media (max-width: 600px) {
-  .header-inner { padding: 12px 16px; }
+  .header-inner { padding: 12px 16px; gap: 10px; }
   main { padding: 16px 14px 40px; }
   .toolbar { padding: 12px; gap:12px; }
+  .toolbar-toggle { padding: 0 11px; }
   .catalog-search-input { padding:11px 38px; font-size:.92rem; }
   .search-hint { display:none; }
   .filter-accordion-toggle { padding:11px 12px; }
   .filter-accordion-inner { padding-left:12px; padding-right:12px; }
   .filter-accordion.open .filter-accordion-inner { padding:10px 12px 12px; }
-  .toolbar-row { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 12px; }
-  .toolbar-row > .filter-group { width: 100%; }
-  .toolbar-row .seg, .toolbar-row .sort-select { width: 100%; }
   .btn-reset { margin-left: 0; width: 100%; text-align: center; }
 }
 </style>
@@ -826,63 +1000,86 @@ main {
       <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg></span>
       <span class="logo-text">app<span class="logo-accent">boo</span></span>
     </a>
-    <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему" title="Переключить тему">
-      <span class="theme-icon-dark">🌙</span>
-      <span class="theme-icon-light">☀️</span>
-    </button>
+    <div class="theme-menu-wrap" id="theme-menu-wrap">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu" aria-label="Выбор темы" title="Выбор темы">
+        <span class="theme-menu-icon" id="theme-current-icon" aria-hidden="true">🌙</span>
+        <span id="theme-current-name">Тёмная</span>
+        <span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="theme-menu" id="theme-menu" role="menu" aria-label="Тема оформления" aria-hidden="true">
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="light"><span class="theme-menu-icon" aria-hidden="true">☀️</span>Светлая<span class="theme-check" aria-hidden="true">✓</span></button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dawn"><span class="theme-menu-icon" aria-hidden="true">🌅</span>Рассвет<span class="theme-check" aria-hidden="true">✓</span></button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="overcast"><span class="theme-menu-icon" aria-hidden="true">☁️</span>Пасмурно<span class="theme-check" aria-hidden="true">✓</span></button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dusk"><span class="theme-menu-icon" aria-hidden="true">🌆</span>Сумерки<span class="theme-check" aria-hidden="true">✓</span></button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dark"><span class="theme-menu-icon" aria-hidden="true">🌙</span>Тёмная<span class="theme-check" aria-hidden="true">✓</span></button>
+      </div>
+    </div>
   </div>
 </header>
 
 <main>
-  <!-- Панель фильтров и сортировки -->
+  <!-- Панель поиска и фильтров: поиск виден всегда, фильтры сворачиваются кнопкой -->
   <div class="toolbar">
-    <div class="catalog-search-wrap">
-      <span class="search-icon" aria-hidden="true">⌕</span>
-      <input id="catalog-search" class="catalog-search-input" type="search" placeholder="Найти приложение по названию, описанию или тегу…" autocomplete="off" aria-label="Поиск по мини-приложениям">
-      <kbd class="search-hint">⌕</kbd>
-    </div>
-    <div class="toolbar-row">
-      <div class="filter-group">
-        <span class="filter-label">Платформа</span>
-        <div class="seg" role="group" aria-label="Фильтр по платформе">
-          <button class="seg-btn active" data-platform="all">Все</button>
-          <button class="seg-btn" data-platform="desktop">🖥 Desktop</button>
-          <button class="seg-btn" data-platform="mobile">📱 Mobile</button>
-        </div>
+    <div class="toolbar-head">
+      <div class="catalog-search-wrap">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input id="catalog-search" class="catalog-search-input" type="search" placeholder="Найти приложение по названию, описанию или тегу…" autocomplete="off" aria-label="Поиск по мини-приложениям">
+        <kbd class="search-hint">⌕</kbd>
       </div>
-      <section class="filter-group filter-accordion" data-accordion="sort">
-        <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="sort-panel">
-          <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">Новые</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
-        </button>
-        <div class="filter-accordion-panel" id="sort-panel" aria-hidden="true"><div class="filter-accordion-inner">
-          <div class="sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
-            <button class="sort-option active" type="button" data-sort="default">Новые</button>
-            <button class="sort-option" type="button" data-sort="first">Старые</button>
-            <button class="sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
-            <button class="sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
-          </div>
-        </div></div>
-      </section>
-      <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
+      <button class="toolbar-toggle" id="toolbar-toggle" type="button" aria-expanded="false" aria-controls="toolbar-body">
+        <span>Фильтры</span>
+        <span class="filters-count" id="filters-count" hidden>0</span>
+        <span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
     </div>
-    <section class="filter-group filter-accordion" data-accordion="tags">
-      <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="tag-panel">
-        <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
-      </button>
-      <div class="filter-accordion-panel" id="tag-panel" aria-hidden="true"><div class="filter-accordion-inner">
-        <input id="tag-search" class="filter-search" type="search" placeholder="Поиск по тегам…" autocomplete="off" aria-label="Поиск по тегам">
-        <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
-      </div></div>
-    </section>
-    <section class="filter-group filter-accordion" data-accordion="ai">
-      <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="ai-panel">
-        <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
-      </button>
-      <div class="filter-accordion-panel" id="ai-panel" aria-hidden="true"><div class="filter-accordion-inner">
-        <input id="ai-search" class="filter-search" type="search" placeholder="Поиск по нейросетям…" autocomplete="off" aria-label="Поиск по нейросетям">
-        <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
-      </div></div>
-    </section>
+    <div class="toolbar-body" id="toolbar-body" aria-hidden="true">
+      <div class="toolbar-body-inner">
+        <section class="filter-group filter-accordion" data-accordion="platform">
+          <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="platform-panel">
+            <span class="filter-label">Платформа</span><span class="filter-summary" id="platform-summary">Все</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="filter-accordion-panel" id="platform-panel" aria-hidden="true"><div class="filter-accordion-inner">
+            <div class="seg" role="group" aria-label="Фильтр по платформе">
+              <button class="seg-btn active" data-platform="all">Все</button>
+              <button class="seg-btn" data-platform="desktop">🖥 Desktop</button>
+              <button class="seg-btn" data-platform="mobile">📱 Mobile</button>
+            </div>
+          </div></div>
+        </section>
+        <section class="filter-group filter-accordion" data-accordion="sort">
+          <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="sort-panel">
+            <span class="filter-label">Сортировка</span><span class="filter-summary" id="sort-summary">Новые</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="filter-accordion-panel" id="sort-panel" aria-hidden="true"><div class="filter-accordion-inner">
+            <div class="sort-options" id="sort-options" role="group" aria-label="Вариант сортировки">
+              <button class="sort-option active" type="button" data-sort="default">Новые</button>
+              <button class="sort-option" type="button" data-sort="first">Старые</button>
+              <button class="sort-option" type="button" data-sort="az">По алфавиту (А–Я)</button>
+              <button class="sort-option" type="button" data-sort="za">По алфавиту (Я–А)</button>
+            </div>
+          </div></div>
+        </section>
+        <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
+        <section class="filter-group filter-accordion" data-accordion="tags">
+          <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="tag-panel">
+            <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="filter-accordion-panel" id="tag-panel" aria-hidden="true"><div class="filter-accordion-inner">
+            <input id="tag-search" class="filter-search" type="search" placeholder="Поиск по тегам…" autocomplete="off" aria-label="Поиск по тегам">
+            <div class="tag-filters" id="tag-filters" role="group" aria-label="Фильтр по тегам"></div>
+          </div></div>
+        </section>
+        <section class="filter-group filter-accordion" data-accordion="ai">
+          <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="ai-panel">
+            <span class="filter-label">Нейросети</span><span class="filter-summary" id="ai-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="filter-accordion-panel" id="ai-panel" aria-hidden="true"><div class="filter-accordion-inner">
+            <input id="ai-search" class="filter-search" type="search" placeholder="Поиск по нейросетям…" autocomplete="off" aria-label="Поиск по нейросетям">
+            <div class="tag-filters" id="ai-filters" role="group" aria-label="Фильтр по нейросетям"></div>
+          </div></div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <!-- Сетка карточек -->
@@ -1032,6 +1229,8 @@ async function loadApps() {
   buildTagFilters();
   buildAiFilters();
   render();
+  // Иконки мини-приложений появились — пересобираем фоновый декор переходных тем
+  if (DECOR_THEMES.includes(document.documentElement.getAttribute("data-theme"))) buildBgDecor();
 }
 
 /* --- Состояние загрузки: скелетоны --- */
@@ -1217,16 +1416,36 @@ function render() {
   grid.innerHTML = list.map(renderCard).join("");
 }
 
-/* --- Управление состоянием кнопки «Сбросить фильтры» --- */
+/* --- Управление состоянием кнопки «Сбросить фильтры» и счётчика фильтров --- */
 function updateResetBtn() {
   const show = !!catalogSearch || !!activeTagFilter || !!activeAiFilter || activePlatform !== "all" || sortMode !== "default";
   document.getElementById("reset-btn").style.display = show ? "" : "none";
+  updateFiltersCount();
+}
+
+// Счётчик активных фильтров на кнопке «Фильтры» (поиск не считаем — он всегда виден)
+function updateFiltersCount() {
+  const count = (activePlatform !== "all") + (sortMode !== "default") + (activeTagFilter ? 1 : 0) + (activeAiFilter ? 1 : 0);
+  const badge = document.getElementById("filters-count");
+  badge.textContent = String(count);
+  badge.hidden = count === 0;
+}
+
+// При клике по тегу/нейросети на карточке раскрываем панель фильтров и нужную секцию
+function ensureFiltersVisible(accordionName) {
+  const body = document.getElementById("toolbar-body");
+  if (!body.classList.contains("open")) setToolbarOpen(true);
+  if (accordionName) {
+    const section = document.querySelector(`.filter-accordion[data-accordion="${accordionName}"]`);
+    if (section && !section.classList.contains("open")) setAccordionOpen(section, true);
+  }
 }
 
 function applyTagFilter(tag) {
   activeTagFilter = activeTagFilter === tag ? "" : tag;
   document.querySelectorAll(".tag-filter").forEach(b =>
     b.classList.toggle("active", b.dataset.tag === activeTagFilter));
+  ensureFiltersVisible("tags");
   render();
   updateResetBtn();
 }
@@ -1235,9 +1454,13 @@ function applyAiFilter(ai) {
   activeAiFilter = activeAiFilter === ai ? "" : ai;
   document.querySelectorAll(".ai-filter").forEach(b =>
     b.classList.toggle("active", b.dataset.ai === activeAiFilter));
+  ensureFiltersVisible("ai");
   render();
   updateResetBtn();
 }
+
+const SORT_LABELS = { default: "Новые", first: "Старые", az: "По алфавиту (А–Я)", za: "По алфавиту (Я–А)" };
+const PLATFORM_LABELS = { all: "Все", desktop: "Desktop", mobile: "Mobile" };
 
 function resetFilters() {
   activeTagFilter = "";
@@ -1256,25 +1479,108 @@ function resetFilters() {
     b.classList.toggle("active", b.dataset.platform === "all"));
   document.querySelectorAll(".tag-filter").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".ai-filter").forEach(b => b.classList.remove("active"));
-  document.getElementById("sort-select").value = "default";
+  document.querySelectorAll(".sort-option").forEach(option =>
+    option.classList.toggle("active", option.dataset.sort === "default"));
+  document.getElementById("sort-summary").textContent = SORT_LABELS.default;
+  document.getElementById("platform-summary").textContent = PLATFORM_LABELS.all;
   render();
   updateResetBtn();
 }
 
-/* --- Тема: ручное переключение с запоминанием в localStorage --- */
-function initTheme() {
-  const saved = localStorage.getItem("appboo-theme");
-  if (saved === "light" || saved === "dark") {
-    document.documentElement.setAttribute("data-theme", saved);
+/* --- Темы: светлая, тёмная и переходные; выбор в меню с запоминанием --- */
+const THEMES = [
+  { value: "light",    icon: "☀️", name: "Светлая" },
+  { value: "dawn",     icon: "🌅", name: "Рассвет" },
+  { value: "overcast", icon: "☁️", name: "Пасмурно" },
+  { value: "dusk",     icon: "🌆", name: "Сумерки" },
+  { value: "dark",     icon: "🌙", name: "Тёмная" }
+];
+// Цвет мобильной browser-панели под тему
+const THEME_UI_COLORS = {
+  light: "#f4f5f9", dawn: "#e4e9db", overcast: "#99a392", dusk: "#161b16", dark: "#0a0c10"
+};
+// В переходных темах на фоне разбросаны едва заметные иконки приложений
+const DECOR_THEMES = ["dawn", "overcast", "dusk"];
+const DECOR_ICON_SVG = '<svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg>';
+
+function systemTheme() {
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function applyTheme(value, persist) {
+  document.documentElement.setAttribute("data-theme", value);
+  if (persist) localStorage.setItem("appboo-theme", value);
+  const theme = THEMES.find(t => t.value === value) || THEMES[THEMES.length - 1];
+  document.getElementById("theme-current-icon").textContent = theme.icon;
+  document.getElementById("theme-current-name").textContent = theme.name;
+  document.querySelectorAll("#theme-menu [data-theme-value]").forEach(btn =>
+    btn.setAttribute("aria-checked", String(btn.dataset.themeValue === value)));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && THEME_UI_COLORS[value]) meta.setAttribute("content", THEME_UI_COLORS[value]);
+  // Иконки на фоне: пересобираем при каждом входе в переходную тему, вне их — убираем
+  if (DECOR_THEMES.includes(value)) buildBgDecor();
+  else {
+    const layer = document.getElementById("bg-decor");
+    if (layer) layer.innerHTML = "";
   }
 }
-function toggleTheme() {
-  const root = document.documentElement;
-  const current = root.getAttribute("data-theme")
-    || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-  const next = current === "dark" ? "light" : "dark";
-  root.setAttribute("data-theme", next);
-  localStorage.setItem("appboo-theme", next);
+
+function initTheme() {
+  const saved = localStorage.getItem("appboo-theme");
+  applyTheme(THEMES.some(t => t.value === saved) ? saved : systemTheme(), false);
+}
+
+/* --- Разбросанные фоновые иконки: книжка appboo + иконки мини-приложений,
+       редкие, разного масштаба и с случайным поворотом --- */
+function decorIconSources() {
+  // Пути к реальным иконкам всех загруженных мини-приложений
+  const sources = [];
+  allApps.forEach(app => {
+    const iconVal = (app.icon || "").trim();
+    if (iconVal && isIconFile(iconVal)) sources.push(resolveIconPath(iconVal, app.id));
+  });
+  return sources;
+}
+
+function buildBgDecor() {
+  let layer = document.getElementById("bg-decor");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "bg-decor";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.prepend(layer);
+  }
+  layer.innerHTML = "";
+  const icons = decorIconSources();
+  // Плотность подбираем от площади экрана, чтобы узор оставался «редким»
+  const area = window.innerWidth * window.innerHeight;
+  const count = Math.max(18, Math.min(38, Math.round(area / 32000)));
+  for (let i = 0; i < count; i++) {
+    const item = document.createElement("span");
+    item.className = "bg-decor-item";
+    const size = 30 + Math.random() * 105;                // масштаб: 1x–4x базовой иконки
+    const rotate = Math.round(Math.random() * 60 - 30);   // поворот: −30°…30°
+    item.style.left = (Math.random() * 100).toFixed(2) + "%";
+    item.style.top = (Math.random() * 100).toFixed(2) + "%";
+    item.style.width = size.toFixed(1) + "px";
+    item.style.height = size.toFixed(1) + "px";
+    item.style.transform = `rotate(${rotate}deg)`;
+    item.style.opacity = (0.14 + Math.random() * 0.10).toFixed(2); // заметные, но фоновые
+    // ~70% — иконки мини-приложений, остальные — книжка appboo
+    if (icons.length && Math.random() < 0.7) {
+      const src = icons[Math.floor(Math.random() * icons.length)];
+      if (/\.svg$/i.test(src)) {
+        // Штриховые SVG перекрашиваем в цвет темы через маску — единый стиль с книжкой
+        item.classList.add("bg-decor-mask");
+        item.style.setProperty("--icon-src", `url('${escapeAttr(src)}')`);
+      } else {
+        item.innerHTML = `<img class="bg-decor-img" src="${escapeAttr(src)}" alt="" loading="lazy" onerror="this.remove()">`;
+      }
+    } else {
+      item.innerHTML = DECOR_ICON_SVG;
+    }
+    layer.appendChild(item);
+  }
 }
 
 /* --- Уведомление об успешном копировании --- */
@@ -1298,19 +1604,58 @@ function showCopyToast() {
   }, 2200);
 }
 
+/* --- Раскрытие/сворачивание секций фильтров (общее для всех аккордеонов) --- */
+function setAccordionOpen(section, open) {
+  section.classList.toggle("open", open);
+  const button = section.querySelector(".filter-accordion-toggle");
+  if (button) button.setAttribute("aria-expanded", String(open));
+  const panel = document.getElementById(button && button.getAttribute("aria-controls"));
+  if (panel) panel.setAttribute("aria-hidden", String(!open));
+  const summary = section.querySelector(".filter-summary");
+  // У сортировки и платформы в summary всегда показан текущий выбор
+  if (summary && (section.dataset.accordion === "tags" || section.dataset.accordion === "ai")) {
+    summary.textContent = open ? "Скрыть фильтры" : "Показать фильтры";
+  }
+}
+
+/* --- Сворачиваемая панель фильтров (поиск остаётся видимым) --- */
+function setToolbarOpen(open) {
+  const body = document.getElementById("toolbar-body");
+  body.classList.toggle("open", open);
+  body.setAttribute("aria-hidden", String(!open));
+  document.getElementById("toolbar-toggle").setAttribute("aria-expanded", String(open));
+  localStorage.setItem("appboo-filters-open", open ? "1" : "0");
+}
+
+function initToolbar() {
+  const saved = localStorage.getItem("appboo-filters-open") === "1";
+  const body = document.getElementById("toolbar-body");
+  body.classList.toggle("open", saved);
+  body.setAttribute("aria-hidden", String(!saved));
+  document.getElementById("toolbar-toggle").setAttribute("aria-expanded", String(saved));
+}
+
+/* --- Меню тем --- */
+function setThemeMenuOpen(open) {
+  document.getElementById("theme-menu").classList.toggle("open", open);
+  document.getElementById("theme-menu").setAttribute("aria-hidden", String(!open));
+  document.getElementById("theme-toggle").setAttribute("aria-expanded", String(open));
+  document.getElementById("theme-menu-wrap").classList.toggle("open", open);
+}
+
 /* --- Навешивание событий --- */
 function bindEvents() {
-  // Раскрытие и сворачивание блоков тегов и нейросетей
+  // Раскрытие и сворачивание секций: платформа, сортировка, теги, нейросети
   document.querySelectorAll(".filter-accordion-toggle").forEach(button => {
     button.addEventListener("click", () => {
       const section = button.closest(".filter-accordion");
-      const isOpen = section.classList.toggle("open");
-      button.setAttribute("aria-expanded", String(isOpen));
-      const panel = document.getElementById(button.getAttribute("aria-controls"));
-      if (panel) panel.setAttribute("aria-hidden", String(!isOpen));
-      const summary = section.querySelector(".filter-summary");
-      if (summary && section.dataset.accordion !== "sort") summary.textContent = isOpen ? "Скрыть фильтры" : "Показать фильтры";
+      setAccordionOpen(section, !section.classList.contains("open"));
     });
+  });
+
+  // Сворачивание всей панели фильтров
+  document.getElementById("toolbar-toggle").addEventListener("click", () => {
+    setToolbarOpen(!document.getElementById("toolbar-body").classList.contains("open"));
   });
 
   // Поиск по всему каталогу
@@ -1336,6 +1681,7 @@ function bindEvents() {
     document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     activePlatform = btn.dataset.platform;
+    document.getElementById("platform-summary").textContent = PLATFORM_LABELS[activePlatform] || PLATFORM_LABELS.all;
     render();
     updateResetBtn();
   });
@@ -1347,8 +1693,7 @@ function bindEvents() {
     sortMode = btn.dataset.sort;
     document.querySelectorAll(".sort-option").forEach(option =>
       option.classList.toggle("active", option === btn));
-    const labels = { default: "Новые", first: "Старые", az: "По алфавиту (А–Я)", za: "По алфавиту (Я–А)" };
-    document.getElementById("sort-summary").textContent = labels[sortMode];
+    document.getElementById("sort-summary").textContent = SORT_LABELS[sortMode] || SORT_LABELS.default;
     render();
     updateResetBtn();
   });
@@ -1444,11 +1789,26 @@ function bindEvents() {
     if (e.target.id === "app-modal") closeIframe();
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeIframe();
+    if (e.key === "Escape") {
+      closeIframe();
+      setThemeMenuOpen(false);
+    }
   });
 
-  // Переключение темы
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  // Меню тем: открытие по кнопке, выбор темы, закрытие по клику мимо
+  document.getElementById("theme-toggle").addEventListener("click", e => {
+    e.stopPropagation();
+    setThemeMenuOpen(!document.getElementById("theme-menu").classList.contains("open"));
+  });
+  document.querySelectorAll("#theme-menu [data-theme-value]").forEach(button => {
+    button.addEventListener("click", () => {
+      applyTheme(button.dataset.themeValue, true);
+      setThemeMenuOpen(false);
+    });
+  });
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#theme-menu-wrap")) setThemeMenuOpen(false);
+  });
 }
 
 /* --- Встроенное окно приложения --- */
@@ -1467,6 +1827,7 @@ function closeIframe() {
 
 /* --- Старт --- */
 initTheme();
+initToolbar();
 bindEvents();
 loadApps();
 </script>
