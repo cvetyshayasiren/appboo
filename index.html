@@ -975,6 +975,17 @@ main {
 .modal-frame { flex:1; width:100%; height:100%; min-height:0; border:0; background:#fff; }
 @media (max-width:600px) { .modal-toolbar { top:10px; right:10px; } .modal-close { width:36px; height:36px; } }
 
+/* --- Кнопки прокрутки каталога: в начало и в конец списка --- */
+.scroll-nav { position:fixed; right:16px; bottom:16px; z-index:90; display:flex; flex-direction:column; gap:8px; }
+.scroll-btn { display:grid; place-items:center; width:42px; height:42px; padding:0; border:1px solid var(--border-strong); border-radius:50%; cursor:pointer; background:var(--bg-elevated); color:var(--text-muted); box-shadow:var(--shadow); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease, opacity .2s ease, visibility .2s ease; }
+.scroll-btn svg { display:block; width:20px; height:20px; }
+.scroll-btn:hover { background:var(--card-hover); color:var(--text); border-color:var(--text-dim); }
+.scroll-btn:active { transform:scale(.94); }
+.scroll-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+/* Кнопка не видна, когда она бесполезна: наверху прячется «в начало», внизу — «в конец» */
+.scroll-btn.is-hidden { opacity:0; visibility:hidden; pointer-events:none; transform:translateY(4px); }
+@media (max-width:600px) { .scroll-nav { right:12px; bottom:12px; } .scroll-btn { width:38px; height:38px; } }
+
 /* --- Фоновые «водяные» иконки приложений — только в переходных темах --- */
 #bg-decor {
   position: fixed;
@@ -1121,6 +1132,16 @@ main {
 </main>
 
 <footer class="app-footer">appboo — коллекция мини-приложений</footer>
+
+<!-- Кнопки быстрого перехода: в начало и в конец списка приложений -->
+<div class="scroll-nav">
+  <button class="scroll-btn" id="scroll-top" type="button" aria-label="В начало списка" title="В начало списка">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 16V4M4.5 9.5 10 4l5.5 5.5"/></svg>
+  </button>
+  <button class="scroll-btn" id="scroll-bottom" type="button" aria-label="В конец списка" title="В конец списка">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4v12M4.5 10.5 10 16l5.5-5.5"/></svg>
+  </button>
+</div>
 
 <!-- Просмотр приложения во встроенном окне по отдельной кнопке -->
 <div class="modal" id="app-modal" role="dialog" aria-modal="true" aria-label="Окно мини-приложения">
@@ -1884,6 +1905,14 @@ function bindEvents() {
     const idx = Math.max(0, HEADER_STYLES.indexOf(localStorage.getItem("appboo-header-style")));
     applyHeaderStyle(HEADER_STYLES[(idx + 1) % HEADER_STYLES.length], true);
   });
+
+  // Кнопки прокрутки каталога: плавный переход к началу или к концу списка
+  document.getElementById("scroll-top").addEventListener("click", () => smoothScrollTo(0));
+  document.getElementById("scroll-bottom").addEventListener("click", () => smoothScrollTo(document.documentElement.scrollHeight));
+  window.addEventListener("scroll", updateScrollNav, { passive: true });
+  window.addEventListener("resize", updateScrollNav);
+  // Высота страницы меняется (рендер карточек, фильтры, загрузка иконок) — пересчитать видимость
+  new ResizeObserver(updateScrollNav).observe(document.body);
 }
 
 /* --- Встроенное окно приложения --- */
@@ -1898,6 +1927,21 @@ function closeIframe() {
   modal.classList.remove("open");
   document.getElementById("modal-frame").src = "about:blank";
   document.body.style.overflow = "";
+}
+
+/* --- Кнопки прокрутки списка: видны, только когда есть куда идти --- */
+const SCROLL_NAV_EDGE = 40; // запас от края страницы, при котором кнопка прячется (px)
+
+function updateScrollNav() {
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  const y = window.scrollY;
+  document.getElementById("scroll-top").classList.toggle("is-hidden", y <= SCROLL_NAV_EDGE);
+  document.getElementById("scroll-bottom").classList.toggle("is-hidden", y >= maxScroll - SCROLL_NAV_EDGE);
+}
+
+function smoothScrollTo(top) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
 }
 
 /* --- Старт --- */
