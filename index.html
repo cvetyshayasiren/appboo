@@ -158,6 +158,7 @@ body {
 }
 
 /* --- Шапка --- */
+/* Стили шапки переключаются кликом по логотипу: обычная -> прозрачная -> стекло */
 .app-header {
   position: sticky;
   top: 0;
@@ -165,6 +166,35 @@ body {
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
   backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+/* Прозрачная: лёгкая просвечиваемость — контент чуть виден под шапкой при скролле */
+.app-header[data-header-style="translucent"] {
+  background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) 70%, transparent);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+}
+/* Стеклянная: матовое стекло — сильное размытие, блики, внутренние подсветки, глубина */
+.app-header[data-header-style="glass"] {
+  background:
+    linear-gradient(105deg,
+      transparent 42%,
+      color-mix(in srgb, #ffffff 9%, transparent) 50%,
+      transparent 58%),
+    linear-gradient(to bottom,
+      color-mix(in srgb, #ffffff 14%, transparent),
+      color-mix(in srgb, #ffffff 4%, transparent) 55%,
+      color-mix(in srgb, #ffffff 2%, transparent)),
+    color-mix(in srgb, var(--bg-elevated) 52%, transparent);
+  border-bottom-color: color-mix(in srgb, #ffffff 28%, transparent);
+  backdrop-filter: blur(26px) saturate(190%) brightness(1.06);
+  -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 35%, transparent),
+    inset 0 -14px 28px -20px color-mix(in srgb, #ffffff 24%, transparent),
+    0 12px 36px rgba(0, 0, 0, 0.18);
 }
 .header-inner {
   max-width: 1200px;
@@ -937,8 +967,11 @@ main {
 .modal.open { display:flex; }
 .modal-panel { position:relative; display:flex; flex-direction:column; width:100%; height:100%; max-width:none; margin:0; overflow:hidden; border-radius:0; background:#080b09; box-shadow:none; }
 .modal-toolbar { position:absolute; top:12px; right:12px; z-index:2; display:flex; justify-content:flex-end; padding:0; background:transparent; }
-.modal-close { display:grid; place-items:center; width:38px; height:38px; padding:0; border:1px solid rgba(255,255,255,.28); border-radius:50%; cursor:pointer; background:rgba(15,20,17,.62); color:#fff; font-size:0; line-height:1; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-.modal-close::before { content:"×"; font-size:27px; font-weight:400; }
+.modal-close { display:grid; place-items:center; width:38px; height:38px; padding:0; border:1px solid rgba(255,255,255,.28); border-radius:50%; cursor:pointer; background:rgba(15,20,17,.62); color:#fff; line-height:1; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:background .15s ease, border-color .15s ease, transform .1s ease; }
+.modal-close svg { display:block; width:20px; height:20px; }
+.modal-close:hover { background:rgba(15,20,17,.82); border-color:rgba(255,255,255,.5); }
+.modal-close:active { transform:scale(.94); }
+.modal-close:focus-visible { outline:2px solid rgba(255,255,255,.7); outline-offset:2px; }
 .modal-frame { flex:1; width:100%; height:100%; min-height:0; border:0; background:#fff; }
 @media (max-width:600px) { .modal-toolbar { top:10px; right:10px; } .modal-close { width:36px; height:36px; } }
 
@@ -1007,6 +1040,7 @@ main {
         <span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
       <div class="theme-menu" id="theme-menu" role="menu" aria-label="Тема оформления" aria-hidden="true">
+        <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="system"><span class="theme-menu-icon" aria-hidden="true">🌗</span>Системная<span class="theme-check" aria-hidden="true">✓</span></button>
         <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="light"><span class="theme-menu-icon" aria-hidden="true">☀️</span>Светлая<span class="theme-check" aria-hidden="true">✓</span></button>
         <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dawn"><span class="theme-menu-icon" aria-hidden="true">🌅</span>Рассвет<span class="theme-check" aria-hidden="true">✓</span></button>
         <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="overcast"><span class="theme-menu-icon" aria-hidden="true">☁️</span>Пасмурно<span class="theme-check" aria-hidden="true">✓</span></button>
@@ -1091,7 +1125,7 @@ main {
 <!-- Просмотр приложения во встроенном окне по отдельной кнопке -->
 <div class="modal" id="app-modal" role="dialog" aria-modal="true" aria-label="Окно мини-приложения">
   <div class="modal-panel">
-    <div class="modal-toolbar"><button class="modal-close" id="modal-close" type="button">Закрыть ✕</button></div>
+    <div class="modal-toolbar"><button class="modal-close" id="modal-close" type="button" aria-label="Закрыть окно приложения" title="Закрыть"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg></button></div>
     <iframe class="modal-frame" id="modal-frame" title="Мини-приложение" src="about:blank" allow="fullscreen; clipboard-read; clipboard-write"></iframe>
   </div>
 </div>
@@ -1487,8 +1521,9 @@ function resetFilters() {
   updateResetBtn();
 }
 
-/* --- Темы: светлая, тёмная и переходные; выбор в меню с запоминанием --- */
+/* --- Темы: системная, светлая, тёмная и переходные; выбор в меню с запоминанием --- */
 const THEMES = [
+  { value: "system",   icon: "🌗", name: "Системная" },
   { value: "light",    icon: "☀️", name: "Светлая" },
   { value: "dawn",     icon: "🌅", name: "Рассвет" },
   { value: "overcast", icon: "☁️", name: "Пасмурно" },
@@ -1503,12 +1538,31 @@ const THEME_UI_COLORS = {
 const DECOR_THEMES = ["dawn", "overcast", "dusk"];
 const DECOR_ICON_SVG = '<svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg>';
 
+const SYSTEM_SCHEME = window.matchMedia("(prefers-color-scheme: light)");
 function systemTheme() {
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return SYSTEM_SCHEME.matches ? "light" : "dark";
+}
+
+// «Системная» — живое следование теме ОС
+function resolveTheme(value) {
+  if (value === "system") return systemTheme() === "light" ? "dawn" : "dusk";
+  return value;
+}
+
+// Выбранная в меню тема (может быть "system"); хранится и при отсутствии выбора
+let currentThemeValue = null;
+
+// Пока выбрана «Системная» — переключаемся следом за темой ОС
+if (typeof SYSTEM_SCHEME.addEventListener === "function") {
+  SYSTEM_SCHEME.addEventListener("change", () => {
+    if (currentThemeValue === "system") applyTheme("system", false);
+  });
 }
 
 function applyTheme(value, persist) {
-  document.documentElement.setAttribute("data-theme", value);
+  const resolved = resolveTheme(value);
+  currentThemeValue = value;
+  document.documentElement.setAttribute("data-theme", resolved);
   if (persist) localStorage.setItem("appboo-theme", value);
   const theme = THEMES.find(t => t.value === value) || THEMES[THEMES.length - 1];
   document.getElementById("theme-current-icon").textContent = theme.icon;
@@ -1516,9 +1570,9 @@ function applyTheme(value, persist) {
   document.querySelectorAll("#theme-menu [data-theme-value]").forEach(btn =>
     btn.setAttribute("aria-checked", String(btn.dataset.themeValue === value)));
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta && THEME_UI_COLORS[value]) meta.setAttribute("content", THEME_UI_COLORS[value]);
+  if (meta && THEME_UI_COLORS[resolved]) meta.setAttribute("content", THEME_UI_COLORS[resolved]);
   // Иконки на фоне: пересобираем при каждом входе в переходную тему, вне их — убираем
-  if (DECOR_THEMES.includes(value)) buildBgDecor();
+  if (DECOR_THEMES.includes(resolved)) buildBgDecor();
   else {
     const layer = document.getElementById("bg-decor");
     if (layer) layer.innerHTML = "";
@@ -1528,6 +1582,20 @@ function applyTheme(value, persist) {
 function initTheme() {
   const saved = localStorage.getItem("appboo-theme");
   applyTheme(THEMES.some(t => t.value === saved) ? saved : systemTheme(), false);
+}
+
+/* --- Стиль шапки: обычная / прозрачная / стекло — цикл по клику на логотип --- */
+const HEADER_STYLES = ["default", "translucent", "glass"];
+function applyHeaderStyle(style, persist) {
+  const header = document.querySelector(".app-header");
+  if (!header) return;
+  if (style === "default") header.removeAttribute("data-header-style");
+  else header.setAttribute("data-header-style", style);
+  if (persist) localStorage.setItem("appboo-header-style", style);
+}
+function initHeaderStyle() {
+  const saved = localStorage.getItem("appboo-header-style");
+  applyHeaderStyle(HEADER_STYLES.includes(saved) ? saved : "default", false);
 }
 
 /* --- Разбросанные фоновые иконки: книжка appboo + иконки мини-приложений,
@@ -1809,6 +1877,13 @@ function bindEvents() {
   document.addEventListener("click", e => {
     if (!e.target.closest("#theme-menu-wrap")) setThemeMenuOpen(false);
   });
+
+  // Пасхалка: клик по надписи appboo в шапке циклически меняет её стиль
+  document.querySelector(".logo").addEventListener("click", e => {
+    e.preventDefault();
+    const idx = Math.max(0, HEADER_STYLES.indexOf(localStorage.getItem("appboo-header-style")));
+    applyHeaderStyle(HEADER_STYLES[(idx + 1) % HEADER_STYLES.length], true);
+  });
 }
 
 /* --- Встроенное окно приложения --- */
@@ -1827,6 +1902,7 @@ function closeIframe() {
 
 /* --- Старт --- */
 initTheme();
+initHeaderStyle();
 initToolbar();
 bindEvents();
 loadApps();
