@@ -1,11 +1,17 @@
 {
   "title": "Покеген",
   "description": "Генератор покевайба",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Preview",
   "platform": "both",
   "tags": [
     "Game",
     "Generator"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

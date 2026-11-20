@@ -1,11 +1,17 @@
 {
   "title": "Эмодзиатор",
   "description": "Пикер эмодзи",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "GLM-5.3",
   "platform": "both",
   "tags": [
     "Tool",
     "Emoji"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

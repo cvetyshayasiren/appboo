@@ -1,11 +1,17 @@
 {
   "title": "Стандартная модель",
   "description": "Интерактивная карта элементарных частиц",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Max",
   "platform": "both",
   "tags": [
     "Education",
     "Science"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

@@ -1,11 +1,17 @@
 {
   "title": "CRT·VIEW",
   "description": "Просмотрщик изображений с эффектами",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Max",
   "platform": "both",
   "tags": [
     "Tool",
     "Images"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

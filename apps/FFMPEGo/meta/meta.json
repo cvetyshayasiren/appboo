@@ -1,11 +1,17 @@
 {
   "title": "FFMPEGo",
   "description": "Браузерный конвертер на ffmpeg.wasm. Всё работает локально в браузере",
+  "info": "",
+  "icon": "icon.svg",
+  "color": "",
   "ai": "Kimi K2.8 Preview",
   "platform": "both",
   "tags": [
     "Tool",
     "Media"
   ],
-  "icon": "icon.svg"
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

@@ -1,11 +1,17 @@
 {
   "title": "KOLaGEN",
   "description": "Генератор кольев",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Preview",
   "platform": "both",
   "tags": [
     "Game",
     "Generator"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

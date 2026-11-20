@@ -1,11 +1,17 @@
 {
   "title": "Покемоны Пороховых",
   "description": "Лови, сражайся, собирай",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen3.7-Plus",
   "platform": "both",
   "tags": [
     "Game",
     "RPG"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

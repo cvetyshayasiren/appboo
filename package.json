@@ -1,0 +1,13 @@
+{
+  "name": "appboo",
+  "private": true,
+  "description": "Каталог мини-приложений appboo. Скрипты проверки и нормализации контракта v2.",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "normalize": "node scripts/normalize.mjs"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}

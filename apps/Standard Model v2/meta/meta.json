@@ -1,11 +1,17 @@
 {
   "title": "Стандартная модель v2",
   "description": "Интерактивная карта элементарных частиц",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Kimi K3",
   "platform": "both",
   "tags": [
     "Education",
     "Science"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

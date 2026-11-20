@@ -1,11 +1,17 @@
 {
   "title": "Клавиатурные заметки",
   "description": "Заметки поверх раскладки",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen3.8-Max",
   "platform": "both",
   "tags": [
     "Productivity",
     "Notes"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

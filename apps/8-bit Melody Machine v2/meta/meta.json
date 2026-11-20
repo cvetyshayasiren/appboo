@@ -1,11 +1,17 @@
 {
   "title": "8-bit Melody Machine v2",
   "description": "Рандомный чиптюн v2",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Max",
   "platform": "desktop",
   "tags": [
     "Music",
     "Generator"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

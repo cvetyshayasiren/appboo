@@ -1,11 +1,17 @@
 {
   "title": "Погодный страж",
   "description": "Хранитель погоды над маленьким островом",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "MiniMax M3.1-Flash",
   "platform": "both",
   "tags": [
     "Game",
     "Simulation"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

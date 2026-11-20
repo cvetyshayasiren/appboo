@@ -1,11 +1,17 @@
 {
   "title": "Pixel Metronome",
   "description": "Пиксельный метроном с чиптюн-звуками и ритмическими паттернами",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "ChatGPT",
   "platform": "both",
   "tags": [
     "Music",
     "Rhythm"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }

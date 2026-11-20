@@ -1,11 +1,17 @@
 {
   "title": "ФРАКТАЛБУК",
   "description": "Старинная магическая книга живых фракталов",
+  "info": "",
   "icon": "icon.svg",
+  "color": "",
   "ai": "Qwen4-Max",
   "platform": "both",
   "tags": [
     "Creative",
     "Generative Art"
-  ]
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
 }
