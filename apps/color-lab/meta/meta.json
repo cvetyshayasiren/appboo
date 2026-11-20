@@ -1,0 +1,20 @@
+{
+  "title": "Color Lab",
+  "description": "Лаборатория цвета: конвертер HEX/RGB/HSL, генератор палитр с цветовыми гармониями, интерполяция градиентов и проверка контраста WCAG.",
+  "info": "Полностью переработанная версия Color Lab: вкладки Цвет / Палитры / Градиент / Превью, цветовое пространство и настройки темы.",
+  "icon": "icon.svg",
+  "color": "#7A5AF8",
+  "ai": "GLM-5.3-Flash",
+  "platform": "both",
+  "tags": [
+    "Creative",
+    "Color"
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}

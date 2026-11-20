@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- колба с жидкостью -->
+  <path d="M10 3v5l-4.4 8.6A2.6 2.6 0 0 0 8 20.6h8a2.6 2.6 0 0 0 2.4-4L14 8V3"/>
+  <path d="M9 3h6"/>
+  <path d="M7.6 14.4h8.8"/>
+  <!-- пузырьки -->
+  <path d="M11 17h.01M13.4 17.6h.01M12 15.4h.01" stroke-width="2.2"/>
+</svg>
