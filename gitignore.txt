@@ -1,2 +1,0 @@
-# Зависимости скриптов (sharp — опциональная devDependency)
-node_modules/
