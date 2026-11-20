@@ -1,0 +1,17 @@
+{
+  "title": "Notone",
+  "description": "Справочник и тренажёры по теории музыки: интервалы, аккорды, лады, нотный стан и полифония. Без очков и таймеров.",
+  "info": "",
+  "icon": "icon.svg",
+  "color": "#8b5cf6",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Music",
+    "Tool"
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": []
+}
