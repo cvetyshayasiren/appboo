@@ -383,7 +383,261 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   }
 }
 @keyframes menuFade{from{opacity:0}to{opacity:1}}
-\n</style>
+\n
+
+/* ===== финальная коррекция: мобильный overflow и компактные диалоги ===== */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+body { min-width: 0; }
+#modalRoot { position: relative; z-index: 100; }
+.app, .top-in, .tabpane, .card, .mix-grid, .mix-col,
+.grid, .pane-head, .out-banner, .result-box, .step,
+.step-body, .step-info, .src-card, .out-card {
+  min-width: 0;
+  max-width: 100%;
+}
+.app { width: 100%; }
+.grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.mix-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+img, svg, video, canvas, iframe { max-width: 100%; }
+pre, code, .mono-val, .result-meta { overflow-wrap: anywhere; }
+
+/* Диалог прокручивается внутри себя; подложка остаётся в границах экрана. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top))
+           max(12px, env(safe-area-inset-right))
+           max(12px, env(safe-area-inset-bottom))
+           max(12px, env(safe-area-inset-left));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.modal {
+  width: min(560px, 100%);
+  max-width: 100%;
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
+.modal-foot {
+  position: static;
+  bottom: auto;
+  background: none;
+  padding-bottom: 0;
+}
+.modal-head, .modal-head > div { min-width: 0; }
+.modal p, .modal h3, .modal h4, .fit, .settings-note, .disclaimer-full {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .mix-grid { grid-template-columns: minmax(0, 1fr); }
+  /* На телефонах диалог открывается как bottom sheet. */
+  .modal-backdrop {
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+    padding-top: env(safe-area-inset-top);
+    overflow: hidden;
+    touch-action: none;
+  }
+  .modal {
+    width: 100%;
+    max-width: none;
+    max-height: min(88dvh, 820px);
+    max-height: min(88dvh, 820px);
+    margin: 0;
+    padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: sheetIn .28s cubic-bezier(.2,.8,.2,1) both;
+    touch-action: pan-y;
+  }
+  .modal::before {
+    content: "";
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line);
+    margin: -7px auto 14px;
+  }
+  .modal-foot { justify-content: flex-end; flex-wrap: wrap; }
+}
+@keyframes sheetIn {
+  from { opacity: .8; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 420px) {
+  .app { padding-left: 12px; padding-right: 12px; }
+  .top-in { min-width: 0; }
+  .brand { min-width: 0; }
+  .brand h1 { white-space: normal; overflow-wrap: anywhere; }
+  .tabs { min-width: 0; }
+  .tab-btn { min-width: 0; }
+  .card { padding: 14px; }
+  .src-card { padding: 15px; }
+  .modal-foot .btn { flex: 1 1 auto; }
+}
+
+
+/* ===== MOBILE-FIRST REWORK v2: устойчивый мобильный layout и bottom sheet ===== */
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+html { width:100%; max-width:100%; overflow-x:clip; scroll-padding-top:96px; }
+body { width:100%; max-width:100%; min-width:0; overflow-x:clip; }
+#modalRoot { position:static; z-index:auto; }
+button, input, select, textarea { font:inherit; }
+button { -webkit-tap-highlight-color:transparent; }
+.btn, .icon-btn, .tab-btn, .flow-step, .preset, .menu-item { touch-action:manipulation; }
+:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+
+@media (max-width:720px) {
+  html, body { overscroll-behavior-x:none; }
+  body { font-size:14px; }
+  .top { position:sticky; top:0; z-index:50; }
+  .top-in {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto;
+    gap:8px 10px; width:100%; padding:9px 14px 8px;
+  }
+  .brand { grid-column:1; grid-row:1; min-width:0; gap:8px; }
+  .brand-glyph { width:30px; height:30px; }
+  .brand h1 { font-size:15px; white-space:nowrap; }
+  .tagline { display:none; }
+  .top-actions { grid-column:2; grid-row:1; display:flex; gap:4px; margin:0; }
+  .icon-btn { width:42px; height:42px; min-height:42px; }
+  .tabs {
+    grid-column:1/-1; grid-row:2; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px; width:100%; margin:0; min-width:0;
+  }
+  .tab-btn {
+    display:flex; justify-content:center; min-width:0; min-height:42px; padding:8px 5px;
+    gap:5px; border:1px solid var(--line2); border-radius:11px; background:var(--surface);
+    font-size:12px; line-height:1.1;
+  }
+  .tab-btn.active { background:var(--surface2); border-color:color-mix(in srgb,var(--cyan) 48%,var(--line)); }
+  .tab-btn::after { display:none; }
+  .tab-btn .ic { width:15px; height:15px; }
+  .tab-chip { font-size:9px; padding:1px 5px; }
+  .app { width:100%; max-width:100%; padding:18px 13px calc(32px + env(safe-area-inset-bottom)); }
+  .tabpane.active { animation:none; }
+  .pane-head { display:flex; flex-direction:column; align-items:stretch; gap:12px; margin-bottom:16px; }
+  .pane-head>div:first-child { flex:0 1 auto; min-width:0; }
+  .pane-head h2 { font-size:clamp(21px,6vw,25px); line-height:1.18; letter-spacing:-.4px; }
+  .pane-head p { margin-top:6px; font-size:13px; line-height:1.5; }
+  .pane-head>.btn, .pane-head>.add-wrap { align-self:stretch; width:100%; }
+  .pane-head>.btn { min-height:46px; }
+  .grid { display:grid; grid-template-columns:minmax(0,1fr); gap:11px; }
+  .card { min-width:0; padding:15px; border-radius:15px; }
+  .src-card { gap:10px; padding:15px; }
+  .src-top { gap:9px; }
+  .src-top h3 { font-size:14px; }
+  .src-actions { align-items:flex-start; }
+  .src-actions>.btn, .src-actions>span { min-width:0; }
+  .mix-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  .mix-col, .mix-col>.card { min-width:0; width:100%; }
+  .flow-hint { display:grid; grid-template-columns:minmax(0,1fr); gap:7px; padding:12px; }
+  .flow-hint>.ic { display:none; }
+  .flow-step { min-height:40px; justify-content:flex-start; text-align:left; font-size:12px; }
+  .pool-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .pool-actions { display:grid; grid-template-columns:minmax(0,1fr); }
+  .pool-actions .btn { width:100%; min-height:44px; }
+  .out-banner { align-items:flex-start; padding:12px; gap:8px; }
+  .out-banner>span { flex:1 1 100%; }
+  .out-banner .btn { width:100%; min-height:44px; }
+  .out-head { min-width:0; flex-wrap:wrap; }
+  .out-head h3 { flex:1 1 130px; }
+  .result-box { min-width:0; padding:11px; }
+  .result-main { min-width:0; }
+  .big-num { font-size:clamp(27px,8vw,34px); }
+  .param-row { flex-wrap:wrap; gap:9px; }
+  .param-row .field { flex:1 1 100%; min-width:0; }
+  .field { min-width:0; }
+  input[type=number], input[type=text], input[type=date], select, textarea { width:100%; min-width:0; min-height:44px; font-size:16px; }
+  .btn { min-height:44px; padding:10px 13px; }
+  .btn-sm { min-height:40px; }
+  .icon-btn.sm { min-height:34px; }
+  .menu.open { position:fixed!important; left:12px!important; right:12px!important; width:auto!important; max-width:none!important; max-height:min(65dvh,520px); z-index:120; overflow-y:auto; overscroll-behavior:contain; }
+  .toasts { left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); width:auto; max-width:none; }
+  .cs-row { align-items:flex-start; flex-wrap:wrap; }
+  .cs-name { max-width:100%; flex:0 0 auto; }
+  .cs-msg { flex:1 1 100%; white-space:normal; overflow-wrap:anywhere; }
+  .step-body { grid-template-columns:22px minmax(0,1fr); }
+
+  /* Bottom sheet: fixed to the visual viewport, independently scrollable. */
+  #modalRoot { position:relative; z-index:200; }
+  .modal-backdrop {
+    position:fixed!important; inset:0!important; z-index:200!important;
+    display:flex!important; align-items:flex-end!important; justify-content:stretch!important;
+    width:100%; height:100vh; height:100dvh; min-height:0;
+    padding:0!important; margin:0; overflow:hidden!important;
+    background:var(--scrim); -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+    overscroll-behavior:none; touch-action:pan-y;
+  }
+  .modal {
+    position:relative; display:block; flex:0 1 auto;
+    width:100%!important; max-width:none!important; min-width:0;
+    max-height:calc(100vh - env(safe-area-inset-top));
+    max-height:calc(100dvh - env(safe-area-inset-top));
+    margin:auto 0 0!important; padding:12px 17px calc(18px + env(safe-area-inset-bottom))!important;
+    border:1px solid var(--line); border-bottom:0;
+    border-radius:22px 22px 0 0!important;
+    background:var(--surface); box-shadow:0 -16px 48px rgba(0,0,0,.25);
+    overflow-x:hidden!important; overflow-y:auto!important;
+    overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; touch-action:pan-y;
+    animation:mobileSheetIn .24s cubic-bezier(.2,.75,.25,1) both!important;
+  }
+  .modal::-webkit-scrollbar { display:none; }
+  .modal::before {
+    content:""; display:block; width:38px; height:4px; border-radius:99px;
+    background:var(--faint); opacity:.65; margin:0 auto 13px;
+  }
+  .modal-head { position:relative; display:flex; align-items:center; gap:10px; margin-bottom:14px; padding:0 0 12px; border-bottom:1px solid var(--line2); }
+  .modal-head .src-ic { width:38px; height:38px; flex:none; }
+  .modal-head h3 { font-size:16px; line-height:1.25; }
+  .modal-head .sub { font-size:11px; line-height:1.35; }
+  .modal-head .icon-btn { width:40px; height:40px; min-height:40px; flex:none; background:var(--surface2); border:1px solid var(--line2); }
+  .modal p { font-size:13px; line-height:1.55; }
+  .modal h4 { margin-top:15px; }
+  .fit-grid { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .fit { padding:11px; }
+  .modal-foot { position:static!important; display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; padding:12px 0 0!important; border-top:1px solid var(--line2); background:none!important; }
+  .modal-foot .btn { flex:1 1 120px; min-height:44px; }
+}
+@keyframes mobileSheetIn { from { opacity:.75; transform:translate3d(0,28px,0); } to { opacity:1; transform:translate3d(0,0,0); } }
+@media(max-width:380px) {
+  .top-in { padding-left:11px; padding-right:11px; }
+  .app { padding-left:11px; padding-right:11px; }
+  .tab-btn { font-size:11px; }
+  .tab-chip { display:none; }
+  .card { padding:13px; }
+  .src-card { padding:14px; }
+  .modal { padding-left:14px!important; padding-right:14px!important; }
+  .modal-foot .btn { flex-basis:100%; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .modal, .modal-backdrop, .tabpane.active { animation:none!important; }
+}
+
+</style>
 </head>
 <body>
 <!-- ===== SVG-спрайт иконок (офлайн) ===== -->
@@ -743,8 +997,7 @@ const SOURCES = [
     notFor: 'Всё, где важна непредсказуемость: от призовой жеребьёвки до секретов.',
     collect: async () => { const b = new Uint8Array(64); for (let i = 0; i < 64; i++) b[i] = Math.floor(Math.random() * 256); return b; } },
   { id: 'time', name: 'Время: Date.now()', icon: 'clock', strength: 1, tags: ['off'], timeout: 3000, order: 3,
-    short: 'Timestamp в миллисекундах + младшие байты серии замеров.',
-    long: 'Кодирует текущий timestamp и младшие байты последовательных замеров Date.now() с работой между ними. Классическая «соль», но атакующий обычно знает примерное время генерации.',
+    short: 'Timestamp в миллисекундах + младшие байты серии замеров.',    long: 'Кодирует текущий timestamp и младшие байты последовательных замеров Date.now() с работой между ними. Классическая «соль», но атакующий обычно знает примерное время генерации.',
     why: 'Предсказуемо с точностью до секунд; младшие биты дают лишь несколько бит энтропии.',
     goodFor: 'Дополнительная «соль», учебные демонстрации.',
     notFor: 'Самостоятельный источник; всё непредсказуемое.',
@@ -1171,13 +1424,60 @@ function toast(msg, type) {
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 4200);
 }
 let lastFocus = null;
+let modalScrollLock = null;
+function lockPageScroll() {
+  if (modalScrollLock) return;
+  const y = window.scrollY || window.pageYOffset || 0;
+  const body = document.body, html = document.documentElement;
+  modalScrollLock = {
+    y,
+    htmlOverflow: html.style.overflow,
+    bodyOverflow: body.style.overflow,
+    bodyPosition: body.style.position,
+    bodyTop: body.style.top,
+    bodyLeft: body.style.left,
+    bodyRight: body.style.right,
+    bodyWidth: body.style.width,
+    bodyPaddingRight: body.style.paddingRight
+  };
+  const scrollbar = Math.max(0, window.innerWidth - html.clientWidth);
+  html.style.overflow = 'hidden';
+  body.style.overflow = 'hidden';
+  body.style.position = 'fixed';
+  body.style.top = `-${y}px`;
+  body.style.left = '0';
+  body.style.right = '0';
+  body.style.width = '100%';
+  if (scrollbar) body.style.paddingRight = `${scrollbar}px`;
+}
+function unlockPageScroll() {
+  if (!modalScrollLock) return;
+  const saved = modalScrollLock, body = document.body, html = document.documentElement;
+  html.style.overflow = saved.htmlOverflow;
+  body.style.overflow = saved.bodyOverflow;
+  body.style.position = saved.bodyPosition;
+  body.style.top = saved.bodyTop;
+  body.style.left = saved.bodyLeft;
+  body.style.right = saved.bodyRight;
+  body.style.width = saved.bodyWidth;
+  body.style.paddingRight = saved.bodyPaddingRight;
+  modalScrollLock = null;
+  window.scrollTo(0, saved.y);
+}
 function openModal(html) {
   lastFocus = document.activeElement;
+  lockPageScroll();
   const root = $('#modalRoot');
-  root.innerHTML = `<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
-  const btn = root.querySelector('button'); if (btn) btn.focus();
+  root.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="Диалоговое окно" tabindex="-1">${html}</section></div>`;
+  const dialog = root.querySelector('.modal');
+  // Не фокусируем кнопку на телефонах: это может вызвать нежелательную прокрутку viewport.
+  dialog && dialog.focus({ preventScroll: true });
 }
-function closeModal() { $('#modalRoot').innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+function closeModal() {
+  $('#modalRoot').innerHTML = '';
+  unlockPageScroll();
+  if (lastFocus && lastFocus.focus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
+}
 const modalHead = (ic, title, sub) => `<div class="modal-head"><span class="src-ic">${icon(ic, 'lg')}</span><div style="flex:1;min-width:0"><h3>${esc(title)}</h3>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div><button class="icon-btn" data-action="close-modal" aria-label="Закрыть">${icon('x')}</button></div>`;
 /* Подробное описание источника */
 function openDetails(uidStr) {
@@ -1672,6 +1972,13 @@ document.addEventListener('keydown', e => {
   }
 
   if (e.key === 'Escape') { if ($('#modalRoot') && $('#modalRoot').innerHTML) closeModal(); closeMenus(); }
+  if (e.key === 'Tab' && $('#modalRoot .modal')) {
+    const dialog = $('#modalRoot .modal');
+    const focusable = [...dialog.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x => x.offsetParent !== null);
+    if (!focusable.length) { e.preventDefault(); dialog.focus(); }
+    else if (e.shiftKey && (document.activeElement === focusable[0] || document.activeElement === dialog)) { e.preventDefault(); focusable[focusable.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === focusable[focusable.length - 1]) { e.preventDefault(); focusable[0].focus(); }
+  }
   if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('src-card')) openDetails(e.target.dataset.uid);
 });
 function init() {
