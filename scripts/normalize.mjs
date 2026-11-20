@@ -342,10 +342,44 @@ for (const id of folders) {
   if (existsSync(readmePath)) {
     const readme = readFileSync(readmePath, "utf8");
     const table = `<!-- catalog:start -->\n| | Приложение | Описание |\n|---|---|---|\n${catalogRows.join("\n")}\n<!-- catalog:end -->`;
-    const re = /<!-- catalog:start -->[\s\S]*?<!-- catalog:end -->/;
+
+    /* Блоки каталога ищем построчно и по вхождению маркера в строку: так в блок
+       попадает и мусор вида "`<!-- catalog:start -->" или "<!-- catalog:end -->`
+       проза" — при перегенерации строки маркеров становятся чистыми. Блок
+       должен быть один: первый заменяем свежей таблицей, дубликаты после него
+       сворачиваем (заодно убирая одну соседнюю пустую строку, чтобы не дыра). */
+    const lines = readme.split("\n");
+    const blocks = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes("<!-- catalog:start -->")) {
+        let j = i;
+        while (j < lines.length && !lines[j].includes("<!-- catalog:end -->")) j++;
+        blocks.push([i, Math.min(j, lines.length - 1)]);
+        i = Math.min(j, lines.length - 1);
+      }
+    }
+
     let next;
-    if (re.test(readme)) next = readme.replace(re, table);
-    else next = readme.replace(/\s*$/, "") + "\n\n## Каталог приложений\n\n" + table + "\n";
+    if (!blocks.length) {
+      next = readme.replace(/\s*$/, "") + "\n\n## Каталог приложений\n\n" + table + "\n";
+    } else {
+      const drop = new Set();
+      blocks.forEach(([s, e], idx) => {
+        for (let i = s; i <= e; i++) drop.add(i);
+        if (idx > 0 && lines[e + 1] === "") drop.add(e + 1);
+      });
+      const out = [];
+      let placed = false;
+      for (let i = 0; i < lines.length; i++) {
+        if (drop.has(i)) {
+          if (!placed) { out.push(...table.split("\n")); placed = true; }
+          continue;
+        }
+        out.push(lines[i]);
+      }
+      next = out.join("\n");
+      if (blocks.length > 1) act(`README.md: блок каталога задублирован (${blocks.length}×) — свёрнут до одного`);
+    }
     writeFile(readmePath, next, "README.md (каталог)");
   } else {
     debts.push("README.md отсутствует — каталог не вписан");
