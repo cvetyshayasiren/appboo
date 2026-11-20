@@ -13,5 +13,8 @@
   "languages": [
     "ru"
   ],
-  "screenshots": []
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
 }

@@ -4,7 +4,7 @@
    Запуск: node scripts/validate.mjs */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, extname } from "node:path";
 
 const ROOT = join(new URL("..", import.meta.url).pathname);
 const APPS = join(ROOT, "apps");
