@@ -1,0 +1,21 @@
+{
+  "title": "random source",
+  "description": "Лаборатория энтропии: собирает случайность из 17 источников — от CSPRNG браузера и микрофона до погодного API и random.org, смешивает пул через SHA-256, выдаёт байты в hex/base64 и монету, кубик, выбор из списка.",
+  "info": "Все вычисления локальны в браузере; сетевые источники (random.org, open-meteo.com) опциональны и включаются вручную.",
+  "icon": "icon.svg",
+  "color": "#41d9ff",
+  "ai": "GLM-5.3-Flash",
+  "platform": "both",
+  "tags": [
+    "Tool",
+    "Random",
+    "Entropy"
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}

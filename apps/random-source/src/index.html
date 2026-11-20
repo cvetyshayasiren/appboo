@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>random source — лаборатория энтропии</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23070b15'/%3E%3Ccircle cx='7' cy='7' r='2.2' fill='%2341d9ff'/%3E%3Ccircle cx='17' cy='8' r='2.2' fill='%238f7bff'/%3E%3Ccircle cx='8' cy='17' r='2.2' fill='%238f7bff'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%2341d9ff'/%3E%3Ccircle cx='12' cy='12' r='1.6' fill='%23ff5da2'/%3E%3C/svg%3E">
+<style>
+/* ===== RANDOM SOURCE · палитра: чернильный навигационный фон + циан/фиолет/лайм/янтарь/маджента ===== */
+:root{
+--bg:#070b15;--surface:#101a2e;--surface2:#15213a;--inset:#0b1322;--text:#e9eefb;--dim:#9aa8c7;--faint:#647399;
+--line:#22304f;--line2:#1a2540;--cyan:#41d9ff;--violet:#8f7bff;--lime:#a8e05f;--amber:#ffb224;--magenta:#ff5da2;
+--red:#ff5470;--green:#31d492;--blue:#5aa2ff;--weak:#ff5470;--mid:#ffb224;--strong:#31d492;
+--grad:linear-gradient(135deg,#41d9ff,#8f7bff);--grad-wide:linear-gradient(90deg,#ff5470,#ffb224,#a8e05f,#31d492,#41d9ff);
+--ink:#071018;--ring:rgba(65,217,255,.22);--tip:#0a101f;--tipline:#2a3a60;--tiptext:#e9eefb;
+--header:rgba(7,11,21,.8);--scrim:rgba(3,6,12,.72);--shadow:0 18px 50px rgba(2,6,16,.55);
+--a1:rgba(65,217,255,.13);--a2:rgba(143,123,255,.13);--a3:rgba(255,93,162,.07);--grain:.05;
+--b0:#5d6f96;--b1:#5aa2ff;--b2:#8f7bff;--b3:#41d9ff;--track:#0b1322;--thumb:#2c3d63;--thumbhi:#41d9ff}
+:root[data-theme="light"]{
+--bg:#eef1f8;--surface:#fff;--surface2:#f4f6fc;--inset:#eef1f9;--text:#111a2e;--dim:#4c5a78;--faint:#8b97b3;
+--line:#d7deee;--line2:#e5eaf5;--cyan:#0e8fb8;--violet:#6a58e8;--lime:#5f9e0d;--amber:#b26a00;--magenta:#d63384;
+--red:#d92d4f;--green:#0c9d6c;--blue:#2563eb;--weak:#d92d4f;--mid:#b26a00;--strong:#0c9d6c;
+--grad:linear-gradient(135deg,#0ea5c9,#6a58e8);--grad-wide:linear-gradient(90deg,#d92d4f,#b26a00,#5f9e0d,#0c9d6c,#0e8fb8);
+--ink:#fff;--ring:rgba(14,143,184,.2);--tip:#111a2e;--tipline:#31405f;--tiptext:#e9eefb;
+--header:rgba(238,241,248,.85);--scrim:rgba(20,28,48,.45);--shadow:0 16px 40px rgba(30,42,70,.16);
+--a1:rgba(14,165,201,.13);--a2:rgba(106,88,232,.11);--a3:rgba(214,51,132,.06);--grain:.035;
+--b0:#8b97b3;--b1:#2563eb;--b2:#6a58e8;--b3:#0e8fb8;--track:#e7ebf5;--thumb:#b9c4dd;--thumbhi:#0e8fb8}
+/* ===== база + живой фон (аврора и зерно) ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.55;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .35s,color .35s}
+body::before{content:"";position:fixed;inset:-25%;z-index:0;pointer-events:none;background:radial-gradient(46% 38% at 18% 12%,var(--a1),transparent 70%),radial-gradient(42% 40% at 84% 18%,var(--a2),transparent 70%),radial-gradient(40% 42% at 55% 92%,var(--a3),transparent 70%);animation:aurora 48s ease-in-out infinite alternate}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--grain);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+@keyframes aurora{0%{transform:translate(0,0)}50%{transform:translate(3%,2%) rotate(2deg)}100%{transform:translate(-3%,-2%) rotate(-2deg)}}
+::selection{background:var(--cyan);color:var(--ink)}
+/* ===== скроллбары в палитре приложения ===== */
+*{scrollbar-width:thin;scrollbar-color:var(--thumb) var(--track)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:var(--track);border-radius:8px}
+::-webkit-scrollbar-thumb{background:var(--thumb);border-radius:8px;border:2px solid var(--track)}::-webkit-scrollbar-thumb:hover{background:var(--thumbhi)}
+.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.ic.lg{width:24px;height:24px}.ic.xl{width:44px;height:44px;stroke-width:1.4}
+/* ===== шапка и вкладки ===== */
+.top{position:sticky;top:0;z-index:50;background:var(--header);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line2)}
+.top-in{max-width:1140px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.brand-glyph{width:36px;height:36px;flex:none}
+.brand h1{font-size:17px;font-weight:700;white-space:nowrap}.brand h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+.tagline{display:block;font-size:10.5px;color:var(--faint);font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:-2px}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tab-btn{position:relative;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;background:none;border:none;border-radius:10px;color:var(--dim);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .2s,background .2s}
+.tab-btn:hover{color:var(--text);background:var(--surface2)}.tab-btn.active{color:var(--text)}
+.tab-btn::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2.5px;border-radius:3px;background:var(--grad);transform:scaleX(0);transition:transform .25s}
+.tab-btn.active::after{transform:scaleX(1)}
+.tab-chip{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--line2);color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+.tab-btn.active .tab-chip{background:var(--grad);color:var(--ink)}
+.tab-chip.pulse{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--ring)}50%{box-shadow:0 0 0 6px transparent}}
+.top-actions{display:flex;gap:6px}
+/* ===== кнопки ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform .15s,border-color .2s,box-shadow .2s,filter .2s}
+.btn:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 6px 18px rgba(2,8,20,.25)}.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-primary{background:var(--grad);color:var(--ink);border-color:transparent;box-shadow:0 8px 24px var(--ink0,transparent)}
+.btn-primary:hover{filter:brightness(1.08);border-color:transparent}
+.btn-danger{background:color-mix(in srgb,var(--red) 14%,var(--surface));color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn-danger:hover{border-color:var(--red)}.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:9px}.btn-block{width:100%}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;border-radius:10px;border:1px solid transparent;background:none;color:var(--dim);cursor:pointer;transition:all .2s}
+.icon-btn:hover{color:var(--text);background:var(--surface2);border-color:var(--line)}.icon-btn:active{transform:scale(.92)}
+.icon-btn.danger:hover{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,var(--line))}
+.icon-btn.sm{width:28px;height:28px;border-radius:8px}.icon-btn.sm .ic{width:15px;height:15px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+/* ===== раскладка и карточки ===== */
+.app{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:26px 20px 90px}
+.tabpane{display:none}.tabpane.active{display:block;animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pane-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.pane-head h2{font-size:24px;font-weight:800;letter-spacing:-.3px}
+.pane-head h2 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pane-head p{color:var(--dim);font-size:13.5px;max-width:560px;margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;transition:border-color .25s,box-shadow .25s,transform .25s;animation:fadeUp .45s ease both;animation-delay:var(--d,0s)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:14px}
+.src-card{display:flex;flex-direction:column;gap:9px;cursor:pointer}
+.src-card:hover{border-color:color-mix(in srgb,var(--cyan) 55%,var(--line));box-shadow:0 10px 30px rgba(2,8,20,.28);transform:translateY(-2px)}
+.src-card.off{opacity:.62}.src-card.off:hover{opacity:.85}.src-card.is-default{border-color:color-mix(in srgb,var(--cyan) 40%,var(--line))}
+.src-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.src-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);color:var(--cyan)}
+.src-card.is-default .src-ic{background:var(--grad);color:var(--ink);border-color:transparent}
+.src-card h3{font-size:15.5px;font-weight:700;line-height:1.3}.short{font-size:12.8px;color:var(--dim);flex:1}
+.why{font-size:11.8px;color:var(--faint);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.src-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--surface2);border:1px solid var(--line2);color:var(--dim)}
+.tag .ic{width:12px;height:12px}
+.t-net{color:var(--blue)}.t-perm{color:var(--amber)}.t-file{color:var(--magenta)}.t-demo{color:var(--red)}.t-off{color:var(--green)}.t-sensor{color:var(--violet)}
+/* ===== оценка криптостойкости ===== */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:help;border:1px solid;position:relative}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-weak{color:var(--weak);background:color-mix(in srgb,var(--weak) 12%,transparent);border-color:color-mix(in srgb,var(--weak) 38%,transparent)}
+.b-mid{color:var(--mid);background:color-mix(in srgb,var(--mid) 12%,transparent);border-color:color-mix(in srgb,var(--mid) 38%,transparent)}
+.b-strong{color:var(--strong);background:color-mix(in srgb,var(--strong) 12%,transparent);border-color:color-mix(in srgb,var(--strong) 38%,transparent)}
+.meter{display:flex;gap:3px;align-items:center}.meter i{width:16px;height:5px;border-radius:3px;background:var(--line2)}
+.m-weak i.on{background:var(--weak)}.m-mid i.on{background:var(--mid)}.m-strong i.on{background:var(--strong)}
+.gauge{margin:10px 0 4px}.gauge-track{height:9px;border-radius:6px;background:var(--inset);border:1px solid var(--line2);overflow:hidden}
+.gauge-fill{height:100%;border-radius:6px;background:var(--grad-wide);background-size:500% 100%;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.gauge-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:4px;font-family:ui-monospace,Menlo,monospace}
+.strength-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.reasons{list-style:none;margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.reasons li{display:flex;gap:8px;font-size:12.3px;color:var(--dim);align-items:flex-start}.reasons .ic{width:14px;height:14px;margin-top:3px}
+.reasons .good .ic{color:var(--green)}.reasons .bad .ic{color:var(--red)}.reasons .warn .ic{color:var(--amber)}.reasons .info .ic{color:var(--blue)}
+/* ===== дисклеймер и тултипы ===== */
+.disclaimer{margin-top:12px;padding:10px 12px;border-radius:11px;font-size:11.8px;color:var(--dim);background:color-mix(in srgb,var(--amber) 7%,var(--inset));border:1px solid color-mix(in srgb,var(--amber) 26%,var(--line2));display:flex;gap:9px;align-items:flex-start}
+.disclaimer .ic{color:var(--amber);width:15px;height:15px;margin-top:2px}
+.disclaimer button{background:none;border:none;color:var(--cyan);font:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline}
+.disclaimer-full{font-size:12.8px;color:var(--dim);line-height:1.65;border-left:3px solid var(--amber);padding:4px 0 4px 14px;margin:10px 0}
+[data-tooltip]{position:relative}
+[data-tooltip]::after{content:attr(data-tooltip);position:absolute;left:0;bottom:calc(100% + 8px);z-index:70;width:max-content;max-width:min(270px,72vw);padding:8px 11px;border-radius:9px;background:var(--tip);color:var(--tiptext);border:1px solid var(--tipline);font-size:11.3px;font-weight:500;line-height:1.45;white-space:normal;opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .18s,transform .18s;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+[data-tooltip]:hover::after,[data-tooltip]:focus-visible::after{opacity:1;transform:none}
+/* ===== переключатель, меню, формы ===== */
+.switch{position:relative;display:inline-block;width:42px;height:24px;flex:none;cursor:pointer}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0}
+.switch .tr{position:absolute;inset:0;border-radius:99px;background:var(--inset);border:1px solid var(--line);transition:background .25s;pointer-events:none}
+.switch .tr::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--faint);transition:transform .25s cubic-bezier(.2,.8,.2,1),background .25s}
+.switch input:checked+.tr{background:var(--grad);border-color:transparent}.switch input:checked+.tr::after{transform:translateX(18px);background:#fff}
+.switch input:focus-visible+.tr{outline:2px solid var(--cyan);outline-offset:2px}
+.add-wrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:min(360px,calc(100vw - 36px));max-height:380px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:6px;display:none}
+.menu.open{display:block;animation:menuIn .18s ease both}
+@keyframes menuIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.menu-title{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);padding:8px 10px 4px}
+.menu-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;background:none;border:none;border-radius:10px;color:var(--text);font:inherit;cursor:pointer}
+.menu-item:hover{background:var(--surface2)}
+.mi-ic{width:32px;height:32px;flex:none;border-radius:9px;display:grid;place-items:center;background:var(--inset);border:1px solid var(--line2);color:var(--cyan)}
+.mi-body{flex:1;min-width:0}.mi-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.mi-desc{font-size:11.3px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.mi-count{font-size:10px;color:var(--green);font-weight:700}.menu-item.danger .mi-ic{color:var(--red)}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+input[type=number],input[type=text],input[type=date],select,textarea{background:var(--inset);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:13.5px;padding:8px 11px;width:100%;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--ring);outline:none}
+textarea{resize:vertical;min-height:84px;font-size:13px}input[type=number]{font-family:ui-monospace,Menlo,monospace}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa8c7' stroke-width='2.4'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.param-row{display:flex;gap:10px;flex-wrap:wrap}.param-row .field{flex:1;min-width:90px}
+.choice-editor{display:flex;flex-direction:column;gap:10px}.choice-entry{display:flex;gap:8px;align-items:center}.choice-entry input{min-width:0;flex:1}.choice-add{flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line2);color:var(--dim);box-shadow:none}.choice-add:hover{background:var(--inset);border-color:var(--cyan);color:var(--cyan)}.choice-add .ic{width:17px;height:17px}.choice-bubbles{display:flex;flex-wrap:wrap;gap:7px;min-height:8px}.choice-bubble{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:6px 9px 6px 11px;border:1px solid var(--line2);border-radius:999px;background:var(--surface2);font-size:12px;color:var(--text)}.choice-bubble span{overflow-wrap:anywhere}.choice-bubble button{display:grid;place-items:center;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:var(--line2);color:var(--dim);cursor:pointer}.choice-bubble button:hover{background:var(--red);color:white}.choice-bubble .ic{width:11px;height:11px}.choice-empty{font-size:12px;color:var(--faint);padding:2px 0}
+.presets{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.preset{font-size:11px;font-weight:700;font-family:ui-monospace,Menlo,monospace;padding:3px 9px;border-radius:99px;border:1px solid var(--line);background:var(--inset);color:var(--dim);cursor:pointer;transition:all .15s}
+.preset:hover{color:var(--cyan);border-color:var(--cyan)}.preset.on{background:var(--grad);color:var(--ink);border-color:transparent}
+/* ===== подсказки и пустые состояния ===== */
+.hint{font-size:12.3px;color:var(--faint);margin-top:16px;display:flex;gap:8px;align-items:flex-start}
+.hint .ic{width:15px;height:15px;margin-top:2px;color:var(--blue)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:34px 18px;color:var(--faint);border:1.5px dashed var(--line);border-radius:14px}
+.empty .ic{color:var(--violet)}.empty b{color:var(--dim);font-size:14px}.empty p{font-size:12.5px;max-width:340px}
+.flow-hint{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:22px;padding:14px 16px;background:var(--surface);border:1px solid var(--line2);border-radius:14px}
+.flow-step{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--dim);font:inherit;font-size:12.8px;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:9px}
+.flow-step:hover{color:var(--text);background:var(--surface2)}
+.flow-step .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--grad);color:var(--ink);font-family:ui-monospace,Menlo,monospace}
+.flow-hint>.ic{color:var(--faint);width:15px}
+/* ===== Mix: пайплайн и пул ===== */
+.mix-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.mix-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-head h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:9px}.card-head h3 .ic{color:var(--cyan)}
+.pipeline{list-style:none;display:flex;flex-direction:column}
+.step{position:relative;display:flex;gap:12px;padding-bottom:14px}.step:last-child{padding-bottom:0}
+.step::before{content:"";position:absolute;left:15px;top:34px;bottom:0;width:2px;background:linear-gradient(var(--cyan),var(--violet));opacity:.35}
+.step:last-child::before{display:none}
+.step-node{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;z-index:1;background:var(--inset);border:1.5px solid var(--cyan);color:var(--cyan);font-family:ui-monospace,Menlo,monospace;font-size:12.5px;font-weight:800}
+.step-body{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;transition:border-color .2s,box-shadow .2s}
+.step-body:hover{border-color:color-mix(in srgb,var(--violet) 50%,var(--line))}
+.step.drag-over .step-body{border-color:var(--cyan);border-style:dashed;box-shadow:0 0 0 3px var(--ring)}.step.dragging{opacity:.45}
+.step-info{flex:1;min-width:0}.step-name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.step-name .ic{width:15px;height:15px;color:var(--violet)}.step-desc{font-size:11.6px;color:var(--faint);margin-top:2px}
+.step-ctrl{display:flex;gap:2px;flex:none}.step-grip{cursor:grab;color:var(--faint);display:grid;place-items:center;width:22px}
+.step.is-danger .step-body{border-color:color-mix(in srgb,var(--red) 45%,var(--line));background:color-mix(in srgb,var(--red) 6%,var(--surface2))}
+.step.is-danger .step-node{border-color:var(--red);color:var(--red)}.step.is-danger .step-name .ic{color:var(--red)}
+.mini-chip{font-size:9.5px;font-weight:800;letter-spacing:.5px;padding:1px 7px;border-radius:99px;text-transform:uppercase}
+.mc-red{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent)}
+.pool-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.stat{background:var(--inset);border:1px solid var(--line2);border-radius:11px;padding:8px 10px;min-width:0}
+.stat b{display:block;font-size:16px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:var(--cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.hexdump{display:flex;flex-wrap:wrap;gap:4px;padding:12px;background:var(--inset);border:1px solid var(--line2);border-radius:12px;max-height:190px;overflow:auto}
+.byte{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:600;padding:2px 5px;border-radius:6px;background:var(--surface2);border:1px solid var(--line2);animation:byteIn .3s ease both;animation-delay:var(--bd,0s)}
+@keyframes byteIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.byte.t0{color:var(--b0)}.byte.t1{color:var(--b1)}.byte.t2{color:var(--b2)}.byte.t3{color:var(--b3)}
+.hex-more{font-size:11px;color:var(--faint);align-self:center;padding:2px 6px;font-family:ui-monospace,Menlo,monospace}
+.pool-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.collect-status{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.cs-row{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--inset);border:1px solid var(--line2);border-radius:11px;font-size:12.5px}
+.cs-row .ic{width:16px;height:16px;flex:none}
+.cs-name{font-weight:600;flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-msg{color:var(--faint);font-size:11.8px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-row.ok .ic{color:var(--green)}.cs-row.err .ic{color:var(--red)}.cs-row.err .cs-msg{color:var(--red)}.cs-row.run .ic{color:var(--cyan)}.cs-row.wait .ic{color:var(--faint)}
+.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.pool-notes{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.pool-note{font-size:11.6px;color:var(--amber);display:flex;gap:7px;align-items:flex-start}.pool-note.err{color:var(--red)}
+.pool-note .ic{width:13px;height:13px;margin-top:3px;flex:none}
+/* ===== Output ===== */
+.out-banner{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:12px 15px;margin-bottom:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;font-size:13px}
+.out-banner>.ic{color:var(--cyan)}.out-banner .btn{margin-left:auto}
+.out-card{display:flex;flex-direction:column;gap:12px}
+.out-head{display:flex;align-items:center;gap:10px}.out-head .src-ic{width:36px;height:36px;border-radius:11px}
+.out-head h3{font-size:14.5px;font-weight:700;flex:1;min-width:0}
+.out-badge-row{display:flex;align-items:center;gap:8px}.result-zone{min-height:70px}
+.result-box{background:var(--inset);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;display:flex;align-items:flex-start;gap:10px;animation:resIn .3s ease both}
+@keyframes resIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.result-box.flash{animation:flash .5s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 var(--ring)}40%{box-shadow:0 0 0 5px var(--ring)}100%{box-shadow:0 0 0 0 transparent}}
+.result-main{flex:1;min-width:0}.result-meta{font-size:10.8px;color:var(--faint);margin-top:7px;font-family:ui-monospace,Menlo,monospace}
+.result-placeholder{min-height:70px;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--line);border-radius:12px;color:var(--faint);font-size:12.3px;padding:10px}
+.result-error{border:1px solid color-mix(in srgb,var(--red) 45%,var(--line));background:color-mix(in srgb,var(--red) 8%,var(--inset));color:var(--red);border-radius:12px;padding:11px 13px;font-size:12.5px;display:flex;gap:9px;align-items:flex-start;animation:shake .35s ease}
+.result-error .ic{width:15px;height:15px;margin-top:2px;flex:none}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.big-num{font-size:34px;font-weight:800;font-family:ui-monospace,Menlo,monospace;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.15;word-break:break-all}
+.mono-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all;color:var(--cyan);line-height:1.6}
+.choice-val{font-size:19px;font-weight:700;word-break:break-word}.date-val{font-size:16.5px;font-weight:700}
+.dice-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.die{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--surface2);border:1.5px solid var(--violet);font-family:ui-monospace,Menlo,monospace;font-size:16.5px;font-weight:800;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.dice-sum{font-size:13px;color:var(--dim);font-weight:700;margin-left:4px}.dice-sum b{color:var(--lime);font-size:17px;font-family:ui-monospace,Menlo,monospace}
+/* ===== модалки и тосты ===== */
+.modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--scrim);backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px;overflow:auto;animation:bdIn .2s ease both}
+@keyframes bdIn{from{opacity:0}to{opacity:1}}
+.modal{width:min(580px,100%);max-height:min(86vh,760px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);animation:modalIn .26s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}.modal-head .src-ic{width:42px;height:42px}
+.modal-head h3{font-size:17.5px;font-weight:800;line-height:1.3}.modal-head .sub{font-size:12px;color:var(--faint);margin-top:2px}
+.modal p{font-size:13.3px;color:var(--dim);margin-bottom:10px}
+.modal h4{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);margin:16px 0 7px}
+.fit-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fit{padding:10px 12px;border-radius:11px;font-size:12.3px;line-height:1.5;color:var(--dim)}
+.fit.good{background:color-mix(in srgb,var(--green) 8%,var(--inset));border:1px solid color-mix(in srgb,var(--green) 28%,var(--line2))}
+.fit.bad{background:color-mix(in srgb,var(--red) 7%,var(--inset));border:1px solid color-mix(in srgb,var(--red) 26%,var(--line2))}
+.fit b{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.fit.good b{color:var(--green)}.fit.bad b{color:var(--red)}.fit .ic{width:13px;height:13px}
+.modal-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;flex-wrap:wrap}
+.seg{display:flex;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;border:none;border-radius:9px;background:none;color:var(--dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.seg button.on{background:var(--grad);color:var(--ink)}
+.settings-note{font-size:12.3px;color:var(--dim);background:var(--inset);border:1px solid var(--line2);border-radius:11px;padding:11px 13px;display:flex;gap:9px}
+.settings-note .ic{color:var(--green);flex:none;margin-top:2px}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:130;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px))}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--blue);box-shadow:var(--shadow);font-size:12.8px;animation:toastIn .25s ease both}
+.toast.out{animation:toastOut .25s ease both}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast .ic{width:16px;height:16px;margin-top:1px;flex:none}
+.t-success{border-left-color:var(--green)}.t-success .ic{color:var(--green)}
+.t-error{border-left-color:var(--red)}.t-error .ic{color:var(--red)}
+.t-warn{border-left-color:var(--amber)}.t-warn .ic{color:var(--amber)}.t-info .ic{color:var(--blue)}
+/* ===== адаптивность ===== */
+@media(max-width:920px){.mix-grid{grid-template-columns:1fr}.tagline{display:none}.pool-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.top-in{padding:8px 12px;gap:8px;flex-wrap:wrap}.brand h1{font-size:15px}.brand-glyph{width:30px;height:30px}
+.tabs{order:3;width:100%;margin-left:0;justify-content:space-between}.tab-btn{padding:8px 10px;font-size:13px;flex:1;justify-content:center}
+.top-actions{margin-left:auto}.app{padding:18px 12px 80px}.pane-head h2{font-size:20px}.grid{grid-template-columns:1fr}.fit-grid{grid-template-columns:1fr}
+.toasts{right:12px;left:12px;max-width:none}.cs-name{max-width:38%}.menu{position:fixed;left:12px;right:12px;width:auto;max-height:60vh}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ===== UI polish: равномерная сетка и адаптивность ===== */
+html{scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+body{min-width:320px}
+.app{width:100%;max-width:1200px;padding-left:clamp(14px,2.2vw,24px);padding-right:clamp(14px,2.2vw,24px)}
+.top-in{width:100%;max-width:1200px}
+.grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));align-items:stretch;gap:16px}
+.card{min-width:0;overflow-wrap:anywhere}
+.src-card,.out-card{height:100%}
+.src-card{padding:19px;gap:11px}
+.src-card .short{line-height:1.55}
+.src-card .tags{margin-top:auto;padding-top:2px}
+.src-actions{align-items:center;flex-wrap:wrap;margin-top:3px}
+.src-actions>span{flex-wrap:wrap;justify-content:flex-end}
+.pane-head{align-items:center;margin-bottom:22px}
+.pane-head>div:first-child{flex:1 1 460px;min-width:0}
+.pane-head p{max-width:680px;line-height:1.6}
+.mix-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:16px}
+.mix-col{min-width:0}
+.mix-col>.card{width:100%}
+#assessCard,#poolCard{min-width:0}
+.pool-actions{align-items:center}
+.pool-actions .btn{flex:0 1 auto}
+.out-banner{align-items:center;line-height:1.5}
+.out-banner>span{flex:1 1 280px;min-width:0}
+.out-card{gap:14px}
+.choice-entry{align-items:center}
+.choice-entry .choice-add{min-height:40px}
+.choice-bubble{min-width:0;line-height:1.35}
+.choice-bubble button{width:22px;height:22px;flex:none}
+.field{min-width:0}
+.param-row .field{min-width:min(100%,120px)}
+input[type=number],input[type=text],input[type=date],select,textarea{min-height:40px;min-width:0}
+.btn,.icon-btn,.tab-btn,.flow-step,.preset,.menu-item{touch-action:manipulation}
+.btn,.icon-btn{min-height:38px}
+.icon-btn.sm{min-height:28px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline-offset:3px}
+.menu{max-width:calc(100vw - 24px);overscroll-behavior:contain}
+.modal-backdrop{padding:clamp(10px,3vw,24px);overflow-y:auto;overscroll-behavior:contain;align-items:center}
+.modal{width:min(620px,100%);max-height:min(88dvh,820px);padding:clamp(16px,3vw,24px);overscroll-behavior:contain;scrollbar-gutter:stable}
+.modal-head{position:relative;align-items:center;padding-right:2px}
+.modal-head h3{overflow-wrap:anywhere}
+.modal-foot{position:sticky;bottom:calc(-1 * clamp(16px,3vw,24px));padding:12px 0 2px;background:linear-gradient(transparent,var(--surface) 22%);margin-top:18px}
+.fit-grid{align-items:stretch}
+.fit{overflow-wrap:anywhere}
+.settings-note,.disclaimer{line-height:1.55}
+.toasts{width:min(380px,calc(100vw - 32px));max-height:45vh;overflow:auto;overscroll-behavior:contain}
+.toast{overflow-wrap:anywhere}
+@media(max-width:1000px){
+  .top-in{gap:12px}
+  .brand{gap:8px}
+  .tab-btn{padding-inline:11px}
+  .mix-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:720px){
+  .top-in{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:9px 14px}
+  .brand{grid-column:1;grid-row:1}
+  .top-actions{grid-column:2;grid-row:1;justify-self:end}
+  .tabs{grid-column:1/-1;grid-row:2;width:100%;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .tab-btn{min-width:0;padding:9px 6px;font-size:13px;gap:6px}
+  .tab-btn .ic{width:16px;height:16px}
+  .tab-chip{font-size:9px;padding:1px 5px}
+  .app{padding-top:20px;padding-bottom:64px}
+  .pane-head{align-items:stretch;gap:13px;margin-bottom:17px}
+  .pane-head>div:first-child{flex-basis:100%}
+  .pane-head>.btn,.pane-head>.add-wrap{align-self:flex-start}
+  .pane-head h2{font-size:clamp(20px,5vw,23px)}
+  .pane-head p{font-size:13px}
+  .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+  .card{padding:16px;border-radius:14px}
+  .flow-hint{gap:5px;padding:11px;align-items:flex-start}
+  .flow-step{font-size:11.5px;padding:5px 4px}
+  .flow-hint>.ic{width:12px;margin-top:8px}
+  .pool-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .out-banner{gap:9px;padding:11px 12px}
+  .out-banner .btn{margin-left:0}
+  .modal-backdrop{padding:10px;align-items:center}
+  .modal{width:100%;max-height:calc(100dvh - 20px);border-radius:15px;padding:16px}
+  .modal-head .src-ic{width:38px;height:38px}
+  .modal-foot{bottom:-16px;padding-bottom:3px}
+}
+@media(max-width:420px){
+  .brand h1{font-size:14px}
+  .brand-glyph{width:29px;height:29px}
+  .top-actions{gap:2px}
+  .icon-btn{width:36px;height:36px}
+  .tab-btn{font-size:12px;gap:4px}
+  .tab-btn .ic{display:none}
+  .app{padding-left:12px;padding-right:12px}
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .src-card{padding:15px}
+  .param-row{gap:8px}
+  .param-row .field{flex:1 1 100%;min-width:0}
+  .pool-actions .btn{flex:1 1 100%}
+  .modal-foot{justify-content:stretch}
+  .modal-foot .btn{flex:1 1 auto}
+  .fit-grid{grid-template-columns:1fr}
+}
+@media(hover:none){
+  .src-card:hover,.btn:hover{transform:none;box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto}}
+
+
+/* ===== точечные исправления мобильной компоновки ===== */
+.src-top{display:flex;align-items:center;gap:11px;min-width:0}
+.src-top h3{flex:1;min-width:0;font-size:15px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.src-top .switch{margin-left:auto}
+@media(max-width:720px){
+  .src-top{justify-content:flex-start}
+  .src-top h3{font-size:14.5px}
+  .step-body{display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:9px;row-gap:8px;align-items:start}
+  .step-grip{grid-column:1;grid-row:1}
+  .step-info{grid-column:2;grid-row:1;min-width:0;width:100%}
+  .step-name{width:100%;min-width:0}
+  .step-desc{display:block;width:100%;max-width:none;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+  .step-ctrl{grid-column:2;grid-row:2;justify-self:end}
+  .step::before{left:15px}
+  .menu.open{position:fixed;left:12px;right:12px;width:auto;max-width:none;z-index:100;overscroll-behavior:contain}
+}
+@media(max-width:420px){.src-top{gap:9px}.src-top h3{font-size:14px}.step-body{padding:10px}}
+
+
+/* Mobile pipeline menu: viewport-level layer, never clipped by card containers */
+@media(max-width:720px){
+  body > .menu.open{
+    position:fixed!important; transform:none!important;
+    animation:menuFade .14s ease both!important;
+    overflow-y:auto; overscroll-behavior:contain; box-sizing:border-box;
+  }
+}
+@keyframes menuFade{from{opacity:0}to{opacity:1}}
+\n</style>
+</head>
+<body>
+<!-- ===== SVG-спрайт иконок (офлайн) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#41d9ff"/><stop offset="1" stop-color="#8f7bff"/></linearGradient></defs>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="3.6"/><path d="M10.6 12.4L20 3M16 6.5l3 3M13.2 9.2l2.4 2.4"/></symbol>
+<symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6 1.4A3.5 3.5 0 0 1 17 18z"/></symbol>
+<symbol id="i-dice" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="9" r="1.15" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.15" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.15" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M4 9.5a12 12 0 0 1 16 0M7 13a8 8 0 0 1 10 0M10 16.4a4 4 0 0 1 4 0"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 4l7.2 16 2.3-6.3L21 11.4z"/></symbol>
+<symbol id="i-motion" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M11 18h2M3.5 9v6M20.5 9v6"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4.5 18a8.5 8.5 0 1 1 15 0"/><path d="M12 14.5l3.8-4.6"/><circle cx="12" cy="15" r="1.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.3-6.5-10a6.5 6.5 0 0 1 13 0C18.5 15.7 12 21 12 21z"/><circle cx="12" cy="11" r="2.3"/></symbol>
+<symbol id="i-battery" viewBox="0 0 24 24"><rect x="3" y="8" width="15" height="8" rx="2"/><path d="M20.5 10.5v3M6.5 10.5v3M9.5 10.5v3"/></symbol>
+<symbol id="i-signal" viewBox="0 0 24 24"><path d="M4.5 18v-2.5M9.5 18v-5.5M14.5 18v-8.5M19.5 18V5.5"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c3 2.8 3 14 0 16.8-3-2.8-3-14 0-16.8z"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="8.6" cy="10" r="1.6"/><path d="M5.5 17.5l4.3-4.3 2.9 2.9 3.4-3.4 4.4 4.4"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v11"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="15" r="2"/></symbol>
+<symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l2.5-6.5 4 13 2.5-6.5H21"/></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6.5h3.4c5 0 6.2 8.5 11.2 8.5H21M3 15h3.4c2.1 0 3.4-1.4 4.5-3M13.6 9.5c1.1-1.6 2.4-3 4-3H21"/><path d="M18.5 3.5L21.5 6.5 18.5 9.5M18.5 12L21.5 15 18.5 18"/></symbol>
+<symbol id="i-hash" viewBox="0 0 24 24"><path d="M9.5 4L7.8 20M16.2 4L14.5 20M4.5 9h16M3.5 15h16"/></symbol>
+<symbol id="i-xor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 3.8v16.4M3.8 12h16.4"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5s6 6.2 6 10.2a6 6 0 0 1-12 0C6 9.7 12 3.5 12 3.5z"/><path d="M9.5 14a2.6 2.6 0 0 0 2.5 2.6"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 3v6l-5.2 9a2 2 0 0 0 1.8 3h10.8a2 2 0 0 0 1.8-3L14 9V3M8.5 3h7M7.3 14.5h9.4"/><circle cx="11" cy="17.5" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V5.4A1.4 1.4 0 0 1 10.9 4h2.2a1.4 1.4 0 0 1 1.4 1.4V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M6 14.5l6-6 6 6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3.5v5.5h-5.5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l5 5L19 7"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5L22 20H2z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.2" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M4.8 4.8l1.8 1.8M17.4 17.4l1.8 1.8M19.2 4.8l-1.8 1.8M6.6 17.4l-1.8 1.8"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></symbol>
+<symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.25" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.25" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.25" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.25" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13.5 6l6 6-6 6"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5L3.5 14H10l-1 7.5L18.5 10H12z"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8.5 6H21M8.5 12H21M8.5 18H21"/><circle cx="4" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-type" viewBox="0 0 24 24"><path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+<symbol id="i-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.6" r="2"/><path d="M5.4 16.4c.6-1.7 5.6-1.7 6.2 0M14.5 9.5H19M14.5 13H19"/></symbol>
+<symbol id="i-seed" viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13C12 8.5 9 6 4 6c0 5 3 7 8 7zM12 13c0-4.5 3-7 8-7 0 5-3 7-8 7z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M3 8h9M17.5 8H21M3 16h3.5M11.5 16H21"/><circle cx="15" cy="8" r="2.4"/><circle cx="9" cy="16" r="2.4"/></symbol>
+</svg>
+
+<!-- ===== Шапка ===== -->
+<header class="top"><div class="top-in">
+<div class="brand">
+<svg class="brand-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="url(#lg)" stroke-width="1.4"/><circle cx="7.2" cy="7.6" r="2" fill="url(#lg)"/><circle cx="16.8" cy="6.9" r="1.6" fill="url(#lg)"/><circle cx="12" cy="12.4" r="1.3" fill="#ff5da2"/><circle cx="6.9" cy="16.6" r="1.6" fill="url(#lg)"/><circle cx="17" cy="16.9" r="2" fill="url(#lg)"/></svg>
+<div><h1>random<span> source</span></h1><span class="tagline">энтропия → пул → результат</span></div>
+</div>
+<nav class="tabs" role="tablist" aria-label="Разделы приложения">
+<button class="tab-btn active" role="tab" aria-selected="true" data-action="tab" data-tab="source" id="tabbtn-source"><svg class="ic"><use href="#i-bolt"/></svg>Source<span class="tab-chip" data-chip="source">1</span></button>
+<button class="tab-btn" role="tab" aria-selected="false" data-action="tab" data-tab="mix" id="tabbtn-mix"><svg class="ic"><use href="#i-flask"/></svg>Mix<span class="tab-chip" data-chip="mix">—</span></button>
+<button class="tab-btn" role="tab" aria-selected="false" data-action="tab" data-tab="output" id="tabbtn-output"><svg class="ic"><use href="#i-dice"/></svg>Output<span class="tab-chip" data-chip="output">4</span></button>
+</nav>
+<div class="top-actions">
+<button class="icon-btn" data-action="theme-quick" id="themeQuick" aria-label="Переключить тему" data-tooltip="Светлая / тёмная тема"><svg class="ic"><use href="#i-sun"/></svg></button>
+<button class="icon-btn" data-action="open-settings" aria-label="Настройки" data-tooltip="Настройки"><svg class="ic"><use href="#i-gear"/></svg></button>
+</div>
+</div></header>
+
+<main class="app">
+<!-- ===== Вкладка SOURCE: только выбор источников ===== -->
+<section class="tabpane active" id="pane-source" role="tabpanel" aria-labelledby="tabbtn-source">
+<div class="pane-head">
+<div><h2>Источники <em>энтропии</em></h2><p>Выберите, откуда собирать случайность. У каждого источника — оценочная криптостойкость с пояснением. Подготовка каждого источника начинается сразу при добавлении. На Mix остаётся только смешивание готовых данных.</p></div>
+<div class="add-wrap"><button class="btn btn-primary" data-action="menu" data-menu="menu-sources"><svg class="ic"><use href="#i-plus"/></svg>Добавить источник</button><div class="menu" id="menu-sources" role="menu"></div></div>
+</div>
+<div class="grid" id="srcGrid"></div>
+<div class="flow-hint">
+<button class="flow-step" data-action="tab" data-tab="source"><span class="n">1</span>Выбрать источники</button>
+<svg class="ic"><use href="#i-arrow"/></svg>
+<button class="flow-step" data-action="tab" data-tab="mix"><span class="n">2</span>Собрать и смешать пул</button>
+<svg class="ic"><use href="#i-arrow"/></svg>
+<button class="flow-step" data-action="tab" data-tab="output"><span class="n">3</span>Получить результат</button>
+</div>
+<p class="hint"><svg class="ic"><use href="#i-info"/></svg>Данные источников подготавливаются сразу при добавлении карточки. Базовый CSPRNG нельзя удалить, но можно выключить. Данные обрабатываются локально, кроме явно обозначенных сетевых источников.</p>
+</section>
+
+<!-- ===== Вкладка MIX ===== -->
+<section class="tabpane" id="pane-mix" role="tabpanel" aria-labelledby="tabbtn-mix">
+<div class="pane-head">
+<div><h2>Смешивание <em>энтропии</em></h2><p>Источники уже подготовлены на вкладке Source. Здесь настройте цепочку шагов и смешайте сохранённые байты в пул. Итоговая оценка — эвристическая.</p></div>
+<button class="btn btn-primary" data-action="collect" id="collectBtn"><svg class="ic"><use href="#i-flask"/></svg><span>Собрать и смешать</span></button>
+</div>
+<div class="mix-grid">
+<div class="mix-col"><div class="card">
+<div class="card-head"><h3><svg class="ic"><use href="#i-sliders"/></svg>Пайплайн смешивания</h3>
+<div class="add-wrap"><button class="btn btn-sm" data-action="menu" data-menu="menu-steps"><svg class="ic"><use href="#i-plus"/></svg>Шаг</button><div class="menu" id="menu-steps" role="menu"></div></div></div>
+<ol class="pipeline" id="pipelineList"></ol>
+</div></div>
+<div class="mix-col"><div class="card" id="assessCard"></div><div class="card" id="poolCard"></div></div>
+</div>
+</section>
+
+<!-- ===== Вкладка OUTPUT ===== -->
+<section class="tabpane" id="pane-output" role="tabpanel" aria-labelledby="tabbtn-output">
+<div class="pane-head">
+<div><h2>Форматы <em>вывода</em></h2><p>Числа, сиды, выбор из списка, текст по алфавиту, кубики, UUID и даты. Можно добавлять несколько карточек одного типа с разными параметрами.</p></div>
+<div class="add-wrap"><button class="btn btn-primary" data-action="menu" data-menu="menu-formats"><svg class="ic"><use href="#i-plus"/></svg>Добавить формат</button><div class="menu" id="menu-formats" role="menu"></div></div>
+</div>
+<div class="out-banner" id="outBanner"></div>
+<div class="grid" id="outGrid"></div>
+</section>
+</main>
+<div id="modalRoot"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+/* ============================================================
+   1. УТИЛИТЫ
+   ============================================================ */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+/* Экранирование HTML для пользовательских строк */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = (n, cl) => `<svg class="ic ${cl || ''}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const utf8 = s => new TextEncoder().encode(s);
+const concatBytes = arrs => {
+  let n = 0; for (const a of arrs) n += a.length;
+  const out = new Uint8Array(n); let o = 0;
+  for (const a of arrs) { out.set(a, o); o += a.length; }
+  return out;
+};
+const toHex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let uidSeq = 0;
+const uid = p => p + (++uidSeq).toString(36) + '-' + Date.now().toString(36).slice(-4);
+/* Проверка целого параметра с понятной ошибкой */
+const readInt = (v, name, min, max) => {
+  const n = Number(v);
+  if (!Number.isFinite(n) || Math.round(n) !== n) throw new Error(`«${name}»: введите целое число от ${min} до ${max}.`);
+  if (n < min || n > max) throw new Error(`«${name}»: допустимый диапазон — от ${min} до ${max}.`);
+  return n;
+};
+const fmtTime = t => new Date(t).toLocaleTimeString('ru-RU');
+
+/* ============================================================
+   2. КРИПТОГРАФИЯ: SHA-256 / HMAC / HKDF на чистом JS —
+   работает офлайн и из file://, где crypto.subtle может быть недоступен.
+   ============================================================ */
+const SHA_K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256(data) {
+  const l = data.length, total = (((l + 8) >> 6) + 1) * 64;
+  const buf = new Uint8Array(total); buf.set(data); buf[l] = 0x80;
+  const dv = new DataView(buf.buffer), bits = l * 8;
+  dv.setUint32(total - 4, bits >>> 0);
+  dv.setUint32(total - 8, Math.floor(bits / 0x100000000));
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Uint32Array(64);
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const x = w[i-15], y = w[i-2];
+      const s0 = ((x>>>7)|(x<<25)) ^ ((x>>>18)|(x<<14)) ^ (x>>>3);
+      const s1 = ((y>>>17)|(y<<15)) ^ ((y>>>19)|(y<<13)) ^ (y>>>10);
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let i = 0; i < 64; i++) {
+      const S1 = ((e>>>6)|(e<<26)) ^ ((e>>>11)|(e<<21)) ^ ((e>>>25)|(e<<7));
+      const t1 = (h + S1 + ((e & f) ^ (~e & g)) + SHA_K[i] + w[i]) >>> 0;
+      const S0 = ((a>>>2)|(a<<30)) ^ ((a>>>13)|(a<<19)) ^ ((a>>>22)|(a<<10));
+      const t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32), ov = new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((hh, i) => ov.setUint32(i * 4, hh));
+  return out;
+}
+function hmacSha256(key, msg) {
+  if (key.length > 64) key = sha256(key);
+  const k = new Uint8Array(64); k.set(key);
+  const ip = new Uint8Array(64), op = new Uint8Array(64);
+  for (let i = 0; i < 64; i++) { ip[i] = k[i] ^ 0x36; op[i] = k[i] ^ 0x5c; }
+  return sha256(concatBytes([op, sha256(concatBytes([ip, msg]))]));
+}
+function hkdfSha256(ikm, salt, info, length) {
+  const prk = hmacSha256(salt, ikm);
+  const blocks = []; let t = new Uint8Array(0);
+  for (let i = 1; i <= Math.ceil(length / 32); i++) {
+    t = hmacSha256(prk, concatBytes([t, info, new Uint8Array([i])]));
+    blocks.push(t);
+  }
+  return concatBytes(blocks).slice(0, length);
+}
+const csRandom = n => { const b = new Uint8Array(n); crypto.getRandomValues(b); return b; };
+/* Несмещённые числа через rejection sampling */
+function csRandBelow(n) {
+  if (n === 1) return 0;
+  const lim = Math.floor(0x100000000 / n) * n, buf = new Uint32Array(1);
+  do { crypto.getRandomValues(buf); } while (buf[0] >= lim);
+  return buf[0] % n;
+}
+function randBelow(n, draw) {
+  if (n <= 1) return 0;
+  if (n > 2 ** 48) throw new Error('Диапазон слишком большой (максимум 2^48 значений).');
+  const lim = Math.floor(2 ** 48 / n) * n;
+  for (let t = 0; t < 10000; t++) {
+    const b = draw(6);
+    let v = 0; for (let j = 0; j < 6; j++) v = v * 256 + b[j];
+    if (v < lim) return v % n;
+  }
+  throw new Error('Не удалось получить несмещённое значение — попробуйте ещё раз.');
+}
+
+/* ============================================================
+   3. ДИСКЛЕЙМЕРЫ И ШКАЛА ОЦЕНКИ
+   ============================================================ */
+const DISCLAIMER_FULL = 'Оценка криптостойкости — эвристическая и ориентировочная. Она не является гарантией безопасности и не заменяет криптографический аудит. Не используйте результаты для защиты критичных секретов. Автор не несёт ответственности за последствия использования. Целевое использование приложения — получить случайное число, выбрать из списка, совершить бросок кубика и т.п. Использование результатов в качестве паролей — на ваш страх и риск; приложение ничего не хранит и не сохраняет.';
+const DISCLAIMER_SHORT = 'Оценка эвристическая и ориентировочная: это не гарантия безопасности и не криптографический аудит. Не используйте результаты для защиты критичных секретов. Полный текст — в настройках.';
+const DISCLAIMER_INLINE = 'Оценка эвристическая и ориентировочная — не гарантия безопасности и не криптографический аудит. Не используйте результаты для защиты критичных секретов.';
+const strengthInfo = s => s <= 1 ? { label: 'Слабый', cls: 'weak' } : s <= 3 ? { label: 'Средний', cls: 'mid' } : { label: 'Криптостойкий', cls: 'strong' };
+const badgeHTML = (score, tip) => {
+  const s = strengthInfo(score);
+  return `<span class="badge b-${s.cls}" tabindex="0" data-action="disclaimer" data-tooltip="${esc(tip || DISCLAIMER_SHORT)}"><span class="dot"></span>${s.label} · ${score}/5</span>`;
+};
+const meterHTML = score => {
+  const s = strengthInfo(score);
+  let d = ''; for (let i = 1; i <= 5; i++) d += `<i class="${i <= score ? 'on' : ''}"></i>`;
+  return `<span class="meter m-${s.cls}" aria-hidden="true">${d}</span>`;
+};
+const TAG_INFO = {
+  off: { label: 'офлайн', cls: 't-off' }, net: { label: 'нужен интернет', cls: 't-net' },
+  perm: { label: 'нужно разрешение', cls: 't-perm' }, file: { label: 'файл пользователя', cls: 't-file' },
+  sensor: { label: 'датчики', cls: 't-sensor' }, demo: { label: 'демо «как не надо»', cls: 't-demo' }
+};
+const tagsHTML = tags => tags.map(t => `<span class="tag ${TAG_INFO[t].cls}">${TAG_INFO[t].label}</span>`).join('');
+
+/* ============================================================
+   4. РЕЕСТР ИСТОЧНИКОВ (расширяемый): новый источник — одна
+   запись здесь; карточки и меню строятся автоматически.
+   Контракт: id, name, icon, short, long, strength 0–5, why,
+   goodFor, notFor, tags, timeout, order, collect(ctx)->Uint8Array.
+   ============================================================ */
+/* Выбор файла с аккуратной обработкой отмены */
+function pickFile(accept) {
+  return new Promise((resolve, reject) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept; inp.style.display = 'none';
+    document.body.appendChild(inp);
+    let done = false;
+    const finish = (fn, arg) => { if (done) return; done = true; cleanup(); fn(arg); };
+    const onFocus = () => setTimeout(() => { if (!done && (!inp.files || !inp.files.length)) finish(reject, new Error('Файл не выбран.')); }, 900);
+    const cleanup = () => { inp.remove(); window.removeEventListener('focus', onFocus); clearTimeout(guard); };
+    const guard = setTimeout(() => finish(reject, new Error('Выбор файла не состоялся (истекло время ожидания).')), 120000);
+    inp.addEventListener('change', () => { const f = inp.files && inp.files[0]; f ? finish(resolve, f) : finish(reject, new Error('Файл не выбран.')); });
+    inp.addEventListener('cancel', () => finish(reject, new Error('Выбор файла отменён.')));
+    window.addEventListener('focus', onFocus);
+    inp.click();
+  });
+}
+const loadImage = url => new Promise((res, rej) => {
+  const im = new Image();
+  im.onload = () => res(im);
+  im.onerror = () => rej(new Error('неподдерживаемое изображение'));
+  im.src = url;
+});
+/* Busy-работа для джиттера таймеров (без Math.random!) */
+const busy = n => { let x = 0; for (let j = 0; j < n; j++) x += Math.sqrt(j + 1); return x; };
+const netGuard = () => { if (typeof fetch !== 'function' || typeof AbortController !== 'function') throw new Error('Сетевые запросы недоступны в этом браузере.'); };
+
+const SOURCES = [
+  { id: 'csprng', name: 'crypto.getRandomValues()', icon: 'shield', strength: 5, tags: ['off'], timeout: 3000, order: 3,
+    short: 'Браузерный CSPRNG — системная энтропия ОС, включая аппаратные источники.',
+    long: 'Основной источник. Обращается к криптографическому ГПСЧ браузера, засеянному энтропией ОС (аппаратные источники, прерывания, системные события). Работает офлайн и мгновенно.',
+    why: 'CSPRNG спроектирован для криптографии: выход непредсказуем даже при знании предыдущих значений.',
+    goodFor: 'Любые задачи, включая чувствительные: ключи, токены, жеребьёвки.',
+    notFor: 'Ограничений почти нет; вы доверяете реализации браузера и ОС.',
+    collect: async () => csRandom(64) },
+  { id: 'subtle', name: 'Web Crypto: crypto.subtle (усилитель)', icon: 'key', strength: 5, tags: ['off'], timeout: 4000, order: 3,
+    short: 'Расширение пула хешами SHA-256 от случайного зерна CSPRNG.',
+    long: 'Источник-«усилитель»: 32 случайных байта расширяются через crypto.subtle.digest(). Новой независимой энтропии не создаёт — вся случайность исходит из CSPRNG.',
+    why: 'Криптостойкость наследуется от CSPRNG и SHA-256; это деривация, а не независимый источник.',
+    goodFor: 'Расширение пула, демонстрация деривации, криптозадачи вместе с CSPRNG.',
+    notFor: 'Роль «независимого второго источника»; контекст без subtle.',
+    collect: async () => {
+      if (!crypto.subtle) throw new Error('crypto.subtle недоступен в этом контексте.');
+      const seed = csRandom(32);
+      const d1 = new Uint8Array(await crypto.subtle.digest('SHA-256', concatBytes([seed, utf8('rs/1')])));
+      const d2 = new Uint8Array(await crypto.subtle.digest('SHA-256', concatBytes([seed, utf8('rs/2')])));
+      return concatBytes([seed, d1, d2]);
+    } },
+  { id: 'mic', name: 'Шум с микрофона', icon: 'mic', strength: 2, tags: ['off', 'perm'], timeout: 20000, order: 1,
+    short: 'getUserMedia + AnalyserNode: сырые сэмплы окружающего шума (~1 с).',
+    long: 'Запрашивает микрофон и читает временные сэмплы через Web Audio. Шум АЦП и звуки окружения дают реальную энтропию, но в тишине сигнал почти константа — приложение предупредит.',
+    why: 'Зависит от окружения: тишина даёт мало энтропии; возможны предсказуемые паттерны (фон сети, обработка драйвером).',
+    goodFor: 'Дополнительная «соль» к CSPRNG, демонстрация физической энтропии.',
+    notFor: 'Единственный источник для важного; требует разрешения.',
+    collect: async ctx => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia не поддерживается (нужен безопасный контекст).');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      try {
+        ctx.progress('Слушаю микрофон ~1 с…');
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ac = new AC();
+        if (ac.state === 'suspended') await ac.resume();
+        const an = ac.createAnalyser(); an.fftSize = 2048;
+        ac.createMediaStreamSource(stream).connect(an);
+        const frames = [], arr = new Uint8Array(an.fftSize);
+        for (let i = 0; i < 10; i++) { await sleep(90); an.getByteTimeDomainData(arr); frames.push(arr.slice()); }
+        const all = concatBytes(frames);
+        let energy = 0; for (const v of all) energy += Math.abs(v - 128);
+        await ac.close();
+        if (energy < all.length * 0.05) ctx.warn('Микрофон: почти тишина — энтропии в сэмплах мало.');
+        return all;
+      } finally { stream.getTracks().forEach(t => t.stop()); }
+    } },
+  { id: 'weather', name: 'Погода через API', icon: 'cloud', strength: 1, tags: ['net'], timeout: 9000, order: 2,
+    short: 'Open-Meteo (без ключа): текущая погода как байты JSON.',
+    long: 'Запрашивает текущую погоду для Москвы у открытого API open-meteo.com (аналог OpenWeatherMap, но без ключа). Температура, ветер и код погоды сериализуются в байты; данные меняются медленно.',
+    why: 'Мало энтропии: узкие диапазоны, медленные изменения, наблюдатель может узнать те же данные; плюс задержка запроса.',
+    goodFor: 'Экзотическая «соль», демонстрация внешних источников.',
+    notFor: 'Самостоятельный источник; задачи без интернета.',
+    collect: async ctx => {
+      netGuard();
+      ctx.progress('Запрос к open-meteo.com…');
+      const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 7000);
+      try {
+        const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current_weather=true', { signal: ctrl.signal, cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        const bytes = utf8(JSON.stringify(j.current_weather || j)).slice(0, 2048);
+        if (bytes.length < 8) throw new Error('API вернул пустые данные');
+        return bytes;
+      } catch (e) {
+        if (e && e.name === 'AbortError') throw new Error('Таймаут запроса погоды (7 с). Проверьте интернет.');
+        throw new Error('Погода недоступна: ' + (e && e.message ? e.message : 'нет сети') + '. Нужен интернет.');
+      } finally { clearTimeout(t); }
+    } },
+  { id: 'math', name: 'Math.random()', icon: 'alert', strength: 0, tags: ['off', 'demo'], timeout: 3000, order: 3,
+    short: 'Некриптостойкий PRNG движка JS — демонстрация «плохого» источника.',
+    long: 'Быстрый генератор движка (обычно xorshift128+): состояние восстанавливается по десяткам выходов. Добавлен намеренно, чтобы показать влияние слабого источника. Для итогов не используется никогда.',
+    why: 'Состояние восстанавливается по выходам, seed предсказуем. Категорически не криптостойкий.',
+    goodFor: 'Демонстрация «как не надо», несерьёзные визуальные эффекты.',
+    notFor: 'Всё, где важна непредсказуемость: от призовой жеребьёвки до секретов.',
+    collect: async () => { const b = new Uint8Array(64); for (let i = 0; i < 64; i++) b[i] = Math.floor(Math.random() * 256); return b; } },
+  { id: 'time', name: 'Время: Date.now()', icon: 'clock', strength: 1, tags: ['off'], timeout: 3000, order: 3,
+    short: 'Timestamp в миллисекундах + младшие байты серии замеров.',
+    long: 'Кодирует текущий timestamp и младшие байты последовательных замеров Date.now() с работой между ними. Классическая «соль», но атакующий обычно знает примерное время генерации.',
+    why: 'Предсказуемо с точностью до секунд; младшие биты дают лишь несколько бит энтропии.',
+    goodFor: 'Дополнительная «соль», учебные демонстрации.',
+    notFor: 'Самостоятельный источник; всё непредсказуемое.',
+    collect: async () => {
+      const out = [], now = Date.now();
+      for (let i = 7; i >= 0; i--) out.push(Math.floor(now / 2 ** (i * 8)) & 0xff);
+      for (let i = 0; i < 24; i++) { busy(300); out.push(Date.now() & 0xff); }
+      return Uint8Array.from(out);
+    } },
+  { id: 'nettiming', name: 'Тайминги сетевых запросов', icon: 'wifi', strength: 1, tags: ['net'], timeout: 25000, order: 2,
+    short: 'Джиттер задержки ответа: 5 запросов, дробные миллисекунды.',
+    long: 'Выполняет лёгкие запросы (generate_204) и записывает высокоточные задержки как float64-байты. Сетевой джиттер — реальный шум, но неравномерный и частично наблюдаемый для сетевого наблюдателя.',
+    why: 'Задержки кластеризуются вокруг типичных значений; часть джиттера видна наблюдателю. Энтропии немного.',
+    goodFor: 'Дополнительная «соль» при наличии интернета.',
+    notFor: 'Офлайн (честно сообщит об ошибке); самостоятельное использование.',
+    collect: async ctx => {
+      netGuard();
+      const deltas = [];
+      for (let i = 0; i < 5; i++) {
+        ctx.progress(`Замер задержки ${i + 1}/5…`);
+        const t0 = performance.now(), ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 4000);
+        try { await fetch('https://www.gstatic.com/generate_204?rs=' + Date.now() + '-' + i, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal }); }
+        catch (e) { clearTimeout(to); throw new Error('Сеть недоступна — тайминги не измерить. Нужен интернет.'); }
+        clearTimeout(to);
+        deltas.push(performance.now() - t0);
+      }
+      const b = new Uint8Array(deltas.length * 8), dv = new DataView(b.buffer);
+      deltas.forEach((d, i) => dv.setFloat64(i * 8, d));
+      return b;
+    } },
+  { id: 'input', name: 'Мышь и клавиатура', icon: 'cursor', strength: 2, tags: ['off'], timeout: 12000, order: 1,
+    short: 'Тайминги движений мыши и нажатий клавиш (нужно взаимодействие).',
+    long: 'До 8 секунд слушает pointermove и keydown, записывая тайминги и координаты. Моторика — неплохой шум, но только при активном взаимодействии; без него источник вернёт ошибку.',
+    why: 'Энтропия есть только при взаимодействии; тайминги ограничены разрешением таймера и частично предсказуемы.',
+    goodFor: 'Дополнительная энтропия к CSPRNG, интерактивные демо.',
+    notFor: 'Автоматические сценарии без пользователя; единственный источник.',
+    collect: ctx => new Promise((resolve, reject) => {
+      const samples = [];
+      const push = v => { samples.push(v); if (samples.length % 30 === 0) ctx.progress('Собрано отсчётов: ' + Math.floor(samples.length / 3) + '…'); };
+      const onMove = e => { push(e.timeStamp); push(e.clientX || 0); push(e.clientY || 0); if (samples.length >= 300) finish(); };
+      const onKey = e => { push(e.timeStamp); push(e.keyCode || 0); if (samples.length >= 300) finish(); };
+      const timer = setTimeout(finish, 8000);
+      const cleanup = () => { clearTimeout(timer); window.removeEventListener('pointermove', onMove); window.removeEventListener('keydown', onKey); };
+      function finish() {
+        cleanup();
+        if (samples.length >= 12) {
+          const b = new Uint8Array(Math.min(samples.length, 512));
+          for (let i = 0; i < b.length; i++) b[i] = Math.floor(samples[i]) & 0xff;
+          resolve(b);
+        } else reject(new Error('Слишком мало взаимодействий. Запустите сбор снова и активно двигайте мышью / нажимайте клавиши.'));
+      }
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('keydown', onKey);
+      ctx.progress('Двигайте мышью или нажимайте клавиши (до 8 с)…');
+    }) },
+  { id: 'motion', name: 'Датчики движения устройства', icon: 'motion', strength: 2, tags: ['off', 'perm', 'sensor'], timeout: 15000, order: 1,
+    short: 'DeviceMotion / DeviceOrientation: акселерометр и гироскоп (~2 с).',
+    long: 'Собирает показания акселерометра и гироскопа. На мобильных шум сенсоров реален; на ПК датчиков обычно нет — источник сообщит. На iOS нужно явное разрешение.',
+    why: 'Шум МЭМС-сенсоров есть, но стационарное устройство даёт почти константу; часть показаний предсказуема (гравитация).',
+    goodFor: 'Дополнительная энтропия на мобильных, физические демо.',
+    notFor: 'Десктопы без датчиков; единственный источник.',
+    collect: async ctx => {
+      const DME = window.DeviceMotionEvent, DOE = window.DeviceOrientationEvent;
+      if (!DME && !DOE) throw new Error('Датчики движения не поддерживаются этим устройством/браузером.');
+      if (DME && typeof DME.requestPermission === 'function') {
+        const p = await DME.requestPermission();
+        if (p !== 'granted') throw new Error('Доступ к датчикам движения запрещён пользователем.');
+      }
+      return new Promise((resolve, reject) => {
+        const samples = [];
+        const h = e => {
+          const a = e.accelerationIncludingGravity || e.acceleration;
+          if (a) samples.push(a.x || 0, a.y || 0, a.z || 0);
+          if (e.alpha != null) samples.push(e.alpha, e.beta || 0, e.gamma || 0);
+        };
+        window.addEventListener('devicemotion', h);
+        window.addEventListener('deviceorientation', h);
+        ctx.progress('Читаю датчики ~2 с… (можно слегка потрясти устройство)');
+        setTimeout(() => {
+          window.removeEventListener('devicemotion', h);
+          window.removeEventListener('deviceorientation', h);
+          if (samples.length < 6) return reject(new Error('Датчики не прислали данных: стационарное устройство или нет сенсоров.'));
+          const use = samples.slice(0, 256), b = new Uint8Array(use.length * 4), dv = new DataView(b.buffer);
+          use.forEach((v, i) => dv.setFloat32(i * 4, v));
+          resolve(b);
+        }, 2200);
+      });
+    } },
+  { id: 'perf', name: 'Performance.now()', icon: 'gauge', strength: 1, tags: ['off'], timeout: 5000, order: 3,
+    short: 'Высокое разрешение таймера: дробные микросекунды под нагрузкой.',
+    long: 'Многократно замеряет performance.now() между вычислениями и берёт дробные биты. Разрешение часто огрублено браузером (защита от Spectre), поэтому энтропия зависит от окружения.',
+    why: 'Таймер огрублён политиками браузера; джиттер мал и частично предсказуем.',
+    goodFor: 'Лёгкая «соль» офлайн, демонстрация микротаймингов.',
+    notFor: 'Самостоятельный источник; окружения с фиксированным таймером.',
+    collect: async () => {
+      if (!window.performance || !performance.now) throw new Error('performance.now() не поддерживается.');
+      const out = [];
+      for (let i = 0; i < 128; i++) {
+        busy(150 + (i % 7) * 30);
+        const f = Math.floor((performance.now() % 1) * 1e6);
+        out.push(f & 0xff, (f >>> 8) & 0xff);
+      }
+      return Uint8Array.from(out);
+    } },
+  { id: 'raf', name: 'Джиттер кадров (requestAnimationFrame)', icon: 'activity', strength: 1, tags: ['off'], timeout: 8000, order: 3,
+    short: 'Нерегулярность интервалов между кадрами рендера (~48 кадров).',
+    long: 'Измеряет интервалы между кадрами rAF и кодирует дробные части дельт. Планировщик ОС и нагрузка GPU делают интервалы слегка нерегулярными — небольшой физический джиттер.',
+    why: 'Интервалы стремятся к периоду развёртки (16.7 мс); джиттер мал и зависит от нагрузки.',
+    goodFor: 'Дополнительная «соль» офлайн, демонстрация системного шума.',
+    notFor: 'Фоновые вкладки (rAF ограничивается); самостоятельный источник.',
+    collect: () => new Promise((resolve, reject) => {
+      if (!window.requestAnimationFrame) return reject(new Error('requestAnimationFrame не поддерживается.'));
+      const deltas = []; let last = performance.now();
+      const tick = t => {
+        deltas.push(t - last); last = t;
+        if (deltas.length >= 48) {
+          const b = new Uint8Array(deltas.length * 2);
+          deltas.forEach((d, i) => { const v = Math.floor((d % 1) * 10000) & 0xffff; b[i*2] = v & 255; b[i*2+1] = v >> 8; });
+          resolve(b);
+        } else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }) },
+  { id: 'geo', name: 'Геолокация', icon: 'pin', strength: 1, tags: ['off', 'perm'], timeout: 12000, order: 1,
+    short: 'navigator.geolocation: координаты, точность и время фикса.',
+    long: 'Запрашивает позицию (с разрешения) и кодирует широту, долготу, точность и timestamp как float64-байты. Координаты меняются медленно и известны наблюдателю рядом с вами.',
+    why: 'Позиция почти константна и часто известна атакующему; энтропия лишь в шуме GPS-фикса.',
+    goodFor: 'Экзотическая «соль», демо источников с разрешением.',
+    notFor: 'Сценарии без разрешения; приватные задачи; единственный источник.',
+    collect: ctx => new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject(new Error('Геолокация не поддерживается этим браузером.'));
+      ctx.progress('Ожидаю разрешение и фикс геолокации…');
+      navigator.geolocation.getCurrentPosition(p => {
+        const b = new Uint8Array(40), dv = new DataView(b.buffer);
+        dv.setFloat64(0, p.coords.latitude); dv.setFloat64(8, p.coords.longitude);
+        dv.setFloat64(16, p.coords.accuracy || 0); dv.setFloat64(24, p.coords.altitude || 0);
+        dv.setFloat64(32, p.timestamp);
+        resolve(b);
+      }, err => reject(new Error('Геолокация: ' + ({1:'доступ запрещён пользователем',2:'позиция недоступна',3:'таймаут ожидания'}[err.code] || err.message) + '.')),
+      { timeout: 9000, maximumAge: 0 });
+    }) },
+  { id: 'battery', name: 'Батарея / состояние устройства', icon: 'battery', strength: 1, tags: ['off', 'sensor'], timeout: 5000, order: 3,
+    short: 'Battery API: уровень заряда, статус и тайминги зарядки.',
+    long: 'Читает navigator.getBattery(): уровень, флаг зарядки, время до заряда/разряда. Значения слегка меняются со временем. API есть не везде (в Firefox и Safari отсутствует).',
+    why: 'Значения почти константны в пределах сессии; энтропии — доли бита.',
+    goodFor: 'Демонстрация «состояния устройства» как слабой соли.',
+    notFor: 'Неподдерживаемые браузеры; серьёзные задачи.',
+    collect: async () => {
+      if (!navigator.getBattery) throw new Error('Battery API не поддерживается этим браузером (например, Firefox/Safari).');
+      const bt = await navigator.getBattery();
+      const b = new Uint8Array(40), dv = new DataView(b.buffer);
+      dv.setFloat64(0, bt.level); dv.setUint8(8, bt.charging ? 1 : 0);
+      dv.setFloat64(16, isFinite(bt.chargingTime) ? bt.chargingTime : 0);
+      dv.setFloat64(24, isFinite(bt.dischargingTime) ? bt.dischargingTime : 0);
+      dv.setFloat64(32, Date.now() % 1e7);
+      return b;
+    } },
+  { id: 'connection', name: 'Данные о сети', icon: 'signal', strength: 1, tags: ['off'], timeout: 4000, order: 3,
+    short: 'navigator.connection: тип соединения, downlink, RTT.',
+    long: 'Кодирует effectiveType, downlink, RTT и saveData из Network Information API плюс младшие байты времени. Параметры сети меняются редко и принимают считанные значения.',
+    why: 'Крайне низкая энтропия: несколько дискретных, почти константных значений.',
+    goodFor: 'Демонстрация пассивных источников-«солей».',
+    notFor: 'Браузеры без поддержки API; серьёзные задачи.',
+    collect: async () => {
+      const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (!c) throw new Error('Network Information API не поддерживается этим браузером.');
+      return utf8([c.effectiveType || '', c.type || '', String(c.downlink || 0), String(c.rtt || 0), String(c.saveData || false), String(Date.now() & 0xffff)].join('|'));
+    } },
+  { id: 'randomorg', name: 'random.org (атмосферный шум)', icon: 'globe', strength: 3, tags: ['net'], timeout: 9000, order: 2,
+    short: 'Публичный API истинной случайности на атмосферном шуме.',
+    long: 'Запрашивает 64 байта у random.org — сервиса на атмосферном шуме. Случайность истинная, но вы доверяете сервису и каналу: наблюдатель сети теоретически видит ответ. Есть дневные лимиты.',
+    why: 'Истинная случайность, но криптография требует доверия к третьей стороне и конфиденциальности канала — оценка «средний».',
+    goodFor: 'Жеребьёвки, лотереи, демо истинной случайности; примесь к CSPRNG.',
+    notFor: 'Секреты от третьих лиц; офлайн; массовые запросы (лимиты).',
+    collect: async ctx => {
+      netGuard();
+      ctx.progress('Запрос к random.org…');
+      const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 7000);
+      try {
+        const r = await fetch('https://www.random.org/integers/?num=64&min=0&max=255&col=1&base=10&format=plain&rnd=new', { signal: ctrl.signal, cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' (возможно, дневной лимит)');
+        const nums = (await r.text()).trim().split(/\s+/).map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 255);
+        if (nums.length < 16) throw new Error('сервис вернул некорректные данные');
+        return Uint8Array.from(nums);
+      } catch (e) {
+        if (e && e.name === 'AbortError') throw new Error('Таймаут запроса random.org (7 с).');
+        throw new Error('random.org недоступен: ' + (e && e.message ? e.message : 'сеть/CORS') + '.');
+      } finally { clearTimeout(t); }
+    } },
+  { id: 'photo', name: 'Пиксели вашей фотографии', icon: 'image', strength: 2, tags: ['off', 'file'], timeout: 130000, order: 0,
+    short: 'Файл → canvas → getImageData: шум матрицы и текстур.',
+    long: 'При добавлении карточки откроется выбор изображения. Файл рисуется на canvas локально, сырые RGBA-байты становятся энтропией. Шумные уникальные фото (высокий ISO, текстуры) лучше; однородные и сжатые — хуже.',
+    why: 'Шум сенсора случаен, но сжатие и однородные области убивают энтропию; фото может быть известно атакующему.',
+    goodFor: 'Творческая «соль» к CSPRNG, демо энтропии в данных.',
+    notFor: 'Публичные/однородные изображения; единственный источник.',
+    collect: async ctx => {
+      const file = await pickFile('image/*');
+      ctx.progress(`Читаю пиксели «${file.name}»…`);
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await loadImage(url);
+        const scale = Math.min(1, 512 / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const g = canvas.getContext('2d', { willReadFrequently: true });
+        g.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const data = g.getImageData(0, 0, canvas.width, canvas.height).data;
+        const out = new Uint8Array(Math.min(4096, data.length));
+        const stride = Math.max(1, Math.floor(data.length / out.length));
+        for (let i = 0; i < out.length; i++) out[i] = data[i * stride];
+        if (new Set(out).size < 8) ctx.warn('Фото почти однородное — энтропии в пикселях мало.');
+        return out;
+      } catch (e) {
+        throw new Error('Не удалось прочитать изображение: ' + (e && e.message ? e.message : 'неподдерживаемый формат') + '.');
+      } finally { URL.revokeObjectURL(url); }
+    } },
+  { id: 'audiofile', name: 'Сэмплы вашего аудиофайла', icon: 'music', strength: 2, tags: ['off', 'file'], timeout: 130000, order: 0,
+    short: 'Файл → decodeAudioData: младшие байты сырых сэмплов.',
+    long: 'При добавлении карточки откроется выбор аудиофайла. Он декодируется локально через Web Audio; младшие байты мантисс float-сэмплов становятся энтропией. Живые шумные записи лучше; тишина и сжатие — хуже. Файл никуда не отправляется.',
+    why: 'Шум записи случаен, но тишина, синтез и компрессия делают сэмплы предсказуемыми; файл может быть известен атакующему.',
+    goodFor: 'Творческая «соль» к CSPRNG, демо энтропии в медиа.',
+    notFor: 'Тихие/синтетические файлы; единственный источник.',
+    collect: async ctx => {
+      const file = await pickFile('audio/*');
+      ctx.progress(`Декодирую «${file.name}»…`);
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error('Web Audio API не поддерживается этим браузером.');
+      const ac = new AC();
+      try {
+        const buf = await ac.decodeAudioData(await file.arrayBuffer());
+        const ch = buf.getChannelData(0);
+        if (!ch.length) throw new Error('пустой аудиопоток');
+        const view = new Uint8Array(ch.buffer, ch.byteOffset, ch.byteLength);
+        const out = new Uint8Array(Math.min(4096, Math.floor(view.length / 2)));
+        const stride = Math.max(2, 2 * Math.floor(view.length / (out.length * 2)));
+        for (let i = 0; i < out.length; i++) out[i] = view[i * stride];
+        let nz = 0; for (const v of out) if (v !== 0) nz++;
+        if (nz < out.length * 0.05) ctx.warn('Аудио почти тихое — энтропии в сэмплах мало.');
+        return out;
+      } catch (e) {
+        throw new Error('Не удалось декодировать аудио: ' + (e && e.message ? e.message : 'формат не поддерживается') + '.');
+      } finally { try { ac.close(); } catch (e) {} }
+    } }
+];
+const SRC_BY_ID = Object.fromEntries(SOURCES.map(s => [s.id, s]));
+
+/* ============================================================
+   5. ШАГИ ПАЙПЛАЙНА СМЕШИВАНИЯ
+   ============================================================ */
+const STEPS = {
+  xor: { name: 'XOR-свёртка', icon: 'xor',
+    desc: 'Побайтовый XOR всех данных в 32-байтовый блок. Сохраняет энтропию независимых источников, но не выравнивает смещения.',
+    apply: b => { const o = new Uint8Array(32); for (let i = 0; i < b.length; i++) o[i % 32] ^= b[i]; return o; } },
+  sha256: { name: 'SHA-256', icon: 'hash',
+    desc: 'Хеш конкатенации байтов: сжимает вход в 32 байта и равномерно «размазывает» энтропию.',
+    apply: b => sha256(b) },
+  hkdf: { name: 'HKDF-SHA256', icon: 'drop',
+    desc: 'Extract + Expand: извлекает ключевой материал и расширяет пул до 64 байт (RFC 5869).',
+    apply: b => hkdfSha256(b, utf8('random-source/salt'), utf8('random-source/pool'), 64) },
+  shuffle: { name: 'Перемешивание байтов', icon: 'shuffle',
+    desc: 'Fisher–Yates с индексами из CSPRNG. Перестановка меняет порядок, но сама энтропию не добавляет.',
+    apply: b => { const o = b.slice(); for (let i = o.length - 1; i > 0; i--) { const j = csRandBelow(i + 1); const t = o[i]; o[i] = o[j]; o[j] = t; } return o; } },
+  mathrand: { name: 'Примесь Math.random()', icon: 'alert', danger: true,
+    desc: 'Намеренно плохой шаг («как не надо»): подмешивает предсказуемые байты XOR-ом. Понижает оценку, особенно в конце.',
+    apply: b => { const o = b.slice(); for (let i = 0; i < o.length; i++) o[i] ^= Math.floor(Math.random() * 256); return o; } }
+};
+const STEP_ORDER = ['xor', 'sha256', 'hkdf', 'shuffle', 'mathrand'];
+
+/* ============================================================
+   6. ЭВРИСТИЧЕСКАЯ ИТОГОВАЯ ОЦЕНКА (0–5):
+   функция от источников и шагов пайплайна.
+   ============================================================ */
+function evaluateStrength(srcs, steps) {
+  const reasons = [];
+  if (!srcs.length) return { score: 0, reasons: [{ t: 'bad', text: 'Нет включённых источников — собирать нечего.' }] };
+  const maxS = Math.max.apply(null, srcs.map(s => s.strength));
+  const cryptoSrcs = srcs.filter(s => s.strength >= 4);
+  const hasCrypto = cryptoSrcs.length > 0;
+  const proper = steps.some(t => t === 'xor' || t === 'sha256' || t === 'hkdf');
+  const hasHash = steps.some(t => t === 'sha256' || t === 'hkdf');
+  let score;
+  if (hasCrypto) {
+    if (proper) {
+      score = hasHash ? 5 : 4;
+      reasons.push({ t: 'good', text: `Криптостойкий источник (${cryptoSrcs.map(s => s.name).join(', ')}) корректно смешан через ${hasHash ? 'хеш/HKDF' : 'XOR'}.` });
+      if (!hasHash) reasons.push({ t: 'info', text: 'XOR сохраняет энтропию, но хеш (SHA-256/HKDF) выравнивает распределение лучше.' });
+    } else {
+      score = 3;
+      reasons.push({ t: 'warn', text: 'Криптостойкий источник есть, но пайплайн не выполняет корректного смешивания — оценка снижена.' });
+    }
+  } else {
+    score = Math.min(maxS, 3);
+    if (maxS <= 1) {
+      score = Math.min(score, 1);
+      reasons.push({ t: 'bad', text: 'Все источники слабые. Смешивание не создаёт энтропию из воздуха — итог остаётся слабым.' });
+    } else {
+      reasons.push({ t: 'warn', text: 'Лучшие источники — среднего качества; без CSPRNG итог не может быть криптостойким.' });
+      if (hasHash && srcs.length >= 2 && maxS >= 2) {
+        score = 3;
+        reasons.push({ t: 'info', text: 'Несколько независимых источников среднего качества, объединённых хешем — оценка поднята до средней.' });
+      }
+    }
+    if (!proper) { score = Math.max(0, score - 1); reasons.push({ t: 'bad', text: 'Нет ни одного корректного шага смешивания (XOR / SHA-256 / HKDF).' }); }
+  }
+  const mi = steps.indexOf('mathrand');
+  if (mi >= 0) {
+    const last = mi === steps.length - 1;
+    score = Math.min(score, last ? 1 : 2);
+    reasons.push({ t: 'bad', text: last ? 'Math.random() в конце пайплайна портит результат: итог понижен до «слабого».' : 'Примесь Math.random() в пайплайне снижает итоговую оценку.' });
+  }
+  if (!steps.length) reasons.push({ t: 'warn', text: 'Пайплайн пуст: байты источников просто склеиваются без обработки.' });
+  return { score, reasons };
+}
+
+/* ============================================================
+   7. ФОРМАТЫ ВЫВОДА (паролей нет).
+   ============================================================ */
+const FORMATS = {
+  seed: { name: 'Случайный сид', icon: 'seed', desc: 'Случайные байты заданной длины в hex или base64.',
+    defaults: () => ({ length: 16, format: 'hex' }),
+    paramsHTML: (u, p) => `<div class="param-row"><div class="field"><label>Длина, байт</label><input type="number" min="1" max="256" value="${p.length}" data-bind="${u}.length" data-num="1"></div><div class="field"><label>Кодировка</label><select data-bind="${u}.format"><option value="hex"${p.format === 'hex' ? ' selected' : ''}>Hex</option><option value="base64"${p.format === 'base64' ? ' selected' : ''}>Base64</option></select></div></div>`,
+    generate: (p, draw) => {
+      const len = readInt(p.length, 'Длина', 1, 256), b = draw(len);
+      const value = p.format === 'base64' ? btoa(String.fromCharCode.apply(null, b)) : toHex(b);
+      return { value, html: `<div class="mono-val">${esc(value)}</div>`, meta: `${len} байт · ${p.format}` };
+    } },
+  number: { name: 'Число в диапазоне', icon: 'hash', desc: 'Равномерное целое между min и max включительно, без смещения.',
+    defaults: () => ({ min: 1, max: 100 }),
+    paramsHTML: (u, p) => `<div class="param-row"><div class="field"><label>Минимум</label><input type="number" value="${p.min}" data-bind="${u}.min" data-num="1"></div><div class="field"><label>Максимум</label><input type="number" value="${p.max}" data-bind="${u}.max" data-num="1"></div></div>`,
+    generate: (p, draw) => {
+      if (String(p.min).trim() === '' || String(p.max).trim() === '') throw new Error('Заполните оба поля: минимум и максимум.');
+      const min = Number(p.min), max = Number(p.max);
+      if (!Number.isInteger(min) || !Number.isInteger(max)) throw new Error('Минимум и максимум должны быть целыми числами.');
+      if (min > max) throw new Error('Минимум больше максимума — поменяйте значения местами.');
+      if (Math.abs(min) > 1e12 || Math.abs(max) > 1e12) throw new Error('Слишком большие значения: допустимо до ±1 000 000 000 000.');
+      const span = max - min + 1;
+      if (span > 1e12) throw new Error('Диапазон слишком широк (максимум 10^12 значений).');
+      const v = min + randBelow(span, draw);
+      return { value: String(v), html: `<div class="big-num">${v.toLocaleString('ru-RU')}</div>`, meta: `диапазон ${min}…${max}` };
+    } },
+  choice: { name: 'Выбор из списка', icon: 'list', desc: 'Один случайный вариант из добавленных элементов.',
+    defaults: () => ({ list: ['Пицца', 'Суши', 'Паста', 'Рамен', 'Том ям'] }),
+    paramsHTML: (u, p) => {
+      const items = (Array.isArray(p.list) ? p.list : String(p.list || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean);
+      return `<div class="field"><label>Варианты</label><div class="choice-editor"><div class="choice-entry"><input type="text" data-choice-input="${u}" placeholder="Введите вариант…" autocomplete="off"><button type="button" class="btn choice-add" data-action="choice-add" data-uid="${u}" aria-label="Добавить вариант" title="Добавить вариант">${icon('plus')}</button></div><div class="choice-bubbles" data-choice-list="${u}">${items.length ? items.map((item, i) => `<span class="choice-bubble"><span>${esc(item)}</span><button type="button" data-action="choice-remove" data-uid="${u}" data-index="${i}" aria-label="Удалить ${esc(item)}">${icon('x')}</button></span>`).join('') : '<span class="choice-empty">Пока нет вариантов — добавьте первый выше.</span>'}</div></div></div>`;
+    },
+    generate: (p, draw) => {
+      const lines = (Array.isArray(p.list) ? p.list : String(p.list || '').split(/\r?\n/)).map(s => String(s).trim()).filter(Boolean);
+      if (!lines.length) throw new Error('Список пуст — добавьте хотя бы один вариант.');
+      const i = randBelow(lines.length, draw);
+      return { value: lines[i], html: `<div class="choice-val">${esc(lines[i])}</div>`, meta: `вариант ${i + 1} из ${lines.length}` };
+    } },
+  text: { name: 'Текст по алфавиту', icon: 'type', desc: 'Случайная строка заданной длины из вашего набора символов.',
+    defaults: () => ({ alphabet: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', length: 12 }),
+    paramsHTML: (u, p) => `<div class="field"><label>Алфавит (символы)</label><input type="text" value="${esc(p.alphabet)}" data-bind="${u}.alphabet"></div><div class="param-row" style="margin-top:10px"><div class="field"><label>Длина строки</label><input type="number" min="1" max="512" value="${p.length}" data-bind="${u}.length" data-num="1"></div></div>`,
+    generate: (p, draw) => {
+      const alpha = Array.from(String(p.alphabet || ''));
+      if (!alpha.length) throw new Error('Алфавит пуст — введите хотя бы один символ.');
+      const len = readInt(p.length, 'Длина строки', 1, 512);
+      let s = ''; for (let i = 0; i < len; i++) s += alpha[randBelow(alpha.length, draw)];
+      return { value: s, html: `<div class="mono-val">${esc(s)}</div>`, meta: `${len} симв. · алфавит ${alpha.length} симв.` };
+    } },
+  dice: { name: 'Кубики', icon: 'dice', desc: 'Бросок N кубиков с заданным числом граней. Без анимации.',
+    defaults: () => ({ count: 2, sides: 6 }),
+    paramsHTML: (u, p) => `<div class="param-row"><div class="field"><label>Кубиков</label><input type="number" min="1" max="20" value="${p.count}" data-bind="${u}.count" data-num="1"></div><div class="field"><label>Граней</label><input type="number" min="2" max="100" value="${p.sides}" data-bind="${u}.sides" data-num="1"></div></div><div class="presets">${[4,6,8,10,12,20,100].map(s => `<button class="preset${p.sides === s ? ' on' : ''}" data-action="preset-sides" data-uid="${u}" data-sides="${s}">d${s}</button>`).join('')}</div>`,
+    generate: (p, draw) => {
+      const count = readInt(p.count, 'Кубиков', 1, 20), sides = readInt(p.sides, 'Граней', 2, 100);
+      const rolls = []; for (let i = 0; i < count; i++) rolls.push(randBelow(sides, draw) + 1);
+      const sum = rolls.reduce((a, b) => a + b, 0);
+      const html = `<div class="dice-row">${rolls.map(r => `<span class="die">${r}</span>`).join('')}${count > 1 ? `<span class="dice-sum">сумма <b>${sum}</b></span>` : ''}</div>`;
+      return { value: `${count}d${sides}: ${rolls.join(', ')}${count > 1 ? ` (сумма ${sum})` : ''}`, html, meta: `${count}d${sides}` };
+    } },
+  uuid: { name: 'UUID v4', icon: 'id', desc: 'Случайный UUID по RFC 4122 (122 случайных бита).',
+    defaults: () => ({}),
+    paramsHTML: () => `<p class="hint" style="margin:0">${icon('info')}Параметров нет: 16 случайных байтов с фиксированными битами версии и варианта.</p>`,
+    generate: (p, draw) => {
+      const b = draw(16);
+      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+      const h = toHex(b);
+      const value = `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+      return { value, html: `<div class="mono-val">${value}</div>`, meta: 'RFC 4122 · v4' };
+    } },
+  date: { name: 'Случайная дата', icon: 'calendar', desc: 'Равномерно случайный день внутри интервала.',
+    defaults: () => { const y = new Date().getFullYear(); return { from: `${y}-01-01`, to: `${y}-12-31` }; },
+    paramsHTML: (u, p) => `<div class="param-row"><div class="field"><label>От</label><input type="date" value="${esc(p.from)}" data-bind="${u}.from"></div><div class="field"><label>До</label><input type="date" value="${esc(p.to)}" data-bind="${u}.to"></div></div>`,
+    generate: (p, draw) => {
+      const a = Date.parse(p.from), b = Date.parse(p.to);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) throw new Error('Укажите обе даты интервала.');
+      if (a > b) throw new Error('Дата «От» позже даты «До» — поменяйте интервал.');
+      const days = Math.round((b - a) / 86400000);
+      if (days > 36500) throw new Error('Интервал слишком большой (максимум ~100 лет).');
+      const d = new Date(a + randBelow(days + 1, draw) * 86400000);
+      const value = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      return { value, html: `<div class="date-val">${esc(value)}</div>`, meta: `${d.toISOString().slice(0, 10)} · интервал ${days + 1} дн.` };
+    } }
+};
+const FORMAT_ORDER = ['seed', 'number', 'choice', 'text', 'dice', 'uuid', 'date'];
+
+/* ============================================================
+   8. СОСТОЯНИЕ (только в памяти: ничего не хранится и не отправляется)
+   ============================================================ */
+const mkOutput = type => ({ uid: uid('o'), type, params: FORMATS[type].defaults(), result: null, error: null });
+const freshState = () => ({
+  theme: 'dark', tab: 'source',
+  sources: [{ uid: 'src-default', id: 'csprng', enabled: true }],  // ровно одна карточка по умолчанию
+  pipeline: [{ uid: uid('p'), type: 'xor' }, { uid: uid('p'), type: 'sha256' }],
+  pool: null, poolCounter: 0, collecting: false, statuses: null,
+  outputs: [mkOutput('number'), mkOutput('dice'), mkOutput('choice'), mkOutput('seed')]
+});
+let state = freshState();
+
+/* ============================================================
+   9. ТОСТЫ, МОДАЛКИ, КОПИРОВАНИЕ
+   ============================================================ */
+function toast(msg, type) {
+  type = type || 'info';
+  const box = $('#toasts'); if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'toast t-' + type;
+  el.innerHTML = icon(type === 'success' ? 'check' : type === 'error' ? 'x' : type === 'warn' ? 'alert' : 'info') + `<span>${esc(msg)}</span>`;
+  box.appendChild(el);
+  while (box.children.length > 4) box.children[0].remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 4200);
+}
+let lastFocus = null;
+function openModal(html) {
+  lastFocus = document.activeElement;
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const btn = root.querySelector('button'); if (btn) btn.focus();
+}
+function closeModal() { $('#modalRoot').innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+const modalHead = (ic, title, sub) => `<div class="modal-head"><span class="src-ic">${icon(ic, 'lg')}</span><div style="flex:1;min-width:0"><h3>${esc(title)}</h3>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div><button class="icon-btn" data-action="close-modal" aria-label="Закрыть">${icon('x')}</button></div>`;
+/* Подробное описание источника */
+function openDetails(uidStr) {
+  const s = state.sources.find(x => x.uid === uidStr); if (!s) return;
+  const d = SRC_BY_ID[s.id];
+  openModal(modalHead(d.icon, d.name, 'Источник энтропии · ' + (s.enabled ? 'включён' : 'выключен')) +
+    `<div class="strength-line">${badgeHTML(d.strength, d.why)}${meterHTML(d.strength)}</div><p style="margin-top:12px">${esc(d.long)}</p><h4>Почему такая оценка</h4><p>${esc(d.why)}</p><div class="fit-grid"><div class="fit good"><b>${icon('check')}Для чего годится</b>${esc(d.goodFor)}</div><div class="fit bad"><b>${icon('x')}Для чего не годится</b>${esc(d.notFor)}</div></div><h4>Метки</h4><div class="tags">${tagsHTML(d.tags)}</div><div class="disclaimer">${icon('alert')}<span>${DISCLAIMER_INLINE} <button data-action="open-settings">Полный текст в настройках</button></span></div><div class="modal-foot"><button class="btn" data-action="close-modal">Понятно</button></div>`);
+}
+/* Настройки: тема, сброс, полный дисклеймер */
+function openSettings() {
+  openModal(modalHead('gear', 'Настройки', 'Тема, сброс и дисклеймер') +
+    `<h4>Тема приложения</h4><div class="seg"><button data-action="set-theme" data-theme="light" class="${state.theme === 'light' ? 'on' : ''}">${icon('sun')}Светлая</button><button data-action="set-theme" data-theme="dark" class="${state.theme === 'dark' ? 'on' : ''}">${icon('moon')}Тёмная</button></div><h4>Данные</h4><div class="settings-note">${icon('shield')}<span>Всё выполняется локально в браузере: приложение ничего не хранит и не сохраняет. Сетевые источники обращаются к публичным API только по вашему действию при сборе; файлы и списки никуда не отправляются.</span></div><h4>Сброс</h4><p>Вернуть все вкладки к состоянию первого запуска: источники, пайплайн, пул, карточки вывода и тему.</p><button class="btn btn-danger" data-action="ask-reset">${icon('refresh')}Сбросить всё к дефолту</button><h4>Дисклеймер</h4><div class="disclaimer-full">${DISCLAIMER_FULL}</div><div class="modal-foot"><button class="btn" data-action="close-modal">Закрыть</button></div>`);
+}
+function openDisclaimer() {
+  openModal(modalHead('alert', 'Дисклеймер', 'Об оценке криптостойкости') + `<div class="disclaimer-full">${DISCLAIMER_FULL}</div><div class="modal-foot"><button class="btn" data-action="close-modal">Понятно</button></div>`);
+}
+function askReset() {
+  openModal(modalHead('alert', 'Сбросить всё?', 'Действие нельзя отменить') + `<p>Все вкладки вернутся к состоянию первого запуска: базовый CSPRNG, дефолтный пайплайн и стартовые карточки вывода. Пул и результаты будут очищены.</p><div class="modal-foot"><button class="btn" data-action="close-modal">Отмена</button><button class="btn btn-danger" data-action="do-reset">${icon('refresh')}Сбросить всё</button></div>`);
+}
+function resetAll() { state = freshState(); applyTheme(); renderAll(); closeModal(); toast('Всё сброшено к состоянию первого запуска.', 'success'); }
+/* Копирование с запасным путём для file:// */
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand('copy'); ta.remove();
+      if (!ok) throw new Error('execCommand');
+    }
+    toast('Скопировано в буфер обмена.', 'success');
+  } catch (e) { toast('Не удалось скопировать автоматически — выделите текст вручную.', 'error'); }
+}
+
+/* ============================================================
+   10. ВЫПАДАЮЩИЕ МЕНЮ (строятся из реестров)
+   ============================================================ */
+function menuContent(id) {
+  if (id === 'menu-sources') {
+    return `<div class="menu-title">Реестр источников · ${SOURCES.length}</div>` + SOURCES.map(d => {
+      const s = strengthInfo(d.strength), cnt = state.sources.filter(x => x.id === d.id).length;
+      return `<button class="menu-item" data-action="add-source" data-id="${d.id}"><span class="mi-ic">${icon(d.icon)}</span><span class="mi-body"><span class="mi-name">${esc(d.name)} <span class="badge b-${s.cls}" style="cursor:inherit"><span class="dot"></span>${s.label}</span>${cnt ? ` <span class="mi-count">добавлен ×${cnt}</span>` : ''}</span><span class="mi-desc">${esc(d.short)}</span></span></button>`;
+    }).join('');
+  }
+  if (id === 'menu-steps') {
+    return '<div class="menu-title">Шаги смешивания</div>' + STEP_ORDER.map(t => {
+      const d = STEPS[t];
+      return `<button class="menu-item${d.danger ? ' danger' : ''}" data-action="add-step" data-type="${t}"><span class="mi-ic">${icon(d.icon)}</span><span class="mi-body"><span class="mi-name">${esc(d.name)}${d.danger ? ' <span class="mini-chip mc-red">демо</span>' : ''}</span><span class="mi-desc">${esc(d.desc)}</span></span></button>`;
+    }).join('');
+  }
+  return '<div class="menu-title">Форматы вывода</div>' + FORMAT_ORDER.map(t => {
+    const d = FORMATS[t];
+    return `<button class="menu-item" data-action="add-output" data-type="${t}"><span class="mi-ic">${icon(d.icon)}</span><span class="mi-body"><span class="mi-name">${esc(d.name)}</span><span class="mi-desc">${esc(d.desc)}</span></span></button>`;
+  }).join('');
+}
+function closeMenus() {
+  $$('.menu.open').forEach(m => {
+    m.classList.remove('open');
+    if (m._portalPlaceholder) {
+      m._portalPlaceholder.replaceWith(m);
+      m._portalPlaceholder = null;
+    }
+    ['position','left','right','top','width','maxHeight','zIndex'].forEach(k => m.style[k] = '');
+  });
+}
+function toggleMenu(id, btn) {
+  const m = $('#' + id); if (!m) return;
+  const wasOpen = m.classList.contains('open');
+  closeMenus();
+  if (wasOpen) return;
+
+  m.innerHTML = menuContent(id);
+  if (window.innerWidth <= 720 && btn && btn.getBoundingClientRect) {
+    // Выносим мобильное меню в body, чтобы его не обрезали overflow/transform
+    // родительских карточек и колонок.
+    m._portalPlaceholder = document.createComment('menu-position');
+    m.parentNode.insertBefore(m._portalPlaceholder, m);
+    document.body.appendChild(m);
+    Object.assign(m.style, {
+      position: 'fixed', left: '12px', right: '12px', width: 'auto',
+      zIndex: '10000', maxHeight: '68vh'
+    });
+    m.classList.add('open');
+
+    const r = btn.getBoundingClientRect();
+    const edge = 12, gap = 8, vh = document.documentElement.clientHeight;
+    const desired = Math.min(m.scrollHeight, vh - edge * 2, Math.floor(vh * .68));
+    const below = Math.max(0, vh - r.bottom - gap - edge);
+    const above = Math.max(0, r.top - gap - edge);
+    const useBelow = below >= Math.min(desired, 220) || below >= above;
+    const available = useBelow ? below : above;
+    const height = Math.max(120, Math.min(desired, available));
+    const top = useBelow ? r.bottom + gap : Math.max(edge, r.top - gap - height);
+    m.style.top = Math.round(top) + 'px';
+    m.style.maxHeight = Math.round(height) + 'px';
+  } else {
+    m.classList.add('open');
+    m.style.top = '';
+    m.style.maxHeight = '';
+  }
+}
+function renderSources() {
+  const grid = $('#srcGrid'); if (!grid) return;
+  grid.innerHTML = state.sources.map((s, i) => {
+    const d = SRC_BY_ID[s.id], isDef = s.uid === 'src-default';
+    const loadLabel = s.loading ? 'Подготовка…' : s.error ? 'Ошибка загрузки' : s.bytes ? `${s.bytes.length} байт готовы` : 'Не подготовлен';
+    const loadClass = s.loading ? 'run' : s.error ? 'err' : s.bytes ? 'ok' : 'wait';
+    return `<article class="card src-card${s.enabled ? '' : ' off'}${isDef ? ' is-default' : ''}" data-uid="${s.uid}" tabindex="0" style="--d:${Math.min(i * 0.05, 0.4)}s" aria-label="${esc(d.name)} — нажмите для подробностей"><div class="src-top"><span class="src-ic">${icon(d.icon, 'lg')}</span><h3>${esc(d.name)}</h3><label class="switch" data-tooltip="${s.enabled ? 'Источник включён' : 'Источник выключен'}"><input type="checkbox" data-action="toggle-source" data-uid="${s.uid}"${s.enabled ? ' checked' : ''} aria-label="Включить источник ${esc(d.name)}"><span class="tr"></span></label></div><p class="short">${esc(d.short)}</p><div class="strength-line">${badgeHTML(d.strength, d.why)}${meterHTML(d.strength)}</div><p class="why">${esc(d.why)}</p><div class="tags">${tagsHTML(d.tags)}</div><div class="cs-row ${loadClass}" style="margin-top:2px"><span class="cs-ic">${statusIcon(loadClass === 'run' ? 'run' : loadClass === 'ok' ? 'ok' : loadClass === 'err' ? 'err' : 'wait')}</span><span class="cs-msg">${esc(s.progress || s.error || s.warning || loadLabel)}</span></div><div class="src-actions"><button class="btn btn-sm" data-action="details" data-uid="${s.uid}">${icon('info')}Подробнее</button><span style="display:flex;align-items:center;gap:5px">${s.error && !s.loading ? `<button class="btn btn-sm" data-action="retry-source" data-uid="${s.uid}">${icon('refresh')}Повторить</button>` : ''}${isDef ? `<span class="tag t-off" data-tooltip="Базовый источник нельзя удалить — только выключить">${icon('lock')} базовый</span>` : `<button class="icon-btn danger" data-action="remove-source" data-uid="${s.uid}" aria-label="Удалить источник">${icon('trash')}</button>`}</span></div></article>`;
+  }).join('');
+}
+function renderPipeline() {
+  const list = $('#pipelineList'); if (!list) return;
+  if (!state.pipeline.length) {
+    list.innerHTML = `<li style="list-style:none"><div class="empty">${icon('sliders', 'xl')}<b>Пайплайн пуст</b><p>Байты источников будут просто склеены без обработки. Добавьте шаг — например, SHA-256.</p><button class="btn btn-sm" data-action="add-step" data-type="sha256">${icon('plus')}Добавить SHA-256</button></div></li>`;
+    return;
+  }
+  const last = state.pipeline.length - 1;
+  list.innerHTML = state.pipeline.map((st, i) => {
+    const d = STEPS[st.type];
+    return `<li class="step${d.danger ? ' is-danger' : ''}" draggable="true" data-uid="${st.uid}"><span class="step-node">${i + 1}</span><div class="step-body"><span class="step-grip" data-tooltip="Перетащите, чтобы изменить порядок">${icon('grip')}</span><div class="step-info"><div class="step-name">${icon(d.icon)}${esc(d.name)}${d.danger ? ' <span class="mini-chip mc-red">портит оценку</span>' : ''}</div><div class="step-desc">${esc(d.desc)}</div></div><div class="step-ctrl"><button class="icon-btn sm" data-action="move-step" data-uid="${st.uid}" data-dir="-1"${i === 0 ? ' disabled' : ''} aria-label="Шаг вверх">${icon('up')}</button><button class="icon-btn sm" data-action="move-step" data-uid="${st.uid}" data-dir="1"${i === last ? ' disabled' : ''} aria-label="Шаг вниз">${icon('down')}</button><button class="icon-btn sm danger" data-action="remove-step" data-uid="${st.uid}" aria-label="Удалить шаг">${icon('trash')}</button></div></div></li>`;
+  }).join('');
+}
+function renderAssess() {
+  const box = $('#assessCard'); if (!box) return;
+  const enabled = state.sources.filter(s => s.enabled).map(s => SRC_BY_ID[s.id]);
+  const ev = evaluateStrength(enabled, state.pipeline.map(p => p.type));
+  box.innerHTML = `<div class="card-head"><h3>${icon('gauge')}Оценка конфигурации</h3>${badgeHTML(ev.score)}</div><div class="gauge"><div class="gauge-track"><div class="gauge-fill" style="width:${ev.score / 5 * 100}%"></div></div><div class="gauge-scale"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><ul class="reasons">${ev.reasons.map(r => `<li class="${r.t}">${icon(r.t === 'good' ? 'check' : r.t === 'bad' ? 'x' : r.t === 'warn' ? 'alert' : 'info')}${esc(r.text)}</li>`).join('')}</ul><div class="disclaimer">${icon('alert')}<span>${DISCLAIMER_INLINE} <button data-action="open-settings">Полный текст в настройках</button></span></div>`;
+}
+const statusIcon = st => icon(st === 'ok' ? 'check' : st === 'err' ? 'x' : st === 'run' ? 'refresh' : 'clock', st === 'run' ? 'spin' : '');
+const statusRowHTML = s => `<div class="cs-row ${s.st}" data-status="${s.uid}"><span class="cs-ic">${statusIcon(s.st)}</span><span class="cs-name">${esc(s.name)}</span><span class="cs-msg">${esc(s.msg)}</span></div>`;
+function setStatus(uidStr, st, msg) {
+  const s = state.statuses && state.statuses.find(x => x.uid === uidStr); if (!s) return;
+  s.st = st; s.msg = msg;
+  const row = $(`[data-status="${uidStr}"]`);
+  if (row) {
+    row.className = 'cs-row ' + st;
+    const m = row.querySelector('.cs-msg'); if (m) m.textContent = msg;
+    const ic = row.querySelector('.cs-ic'); if (ic) ic.innerHTML = statusIcon(st);
+  }
+}
+function poolHTML() {
+  const p = state.pool;
+  const cells = Array.from(p.bytes.slice(0, 96)).map((v, i) => `<span class="byte t${v < 64 ? 0 : v < 128 ? 1 : v < 192 ? 2 : 3}" style="--bd:${Math.min(i * 0.006, 0.5)}s">${v.toString(16).padStart(2, '0')}</span>`).join('');
+  const more = p.bytes.length > 96 ? `<span class="hex-more">… ещё ${p.bytes.length - 96} байт</span>` : '';
+  const notes = p.warnings.map(w => `<div class="pool-note">${icon('alert')}${esc(w)}</div>`).join('') + p.errors.map(er => `<div class="pool-note err">${icon('x')}${esc(er.name + ': ' + er.msg)}</div>`).join('');
+  return `<div class="card-head"><h3>${icon('flask')}Пул энтропии</h3>${badgeHTML(p.score)}</div><div class="pool-stats"><div class="stat"><b>${p.bytes.length}</b><span>байт</span></div><div class="stat"><b>${p.okCount}</b><span>источников</span></div><div class="stat"><b>${p.steps.length}</b><span>шагов</span></div><div class="stat"><b>${fmtTime(p.at)}</b><span>собрано</span></div></div><div class="hexdump">${cells}${more}</div>${notes ? `<div class="pool-notes">${notes}</div>` : ''}<div class="pool-actions"><button class="btn btn-sm" data-action="copy-pool">${icon('copy')}Копировать hex</button><button class="btn btn-sm" data-action="collect">${icon('refresh')}<span>Собрать заново</span></button><button class="btn btn-sm btn-primary" data-action="tab" data-tab="output">${icon('arrow')}К выводам</button></div>`;
+}
+function renderPool() {
+  const box = $('#poolCard'); if (!box) return;
+  let html;
+  if (state.collecting) {
+    html = `<div class="card-head"><h3>${icon('flask')}Смешивание…</h3></div><div class="collect-status">${state.statuses.map(statusRowHTML).join('')}</div><p class="hint">${icon('info')}Mix использует данные, заранее подготовленные карточками на вкладке Source.</p>`;
+  } else if (state.statuses) {
+    html = `<div class="card-head"><h3>${icon('alert')}Сбор не удался</h3></div><div class="collect-status">${state.statuses.map(statusRowHTML).join('')}</div><div class="pool-actions"><button class="btn btn-sm btn-primary" data-action="tab" data-tab="source">${icon('arrow')}<span>Исправить источники в Source</span></button></div>${state.pool ? `<p class="hint">${icon('info')}Предыдущий пул сохранён и доступен для выводов.</p>` : ''}`;
+  } else if (state.pool) html = poolHTML();
+  else html = `<div class="card-head"><h3>${icon('flask')}Пул энтропии</h3></div><div class="empty">${icon('flask', 'xl')}<b>Пул ещё не собран</b><p>Подготовьте источники на вкладке Source, настройте пайплайн и смешайте готовые данные. Пока пула нет, вкладка Output использует crypto.getRandomValues() напрямую.</p><button class="btn btn-primary" data-action="collect">${icon('play')}<span>Собрать и смешать</span></button></div>`;
+  box.innerHTML = html;
+  updateCollectUI();
+}
+function updateCollectUI() {
+  $$('[data-action="collect"]').forEach(b => {
+    const span = b.querySelector('span');
+    if (span && !b.dataset.label) b.dataset.label = span.textContent;
+    b.disabled = state.collecting;
+    if (span) span.textContent = state.collecting ? 'Собираю…' : (b.dataset.label || 'Собрать');
+    const ic = b.querySelector('.ic'); if (ic) ic.classList.toggle('spin', state.collecting);
+  });
+}
+function resultZoneHTML(c) {
+  if (c.error) return `<div class="result-error">${icon('alert')}<span>${esc(c.error)}</span></div>`;
+  if (!c.result) return `<div class="result-placeholder">${icon('play')}Нажмите «Получить результат»</div>`;
+  const r = c.result, origin = r.origin === 'pool' ? 'смешанный пул' : 'crypto.getRandomValues()';
+  return `<div class="result-box"><div class="result-main">${r.html}<div class="result-meta">${esc(origin + ' · ' + fmtTime(r.at) + (r.meta ? ' · ' + r.meta : ''))}</div></div><button class="icon-btn" data-action="copy-result" data-uid="${c.uid}" aria-label="Копировать результат" data-tooltip="Копировать">${icon('copy')}</button></div>`;
+}
+function renderOutputs() {
+  const grid = $('#outGrid'); if (!grid) return;
+  if (!state.outputs.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${icon('dice', 'xl')}<b>Нет карточек вывода</b><p>Добавьте формат: число, кубики, выбор из списка, текст, сид, UUID или дату.</p><button class="btn btn-primary" data-action="add-output" data-type="number">${icon('plus')}Число в диапазоне</button></div>`;
+    return;
+  }
+  grid.innerHTML = state.outputs.map((c, i) => {
+    const def = FORMATS[c.type];
+    return `<article class="card out-card" data-uid="${c.uid}" style="--d:${Math.min(i * 0.05, 0.4)}s"><div class="out-head"><span class="src-ic">${icon(def.icon, 'lg')}</span><h3>${esc(def.name)}</h3><button class="icon-btn danger" data-action="remove-output" data-uid="${c.uid}" aria-label="Удалить карточку">${icon('trash')}</button></div><div>${def.paramsHTML(c.uid, c.params)}</div><button class="btn btn-primary btn-block" data-action="generate" data-uid="${c.uid}">${icon('play')}Получить результат</button><div class="result-zone" data-zone="${c.uid}">${resultZoneHTML(c)}</div></article>`;
+  }).join('');
+}
+function renderOutBanner() {
+  const box = $('#outBanner'); if (!box) return;
+  box.innerHTML = state.pool
+    ? `${icon('flask')}<span>Источник случайности: <b>смешанный пул</b> · ${state.pool.bytes.length} байт · собран в ${fmtTime(state.pool.at)}</span>${badgeHTML(state.pool.score)}<button class="btn btn-sm" data-action="tab" data-tab="mix">${icon('refresh')}Пересобрать</button>`
+    : `${icon('shield')}<span>Источник случайности: <b>crypto.getRandomValues()</b> — смешанный пул ещё не собран.</span><button class="btn btn-sm" data-action="tab" data-tab="mix">${icon('flask')}Собрать пул на Mix</button>`;
+}
+function updateChips() {
+  const src = $('[data-chip="source"]'); if (src) src.textContent = state.sources.filter(s => s.enabled).length;
+  const mix = $('[data-chip="mix"]'); if (mix) { mix.textContent = state.pool ? state.pool.bytes.length + 'B' : '—'; mix.classList.toggle('pulse', !!state.pool); }
+  const out = $('[data-chip="output"]'); if (out) out.textContent = state.outputs.length;
+}
+function applyTheme() {
+  document.documentElement.dataset.theme = state.theme;
+  const q = $('#themeQuick'); if (q) q.innerHTML = icon(state.theme === 'dark' ? 'sun' : 'moon');
+  $$('.seg [data-action="set-theme"]').forEach(b => b.classList.toggle('on', b.dataset.theme === state.theme));
+}
+function setTab(tab) {
+  state.tab = tab;
+  $$('.tab-btn').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  ['source', 'mix', 'output'].forEach(t => { const p = $('#pane-' + t); if (p) p.classList.toggle('active', t === tab); });
+  if (window.scrollTo) window.scrollTo(0, 0);
+}
+function renderAll() { renderSources(); renderPipeline(); renderAssess(); renderPool(); renderOutputs(); renderOutBanner(); updateChips(); updateCollectUI(); }
+
+/* ============================================================
+   12. СБОР И СМЕШИВАНИЕ (Mix)
+   ============================================================ */
+function withTimeout(p, ms) {
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error(`Таймаут ожидания источника (${Math.round(ms / 1000)} с).`)), ms);
+    p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
+  });
+}
+async function collectAndMix() {
+  if (state.collecting) return;
+  const enabled = state.sources.filter(s => s.enabled);
+  if (!enabled.length) { toast('Включите хотя бы один источник на вкладке Source.', 'warn'); return; }
+  const pending = enabled.filter(s => s.loading || (!s.bytes && !s.error));
+  if (pending.length) {
+    toast('Сначала подготовьте все включённые источники во вкладке Source. Для ошибок используйте «Повторить».', 'warn');
+    setTab('source');
+    return;
+  }
+  state.collecting = true;
+  state.statuses = enabled.map(s => ({
+    uid: s.uid, name: SRC_BY_ID[s.id].name,
+    st: s.error ? 'err' : 'ok',
+    msg: s.error || (s.bytes.length + ' байт готовы')
+  }));
+  renderPool();
+  const ok = enabled.filter(s => s.bytes && !s.error).map(s => ({
+    def: SRC_BY_ID[s.id], bytes: s.bytes, warning: s.warning
+  }));
+  const errors = enabled.filter(s => s.error).map(s => ({ name: SRC_BY_ID[s.id].name, msg: s.error }));
+  const warnings = ok.filter(s => s.warning).map(s => s.warning);
+  if (!ok.length) {
+    state.collecting = false;
+    renderPool();
+    toast('Нет подготовленных данных. Исправьте источники на вкладке Source.', 'error');
+    return;
+  }
+  let bytes = concatBytes(ok.map(o => o.bytes));
+  const rawLen = bytes.length, stepTypes = [];
+  for (const st of state.pipeline) { bytes = STEPS[st.type].apply(bytes); stepTypes.push(st.type); }
+  const ev = evaluateStrength(ok.map(o => o.def), stepTypes);
+  state.pool = { bytes, at: Date.now(), score: ev.score, reasons: ev.reasons, okCount: ok.length, steps: stepTypes, warnings, errors, rawLen };
+  state.poolCounter = 0;
+  state.collecting = false;
+  state.statuses = null;
+  renderPool(); renderAssess(); renderOutputs(); renderOutBanner(); updateChips();
+  toast(`Пул собран: ${bytes.length} байт из ${ok.length} ист. (${rawLen} сырых)` + (errors.length ? `, ошибок: ${errors.length}` : '') + '.', errors.length ? 'warn' : 'success');
+}
+
+/* ============================================================
+   13. ГЕНЕРАЦИЯ (Output): пул → SHA-256-цепочка от пула и счётчика;
+   без пула → crypto.getRandomValues(). Math.random() для итогов не используется.
+   ============================================================ */
+function makeDraw(uidStr) {
+  if (state.pool) {
+    const base = state.pool.bytes, label = utf8(uidStr + ':' + (++state.poolCounter));
+    let chain = sha256(concatBytes([base, label])), block = null, off = 0;
+    return n => {
+      const out = new Uint8Array(n); let filled = 0;
+      while (filled < n) {
+        if (!block || off >= block.length) { block = chain; chain = sha256(chain); off = 0; }
+        const take = Math.min(n - filled, block.length - off);
+        out.set(block.subarray(off, off + take), filled);
+        off += take; filled += take;
+      }
+      return out;
+    };
+  }
+  return n => csRandom(n);
+}
+function generateOutput(uidStr) {
+  const c = state.outputs.find(o => o.uid === uidStr); if (!c) return;
+  try {
+    const res = FORMATS[c.type].generate(c.params, makeDraw(uidStr));
+    res.at = Date.now();
+    res.origin = state.pool ? 'pool' : 'csprng';
+    c.result = res; c.error = null;
+  } catch (e) { c.error = e && e.message ? e.message : String(e); c.result = null; }
+  const zone = $(`[data-zone="${uidStr}"]`);
+  if (zone) { zone.innerHTML = resultZoneHTML(c); const box = zone.querySelector('.result-box'); if (box) box.classList.add('flash'); }
+}
+
+/* ============================================================
+   14. ДЕЙСТВИЯ, СОБЫТИЯ, ИНИЦИАЛИЗАЦИЯ
+   ============================================================ */
+function addSource(id) {
+  const d = SRC_BY_ID[id]; if (!d) return;
+  const source = { uid: uid('s'), id, enabled: true, bytes: null, loading: false, error: null, warning: null, progress: '' };
+  state.sources.push(source);
+  renderSources(); renderAssess(); updateChips();
+  toast('Источник добавлен: ' + d.name + '. Подготавливаю данные…', 'info');
+  // Вызов коллектора происходит синхронно в обработчике клика — это важно
+  // для браузерных разрешений и нативного диалога выбора файла.
+  prepareSource(source);
+}
+async function prepareSource(source) {
+  if (!source || source.loading) return;
+  const def = SRC_BY_ID[source.id];
+  source.loading = true; source.error = null; source.warning = null;
+  source.bytes = null; source.progress = 'Проверка и получение данных…';
+  renderSources();
+  const ctx = {
+    progress: msg => { source.progress = msg; updateSourceStatus(source); },
+    warn: msg => { source.warning = msg; }
+  };
+  try {
+    const task = def.collect(ctx); // не переносить за Promise.then: сохраняем user activation
+    const bytes = await withTimeout(Promise.resolve(task), def.timeout || 15000);
+    if (!(bytes instanceof Uint8Array) || !bytes.length) throw new Error('источник вернул пустые данные');
+    source.bytes = bytes;
+    source.progress = bytes.length + ' байт готовы';
+    source.error = null;
+    toast('Источник подготовлен: ' + def.name + ' (' + bytes.length + ' байт).', 'success');
+  } catch (e) {
+    source.error = e && e.message ? e.message : String(e);
+    source.progress = source.error;
+    toast('Не удалось подготовить «' + def.name + '»: ' + source.error, 'error');
+  } finally {
+    source.loading = false;
+    state.statuses = null;
+    renderSources(); renderAssess(); renderPool(); updateChips();
+  }
+}
+function updateSourceStatus(source) {
+  const card = $(`.src-card[data-uid="${source.uid}"]`);
+  if (!card) return;
+  const row = card.querySelector('.cs-row');
+  if (row) {
+    row.className = 'cs-row ' + (source.loading ? 'run' : source.error ? 'err' : source.bytes ? 'ok' : 'wait');
+    const ic = row.querySelector('.cs-ic');
+    if (ic) ic.innerHTML = statusIcon(source.loading ? 'run' : source.error ? 'err' : source.bytes ? 'ok' : 'wait');
+    const msg = row.querySelector('.cs-msg');
+    if (msg) msg.textContent = source.progress || source.error || source.warning || (source.bytes ? source.bytes.length + ' байт готовы' : 'Не подготовлен');
+  }
+}
+function removeSource(uidStr) {
+  if (uidStr === 'src-default') { toast('Базовый источник нельзя удалить — только выключить.', 'warn'); return; }
+  state.sources = state.sources.filter(s => s.uid !== uidStr);
+  renderSources(); renderAssess(); updateChips();
+  toast('Источник удалён.', 'info');
+}
+function addStep(type) {
+  if (!STEPS[type]) return;
+  state.pipeline.push({ uid: uid('p'), type });
+  renderPipeline(); renderAssess();
+  if (STEPS[type].danger) toast('Добавлен демонстрационный шаг, понижающий оценку.', 'warn');
+}
+function removeStep(uidStr) { state.pipeline = state.pipeline.filter(p => p.uid !== uidStr); renderPipeline(); renderAssess(); }
+function moveStep(uidStr, dir) {
+  const i = state.pipeline.findIndex(p => p.uid === uidStr), j = i + dir;
+  if (i < 0 || j < 0 || j >= state.pipeline.length) return;
+  const t = state.pipeline[i]; state.pipeline[i] = state.pipeline[j]; state.pipeline[j] = t;
+  renderPipeline(); renderAssess();
+}
+function addOutput(type) {
+  if (!FORMATS[type]) return;
+  const c = mkOutput(type);
+  state.outputs.push(c);
+  renderOutputs(); updateChips();
+  const el = $(`[data-uid="${c.uid}"]`);
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast('Формат добавлен: ' + FORMATS[type].name, 'success');
+}
+function choiceList(c) {
+  if (!Array.isArray(c.params.list)) c.params.list = String(c.params.list || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  return c.params.list;
+}
+function addChoiceItem(uidStr) {
+  const c = state.outputs.find(o => o.uid === uidStr && o.type === 'choice'); if (!c) return;
+  const input = $(`[data-choice-input="${uidStr}"]`); if (!input) return;
+  const value = input.value.trim(); if (!value) { input.focus(); return; }
+  choiceList(c).push(value);
+  renderOutputs(); const next = $(`[data-choice-input="${uidStr}"]`); if (next) next.focus();
+}
+function removeChoiceItem(uidStr, index) {
+  const c = state.outputs.find(o => o.uid === uidStr && o.type === 'choice'); if (!c) return;
+  const list = choiceList(c); if (index < 0 || index >= list.length) return;
+  list.splice(index, 1); renderOutputs();
+  const input = $(`[data-choice-input="${uidStr}"]`); if (input) input.focus();
+}
+function removeOutput(uidStr) { state.outputs = state.outputs.filter(o => o.uid !== uidStr); renderOutputs(); updateChips(); toast('Карточка вывода удалена.', 'info'); }
+function setSides(uidStr, sides) {
+  const c = state.outputs.find(o => o.uid === uidStr); if (!c) return;
+  c.params.sides = sides;
+  const inp = $(`[data-bind="${uidStr}.sides"]`); if (inp) inp.value = sides;
+  $$(`[data-action="preset-sides"][data-uid="${uidStr}"]`).forEach(b => b.classList.toggle('on', Number(b.dataset.sides) === sides));
+}
+/* Диспетчер действий по data-action */
+function handleAction(el) {
+  const a = el.dataset.action;
+  switch (a) {
+    case 'tab': setTab(el.dataset.tab); closeMenus(); break;
+    case 'menu': toggleMenu(el.dataset.menu, el); break;
+    case 'add-source': addSource(el.dataset.id); closeMenus(); break;
+    case 'remove-source': removeSource(el.dataset.uid); break;
+    case 'retry-source': { const src = state.sources.find(x => x.uid === el.dataset.uid); if (src) prepareSource(src); break; }
+    case 'details': openDetails(el.dataset.uid); break;
+    case 'add-step': addStep(el.dataset.type); closeMenus(); break;
+    case 'remove-step': removeStep(el.dataset.uid); break;
+    case 'move-step': moveStep(el.dataset.uid, Number(el.dataset.dir)); break;
+    case 'collect': collectAndMix(); break;
+    case 'copy-pool': if (state.pool) copyText(toHex(state.pool.bytes)); break;
+    case 'add-output': addOutput(el.dataset.type); closeMenus(); break;
+    case 'remove-output': removeOutput(el.dataset.uid); break;
+    case 'generate': generateOutput(el.dataset.uid); break;
+    case 'choice-add': addChoiceItem(el.dataset.uid); break;
+    case 'choice-remove': removeChoiceItem(el.dataset.uid, Number(el.dataset.index)); break;
+    case 'copy-result': { const c = state.outputs.find(o => o.uid === el.dataset.uid); if (c && c.result) copyText(c.result.value); break; }
+    case 'preset-sides': setSides(el.dataset.uid, Number(el.dataset.sides)); break;
+    case 'set-theme': state.theme = el.dataset.theme; applyTheme(); break;
+    case 'theme-quick': state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); break;
+    case 'open-settings': openSettings(); break;
+    case 'disclaimer': openDisclaimer(); break;
+    case 'ask-reset': askReset(); break;
+    case 'do-reset': resetAll(); break;
+    case 'close-modal': closeModal(); break;
+    case 'toggle-source': break; // обрабатывается событием change
+  }
+}
+/* Делегирование кликов */
+document.addEventListener('click', e => {
+  const actEl = e.target.closest ? e.target.closest('[data-action]') : null;
+  if (actEl) { if (actEl.dataset.action !== 'menu') closeMenus(); handleAction(actEl); return; }
+  if (!(e.target.closest && e.target.closest('.menu'))) closeMenus();
+  if (e.target.classList && e.target.classList.contains('modal-backdrop')) { closeModal(); return; }
+  const card = e.target.closest ? e.target.closest('.src-card') : null;
+  if (card && !e.target.closest('button,input,label,select,textarea,a')) openDetails(card.dataset.uid);
+});
+/* Переключатели источников */
+document.addEventListener('change', e => {
+  const cb = e.target.closest ? e.target.closest('[data-action="toggle-source"]') : null;
+  if (cb) {
+    const s = state.sources.find(x => x.uid === cb.dataset.uid);
+    if (s) {
+      s.enabled = cb.checked;
+      const cardEl = cb.closest('.src-card'); if (cardEl) cardEl.classList.toggle('off', !s.enabled);
+      renderAssess(); updateChips();
+    }
+    return;
+  }
+  syncBind(e.target); // select тоже шлёт change
+});
+/* Живая синхронизация параметров карточек вывода */
+function syncBind(t) {
+  const bind = t.dataset && t.dataset.bind;
+  if (!bind) return;
+  const dot = bind.indexOf('.'), u = bind.slice(0, dot), field = bind.slice(dot + 1);
+  const c = state.outputs.find(o => o.uid === u);
+  if (!c) return;
+  c.params[field] = t.dataset.num ? (t.value === '' ? '' : Number(t.value)) : t.value;
+  if (field === 'sides') $$(`[data-action="preset-sides"][data-uid="${u}"]`).forEach(b => b.classList.toggle('on', Number(b.dataset.sides) === Number(t.value)));
+}
+document.addEventListener('input', e => syncBind(e.target));
+/* Drag & drop порядка шагов (стрелки — для мобильных) */
+let dragUid = null;
+const pl = $('#pipelineList');
+if (pl) {
+  pl.addEventListener('dragstart', e => {
+    const li = e.target.closest('.step'); if (!li) return;
+    dragUid = li.dataset.uid; li.classList.add('dragging');
+    if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragUid); } catch (err) {} }
+  });
+  pl.addEventListener('dragover', e => { const li = e.target.closest('.step'); if (!li || !dragUid) return; e.preventDefault(); li.classList.add('drag-over'); });
+  pl.addEventListener('dragleave', e => { const li = e.target.closest('.step'); if (li) li.classList.remove('drag-over'); });
+  pl.addEventListener('drop', e => {
+    const li = e.target.closest('.step'); if (!li || !dragUid) return;
+    e.preventDefault();
+    const from = state.pipeline.findIndex(p => p.uid === dragUid), to = state.pipeline.findIndex(p => p.uid === li.dataset.uid);
+    if (from >= 0 && to >= 0 && from !== to) {
+      const m = state.pipeline.splice(from, 1)[0];
+      state.pipeline.splice(to, 0, m);
+      renderPipeline(); renderAssess();
+    }
+    dragUid = null;
+  });
+  pl.addEventListener('dragend', () => { dragUid = null; $$('.step').forEach(s => { s.classList.remove('dragging'); s.classList.remove('drag-over'); }); });
+}
+/* Esc закрывает модалки/меню; Enter открывает карточку источника */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-choice-input]')) {
+    e.preventDefault(); addChoiceItem(e.target.dataset.choiceInput); return;
+  }
+
+  if (e.key === 'Escape') { if ($('#modalRoot') && $('#modalRoot').innerHTML) closeModal(); closeMenus(); }
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('src-card')) openDetails(e.target.dataset.uid);
+});
+function init() {
+  if (!window.crypto || !crypto.getRandomValues) {
+    document.body.innerHTML = '<div style="max-width:520px;margin:80px auto;padding:24px;font-family:system-ui;color:#e9eefb;background:#101a2e;border:1px solid #22304f;border-radius:16px">Этот браузер не поддерживает Web Crypto (crypto.getRandomValues). Откройте приложение в современном браузере.</div>';
+    return;
+  }
+  applyTheme(); renderAll(); setTab('source');
+  const baseSource = state.sources.find(s => s.uid === 'src-default');
+  if (baseSource) prepareSource(baseSource);
+}
+init();
+})();
+</script>
+</body>
+</html>
