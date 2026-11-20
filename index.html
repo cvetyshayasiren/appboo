@@ -1212,14 +1212,14 @@ function hueFor(text) {
 
 // URL приложения (относительный, без ведущего "/" — для GitHub Pages)
 function appUrl(id) {
-  return `apps/${encodeURIComponent(id)}/index.html`;
+  return `apps/${encodeURIComponent(id)}/src/index.html`;
 }
 
-// Разрешение пути иконки: абсолютный URL как есть, иначе относительно папки приложения
+// Разрешение пути иконки: абсолютный URL / data-URI как есть, иначе относительно meta/ приложения
 function resolveIconPath(val, id) {
   if (/^(https?:)?\/\//i.test(val) || val.startsWith("data:")) return val;
   const clean = String(val).replace(/^\/+/, ""); // убираем ведущие слэши
-  return `apps/${encodeURIComponent(id)}/${clean}`;
+  return `apps/${encodeURIComponent(id)}/meta/${clean}`;
 }
 
 /* --- Дефолтные метаданные (на случай отсутствия/битости meta.json) --- */
@@ -1242,7 +1242,7 @@ async function loadMeta(id) {
   const meta = defaultMeta(id);
   try {
     // Защита от кэша через ?v=Date.now()
-    const res = await fetch(`apps/${encodeURIComponent(id)}/meta.json?v=${Date.now()}`);
+    const res = await fetch(`apps/${encodeURIComponent(id)}/meta/meta.json?v=${Date.now()}`);
     if (!res.ok) return meta; // файла нет — используем дефолт
     const text = await res.text();
     if (!text.trim()) return meta; // пустой файл — дефолт
@@ -1270,12 +1270,12 @@ async function loadApps() {
   showLoading();
   let ids = [];
   try {
-    const res = await fetch(`apps/apps.json?v=${Date.now()}`);
+    const res = await fetch(`apps.json?v=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     ids = await res.json();
     if (!Array.isArray(ids)) throw new Error("apps.json не является массивом");
   } catch (e) {
-    showError(`Не удалось загрузить apps/apps.json — ${e.message}`);
+    showError(`Не удалось загрузить apps.json — ${e.message}`);
     return;
   }
   // Параллельно грузим meta.json всех приложений (порядок сохраняется)
