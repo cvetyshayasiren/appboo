@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Менделеев · 118 элементов</title>
+<script>
+(function(){
+  var st={};try{st=JSON.parse(localStorage.getItem('mendeleev.v1')||'{}')}catch(e){}
+  var lang=st.lang||(((navigator.language||'ru').slice(0,2).toLowerCase()==='ru')?'ru':'en');
+  var theme=st.theme||'system', base=st.base||'#6C4BF6', font=st.font||100;
+  function h2r(h){h=h.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  function r2h(r,g,b){r/=255;g/=255;b/=255;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,h=0,s=0,l=(mx+mn)/2;
+    if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4);h*=60;}
+    return [h,s*100,l*100];}
+  function hsl2r(h,s,l){h=((h%360)+360)%360;s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r=0,g=0,b=0;
+    if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+    return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];}
+  function hex(r){return '#'+r.map(function(v){return ('0'+Math.max(0,Math.min(255,v)).toString(16)).slice(-2)}).join('')}
+  function lum(c){var a=c.map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*a[0]+.7152*a[1]+.0722*a[2]}
+  function cr(a,b){var l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)}
+  function fix(fg,bg){var out=fg.slice(),dir=lum(bg)>.4?-1:1,i=0;
+    while(cr(hsl2r(out[0],out[1],out[2]),bg)<4.5&&i<60){out[2]=Math.max(0,Math.min(100,out[2]+dir*2));i++}return out;}
+  var CAT={am:[4,84],ae:[28,88],tm:[45,86],pm:[162,62],md:[188,72],nm:[132,62],hl:[268,72],ng:[218,80],ln:[318,74],an:[288,62],un:[214,14]};
+  window.__paint=function(base,theme,font){
+    var dark=theme==='dark'||(theme==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+    var b=r2h.apply(null,h2r(base)),H=b[0],S=Math.max(28,Math.min(92,b[1])),root=document.documentElement,st=root.style;
+    st.setProperty('--fs',font+'%');
+    root.dataset.theme=dark?'dark':'light';root.dataset.resolved=dark?'dark':'light';
+    var T=dark?{bg:[H,26,7],bg2:[H+22,32,10],surface:[H,22,12],surface2:[H,20,16],overlay:[H,20,14],
+      line:[H,18,26],text:[H,18,95],muted:[H,12,70],primary:[H,Math.min(90,S+14),66],scrim:[H,30,3]}:
+      {bg:[H,38,96],bg2:[H+22,46,93],surface:[H,44,99],surface2:[H,34,96],overlay:[H,40,100],
+      line:[H,26,85],text:[H,38,12],muted:[H,16,38],primary:[H,Math.min(88,S+10),42],scrim:[H,40,10]};
+    for(var k in T){var c=hsl2r(T[k][0],T[k][1],T[k][2]);st.setProperty('--'+k,hex(c));st.setProperty('--'+k+'-rgb',c.join(','));}
+    var pr=hsl2r(T.primary[0],T.primary[1],T.primary[2]);
+    st.setProperty('--on-primary',cr(pr,[255,255,255])>=4.5?'#ffffff':hex(fix([H,60,10],pr)));
+    for(var c in CAT){var h=CAT[c][0],s=CAT[c][1];
+      var bgc=hsl2r(h,dark?s*.62:s*.78,dark?25:87),fgc=fix([h,dark?s:Math.min(95,s+12),dark?86:22],bgc),bdc=hsl2r(h,dark?s*.7:s*.7,dark?40:70);
+      st.setProperty('--c-'+c+'-bg',hex(bgc));st.setProperty('--c-'+c+'-fg',hex(dark?hsl2r(fgc[0],fgc[1],fgc[2]):fgc));st.setProperty('--c-'+c+'-bd',hex(bdc));
+      st.setProperty('--c-'+c+'-raw',hex(hsl2r(h,s,dark?58:52)));}
+    st.setProperty('--grad','linear-gradient(100deg,#3b1e6e,#2563eb,#06b6d4,#22c55e,#eab308,#ef4444)');
+  };
+  window.__hsl={h2r:h2r,r2h:r2h,hsl2r:hsl2r,hex:hex,cr:cr,lum:lum,fix:fix};
+  __paint(base,theme,font);
+  document.documentElement.lang=lang;
+  if(st.motion==='off')document.documentElement.dataset.motion='off';
+})();
+</script>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{--cell:54px;--cellh:calc(var(--cell)*1.18);--gap:3px;--r:14px;--bar:0px;
+  --acc-amber:#ffb020;--acc-cyan:#22d3ee;--acc-magenta:#ff3d9a;--acc-green:#57e389;--acc-red:#ff5a5f;--acc-blue:#4c8dff;
+  --ok:#2fbf71;--warn:#ffb020;--bad:#ff5a5f;--info:#4c8dff;
+  --notch:polygon(0 9px,9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px));
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+html{font-size:var(--fs,100%);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;line-height:1.45;
+  -webkit-text-size-adjust:100%;padding-bottom:env(safe-area-inset-bottom)}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:
+  radial-gradient(120% 80% at 50% -10%,var(--bg2),transparent 60%),var(--bg)}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.42;will-change:transform}
+.o1{width:46vw;height:46vw;left:-8vw;top:-6vw;background:var(--primary);animation:drift1 34s ease-in-out infinite}
+.o2{width:38vw;height:38vw;right:-6vw;top:14vh;background:var(--acc-cyan);opacity:.22;animation:drift2 44s ease-in-out infinite}
+.o3{width:34vw;height:34vw;left:32vw;bottom:-14vw;background:var(--acc-magenta);opacity:.18;animation:drift3 52s ease-in-out infinite}
+@keyframes drift1{50%{transform:translate3d(8vw,6vh,0) scale(1.12)}}
+@keyframes drift2{50%{transform:translate3d(-7vw,-5vh,0) scale(1.16)}}
+@keyframes drift3{50%{transform:translate3d(5vw,-7vh,0) scale(.88)}}
+.grain{position:absolute;inset:-50%;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>")}
+.scan{position:absolute;inset:0;opacity:.35;background:repeating-linear-gradient(0deg,rgba(var(--text-rgb),.025) 0 1px,transparent 1px 3px)}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:var(--surface2);border-radius:20px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--primary),var(--acc-cyan));border-radius:20px;border:2px solid var(--surface2)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--acc-magenta),var(--primary))}
+*{scrollbar-color:var(--primary) var(--surface2);scrollbar-width:thin}
+:focus-visible{outline:2px solid var(--acc-cyan);outline-offset:2px;border-radius:6px}
+.bar{position:sticky;top:0;z-index:60;background:rgba(var(--surface-rgb),.82);backdrop-filter:blur(14px) saturate(1.3);
+  border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.bar-in{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:9px 16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:0 0 auto}
+.mark{width:34px;height:34px;display:grid;place-items:center;background:var(--primary);clip-path:var(--notch);flex:0 0 auto}
+.mark svg{width:22px;height:22px}
+.brandtxt{display:flex;flex-direction:column;line-height:1.05}
+.brandtxt b{font-size:.95rem;letter-spacing:.14em;font-weight:800}
+.brandtxt i{font-style:normal;font-size:.63rem;color:var(--muted);letter-spacing:.04em}
+.tabs{display:flex;gap:4px;margin:0 auto;background:var(--surface2);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.tab{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:650;font-size:.86rem;
+  padding:7px 16px;border-radius:9px;cursor:pointer;transition:color .18s,background .18s,transform .18s;white-space:nowrap}
+.tab:hover{color:var(--text);transform:translateY(-1px)}
+.tab[aria-selected="true"]{background:var(--primary);color:var(--on-primary);box-shadow:0 4px 14px rgba(var(--primary-rgb),.35)}
+.tools{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ib{appearance:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface2);
+  color:var(--text);border-radius:10px;cursor:pointer;transition:transform .15s,border-color .15s,background .15s;font-size:.9rem}
+.ib:hover{transform:translateY(-2px);border-color:var(--primary)}
+.ib.off{opacity:.5}
+.langsw{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface2)}
+.langsw button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:.72rem;font-weight:800;
+  padding:8px 9px;cursor:pointer;letter-spacing:.06em}
+.langsw button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+main{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:18px 16px 60px}
+.view{display:none;animation:rise .45s cubic-bezier(.2,.7,.3,1) both}
+.view.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:6px 0 16px}
+.hero h1{margin:0;font-size:clamp(1.7rem,4.4vw,2.9rem);letter-spacing:-.03em;line-height:1;font-weight:850;
+  background:linear-gradient(96deg,var(--text),var(--primary) 55%,var(--acc-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:6px 0 0;color:var(--muted);font-size:.86rem;max-width:60ch}
+.bigcount{margin-left:auto;display:flex;align-items:baseline;gap:8px;font-family:var(--mono);
+  background:var(--surface);border:1px solid var(--line);padding:8px 14px;clip-path:var(--notch)}
+.bigcount b{font-size:1.7rem;color:var(--primary);line-height:1}
+.bigcount span{font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.card{background:rgba(var(--surface-rgb),.9);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.field{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:6px 10px;min-height:38px}
+.field label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.field input[type=search],.field input[type=text]{border:0;background:transparent;color:var(--text);font:inherit;font-size:.86rem;min-width:60px;width:190px;outline:none}
+select{appearance:none;border:0;background:transparent;color:var(--text);font:inherit;font-size:.83rem;font-weight:600;cursor:pointer;padding-right:14px;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 8px) 55%,calc(100% - 4px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+select option{background:var(--overlay);color:var(--text)}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:.8rem;font-weight:650;padding:6px 11px;border-radius:8px;cursor:pointer;transition:.16s}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;font-weight:650;font-size:.83rem;
+  padding:9px 14px;border-radius:11px;cursor:pointer;transition:transform .15s,border-color .15s,background .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{transform:translateY(-2px);border-color:var(--primary)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--primary);color:var(--on-primary);border-color:transparent;clip-path:var(--notch);border-radius:0;padding:12px 22px;font-size:.92rem;font-weight:750}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:.76rem}
+.badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:6px;background:var(--acc-magenta);color:#fff;font-size:.66rem;font-weight:800;font-family:var(--mono)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:12px;
+  background:rgba(var(--surface-rgb),.75);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.fgroup h4{margin:0 0 8px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:750}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--muted);font:inherit;font-size:.74rem;
+  padding:5px 9px;border-radius:20px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.chip:hover{transform:translateY(-1px);color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--primary);border-color:transparent;color:var(--on-primary);font-weight:700}
+.chip .dot{width:8px;height:8px;border-radius:2px;background:var(--dotc,var(--primary))}
+.chip[aria-pressed="true"] .dot{background:currentColor}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:4px;background:var(--surface2);border:1px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-7px;border-radius:4px;background:var(--primary);border:2px solid var(--overlay);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-track{height:5px;border-radius:4px;background:var(--surface2)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:4px;background:var(--primary);border:2px solid var(--overlay)}
+.dual{position:relative;height:26px}
+.dual input{position:absolute;left:0;top:0;width:100%;pointer-events:none;background:none}
+.dual input::-webkit-slider-thumb{pointer-events:auto}
+.dual input::-moz-range-thumb{pointer-events:auto}
+.dual .track{position:absolute;left:0;right:0;top:9px;height:5px;border-radius:4px;background:var(--surface2);border:1px solid var(--line)}
+.dual .fill{position:absolute;top:9px;height:5px;border-radius:4px;background:linear-gradient(90deg,var(--primary),var(--acc-cyan))}
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:.82rem}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .tr{width:40px;height:22px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);position:relative;transition:.2s;flex:0 0 auto}
+.switch .tr::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:.2s}
+.switch input:checked+.tr{background:var(--primary);border-color:transparent}
+.switch input:checked+.tr::after{transform:translateX(18px);background:var(--on-primary)}
+.switch input:focus-visible+.tr{outline:2px solid var(--acc-cyan);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
+.lg{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:4px 9px;border-radius:20px}
+.lg i{width:11px;height:11px;border-radius:3px;display:block}
+.gradbar{height:12px;border-radius:6px;background:var(--grad);flex:1 1 180px;min-width:140px;border:1px solid var(--line)}
+.gridwrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:rgba(var(--surface-rgb),.55);padding:10px;
+  max-height:78vh;touch-action:pan-x pan-y;overscroll-behavior:contain}
+.gridpad{position:relative}
+.gridscale{position:absolute;top:0;left:0;transform-origin:0 0}
+.ptable{display:grid;grid-template-columns:26px repeat(18,var(--cell));
+  grid-template-rows:18px repeat(7,var(--cellh)) 14px repeat(2,var(--cellh));gap:var(--gap)}
+.axis{display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.cell{position:relative;appearance:none;border:1px solid var(--cb);background:var(--cbg);color:var(--cfg);
+  border-radius:7px;padding:3px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  font:inherit;text-align:left;overflow:hidden;transition:transform .16s cubic-bezier(.2,.8,.3,1),box-shadow .16s,filter .16s}
+.cell:hover{transform:translateY(-3px) scale(1.06);z-index:5;box-shadow:0 10px 22px rgba(0,0,0,.32);filter:brightness(1.08)}
+.cell .cn{font-family:var(--mono);font-size:.56rem;opacity:.85;line-height:1}
+.cell .cs{font-size:calc(var(--cell)*.36);font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.cell .cname{font-size:.46rem;line-height:1.1;opacity:.9;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell .cm{font-family:var(--mono);font-size:.44rem;opacity:.7;line-height:1.1}
+.cell.dim{opacity:.16;filter:grayscale(.7)}
+.cell.dim:hover{opacity:.6}
+.cell .rk{position:absolute;top:2px;right:3px;font-family:var(--mono);font-size:.46rem;background:rgba(0,0,0,.28);color:#fff;border-radius:3px;padding:0 3px}
+.cell .gm{position:absolute;bottom:3px;right:3px;width:7px;height:7px;background:var(--acc-green);border-radius:2px;box-shadow:0 0 6px var(--acc-green)}
+.flabel{grid-column:1/4;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:.6rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.ph{border-style:dashed;font-size:.6rem;font-family:var(--mono);align-items:center;justify-content:center;text-align:center}
+.zoomrow{display:flex;gap:6px;align-items:center;margin-left:auto}
+.zoomrow .zv{font-family:var(--mono);font-size:.72rem;color:var(--muted);min-width:42px;text-align:center}
+.hintline{font-size:.7rem;color:var(--muted);margin:8px 2px 0}
+.listwrap{overflow:auto;max-height:74vh;border:1px solid var(--line);border-radius:var(--r);background:rgba(var(--surface-rgb),.7)}
+table.lt{border-collapse:collapse;width:100%;font-size:.8rem;min-width:840px}
+.lt th{position:sticky;top:0;background:var(--surface2);z-index:2;text-align:left;padding:9px 10px;font-size:.66rem;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+.lt th:hover{color:var(--text)}
+.lt th .ar{color:var(--primary)}
+.lt td{padding:7px 10px;border-bottom:1px solid rgba(var(--line-rgb),.55);font-family:var(--mono);font-size:.76rem;white-space:nowrap}
+.lt td.nm{font-family:var(--sans);font-weight:650;font-size:.82rem}
+.lt tbody tr{cursor:pointer;transition:background .14s}
+.lt tbody tr:hover{background:rgba(var(--primary-rgb),.12)}
+.sym{display:inline-grid;place-items:center;min-width:32px;height:26px;padding:0 5px;border-radius:6px;font-weight:800;font-family:var(--sans);
+  background:var(--cbg);color:var(--cfg);border:1px solid var(--cb)}
+.catpill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;background:var(--cbg);color:var(--cfg);border:1px solid var(--cb);font-family:var(--sans)}
+.tiles{display:flex;flex-direction:column;gap:20px}
+.tgroup h3{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:.95rem}
+.tgroup h3 i{width:14px;height:14px;border-radius:4px;background:var(--dotc)}
+.tgroup h3 span{color:var(--muted);font-size:.75rem;font-family:var(--mono)}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px}
+.tile{appearance:none;text-align:left;font:inherit;cursor:pointer;border:1px solid var(--cb);background:var(--cbg);color:var(--cfg);
+  border-radius:12px;padding:11px;display:flex;gap:11px;align-items:center;transition:transform .16s,box-shadow .16s}
+.tile:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.28)}
+.tile .big{font-size:1.7rem;font-weight:850;line-height:1;min-width:52px}
+.tile .meta{font-size:.72rem;line-height:1.35;overflow:hidden}
+.tile .meta b{display:block;font-size:.86rem}
+.tile .meta em{font-style:normal;opacity:.8;font-family:var(--mono);font-size:.68rem}
+.shellbar{display:flex;gap:2px;margin-top:4px}
+.shellbar i{height:5px;border-radius:2px;background:currentColor;opacity:.55;display:block}
+.gcols{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:14px}
+.sechead{display:flex;align-items:center;gap:9px;margin:0 0 10px}
+.sechead h3{margin:0;font-size:.95rem}
+.sechead .n{width:22px;height:22px;display:grid;place-items:center;background:var(--primary);color:var(--on-primary);
+  font-family:var(--mono);font-size:.7rem;font-weight:800;clip-path:polygon(0 5px,5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
+.counter{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}
+.ring{width:46px;height:46px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:.72rem;font-weight:700;
+  background:conic-gradient(var(--primary) var(--p,0%),var(--surface) 0);position:relative}
+.ring::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--surface2)}
+.ring span{position:relative;z-index:1}
+.mini{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:2px;margin-top:8px}
+.mini button{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--muted);font:inherit;font-size:.5rem;
+  font-weight:700;padding:0;aspect-ratio:1;border-radius:3px;cursor:pointer;transition:.12s;line-height:1}
+.mini button:hover{transform:scale(1.22);z-index:2;border-color:var(--primary)}
+.mini button.on{background:var(--cbg);color:var(--cfg);border-color:var(--cb);box-shadow:0 0 0 1px var(--acc-green) inset}
+.mini .sp{visibility:hidden}
+.modelist{display:flex;flex-direction:column;gap:7px}
+.mode{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);cursor:pointer;transition:.15s}
+.mode:hover{border-color:var(--primary)}
+.mode.on{background:rgba(var(--primary-rgb),.14);border-color:var(--primary)}
+.mode input{margin-top:3px;accent-color:var(--primary);width:16px;height:16px}
+.mode b{display:block;font-size:.84rem}
+.mode small{color:var(--muted);font-size:.72rem}
+.playwrap{max-width:760px;margin:0 auto}
+.prog{display:flex;gap:4px;margin-bottom:14px}
+.prog i{height:6px;flex:1;border-radius:3px;background:var(--surface2);border:1px solid var(--line);transition:.3s}
+.prog i.ok{background:var(--ok);border-color:transparent}
+.prog i.no{background:var(--bad);border-color:transparent}
+.prog i.cur{background:var(--primary);border-color:transparent;box-shadow:0 0 10px rgba(var(--primary-rgb),.6)}
+.frame{background:linear-gradient(135deg,var(--primary),var(--acc-cyan) 60%,var(--acc-magenta));padding:1.5px;clip-path:var(--notch)}
+.frame>.inner{background:var(--surface);clip-path:var(--notch);padding:22px}
+.qmode{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);font-weight:800}
+.qbig{font-size:clamp(2.6rem,11vw,4.6rem);font-weight:850;line-height:1;letter-spacing:-.04em;margin:8px 0;font-family:var(--mono)}
+.qtext{font-size:1.05rem;line-height:1.5;margin:8px 0}
+.qprops{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.qprop{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.qprop small{display:block;color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em}
+.qprop b{font-family:var(--mono);font-size:1rem}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.opt{appearance:none;font:inherit;text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--surface2);color:var(--text);
+  padding:13px 15px;border-radius:12px;display:flex;align-items:center;gap:11px;transition:transform .15s,border-color .15s,background .15s}
+.opt:hover:not(:disabled){transform:translateY(-2px);border-color:var(--primary);background:rgba(var(--primary-rgb),.1)}
+.opt .k{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;border-radius:6px;background:var(--surface);border:1px solid var(--line);font-family:var(--mono);font-size:.7rem}
+.opt .sy{font-weight:800;font-size:1.05rem;min-width:34px}
+.opt .nm{font-size:.85rem;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:rgba(47,191,113,.18)}
+.opt.wrong{border-color:var(--bad);background:rgba(255,90,95,.16)}
+.opt.gone{opacity:.25;text-decoration:line-through}
+.opt:disabled{cursor:default}
+.answerrow{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.answerrow input{flex:1 1 220px;min-width:0;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--text);font:inherit;font-size:1rem;outline:none}
+.answerrow input:focus{border-color:var(--primary)}
+.sugg{margin-top:9px;font-size:.74rem;color:var(--muted)}
+.sugg .srow{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.sugg button{appearance:none;font:inherit;font-size:.74rem;border:1px dashed var(--line);background:transparent;color:var(--muted);padding:3px 9px;border-radius:20px;cursor:pointer}
+.sugg button:hover{color:var(--text);border-color:var(--primary)}
+.hintrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;align-items:center}
+.hintbox{margin-top:10px;padding:9px 12px;border-left:3px solid var(--acc-amber);background:rgba(255,176,32,.1);border-radius:0 10px 10px 0;font-size:.84rem}
+.fb{margin-top:16px;border-radius:12px;padding:14px;display:flex;gap:14px;align-items:center;animation:pop .3s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.fb.ok{background:rgba(47,191,113,.15);border:1px solid var(--ok)}
+.fb.no{background:rgba(255,90,95,.13);border:1px solid var(--bad)}
+.fb .icon{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:10px;font-size:1.2rem;font-weight:800}
+.fb.ok .icon{background:var(--ok);color:#04240f}
+.fb.no .icon{background:var(--bad);color:#2b0304}
+.fb b{display:block;font-size:1rem}
+.fb small{color:var(--muted);font-size:.78rem}
+.resrow{display:flex;gap:11px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);margin-bottom:7px}
+.resrow .st{width:24px;height:24px;flex:0 0 auto;display:grid;place-items:center;border-radius:7px;font-weight:800;font-size:.8rem}
+.resrow.ok .st{background:var(--ok);color:#04240f}
+.resrow.no .st{background:var(--bad);color:#2b0304}
+.resrow .q{flex:1;min-width:0;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resrow .q small{display:block;color:var(--muted);font-size:.7rem}
+.resrow .a{font-family:var(--mono);font-size:.8rem;text-align:right}
+.sumline{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.sumline b{font-size:2rem;font-family:var(--mono);line-height:1}
+.sheetwrap{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
+.scrim{position:absolute;inset:0;background:rgba(var(--scrim-rgb),.62);backdrop-filter:blur(4px);animation:fade .25s both}
+@keyframes fade{from{opacity:0}}
+.sheet{position:relative;width:min(920px,100%);max-height:88vh;overflow:auto;background:var(--overlay);border:1px solid var(--line);
+  border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:up .32s cubic-bezier(.2,.8,.3,1) both}
+@keyframes up{from{opacity:0;transform:translateY(26px) scale(.98)}}
+.handle{display:none}
+.shead{position:sticky;top:0;z-index:3;background:rgba(var(--overlay-rgb),.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  padding:14px 16px;display:flex;gap:14px;align-items:center}
+.etile{width:74px;height:74px;flex:0 0 auto;border-radius:12px;background:var(--cbg);color:var(--cfg);border:1px solid var(--cb);
+  display:flex;flex-direction:column;justify-content:center;padding:6px 8px}
+.etile .z{font-family:var(--mono);font-size:.66rem}
+.etile .s{font-size:1.9rem;font-weight:850;line-height:1}
+.etile .m{font-family:var(--mono);font-size:.6rem;opacity:.85}
+.shead h2{margin:0;font-size:1.35rem;letter-spacing:-.02em}
+.shead .sub{color:var(--muted);font-size:.78rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:3px}
+.shead .acts{margin-left:auto;display:flex;gap:6px;align-items:center}
+.sbody{padding:16px;display:grid;gap:16px}
+.sec{border:1px solid var(--line);border-radius:14px;padding:13px;background:rgba(var(--surface-rgb),.6)}
+.sec>h3{margin:0 0 10px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);font-weight:800}
+.props{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}
+.prop{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.prop small{display:block;color:var(--muted);font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;line-height:1.25}
+.prop b{font-family:var(--mono);font-size:.9rem;word-break:break-word}
+.desc{font-size:.88rem;line-height:1.6;color:var(--text)}
+.atomgrid{display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:16px;align-items:start}
+.atombox{background:#07060f;border:1px solid var(--line);clip-path:var(--notch);padding:10px;position:relative}
+.atombox canvas{width:100%;height:auto;aspect-ratio:1;display:block;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair;touch-action:manipulation}
+.atomtag{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:.6rem;color:#8ea0ff;letter-spacing:.1em}
+.subchips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}
+.subchips button{appearance:none;font:inherit;font-family:var(--mono);font-size:.7rem;border:1px solid var(--line);background:var(--surface2);
+  color:var(--muted);padding:3px 7px;border-radius:6px;cursor:pointer;transition:.14s}
+.subchips button:hover{color:var(--text);transform:translateY(-1px)}
+.subchips button.on{background:var(--primary);color:var(--on-primary);border-color:transparent;font-weight:700}
+.cfgtext{font-family:var(--mono);font-size:.82rem;line-height:1.9;word-break:break-word;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.boxes{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.obox{width:34px;height:30px;border:2px solid var(--line);background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:.85rem;color:var(--acc-cyan);letter-spacing:-2px}
+.isot{width:100%;border-collapse:collapse;font-size:.78rem;min-width:0}
+.isot th{text-align:left;color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:5px 7px;border-bottom:1px solid var(--line)}
+.isot td{padding:6px 7px;border-bottom:1px solid rgba(var(--line-rgb),.5);font-family:var(--mono)}
+.tagok{color:var(--ok);font-weight:700}
+.tagbad{color:var(--warn);font-weight:700}
+.toasts{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(440px,92vw)}
+.toast{pointer-events:auto;background:var(--overlay);border:1px solid var(--line);border-left:3px solid var(--primary);border-radius:11px;
+  padding:10px 13px;font-size:.83rem;box-shadow:0 14px 34px rgba(0,0,0,.4);display:flex;gap:12px;align-items:center;animation:up .25s both;width:100%}
+.toast button{appearance:none;border:0;background:transparent;color:var(--acc-cyan);font:inherit;font-weight:750;cursor:pointer;margin-left:auto;white-space:nowrap}
+footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:18px 16px calc(24px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:.74rem}
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.sw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer;appearance:none;padding:0;transition:transform .15s;position:relative}
+.sw:hover{transform:translateY(-3px) scale(1.06)}
+.sw[aria-pressed="true"]{border-color:var(--text);box-shadow:0 0 0 2px var(--overlay) inset}
+input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);cursor:pointer;padding:3px}
+.kbd{font-family:var(--mono);font-size:.72rem;background:var(--surface2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+.klist{display:grid;gap:7px;font-size:.8rem}
+.klist div{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.muted{color:var(--muted)}
+.small{font-size:.76rem}
+.num{font-family:var(--mono)}
+@media(max-width:1080px){:root{--cell:50px}.gcols{grid-template-columns:1fr}.atomgrid{grid-template-columns:1fr}}
+@media(max-width:760px){
+  :root{--cell:46px}
+  .bar-in{flex-wrap:wrap;padding:8px 12px;gap:8px}
+  .tabs{order:3;width:100%;margin:0;justify-content:space-between}
+  .tab{flex:1;padding:8px 6px;text-align:center}
+  .tools{margin-left:auto}
+  .brandtxt i{display:none}
+  main{padding:14px 12px 50px}
+  .hero{gap:10px}.bigcount{margin-left:0}
+  .field input[type=search]{width:120px}
+  .opts{grid-template-columns:1fr}
+  .sheetwrap{padding:0;align-items:flex-end}
+  .sheet{width:100%;max-height:92vh;border-radius:18px 18px 0 0;animation:slideup .32s cubic-bezier(.2,.8,.3,1) both;padding-bottom:env(safe-area-inset-bottom)}
+  @keyframes slideup{from{transform:translateY(100%)}}
+  .handle{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 0}
+  .shead{padding:10px 12px;gap:10px;flex-wrap:wrap}
+  .etile{width:60px;height:60px}.etile .s{font-size:1.5rem}
+  .shead h2{font-size:1.1rem}
+  .shead .acts{width:100%;margin-left:0}
+  .sbody{padding:12px}
+  .gridwrap{max-height:64vh;padding:6px}
+  .frame>.inner{padding:16px}
+  .mini button{font-size:.42rem}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}html{scroll-behavior:auto}}
+[data-motion="off"] *{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span><div class="scan"></div><div class="grain"></div></div>
+
+<header class="bar" id="bar">
+  <div class="bar-in">
+    <a class="brand" href="#" data-act="tab" data-tab="table">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--on-primary)"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="10" ry="4.4"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(120 12 12)"/></svg></span>
+      <span class="brandtxt"><b data-i18n="appTitle"></b><i data-i18n="appSub"></i></span>
+    </a>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" id="tab-table" aria-controls="v-table" aria-selected="true" data-act="tab" data-tab="table"></button>
+      <button class="tab" role="tab" id="tab-game" aria-controls="v-game" aria-selected="false" data-act="tab" data-tab="game"></button>
+      <button class="tab" role="tab" id="tab-settings" aria-controls="v-settings" aria-selected="false" data-act="tab" data-tab="settings"></button>
+    </nav>
+    <div class="tools">
+      <button class="ib" id="soundBtn" data-act="sound" aria-pressed="true"></button>
+      <button class="ib" id="themeBtn" data-act="theme"></button>
+      <div class="langsw" role="group" id="langsw">
+        <button data-act="lang" data-lang="ru" aria-pressed="true">RU</button>
+        <button data-act="lang" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="view on" id="v-table" role="tabpanel" aria-labelledby="tab-table">
+    <div class="hero">
+      <div>
+        <h1 data-i18n="tableTitle"></h1>
+        <p data-i18n="tableLead"></p>
+      </div>
+      <div class="bigcount"><b id="foundN">118</b><span id="foundL"></span></div>
+    </div>
+    <div class="toolbar" id="toolbar"></div>
+    <div class="filters" id="filters" hidden></div>
+    <div class="legend" id="legend"></div>
+    <div id="tableArea"></div>
+    <p class="hintline" id="gridHint"></p>
+  </section>
+
+  <section class="view" id="v-game" role="tabpanel" aria-labelledby="tab-game" hidden>
+    <div id="gameArea"></div>
+  </section>
+
+  <section class="view" id="v-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="hero"><div><h1 data-i18n="settingsTitle"></h1><p data-i18n="settingsLead"></p></div></div>
+    <div class="setgrid" id="settingsArea"></div>
+  </section>
+</main>
+
+<footer><span data-i18n="footer"></span> · <span class="num">118</span> <span data-i18n="elements"></span></footer>
+
+<div class="sheetwrap" id="sheetwrap" hidden>
+  <div class="scrim" data-act="close"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="sheet"></div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============================ DATA ============================ */
+const RAW=`1|H|Водород|Hydrogen|1.008|nm|1|1|s|0.00008988,13.99,20.271,0.117,0.904,2.2,72.8,53,31,120|1312|+1,-1|hex|g|1766|Г. Кавендиш^H. Cavendish|греч. «рождающий воду»^Greek water-former|топливо, аммиак, гидрогенизация^fuel, ammonia, hydrogenation|самый распространённый элемент Вселенной^the most abundant element in the universe|1:st,2:st,3:12.32y:b-
+2|He|Гелий|Helium|4.0026|ng|18|1|s|0.0001785,0.95,4.222,0.0138,0.0829,0,0,31,28,140|2372.3,5250.5|0|hcp|g|1868|П. Жансен, Н. Локьер^P. Janssen, N. Lockyer|греч. Гелиос — Солнце^Greek Helios, the Sun|криогеника, МРТ, дирижабли^cryogenics, MRI, airships|не замерзает при обычном давлении^never freezes at ordinary pressure|3:st,4:st
+3|Li|Литий|Lithium|6.94|am|1|2|s|0.534,453.65,1603,3,147.1,0.98,59.6,167,128,182|520.2,7298.1,11815|+1|bcc|s|1817|Ю. Арфведсон^J. Arfwedson|греч. lithos — камень^Greek lithos, stone|аккумуляторы, стекло, психиатрия^batteries, glass, psychiatry|самый лёгкий металл^the lightest metal|6:st,7:st
+4|Be|Бериллий|Beryllium|9.0122|ae|2|2|s|1.85,1560,2742,7.895,297,1.57,0,112,96,153|899.5,1757.1,14848.7,21006.6|+2|hcp|s|1798|Л. Воклен^L. Vauquelin|от минерала берилл^from the mineral beryl|рентгеновские окна, сплавы с медью^X-ray windows, copper alloys|прозрачен для рентгеновских лучей^transparent to X-rays|9:st,10:1.51e6y:b-
+5|B|Бор|Boron|10.81|md|13|2|p|2.34,2349,4200,50.2,480,2.04,26.7,87,84,192|800.6,2427.1,3659.7|+3|rho|s|1808|Ж. Гей-Люссак, Л. Тенар^J. Gay-Lussac, L. Thenard|араб. buraq — бура^Arabic buraq, borax|боросиликатное стекло, полупроводники^borosilicate glass, semiconductors|поглотитель нейтронов в реакторах^neutron absorber in reactors|10:st,11:st
+6|C|Углерод|Carbon|12.011|nm|14|2|p|2.267,3823,4300,117,715,2.55,153.9,67,76,170|1086.5,2352.6,4620.5|-4,+2,+4|hex|s|0|известен с древности^known since antiquity|лат. carbo — уголь^Latin carbo, coal|сталь, графит, композиты, основа жизни^steel, graphite, composites, basis of life|алмаз и графит — один элемент^diamond and graphite, one element|12:st,13:st,14:5730y:b-
+7|N|Азот|Nitrogen|14.007|nm|15|2|p|0.0012506,63.15,77.355,0.72,5.56,3.04,0,56,71,155|1402.3,2856,4578.1,7475|-3,+3,+5|hex|g|1772|Д. Резерфорд^D. Rutherford|греч. «безжизненный»^Greek lifeless|удобрения, аммиак, жидкий азот^fertilisers, ammonia, liquid nitrogen|78% воздуха^78% of the air|14:st,15:st
+8|O|Кислород|Oxygen|15.999|nm|16|2|p|0.001429,54.36,90.188,0.444,6.82,3.44,141,48,66,152|1313.9,3388.3,5300.5|-2|mono|g|1774|Д. Пристли, К. Шееле^J. Priestley, C. Scheele|греч. «рождающий кислоты»^Greek acid-former|дыхание, металлургия, медицина^breathing, metallurgy, medicine|самый распространённый в земной коре^most abundant in Earth's crust|16:st,17:st,18:st
+9|F|Фтор|Fluorine|18.998|hl|17|2|p|0.001696,53.48,85.03,0.51,6.51,3.98,328,42,57,147|1681,3374.2,6050.4|-1|mono|g|1886|А. Муассан^H. Moissan|лат. fluere — течь^Latin fluere, to flow|тефлон, зубные пасты, обогащение урана^Teflon, toothpaste, uranium enrichment|самый электроотрицательный элемент^the most electronegative element|19:st
+10|Ne|Неон|Neon|20.180|ng|18|2|p|0.0008999,24.56,27.104,0.335,1.71,0,0,38,58,154|2080.7,3952.3,6122|0|fcc|g|1898|У. Рамзай, М. Траверс^W. Ramsay, M. Travers|греч. neos — новый^Greek neos, new|вывески, лазеры, криогеника^signs, lasers, cryogenics|оранжево-красное свечение в трубке^orange-red glow in a tube|20:st,21:st,22:st
+11|Na|Натрий|Sodium|22.990|am|1|3|s|0.971,370.944,1156.09,2.6,97.42,0.93,52.8,190,166,227|495.8,4562,6910.3|+1|bcc|s|1807|Г. Дэви^H. Davy|лат. natrium, сода^Latin natrium, soda|натриевые лампы, теплоноситель, мыло^sodium lamps, coolant, soap|горит ярко-жёлтым пламенем^burns with a bright yellow flame|23:st,22:2.6y:b+
+12|Mg|Магний|Magnesium|24.305|ae|2|3|s|1.738,923,1363,8.48,128,1.31,0,145,141,173|737.7,1450.7,7732.7|+2|hcp|s|1755|Дж. Блэк^J. Black|от Магнесии в Греции^from Magnesia, Greece|лёгкие сплавы, фейерверки, хлорофилл^light alloys, fireworks, chlorophyll|стоит в центре молекулы хлорофилла^sits at the centre of chlorophyll|24:st,25:st,26:st
+13|Al|Алюминий|Aluminium|26.982|pm|13|3|p|2.698,933.47,2743,10.71,294,1.61,42.5,118,121,184|577.5,1816.7,2744.8|+3|fcc|s|1825|Х. Эрстед^H. C. Orsted|лат. alumen — квасцы^Latin alumen, alum|транспорт, банки, фольга, провода^transport, cans, foil, wires|самый распространённый металл коры^most abundant metal in the crust|27:st,26:7.4e5y:b+
+14|Si|Кремний|Silicon|28.085|md|14|3|p|2.329,1687,3538,50.21,359,1.9,133.6,111,111,210|786.5,1577.1,3231.6|-4,+4|dia|s|1824|Я. Берцелиус^J. Berzelius|лат. silex — кремень^Latin silex, flint|чипы, солнечные панели, стекло^chips, solar cells, glass|основа цифровой эпохи^the basis of the digital age|28:st,29:st,30:st
+15|P|Фосфор|Phosphorus|30.974|nm|15|3|p|1.823,317.3,553.65,0.66,12.4,2.19,72,98,107,180|1011.8,1907,2914.1|-3,+3,+5|cub|s|1669|Х. Бранд^H. Brand|греч. phosphoros — светоносный^Greek phosphoros, light-bearer|удобрения, спички, ДНК^fertilisers, matches, DNA|белый фосфор светится в темноте^white phosphorus glows in the dark|31:st,32:14.27d:b-
+16|S|Сера|Sulfur|32.06|nm|16|3|p|2.067,388.36,717.8,1.727,45,2.58,200.4,88,105,180|999.6,2252,3357|-2,+4,+6|orth|s|0|известна с древности^known since antiquity|санскр. sulvere^Sanskrit sulvere|серная кислота, вулканизация, фунгициды^sulfuric acid, vulcanisation, fungicides|жёлтые кристаллы у вулканов^yellow crystals near volcanoes|32:st,34:st,35:87.4d:b-
+17|Cl|Хлор|Chlorine|35.45|hl|17|3|p|0.003214,171.6,239.11,6.406,20.41,3.16,349,79,102,175|1251.2,2298,3822|-1,+1,+5,+7|orth|g|1774|К. Шееле^C. Scheele|греч. chloros — бледно-зелёный^Greek chloros, pale green|дезинфекция воды, ПВХ, отбеливатели^water disinfection, PVC, bleach|жёлто-зелёный удушливый газ^yellow-green choking gas|35:st,37:st,36:3.01e5y:b-
+18|Ar|Аргон|Argon|39.948|ng|18|3|p|0.0017837,83.81,87.302,1.18,6.43,0,0,71,106,188|1520.6,2665.8,3931|0|fcc|g|1894|Дж. Рэлей, У. Рамзай^Lord Rayleigh, W. Ramsay|греч. argos — ленивый^Greek argos, idle|сварка, лампы, инертная среда^welding, lamps, inert atmosphere|третий по содержанию газ атмосферы^third most common gas of the atmosphere|36:st,38:st,40:st,39:269y:b-
+19|K|Калий|Potassium|39.098|am|1|4|s|0.862,336.7,1032,2.33,76.9,0.82,48.4,243,203,275|418.8,3052,4420|+1|bcc|s|1807|Г. Дэви^H. Davy|англ. potash — поташ^English potash|удобрения, мыло, нервный импульс^fertilisers, soap, nerve impulses|даёт фиолетовое пламя^gives a violet flame|39:st,41:st,40:1.25e9y:b-
+20|Ca|Кальций|Calcium|40.078|ae|2|4|s|1.54,1115,1757,8.54,154.7,1,2.37,194,176,231|589.8,1145.4,4912.4|+2|fcc|s|1808|Г. Дэви^H. Davy|лат. calx — известь^Latin calx, lime|цемент, кости, молочные продукты^cement, bones, dairy|пятый по распространённости в коре^fifth most abundant in the crust|40:st,44:st,48:st,45:163d:b-
+21|Sc|Скандий|Scandium|44.956|tm|3|4|d|2.989,1814,3109,14.1,332.7,1.36,18.1,184,170,0|633.1,1235,2388.6|+3|hcp|s|1879|Л. Нильсон^L. Nilson|от Скандинавии^from Scandinavia|сплавы для велосипедов и ракет^alloys for bikes and rockets|предсказан Менделеевым как экабор^predicted by Mendeleev as eka-boron|45:st
+22|Ti|Титан|Titanium|47.867|tm|4|4|d|4.54,1941,3560,14.15,425,1.54,7.6,176,160,0|658.8,1309.8,2652.5|+2,+3,+4|hcp|s|1791|У. Грегор^W. Gregor|титаны греческой мифологии^Titans of Greek myth|импланты, авиация, белый пигмент^implants, aviation, white pigment|прочный, лёгкий и не ржавеет^strong, light and corrosion-free|46:st,48:st,50:st
+23|V|Ванадий|Vanadium|50.942|tm|5|4|d|6.11,2183,3680,21.5,459,1.63,50.6,171,153,0|650.9,1414,2830|+2,+3,+4,+5|bcc|s|1801|А. дель Рио^A. del Rio|богиня Ванадис^Norse goddess Vanadis|легирование стали, катализаторы^steel alloying, catalysts|соединения всех цветов радуги^compounds in every rainbow colour|51:st,50:1.5e17y:ec
+24|Cr|Хром|Chromium|51.996|tm|6|4|d|7.15,2180,2944,21,339.5,1.66,64.3,166,139,0|652.9,1590.6,2987|+2,+3,+6|bcc|s|1797|Л. Воклен^L. Vauquelin|греч. chroma — цвет^Greek chroma, colour|нержавейка, хромирование, пигменты^stainless steel, chrome plating, pigments|рубин красный благодаря хрому^rubies are red thanks to chromium|52:st,53:st,54:st
+25|Mn|Марганец|Manganese|54.938|tm|7|4|d|7.44,1519,2334,12.91,221,1.55,0,161,139,0|717.3,1509,3248|+2,+4,+7|cub|s|1774|Ю. Ган^J. Gahn|от Магнесии^from Magnesia|сталь, батарейки, перманганат^steel, batteries, permanganate|пещерные краски 30 000 лет назад^cave pigments 30,000 years ago|55:st,53:3.7e6y:ec
+26|Fe|Железо|Iron|55.845|tm|8|4|d|7.874,1811,3134,13.81,340,1.83,15.7,156,132,0|762.5,1561.9,2957|+2,+3|bcc|s|0|известно с древности^known since antiquity|лат. ferrum^Latin ferrum|сталь, строительство, гемоглобин^steel, construction, haemoglobin|ядро Земли в основном железное^Earth's core is mostly iron|54:st,56:st,57:st,58:st
+27|Co|Кобальт|Cobalt|58.933|tm|9|4|d|8.86,1768,3200,16.06,377,1.88,63.7,152,126,0|760.4,1648,3232|+2,+3|hcp|s|1735|Г. Брандт^G. Brandt|нем. Kobold — гоблин^German Kobold, goblin|магниты, батареи, синий пигмент^magnets, batteries, blue pigment|витамин B12 содержит кобальт^vitamin B12 contains cobalt|59:st,60:5.27y:b-
+28|Ni|Никель|Nickel|58.693|tm|10|4|d|8.912,1728,3003,17.48,379,1.91,112,149,124,163|737.1,1753,3395|+2,+3|fcc|s|1751|А. Кронстедт^A. Cronstedt|нем. Kupfernickel^German Kupfernickel|нержавейка, монеты, аккумуляторы^stainless steel, coins, batteries|ферромагнитен при комнатной температуре^ferromagnetic at room temperature|58:st,60:st,62:st,63:100y:b-
+29|Cu|Медь|Copper|63.546|tm|11|4|d|8.96,1357.77,2835,13.26,300.4,1.9,118.4,145,132,140|745.5,1957.9,3555|+1,+2|fcc|s|0|известна с древности^known since antiquity|лат. cuprum, с Кипра^Latin cuprum, from Cyprus|провода, трубы, бронза^wires, pipes, bronze|первый металл, освоенный человеком^first metal mastered by humans|63:st,65:st,64:12.7h:b+
+30|Zn|Цинк|Zinc|65.38|tm|12|4|d|7.134,692.68,1180,7.32,115,1.65,0,142,122,139|906.4,1733.3,3833|+2|hcp|s|1746|А. Маргграф^A. Marggraf|нем. Zinke — зубец^German Zinke, prong|оцинковка, латунь, иммунитет^galvanising, brass, immunity|защищает сталь, жертвуя собой^protects steel sacrificially|64:st,66:st,68:st,65:244d:b+
+31|Ga|Галлий|Gallium|69.723|pm|13|4|p|5.907,302.9146,2673,5.59,254,1.81,28.9,136,122,187|578.8,1979.3,2963|+3|orth|s|1875|П. Лекок де Буабодран^P. Lecoq de Boisbaudran|лат. Gallia — Франция^Latin Gallia, France|GaN-светодиоды, чипы, термометры^GaN LEDs, chips, thermometers|плавится в руке при 30 градусах^melts in your hand at 30 C|69:st,71:st
+32|Ge|Германий|Germanium|72.630|md|14|4|p|5.323,1211.4,3106,36.94,334,2.01,119,125,120,211|762,1537.5,3302.1|+2,+4|dia|s|1886|К. Винклер^C. Winkler|лат. Germania^Latin Germania|оптоволокно, ИК-оптика, транзисторы^optical fibre, IR optics, transistors|экасилиций Менделеева^Mendeleev's eka-silicon|70:st,72:st,74:st,76:st
+33|As|Мышьяк|Arsenic|74.922|md|15|4|p|5.776,1090,887,24.44,32.4,2.18,78,114,119,185|947,1798,2735|-3,+3,+5|rho|s|1250|Альберт Великий^Albertus Magnus|греч. arsenikon — аурипигмент^Greek arsenikon, orpiment|GaAs-электроника, пестициды^GaAs electronics, pesticides|возгоняется, минуя жидкую фазу^sublimes without melting at 1 atm|75:st
+34|Se|Селен|Selenium|78.971|nm|16|4|p|4.809,494,958,6.69,95.48,2.55,195,103,120,190|941,2045,2973.7|-2,+4,+6|hex|s|1817|Я. Берцелиус^J. Berzelius|греч. Selene — Луна^Greek Selene, the Moon|фотобарабаны, стекло, микроэлемент^copier drums, glass, trace nutrient|проводимость растёт на свету^conductivity rises in light|74:st,78:st,80:st,82:st
+35|Br|Бром|Bromine|79.904|hl|17|4|p|3.122,265.8,332,10.57,29.96,2.96,324.6,94,120,185|1139.9,2103,3470|-1,+5|orth|l|1826|А. Балар^A. Balard|греч. bromos — зловоние^Greek bromos, stench|антипирены, фотоплёнка, лекарства^flame retardants, film, medicines|единственный жидкий неметалл^the only liquid nonmetal|79:st,81:st
+36|Kr|Криптон|Krypton|83.798|ng|18|4|p|0.003733,115.78,119.93,1.64,9.08,3,0,88,116,202|1350.8,2350.4,3565|0,+2|fcc|g|1898|У. Рамзай, М. Траверс^W. Ramsay, M. Travers|греч. kryptos — скрытый^Greek kryptos, hidden|лампы, эксимерные лазеры^lamps, excimer lasers|эталон метра в 1960-1983 годах^metre standard 1960-1983|80:st,84:st,86:st,85:10.8y:b-
+37|Rb|Рубидий|Rubidium|85.468|am|1|5|s|1.532,312.45,961,2.19,75.8,0.82,46.9,265,220,303|403,2633,3860|+1|bcc|s|1861|Р. Бунзен, Г. Кирхгоф^R. Bunsen, G. Kirchhoff|лат. rubidus — тёмно-красный^Latin rubidus, deep red|атомные часы, геттеры^atomic clocks, getters|воспламеняется на воздухе^ignites in air|85:st,87:4.9e10y:b-
+38|Sr|Стронций|Strontium|87.62|ae|2|5|s|2.64,1050,1650,7.43,136.9,0.95,5.03,219,195,249|549.5,1064.2,4138|+2|fcc|s|1790|А. Кроуфорд^A. Crawford|от Strontian в Шотландии^from Strontian, Scotland|алый огонь фейерверков, магниты^crimson fireworks, magnets|Sr-90 — опасный продукт деления^Sr-90 is a hazardous fission product|84:st,86:st,88:st,90:28.8y:b-
+39|Y|Иттрий|Yttrium|88.906|tm|3|5|d|4.469,1799,3203,11.42,363,1.22,29.6,212,190,0|600,1180,1980|+3|hcp|s|1794|Ю. Гадолин^J. Gadolin|от деревни Иттербю^from the village of Ytterby|YAG-лазеры, сверхпроводники, люминофоры^YAG lasers, superconductors, phosphors|назван в честь одной деревни^named after a single village|89:st
+40|Zr|Цирконий|Zirconium|91.224|tm|4|5|d|6.506,2128,4650,14,591,1.33,41.1,206,175,0|640.1,1270,2218|+4|hcp|s|1789|М. Клапрот^M. Klaproth|перс. zargun — золотистый^Persian zargun, gold-coloured|оболочки ТВЭЛов, циркон, керамика^fuel cladding, zircon, ceramics|почти не поглощает нейтроны^barely absorbs neutrons|90:st,92:st,94:st,96:2.3e19y:2b-
+41|Nb|Ниобий|Niobium|92.906|tm|5|5|d|8.57,2750,5017,30,689.9,1.6,86.1,198,164,0|652.1,1380,2416|+3,+5|bcc|s|1801|Ч. Хатчетт^C. Hatchett|Ниоба из греческих мифов^Niobe of Greek myth|сверхпроводящие магниты МРТ^superconducting MRI magnets|магниты БАК работают на ниобии^LHC magnets rely on niobium|93:st,94:2.04e4y:b-
+42|Mo|Молибден|Molybdenum|95.95|tm|6|5|d|10.22,2896,4912,37.48,598,2.16,71.9,190,154,0|684.3,1560,2618|+4,+6|bcc|s|1781|П. Йельм^P. Hjelm|греч. molybdos — свинец^Greek molybdos, lead|легирование стали, смазки, катализ^steel alloying, lubricants, catalysis|фермент нитрогеназа содержит молибден^nitrogenase enzyme contains Mo|92:st,95:st,98:st,100:7.1e18y:2b-
+43|Tc|Технеций|Technetium|98|tm|7|5|d|11.5,2430,4538,33.29,585.2,1.9,53,183,147,0|702,1470,2850|+4,+7|hcp|s|1937|К. Перрье, Э. Сегре^C. Perrier, E. Segre|греч. technetos — искусственный^Greek technetos, artificial|медицинская сцинтиграфия^medical scintigraphy|первый искусственно полученный элемент^first artificially made element|97:4.2e6y:ec,98:4.2e6y:b-,99:2.1e5y:b-
+44|Ru|Рутений|Ruthenium|101.07|tm|8|5|d|12.37,2607,4423,38.59,619,2.2,101.3,178,146,0|710.2,1620,2747|+3,+4,+8|hcp|s|1844|К. Клаус^K. Claus|лат. Ruthenia — Русь^Latin Ruthenia, Rus|катализаторы, контакты, солнечные ячейки^catalysts, contacts, solar cells|тонкий рутениевый слой в жёстких дисках^HDD platters use a ruthenium layer|96:st,99:st,101:st,102:st,104:st
+45|Rh|Родий|Rhodium|102.91|tm|9|5|d|12.41,2237,3968,26.59,493,2.28,109.7,173,142,0|719.7,1740,2997|+3|fcc|s|1803|У. Волластон^W. Wollaston|греч. rhodon — роза^Greek rhodon, rose|автокатализаторы, зеркала^car catalysts, mirrors|самый дорогой платиновый металл^costliest platinum-group metal|103:st
+46|Pd|Палладий|Palladium|106.42|tm|10|5|d|12.02,1828.05,3236,16.74,358,2.2,53.7,169,139,163|804.4,1870,3177|+2,+4|fcc|s|1803|У. Волластон^W. Wollaston|астероид Паллада^asteroid Pallas|катализаторы, водородные фильтры^catalysts, hydrogen filters|впитывает 900 объёмов водорода^absorbs 900 volumes of hydrogen|102:st,105:st,106:st,108:st,110:st
+47|Ag|Серебро|Silver|107.87|tm|11|5|d|10.501,1234.93,2435,11.28,254,1.93,125.6,165,145,172|731,2070,3361|+1|fcc|s|0|известно с древности^known since antiquity|лат. argentum^Latin argentum|электроника, зеркала, антисептик^electronics, mirrors, antiseptics|лучший проводник тока и тепла^best conductor of heat and current|107:st,109:st
+48|Cd|Кадмий|Cadmium|112.41|tm|12|5|d|8.69,594.22,1040,6.21,99.87,1.69,0,161,144,158|867.8,1631.4,3616|+2|hcp|s|1817|Ф. Штромейер^F. Stromeyer|лат. cadmia — каламин^Latin cadmia, calamine|Ni-Cd батареи, пигменты, покрытия^Ni-Cd cells, pigments, coatings|токсичен, накапливается в почках^toxic, accumulates in kidneys|110:st,111:st,112:st,113:8e15y:b-,114:st
+49|In|Индий|Indium|114.82|pm|13|5|p|7.31,429.75,2345,3.281,231.8,1.78,28.9,156,142,193|558.3,1820.7,2704|+3|tetr|s|1863|Ф. Райх, Т. Рихтер^F. Reich, T. Richter|индиговая линия спектра^indigo spectral line|ITO-сенсорные экраны, припои^ITO touchscreens, solders|мягкий, оставляет след на бумаге^soft enough to mark paper|113:st,115:4.4e14y:b-
+50|Sn|Олово|Tin|118.71|pm|14|5|p|7.287,505.08,2875,7.03,296.1,1.96,107.3,145,139,217|708.6,1411.8,2943|+2,+4|tetr|s|0|известно с древности^known since antiquity|лат. stannum^Latin stannum|жесть, припои, бронза^tinplate, solder, bronze|оловянная чума на морозе^tin pest in the cold|112:st,118:st,120:st,124:st
+51|Sb|Сурьма|Antimony|121.76|md|15|5|p|6.685,903.78,1908,19.79,193.43,2.05,103.2,133,139,206|834,1594.9,2440|-3,+3,+5|rho|s|0|известна с древности^known since antiquity|греч. anti и monos^Greek anti and monos|антипирены, свинцовые сплавы^flame retardants, lead alloys|сурьма — древняя косметика для глаз^kohl was ancient eye makeup|121:st,123:st
+52|Te|Теллур|Tellurium|127.60|md|16|5|p|6.232,722.66,1261,17.49,114.1,2.1,190.2,123,138,206|869.3,1790,2698|-2,+4,+6|hex|s|1782|Ф. фон Райхенштейн^F. von Reichenstein|лат. tellus — Земля^Latin tellus, Earth|CdTe-солнечные панели, термоэлектрики^CdTe solar cells, thermoelectrics|в коре редок, как платина^as rare in the crust as platinum|126:st,128:2.5e24y:2b-,130:8.2e20y:2b-
+53|I|Иод|Iodine|126.90|hl|17|5|p|4.93,386.85,457.4,15.52,41.57,2.66,295.2,115,139,198|1008.4,1845.9,3180|-1,+5,+7|orth|s|1811|Б. Куртуа^B. Courtois|греч. iodes — фиолетовый^Greek iodes, violet|антисептики, йодированная соль, контраст^antiseptics, iodised salt, contrast agents|фиолетовый пар при возгонке^violet vapour when sublimed|127:st,131:8.02d:b-
+54|Xe|Ксенон|Xenon|131.29|ng|18|5|p|0.005887,161.4,165.051,2.27,12.64,2.6,0,108,140,216|1170.4,2046.4,3099.4|0,+2,+4,+6,+8|fcc|g|1898|У. Рамзай, М. Траверс^W. Ramsay, M. Travers|греч. xenos — чужой^Greek xenos, stranger|ионные двигатели, наркоз, фары^ion engines, anaesthesia, headlights|первый благородный газ с химией^first noble gas with real chemistry|129:st,131:st,132:st,136:2.2e21y:2b-
+55|Cs|Цезий|Caesium|132.91|am|1|6|s|1.873,301.7,944,2.09,63.9,0.79,45.5,298,244,343|375.7,2234.3,3400|+1|bcc|s|1860|Р. Бунзен, Г. Кирхгоф^R. Bunsen, G. Kirchhoff|лат. caesius — небесно-голубой^Latin caesius, sky blue|атомные часы, буровые растворы^atomic clocks, drilling fluids|секунда определена по цезию-133^the second is defined by caesium-133|133:st,137:30.1y:b-
+56|Ba|Барий|Barium|137.33|ae|2|6|s|3.594,1000,2118,7.12,140.2,0.89,13.95,253,215,268|502.9,965.2,3600|+2|bcc|s|1808|Г. Дэви^H. Davy|греч. barys — тяжёлый^Greek barys, heavy|рентген-контраст, бурение, зелёный огонь^barium meal, drilling, green fire|BaSO4 нерастворим и безопасен внутрь^BaSO4 is insoluble and safe to swallow|134:st,136:st,137:st,138:st
+57|La|Лантан|Lanthanum|138.91|ln|0|6|f|6.145,1193,3737,6.2,400,1.1,48,195,207,0|538.1,1067,1850.3|+3|hex|s|1839|К. Мосандер^C. Mosander|греч. lanthanein — скрываться^Greek lanthanein, to lie hidden|оптика, NiMH-батареи, катализ крекинга^optics, NiMH cells, cracking catalysts|дал имя всему семейству лантаноидов^gave its name to the lanthanides|138:9.7e10y:ec,139:st
+58|Ce|Церий|Cerium|140.12|ln|0|6|f|6.77,1068,3716,5.46,398,1.12,50,185,204,0|534.4,1050,1949|+3,+4|fcc|s|1803|Я. Берцелиус, В. Хисингер^J. Berzelius, W. Hisinger|карликовая планета Церера^dwarf planet Ceres|полировка стекла, самоочищающиеся печи^glass polishing, self-cleaning ovens|самый распространённый лантаноид^the most abundant lanthanide|136:st,138:st,140:st,142:st
+59|Pr|Празеодим|Praseodymium|140.91|ln|0|6|f|6.773,1208,3403,6.89,331,1.13,50,247,203,0|527,1020,2086|+3|hex|s|1885|К. Ауэр фон Вельсбах^C. Auer von Welsbach|греч. prasios — зелёный близнец^Greek prasios, green twin|сварочные очки, магниты, жёлтое стекло^welding goggles, magnets, yellow glass|соли красят пламя в зелёный^its salts colour flame green|141:st
+60|Nd|Неодим|Neodymium|144.24|ln|0|6|f|7.007,1297,3347,7.14,289,1.14,50,206,201,0|533.1,1040,2130|+3|hex|s|1885|К. Ауэр фон Вельсбах^C. Auer von Welsbach|греч. neos didymos — новый близнец^Greek neos didymos, new twin|мощнейшие постоянные магниты^strongest permanent magnets|NdFeB-магнит есть в каждом электромоторе^an NdFeB magnet in every EV motor|142:st,144:2.3e15y:a,146:st,150:9.3e18y:2b-
+61|Pm|Прометий|Promethium|145|ln|0|6|f|7.26,1315,3273,7.13,289,1.13,50,205,199,0|540,1050,2150|+3|hex|s|1945|Дж. Маринский и др.^J. Marinsky et al.|Прометей из мифов^Prometheus of myth|люминофоры, бета-источники^phosphors, beta sources|единственный лантаноид без стабильных изотопов^the only lanthanide with no stable isotopes|145:17.7y:ec,147:2.62y:b-
+62|Sm|Самарий|Samarium|150.36|ln|0|6|f|7.52,1345,2173,8.62,191,1.17,50,238,198,0|544.5,1070,2260|+2,+3|rho|s|1879|П. Лекок де Буабодран^P. Lecoq de Boisbaudran|минерал самарскит^mineral samarskite|SmCo-магниты, поглотители нейтронов^SmCo magnets, neutron absorbers|магниты работают при 700 градусах^its magnets work at 700 C|147:1.06e11y:a,149:7e15y:a,152:st,154:st
+63|Eu|Европий|Europium|151.96|ln|0|6|f|5.243,1099,1802,9.21,176,1.2,50,231,198,0|547.1,1085,2400|+2,+3|bcc|s|1901|Э. Демарсе^E. Demarcay|Европа^Europe|красный люминофор, защита банкнот^red phosphor, banknote security|евро банкноты светятся его солями^euro banknotes glow with its salts|151:4.6e18y:a,153:st
+64|Gd|Гадолиний|Gadolinium|157.25|ln|0|6|f|7.895,1585,3273,10.05,301.3,1.2,50,233,196,0|593.4,1170,1990|+3|hcp|s|1880|Ж. де Мариньяк^J. de Marignac|в честь Ю. Гадолина^after J. Gadolin|МРТ-контраст, магнитное охлаждение^MRI contrast, magnetic cooling|рекордный захват тепловых нейтронов^record thermal-neutron capture|152:1.08e14y:a,155:st,157:st,158:st,160:st
+65|Tb|Тербий|Terbium|158.93|ln|0|6|f|8.229,1629,3396,10.15,391,1.2,50,225,194,0|565.8,1110,2114|+3,+4|hcp|s|1843|К. Мосандер^C. Mosander|от деревни Иттербю^from Ytterby|зелёный люминофор, сонары^green phosphor, sonar|меняет форму в магнитном поле^changes shape in a magnetic field|159:st
+66|Dy|Диспрозий|Dysprosium|162.50|ln|0|6|f|8.55,1680,2840,11.06,280,1.22,50,228,192,0|573,1130,2200|+3|hcp|s|1886|П. Лекок де Буабодран^P. Lecoq de Boisbaudran|греч. dysprositos — труднодоступный^Greek dysprositos, hard to get|добавка в NdFeB-магниты, лазеры^NdFeB additive, lasers|держит магниты сильными в жаре^keeps magnets strong when hot|160:st,162:st,163:st,164:st
+67|Ho|Гольмий|Holmium|164.93|ln|0|6|f|8.795,1734,2873,17,265,1.23,50,226,192,0|581,1140,2204|+3|hcp|s|1878|Ж. Соре^J. Soret|лат. Holmia — Стокгольм^Latin Holmia, Stockholm|медицинские лазеры, эталон спектра^medical lasers, spectral standard|самый большой магнитный момент атома^the highest atomic magnetic moment|165:st
+68|Er|Эрбий|Erbium|167.26|ln|0|6|f|9.066,1802,3141,19.9,285,1.24,50,226,189,0|589.3,1150,2194|+3|hcp|s|1843|К. Мосандер^C. Mosander|от деревни Иттербю^from Ytterby|оптические усилители интернета^optical amplifiers of the internet|усиливает сигнал в волокне на 1550 нм^amplifies fibre signals at 1550 nm|166:st,167:st,168:st,170:st
+69|Tm|Тулий|Thulium|168.93|ln|0|6|f|9.321,1818,2223,16.84,232,1.25,50,222,190,0|596.7,1160,2285|+3|hcp|s|1879|П. Клеве^P. Cleve|Туле — северный край^Thule, the far north|портативные рентген-источники^portable X-ray sources|самый редкий стабильный лантаноид^the rarest stable lanthanide|169:st
+70|Yb|Иттербий|Ytterbium|173.05|ln|0|6|f|6.965,1097,1469,7.66,159,1.1,50,222,187,0|603.4,1174.8,2417|+2,+3|fcc|s|1878|Ж. де Мариньяк^J. de Marignac|от деревни Иттербю^from Ytterby|оптические атомные часы, лазеры^optical atomic clocks, lasers|часы на Yb точнее цезиевых^Yb clocks beat caesium ones|171:st,172:st,173:st,174:st,176:st
+71|Lu|Лютеций|Lutetium|174.97|ln|0|6|d|9.84,1925,3675,22,414,1.27,50,217,187,0|523.5,1340,2022.3|+3|hcp|s|1907|Ж. Юрбен^G. Urbain|лат. Lutetia — Париж^Latin Lutetia, Paris|ПЭТ-сканеры, катализ крекинга^PET scanners, cracking catalysts|самый твёрдый и плотный лантаноид^hardest and densest lanthanide|175:st,176:3.8e10y:b-
+72|Hf|Гафний|Hafnium|178.49|tm|4|6|d|13.31,2506,4876,27.2,619,1.3,0,208,175,0|658.5,1440,2250|+4|hcp|s|1923|Д. Костер, Д. Хевеши^D. Coster, G. Hevesy|лат. Hafnia — Копенгаген^Latin Hafnia, Copenhagen|затворы транзисторов, стержни реакторов^transistor gates, reactor rods|химически почти неотличим от циркония^chemically almost twin to zirconium|174:2e15y:a,177:st,178:st,180:st
+73|Ta|Тантал|Tantalum|180.95|tm|5|6|d|16.654,3290,5731,36.57,732.8,1.5,31,200,170,0|761,1500,2100|+5|bcc|s|1802|А. Экеберг^A. Ekeberg|Тантал из греческих мифов^Tantalus of myth|конденсаторы в телефонах, импланты^phone capacitors, implants|биосовместим, кость врастает в него^bone grows into it|180:8.15e15y:ec,181:st
+74|W|Вольфрам|Tungsten|183.84|tm|6|6|d|19.25,3695,6203,35.3,806.7,2.36,78.6,193,162,0|770,1700,2300|+4,+6|bcc|s|1783|Х. и Ф. дЭлюяр^J. and F. dElhuyar|швед. tung sten — тяжёлый камень^Swedish tung sten, heavy stone|нити ламп, твёрдые сплавы, электроды^lamp filaments, carbide tools, electrodes|самая высокая температура плавления^the highest melting point|180:1.8e18y:a,182:st,184:st,186:st
+75|Re|Рений|Rhenium|186.21|tm|7|6|d|21.02,3459,5869,60.43,704,1.9,14.5,188,151,0|760,1260,2510|+4,+7|hcp|s|1925|В. Ноддак, И. Такке^W. Noddack, I. Tacke|лат. Rhenus — Рейн^Latin Rhenus, the Rhine|лопатки турбин, катализ риформинга^turbine blades, reforming catalysts|последний открытый стабильный элемент^last stable element to be found|185:st,187:4.1e10y:b-
+76|Os|Осмий|Osmium|190.23|tm|8|6|d|22.61,3306,5285,57.85,738,2.2,106.1,185,144,0|840,1600,2400|+4,+8|hcp|s|1803|С. Теннант^S. Tennant|греч. osme — запах^Greek osme, smell|перья авторучек, иглы, катализ^pen nibs, needles, catalysis|самый плотный элемент^the densest element|186:2e15y:a,189:st,190:st,192:st
+77|Ir|Иридий|Iridium|192.22|tm|9|6|d|22.56,2719,4403,41.12,564,2.2,151,180,141,0|880,1600,2700|+3,+4|fcc|s|1803|С. Теннант^S. Tennant|греч. iris — радуга^Greek iris, rainbow|свечи зажигания, тигли, эталоны^spark plugs, crucibles, standards|иридиевый слой отмечает гибель динозавров^an iridium layer marks the dinosaur extinction|191:st,193:st
+78|Pt|Платина|Platinum|195.08|tm|10|6|d|21.46,2041.4,4098,22.17,510,2.28,205.3,177,136,175|870,1791,2800|+2,+4|fcc|s|1735|А. де Ульоа^A. de Ulloa|исп. platina — серебришко^Spanish platina, little silver|катализаторы, украшения, цисплатин^catalysts, jewellery, cisplatin|цисплатин лечит рак^cisplatin treats cancer|190:6.5e11y:a,194:st,195:st,196:st,198:st
+79|Au|Золото|Gold|196.97|tm|11|6|d|19.282,1337.33,3243,12.55,334.4,2.54,222.8,174,136,166|890.1,1980,2900|+1,+3|fcc|s|0|известно с древности^known since antiquity|лат. aurum — сияющая заря^Latin aurum, glowing dawn|электроника, ювелирное дело, медицина^electronics, jewellery, medicine|1 г тянется в 3 км проволоки^1 g stretches into 3 km of wire|197:st
+80|Hg|Ртуть|Mercury|200.59|tm|12|6|d|13.5336,234.32,629.88,2.29,59.11,2,0,171,132,155|1007.1,1810,3300|+1,+2|rho|l|0|известна с древности^known since antiquity|греч. hydrargyrum — жидкое серебро^Greek hydrargyrum, liquid silver|термометры, лампы, амальгамы^thermometers, lamps, amalgams|единственный жидкий металл^the only liquid metal|199:st,200:st,202:st,204:st
+81|Tl|Таллий|Thallium|204.38|pm|13|6|p|11.85,577,1746,4.14,165,1.62,19.2,156,145,196|589.4,1971,2878|+1,+3|hcp|s|1861|У. Крукс^W. Crookes|греч. thallos — зелёная ветвь^Greek thallos, green shoot|ИК-детекторы, сцинтилляторы^IR detectors, scintillators|классический яд из детективов^the classic detective poison|203:st,205:st
+82|Pb|Свинец|Lead|207.2|pm|14|6|p|11.342,600.61,2022,4.77,179.5,2.33,35.1,154,146,202|715.6,1450.5,3081.5|+2,+4|fcc|s|0|известен с древности^known since antiquity|лат. plumbum^Latin plumbum|аккумуляторы, защита от радиации^batteries, radiation shielding|конец цепочек распада урана^the end of uranium decay chains|204:st,206:st,207:st,208:st
+83|Bi|Висмут|Bismuth|208.98|pm|15|6|p|9.807,544.7,1837,11.3,151,2.02,91.2,143,148,207|703,1610,2466|+3,+5|rho|s|1753|К. Жоффруа^C. Geoffroy|нем. Wismut^German Wismut|лекарства, косметика, легкоплавкие сплавы^medicines, cosmetics, fusible alloys|радужные ступенчатые кристаллы^rainbow stair-step crystals|209:2e19y:a
+84|Po|Полоний|Polonium|209|pm|16|6|p|9.32,527,1235,13,102.91,2,183.3,135,140,197|812.1,1800,2700|+2,+4|cub|s|1898|М. и П. Кюри^M. and P. Curie|Польша — родина Марии Склодовской^Poland, Marie's homeland|антистатические щётки, источники тепла^antistatic brushes, heat sources|в 250 000 раз токсичнее цианида^250,000 times more toxic than cyanide|208:2.9y:a,209:124y:a,210:138.4d:a
+85|At|Астат|Astatine|210|hl|17|6|p|7,575,610,12,54.4,2.2,233,127,150,202|899|-1,+1|fcc|s|1940|Д. Корсон и др.^D. Corson et al.|греч. astatos — неустойчивый^Greek astatos, unstable|альфа-терапия опухолей, исследования^targeted alpha therapy, research|самый редкий природный элемент коры^the rarest naturally occurring element|210:8.1h:a,211:7.2h:ec
+86|Rn|Радон|Radon|222|ng|18|6|p|0.00973,202,211.5,3.247,16.4,2.2,0,120,150,220|1037,1900,2900|0|fcc|g|1900|Ф. Дорн^F. Dorn|от радия^from radium|геофизика, контроль воздуха^geophysics, air monitoring|вторая причина рака лёгких после курения^second cause of lung cancer after smoking|211:14.6h:b-,220:55.6s:a,222:3.82d:a
+87|Fr|Франций|Francium|223|am|1|7|s|1.87,300,950,2,65,0.7,44,348,260,348|380|+1|bcc|s|1939|М. Перей^M. Perey|Франция^France|только научные исследования^research only|самый нестабильный из первых 101 элемента^least stable of the first 101 elements|223:22m:b-
+88|Ra|Радий|Radium|226|ae|2|7|s|5.5,973,2010,8.5,113,0.9,9.6,283,221,283|509.3,979|+2|bcc|s|1898|М. и П. Кюри^M. and P. Curie|лат. radius — луч^Latin radius, ray|исторические светящиеся краски^historic glow-in-the-dark paints|светится голубым в темноте^glows blue in the dark|226:1600y:a,228:5.75y:b-
+89|Ac|Актиний|Actinium|227|an|0|7|f|10.07,1323,3471,14,400,1.1,33.8,260,215,0|499,1170,1900|+3|fcc|s|1899|А. Дебьерн^A. Debierne|греч. aktis — луч^Greek aktis, ray|альфа-терапия опухолей^targeted alpha therapy|светится бледно-голубым^glows pale blue|225:10d:a,227:21.77y:b-
+90|Th|Торий|Thorium|232.04|an|0|7|f|11.72,2115,5061,13.81,514,1.3,112,237,206,0|587,1110,1930|+4|fcc|s|1829|Я. Берцелиус^J. Berzelius|бог Тор^Norse god Thor|ториевые реакторы, оптика, калильные сетки^thorium reactors, optics, gas mantles|в коре его втрое больше, чем урана^three times more abundant than uranium|230:7.5e4y:a,232:1.4e10y:a
+91|Pa|Протактиний|Protactinium|231.04|an|0|7|f|15.37,1841,4300,12.34,481,1.5,53,243,200,0|568,1120,1800|+4,+5|tetr|s|1913|К. Фаянс, О. Гёринг^K. Fajans, O. Gohring|«до актиния»^before actinium|датирование донных осадков^sediment dating|один из редчайших природных элементов^one of the rarest natural elements|231:3.28e4y:a,233:27d:b-
+92|U|Уран|Uranium|238.03|an|0|7|f|18.95,1405.3,4404,9.14,417.1,1.38,51,240,196,186|597.6,1420,1900|+3,+4,+5,+6|orth|s|1789|М. Клапрот^M. Klaproth|планета Уран^planet Uranus|ядерное топливо, бронебойные сердечники^nuclear fuel, armour-piercing cores|1 кг U-235 равен 20 000 т угля^1 kg of U-235 equals 20,000 t of coal|234:2.46e5y:a,235:7.04e8y:a,238:4.47e9y:a
+93|Np|Нептуний|Neptunium|237|an|0|7|f|20.45,917,4273,3.2,336,1.36,46,221,190,0|604.5,1100,1900|+4,+5|orth|s|1940|Э. Макмиллан, Ф. Абельсон^E. McMillan, P. Abelson|планета Нептун^planet Neptune|нейтронные детекторы^neutron detectors|первый трансурановый элемент^first transuranium element|237:2.14e6y:a,239:2.36d:b-
+94|Pu|Плутоний|Plutonium|244|an|0|7|f|19.84,912.5,3505,2.82,333.5,1.28,0,243,187,0|584.7,1100,2000|+3,+4,+5,+6|mono|s|1940|Г. Сиборг и др.^G. Seaborg et al.|планета Плутон^planet Pluto|ядерные заряды, РИТЭГи зондов^nuclear devices, probe RTGs|греет Вояджеры уже полувека^still warms the Voyager probes|238:87.7y:a,239:2.41e4y:a,240:6561y:a,244:8.1e7y:a
+95|Am|Америций|Americium|243|an|0|7|f|13.69,1449,2880,14.39,238.5,1.13,10,244,180,0|578,1100,2100|+3,+4|hex|s|1944|Г. Сиборг и др.^G. Seaborg et al.|Америка^America|датчики дыма^smoke detectors|есть почти в каждом доме^present in almost every home|241:432y:a,243:7370y:a
+96|Cm|Кюрий|Curium|247|an|0|7|f|13.51,1613,3383,15,386,1.28,28,245,169,0|581,1200,2200|+3|hex|s|1944|Г. Сиборг и др.^G. Seaborg et al.|супруги Кюри^the Curies|РИТЭГи, альфа-спектрометры марсоходов^RTGs, Mars rover spectrometers|светится пурпурным от своего излучения^glows purple from its own radiation|244:18.1y:a,247:1.56e7y:a,248:3.48e5y:a
+97|Bk|Берклий|Berkelium|247|an|0|7|f|14.79,1259,2900,0,0,1.3,0,244,0,0|601,1200,2200|+3,+4|hex|s|1949|С. Томпсон и др.^S. Thompson et al.|Беркли, Калифорния^Berkeley, California|мишень для синтеза теннессина^target for making tennessine|получают микрограммами^made in microgram amounts|247:1380y:a,249:330d:b-
+98|Cf|Калифорний|Californium|251|an|0|7|f|15.1,1173,1743,0,0,1.3,0,245,0,0|608,1200,2300|+3|hex|s|1950|С. Томпсон и др.^S. Thompson et al.|Калифорния^California|нейтронные источники для реакторов^neutron sources for reactors|1 мкг даёт 170 млн нейтронов в минуту^1 microgram emits 170 million neutrons per minute|249:351y:a,251:900y:a,252:2.65y:a
+99|Es|Эйнштейний|Einsteinium|252|an|0|7|f|8.84,1133,1269,0,0,1.3,0,245,0,0|619,1200,2400|+3|fcc|s|1952|А. Гиорсо и др.^A. Ghiorso et al.|Альберт Эйнштейн^Albert Einstein|фундаментальные исследования^fundamental research|найден в остатках первого термоядерного взрыва^found in debris of the first H-bomb test|252:472d:ec,253:20.5d:a
+100|Fm|Фермий|Fermium|257|an|0|7|f|9.7,1800,0,0,0,1.3,34,245,0,0|627,1300,2400|+3|fcc|s|1952|А. Гиорсо и др.^A. Ghiorso et al.|Энрико Ферми^Enrico Fermi|исследования ядер^nuclear research|предел нейтронного захвата в реакторе^the limit of reactor neutron capture|253:3d:ec,257:100.5d:a
+101|Md|Менделевий|Mendelevium|258|an|0|7|f|10.3,1100,0,0,0,1.3,94,246,0,0|635,1300,2500|+2,+3|fcc|s|1955|А. Гиорсо и др.^A. Ghiorso et al.|Д. И. Менделеев^D. Mendeleev|исследования актиноидов^actinide research|получают по одному атому^made one atom at a time|258:51.5d:a,260:31.8d:sf
+102|No|Нобелий|Nobelium|259|an|0|7|f|9.9,1100,0,0,0,1.3,0,246,0,0|642,1300,2600|+2,+3|fcc|s|1966|Г. Флёров и др.^G. Flerov et al.|Альфред Нобель^Alfred Nobel|исследования актиноидов^actinide research|необычно устойчив в состоянии +2^unusually stable in the +2 state|255:3.1m:a,259:58m:a
+103|Lr|Лоуренсий|Lawrencium|266|an|0|7|d|15.6,1900,0,0,0,1.3,0,246,0,0|470|+3|hex|s|1961|А. Гиорсо и др.^A. Ghiorso et al.|Эрнест Лоуренс^Ernest Lawrence|исследования сверхтяжёлых^superheavy research|последний электрон идёт на 7p, а не на 6d^its last electron goes to 7p, not 6d|262:3.6h:ec,266:11h:sf
+104|Rf|Резерфордий|Rutherfordium|267|tm|4|7|d|23.2,2400,5800,0,0,0,0,0,157,0|580|+4|hex|u|1964|Г. Флёров и др.^G. Flerov et al.|Эрнест Резерфорд^Ernest Rutherford|исследования сверхтяжёлых^superheavy research|химически похож на гафний^chemistry resembles hafnium|261:68s:sf,267:1.3h:sf
+105|Db|Дубний|Dubnium|268|tm|5|7|d|29.3,0,0,0,0,0,0,0,149,0|665|+5|bcc|u|1970|Дубна и Беркли^Dubna and Berkeley|город Дубна^the city of Dubna|исследования сверхтяжёлых^superheavy research|спор об имени длился 30 лет^a naming dispute lasted 30 years|268:1.2d:sf,270:23h:sf
+106|Sg|Сиборгий|Seaborgium|269|tm|6|7|d|35,0,0,0,0,0,0,0,143,0|757|+6|bcc|u|1974|Ю. Оганесян и др.^Y. Oganessian et al.|Гленн Сиборг^Glenn Seaborg|исследования сверхтяжёлых^superheavy research|первый элемент, названный при жизни учёного^first element named for a living scientist|269:14m:sf,271:2.4m:a
+107|Bh|Борий|Bohrium|270|tm|7|7|d|37.1,0,0,0,0,0,0,0,141,0|740|+7|hcp|u|1981|Г. Мюнценберг и др.^G. Munzenberg et al.|Нильс Бор^Niels Bohr|исследования сверхтяжёлых^superheavy research|ведёт себя как рений^behaves like rhenium|270:61s:a,278:4.5s:a
+108|Hs|Хассий|Hassium|269|tm|8|7|d|40.7,0,0,0,0,0,0,0,134,0|730|+8|hcp|u|1984|Г. Мюнценберг и др.^G. Munzenberg et al.|земля Гессен^Hesse, Germany|исследования сверхтяжёлых^superheavy research|образует летучий HsO4, как осмий^forms volatile HsO4 like osmium|269:16s:a,270:22s:a
+109|Mt|Мейтнерий|Meitnerium|278|un|9|7|d|37.4,0,0,0,0,0,0,0,129,0|800|+3,+6|fcc|u|1982|Г. Мюнценберг и др.^G. Munzenberg et al.|Лиза Мейтнер^Lise Meitner|исследования сверхтяжёлых^superheavy research|назван в честь открывшей деление ядра^named for the co-discoverer of fission|276:0.72s:a,278:7.6s:a
+110|Ds|Дармштадтий|Darmstadtium|281|un|10|7|d|34.8,0,0,0,0,0,0,0,128,0|960|+6|bcc|u|1994|С. Хофманн и др.^S. Hofmann et al.|город Дармштадт^the city of Darmstadt|исследования сверхтяжёлых^superheavy research|получен слиянием свинца и никеля^made by fusing lead and nickel|279:0.2s:sf,281:12.7s:sf
+111|Rg|Рентгений|Roentgenium|282|un|11|7|d|28.7,0,0,0,0,0,0,0,121,0|1020|+3,+5|bcc|u|1994|С. Хофманн и др.^S. Hofmann et al.|Вильгельм Рентген^Wilhelm Rontgen|исследования сверхтяжёлых^superheavy research|предсказан благороднее золота^predicted to be nobler than gold|280:3.6s:a,282:100s:a
+112|Cn|Коперниций|Copernicium|285|tm|12|7|d|23.7,283,340,0,0,0,0,0,122,0|1155|+2|hcp|u|1996|С. Хофманн и др.^S. Hofmann et al.|Николай Коперник^Nicolaus Copernicus|исследования сверхтяжёлых^superheavy research|возможно, летучий газ, как ртуть^may be a volatile gas like mercury|283:4s:sf,285:29s:sf
+113|Nh|Нихоний|Nihonium|286|pm|13|7|p|16,700,1430,0,0,0,66,0,136,0|707|+1,+3|hcp|u|2004|К. Морита и др.^K. Morita et al.|Япония, Нихон^Japan, Nihon|исследования сверхтяжёлых^superheavy research|первый элемент, открытый в Азии^first element discovered in Asia|284:0.48s:a,286:9.5s:a
+114|Fl|Флеровий|Flerovium|289|pm|14|7|p|14,200,380,0,0,0,0,0,143,0|824|+2,+4|fcc|u|1998|Ю. Оганесян и др.^Y. Oganessian et al.|Лаборатория Флёрова^Flerov Laboratory|исследования сверхтяжёлых^superheavy research|кандидат в остров стабильности^a candidate for the island of stability|288:0.65s:a,289:1.9s:sf
+115|Mc|Московий|Moscovium|290|pm|15|7|p|13.5,700,1400,0,0,0,35,0,187,0|538|+1,+3|bcc|u|2003|Ю. Оганесян и др.^Y. Oganessian et al.|Московская область^Moscow region|исследования сверхтяжёлых^superheavy research|распадается в нихоний за доли секунды^decays to nihonium in fractions of a second|289:0.22s:a,290:0.65s:a
+116|Lv|Ливерморий|Livermorium|293|pm|16|7|p|12.9,709,1085,0,0,0,76,0,183,0|724|+2,+4|hcp|u|2000|Ю. Оганесян и др.^Y. Oganessian et al.|Ливерморская лаборатория^Livermore Laboratory|исследования сверхтяжёлых^superheavy research|назван в честь лаборатории в США^named after a US laboratory|292:13ms:a,293:57ms:a
+117|Ts|Теннессин|Tennessine|294|hl|17|7|p|7.2,723,883,0,0,0,166,0,138,0|743|-1,+1,+3|hcp|u|2010|Ю. Оганесян и др.^Y. Oganessian et al.|штат Теннесси^the state of Tennessee|исследования сверхтяжёлых^superheavy research|самый тяжёлый из галогенов^the heaviest halogen|293:22ms:a,294:51ms:a
+118|Og|Оганесон|Oganesson|294|ng|18|7|p|5,325,450,0,0,0,5,0,157,0|860|0,+2,+4|fcc|u|2002|Ю. Оганесян и др.^Y. Oganessian et al.|Юрий Оганесян^Yuri Oganessian|исследования сверхтяжёлых^superheavy research|вероятно твёрдый, а не газ^probably a solid, not a gas|294:0.7ms:a`;
+
+/* ============================ I18N ============================ */
+const T={
+appTitle:["МЕНДЕЛЕЕВ","MENDELEEV"],appSub:["118 элементов · таблица и игра","118 elements · table & quiz"],
+tabTable:["Таблица","Table"],tabGame:["Игра","Quiz"],tabSettings:["Настройки","Settings"],
+tableTitle:["Периодическая таблица","The periodic table"],
+tableLead:["Каждая клетка — полная карточка: свойства, изотопы, история и пиксельная модель электронных оболочек.","Every cell opens a full record: properties, isotopes, history and a pixel-art model of the electron shells."],
+settingsTitle:["Настройки","Settings"],settingsLead:["Тема, базовый цвет, язык, единицы и размер текста. Всё сохраняется локально.","Theme, base colour, language, units and text size. Everything is stored locally."],
+footer:["Один файл, без сети и зависимостей","One file, offline, no dependencies"],elements:["элементов","elements"],
+search:["Поиск","Search"],searchPh:["название, символ, номер","name, symbol, number"],
+view:["Вид","View"],vGrid:["Сетка","Grid"],vList:["Список","List"],vTiles:["Плитка","Tiles"],
+sortBy:["Сортировка","Sort"],asc:["по возрастанию","ascending"],desc:["по убыванию","descending"],
+colorBy:["Раскраска","Colour"],byCat:["по категории","by category"],
+filters:["Фильтры","Filters"],reset:["Сбросить","Reset"],resetFilters:["Сбросить все фильтры","Reset all filters"],
+filtersReset:["Фильтры сброшены","Filters cleared"],undo:["Вернуть","Undo"],
+found:["найдено","found"],of:["из","of"],
+cat_am:["Щелочной металл","Alkali metal"],cat_ae:["Щелочноземельный металл","Alkaline earth metal"],
+cat_tm:["Переходный металл","Transition metal"],cat_pm:["Постпереходный металл","Post-transition metal"],
+cat_md:["Металлоид","Metalloid"],cat_nm:["Неметалл","Reactive nonmetal"],cat_hl:["Галоген","Halogen"],
+cat_ng:["Благородный газ","Noble gas"],cat_ln:["Лантаноид","Lanthanide"],cat_an:["Актиноид","Actinide"],
+cat_un:["Свойства не изучены","Unknown properties"],
+category:["Категория","Category"],block:["Блок","Block"],period:["Период","Period"],group:["Группа","Group"],
+state:["Состояние при н.у.","State at STP"],st_s:["Твёрдое","Solid"],st_l:["Жидкое","Liquid"],st_g:["Газ","Gas"],st_u:["Неизвестно","Unknown"],
+stability:["Стабильность","Stability"],stable:["Стабильные","Stable"],radio:["Радиоактивные","Radioactive"],all:["Все","All"],
+rangeProp:["Диапазон свойства","Property range"],inGameOnly:["Только выбранные для игры","Only the quiz selection"],
+prop_z:["Атомный номер","Atomic number"],prop_mass:["Атомная масса","Atomic mass"],prop_density:["Плотность","Density"],
+prop_melt:["Температура плавления","Melting point"],prop_boil:["Температура кипения","Boiling point"],
+prop_fusion:["Теплота плавления","Heat of fusion"],prop_vap:["Теплота испарения","Heat of vaporisation"],
+prop_eneg:["Электроотрицательность","Electronegativity"],prop_ie1:["Энергия ионизации I","Ionisation energy I"],
+prop_ea:["Сродство к электрону","Electron affinity"],prop_rAt:["Атомный радиус","Atomic radius"],
+prop_rCov:["Ковалентный радиус","Covalent radius"],prop_rVdw:["Радиус Ван-дер-Ваальса","Van der Waals radius"],
+prop_year:["Год открытия","Discovery year"],prop_name:["Название","Name"],
+lanth:["Лантаноиды","Lanthanides"],act:["Актиноиды","Actinides"],
+zoomIn:["Приблизить","Zoom in"],zoomOut:["Отдалить","Zoom out"],zoomFit:["Вписать","Fit"],
+gridHint:["Стрелки — переход по клеткам, Enter — карточка. Щипок или Ctrl+колесо — масштаб, таблица прокручивается внутри секции.","Arrow keys move between cells, Enter opens a card. Pinch or Ctrl+wheel to zoom; the table scrolls inside its own area."],
+noData:["нет данных","no data"],inGame:["в игре","in quiz"],addGame:["Добавить в игру","Add to quiz"],removeGame:["Убрать из игры","Remove from quiz"],
+added:["добавлен в набор игры","added to the quiz set"],removed:["убран из набора игры","removed from the quiz set"],
+secOverview:["Обзор","Overview"],secPhysical:["Физические свойства","Physical properties"],secAtomic:["Атомные свойства","Atomic properties"],
+secConfig:["Электронная конфигурация","Electron configuration"],secHistory:["Открытие и название","Discovery & name"],
+secIsotopes:["Изотопы","Isotopes"],secUses:["Применение и факты","Uses & facts"],
+discoverer:["Первооткрыватель","Discoverer"],origin:["Происхождение названия","Name origin"],ancient:["с древности","since antiquity"],
+uses:["Применение","Uses"],fact:["Интересный факт","Fun fact"],predicted:["Свойства предсказаны теоретически","Properties are theoretically predicted"],
+isoA:["Массовое число","Mass number"],isoHalf:["Период полураспада","Half-life"],isoDecay:["Тип распада","Decay mode"],isoStab:["Стабильность","Stability"],
+isoStable:["стабилен","stable"],isoRadio:["радиоактивен","radioactive"],
+shellNames:["Оболочки K–Q","Shells K–Q"],fullCfg:["Полная конфигурация","Full configuration"],shortCfg:["Сокращённая запись","Shorthand"],
+orbital:["Орбиталь","Orbital"],electrons:["электронов","electrons"],capacity:["вместимость","capacity"],
+qnums:["Квантовые числа","Quantum numbers"],energyEst:["Энергия уровня, оценка Слейтера","Level energy, Slater estimate"],
+nucleus:["Ядро","Nucleus"],protons:["Протоны","Protons"],neutrons:["Нейтроны (≈)","Neutrons (≈)"],
+pixelHint:["Клик по орбитали или ядру — подробности. Электроны вращаются по оболочкам.","Click an orbital or the nucleus for details. Electrons orbit the shells."],
+fillOrder:["Порядок заполнения","Filling order"],hund:["Правило Хунда","Hund's rule"],
+download:["PNG","PNG"],copyCfg:["Копировать","Copy"],copied:["Конфигурация скопирована","Configuration copied"],
+prevEl:["Предыдущий элемент","Previous element"],nextEl:["Следующий элемент","Next element"],close:["Закрыть","Close"],
+gameTitle:["Самопроверка","Self-check"],gameLead:["Один раунд: вопрос — ответ — сразу результат. Без рекордов, статистики и сохранений.","One round: question — answer — instant verdict. No records, no stats, no saved progress."],
+set:["Набор элементов","Element set"],presets:["Быстрые пресеты","Quick presets"],
+p_all:["Все 118","All 118"],p_20:["Первые 20","First 20"],p_nm:["Неметаллы","Nonmetals"],p_metal:["Металлы","Metals"],
+p_f:["Лантаноиды + актиноиды","Lanthanides + actinides"],p_radio:["Радиоактивные","Radioactive"],p_ng:["Благородные газы","Noble gases"],
+p_hl:["Галогены","Halogens"],p_tm:["Переходные металлы","Transition metals"],p_life:["Основа жизни","Elements of life"],
+rangeNum:["Диапазон номеров","Number range"],manual:["Ручной выбор на мини-таблице","Manual pick on the mini table"],
+selectAll:["Выбрать все","Select all"],clearAll:["Снять все","Clear all"],selected:["Выбрано","Selected"],
+modes:["Режимы вопросов","Question modes"],
+m_number:["По номеру","By number"],m_number_d:["Назвать символ или название","Name the symbol or the element"],
+m_symbol:["По символу","By symbol"],m_symbol_d:["Назвать элемент или его номер","Name the element or its number"],
+m_desc:["По описанию","By description"],m_desc_d:["Применение или факт — угадать элемент","A use or a fact — guess the element"],
+m_prop:["По свойствам","By properties"],m_prop_d:["Масса, плотность, температуры","Mass, density, temperatures"],
+m_pos:["По положению","By position"],m_pos_d:["Группа, период, категория","Group, period, category"],
+answerType:["Тип ответа","Answer type"],a_choice:["1 из 4","1 of 4"],a_text:["Текстовый ввод","Text input"],
+qcount:["Вопросов в раунде","Questions per round"],hints:["Подсказки","Hints"],start:["Начать раунд","Start round"],
+needMore:["Нужно минимум 2 элемента и хотя бы один режим вопросов.","Pick at least 2 elements and one question mode."],
+question:["Вопрос","Question"],next:["Далее","Next"],finish:["Итоги","Results"],
+correct:["Верно!","Correct!"],wrong:["Не угадали","Not quite"],rightAnswer:["Правильный ответ","Correct answer"],
+yourAnswer:["Ваш ответ","Your answer"],empty:["пусто","empty"],typePh:["Название, символ или номер","Name, symbol or number"],
+submit:["Ответить","Answer"],hintLetter:["Первая буква","First letter"],hintInfo:["Часть информации","Reveal info"],hint5050:["Убрать 2 варианта","Remove 2 options"],
+hintLabel:["Намёк: похожие варианты, верный ответ скрыт","Hint: look-alikes, the right answer is hidden"],
+noMatch:["Совпадений нет","No matches"],openCard:["Открыть карточку","Open card"],
+results:["Итоги раунда","Round results"],right:["верно","correct"],missed:["ошибок","missed"],
+retry:["Повторить ошибки","Retry mistakes"],newGame:["Новая игра","New game"],backSetup:["К настройке раунда","Back to setup"],
+roundStarted:["Раунд начат","Round started"],withHint:["с подсказкой","with a hint"],flawless:["Ни одной ошибки — блестяще!","Flawless round!"],
+qNumber:["Какой элемент имеет этот атомный номер?","Which element has this atomic number?"],
+qSymbol:["Что это за элемент?","Which element is this?"],qDesc:["О каком элементе речь?","Which element is described?"],
+qProp:["У какого элемента такие свойства?","Which element has these properties?"],qPos:["Кто стоит в этой клетке таблицы?","Who sits in this cell of the table?"],
+appearance:["Оформление","Appearance"],theme:["Тема","Theme"],th_light:["Светлая","Light"],th_dark:["Тёмная","Dark"],th_system:["Системная","System"],
+baseColor:["Базовый цвет","Base colour"],baseLead:["Тонирует фон, поверхности и акценты. Контраст текста пересчитывается автоматически.","Tints background, surfaces and accents. Text contrast is recalculated automatically."],
+custom:["Свой цвет","Custom colour"],language:["Язык","Language"],unitsTitle:["Единицы измерения","Units"],
+temp:["Температура","Temperature"],density:["Плотность","Density"],fontSize:["Размер шрифта","Font size"],
+motion:["Анимации","Animations"],sound:["Звук","Sound"],on:["вкл","on"],off:["выкл","off"],
+resetSettings:["Сбросить все настройки","Reset all settings"],resetDone:["Настройки сброшены","Settings restored"],
+keys:["Клавиатура","Keyboard"],kArrows:["перемещение по таблице","move across the table"],kEnter:["открыть карточку / ответить","open card / answer"],
+kEsc:["закрыть карточку","close the card"],k14:["выбрать вариант ответа","pick an answer option"],kLR:["соседний элемент в карточке","neighbouring element in the card"],
+about:["О данных","About the data"],
+aboutText:["Значения приведены для стандартных условий; для сверхтяжёлых элементов часть величин предсказана. Энергии орбиталей в модели — оценка по правилам Слейтера, а не измеренные величины.","Values are given for standard conditions; for superheavy elements some quantities are predicted. Orbital energies in the model are Slater-rule estimates, not measured values."],
+soundOn:["Звук включён","Sound on"],soundOff:["Звук выключен","Sound off"],
+u_gcm:["г/см³","g/cm³"],u_kgm:["кг/м³","kg/m³"],u_pm:["пм","pm"],u_kj:["кДж/моль","kJ/mol"],u_ev:["эВ","eV"],u_amu:["а.е.м.","u"],
+d_ms:["мс","ms"],d_s:["с","s"],d_m:["мин","min"],d_h:["ч","h"],d_d:["сут","d"],d_y:["лет","y"],
+cr_fcc:["ГЦК","FCC"],cr_bcc:["ОЦК","BCC"],cr_hcp:["ГПУ","HCP"],cr_hex:["гексагональная","hexagonal"],cr_dia:["алмазная","diamond cubic"],
+cr_rho:["ромбоэдрическая","rhombohedral"],cr_orth:["ромбическая","orthorhombic"],cr_mono:["моноклинная","monoclinic"],
+cr_tetr:["тетрагональная","tetragonal"],cr_cub:["простая кубическая","simple cubic"],cr_0:["неизвестна","unknown"],
+lattice:["Кристаллическая решётка","Crystal lattice"],ox:["Степени окисления","Oxidation states"],ieAll:["Энергии ионизации","Ionisation energies"],
+name:["Название","Name"],symbol:["Символ","Symbol"],rank:["ранг","rank"],step:["Ступень","Step"]
+};
+const CATS=["am","ae","tm","pm","md","nm","hl","ng","ln","an","un"];
+const METALS=["am","ae","tm","pm","ln","an"];
+const NONMET=["nm","hl","ng","md"];
+/* ============================ HELPERS ============================ */
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SH=["K","L","M","N","O","P","Q"], SUP="⁰¹²³⁴⁵⁶⁷⁸⁹", LLET="spdf";
+const sup=n=>String(n).split("").map(d=>SUP[+d]).join("");
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const norm=s=>String(s).toLowerCase().replace(/ё/g,"е").replace(/[^a-zа-я0-9]/gi,"");
+const L=(s,i)=>{const p=String(s).split("^");return p[i===undefined?(S.lang==="ru"?0:1):i]||p[0]};
+function t(k){const e=T[k];return e?e[S.lang==="ru"?0:1]:k}
+function nf(v,d){if(v===null||v===undefined||isNaN(v))return"—";
+  return new Intl.NumberFormat(S.lang==="ru"?"ru-RU":"en-US",{maximumFractionDigits:d===undefined?2:d}).format(v)}
+function nfs(v){return new Intl.NumberFormat(S.lang==="ru"?"ru-RU":"en-US",{maximumSignificantDigits:4}).format(v)}
+function nfi(v){return new Intl.NumberFormat(S.lang==="ru"?"ru-RU":"en-US",{useGrouping:false}).format(v)}
+/* ============================ BUILD ELEMENTS ============================ */
+const AUF=[[1,0],[2,0],[2,1],[3,0],[3,1],[4,0],[3,2],[4,1],[5,0],[4,2],[5,1],[6,0],[4,3],[5,2],[6,1],[7,0],[5,3],[6,2],[7,1]];
+const CAP=[2,6,10,14], NOBLE=[2,10,18,36,54,86];
+const EXC={24:"3d5,4s1",29:"3d10,4s1",41:"4d4,5s1",42:"4d5,5s1",44:"4d7,5s1",45:"4d8,5s1",46:"4d10",47:"4d10,5s1",
+57:"5d1,6s2",58:"4f1,5d1,6s2",64:"4f7,5d1,6s2",78:"4f14,5d9,6s1",79:"4f14,5d10,6s1",89:"6d1,7s2",90:"6d2,7s2",
+91:"5f2,6d1,7s2",92:"5f3,6d1,7s2",93:"5f4,6d1,7s2",96:"5f7,6d1,7s2",103:"5f14,7s2,7p1"};
+function aufbau(z){const o=[];let left=z;for(const[n,l]of AUF){if(left<=0)break;const e=Math.min(CAP[l],left);o.push({n,l,e});left-=e}return o}
+function orbitals(z){let o;
+  if(EXC[z]){const core=NOBLE.filter(v=>v<z).pop()||0;o=core?aufbau(core):[];
+    EXC[z].split(",").forEach(tk=>o.push({n:+tk[0],l:LLET.indexOf(tk[1]),e:+tk.slice(2)}));}
+  else o=aufbau(z);
+  o.forEach(x=>x.key=x.n+LLET[x.l]);
+  return o;}
+function halfLife(tok){
+  if(tok==="st")return null;
+  const m=/^([\d.]+(?:e[+-]?\d+)?)(ms|s|m|h|d|y)$/.exec(tok);if(!m)return null;
+  const v=parseFloat(m[1]),mul={ms:.001,s:1,m:60,h:3600,d:86400,y:31557600}[m[2]];return v*mul;}
+function fmtHalf(sec){
+  if(sec===null)return t("isoStable");
+  const un=[[31557600,"d_y"],[86400,"d_d"],[3600,"d_h"],[60,"d_m"],[1,"d_s"],[.001,"d_ms"]];
+  for(const[f,k]of un){if(sec>=f||f===.001)return nfs(sec/f)+" "+t(k)}
+  return nfs(sec)+" "+t("d_s");}
+const DEC={a:"α","b-":"β−","b+":"β+",ec:"EC","2b-":"2β−",sf:"SF",it:"IT",st:"—"};
+const ELEMENTS=RAW.trim().split("\n").map(line=>{
+  const f=line.split("|"),n=f[9].split(",").map(Number);
+  const e={z:+f[0],sym:f[1],ru:f[2],en:f[3],mass:+f[4],cat:f[5],group:+f[6],period:+f[7],block:f[8],
+    density:n[0],melt:n[1],boil:n[2],fusion:n[3],vap:n[4],eneg:n[5],ea:n[6],rAt:n[7],rCov:n[8],rVdw:n[9],
+    ie:f[10].split(",").map(Number),ox:f[11],struct:f[12],state:f[13],year:+f[14],
+    disc:f[15],origin:f[16],use:f[17],fact:f[18]};
+  e.ie1=e.ie[0];
+  e.orb=orbitals(e.z);
+  e.shells=[0,0,0,0,0,0,0];e.orb.forEach(o=>e.shells[o.n-1]+=o.e);
+  e.cfgFull=e.orb.slice().sort((a,b)=>a.n-b.n||a.l-b.l).map(o=>o.key+sup(o.e)).join(" ");
+  const core=NOBLE.filter(v=>v<e.z).pop();
+  if(core){const co=orbitals(core),keys=new Set(co.map(o=>o.key));
+    const rest=e.orb.filter(o=>!keys.has(o.key)).sort((a,b)=>a.n-b.n||a.l-b.l);
+    e.cfgShort="["+ELEMENTS_SYM(core)+"] "+rest.map(o=>o.key+sup(o.e)).join(" ");}
+  else e.cfgShort=e.cfgFull;
+  e.iso=f[19].split(",").map(s=>{const p=s.split(":");return{a:+p[0],half:halfLife(p[1]),decay:p[2]||"st",stable:p[1]==="st"}});
+  e.radio=!e.iso.some(i=>i.stable);
+  e.name=S0lang==="ru"?e.ru:e.en;
+  return e;});
+function ELEMENTS_SYM(z){const l=RAW.trim().split("\n")[z-1].split("|");return l[1]}
+/* ============================ STATE ============================ */
+var S0lang=(document.documentElement.lang||"ru");
+const KEY="mendeleev.v1";
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return{}}}
+const saved=load();
+const S={
+  lang:saved.lang||S0lang, theme:saved.theme||"system", base:saved.base||"#6C4BF6", font:saved.font||100,
+  temp:saved.temp||"C", dens:saved.dens||"g", sound:saved.sound!==false, motion:saved.motion||"auto",
+  tab:"table", view:saved.view||"grid", sort:saved.sort||{k:"z",d:1}, colorBy:saved.colorBy||"cat", zoom:1,
+  filters:Object.assign({q:"",cats:[],blocks:[],periods:[],group:0,states:[],stab:"all",prop:"mass",rmin:null,rmax:null,inGame:false},saved.filters||{}),
+  set:new Set(saved.set&&saved.set.length?saved.set:Array.from({length:20},(_,i)=>i+1)),
+  cfg:Object.assign({modes:["number","symbol","desc","pos"],answer:"choice",count:10,hints:true},saved.cfg||{}),
+  phase:"setup", round:null
+};
+ELEMENTS.forEach(e=>e.name=S.lang==="ru"?e.ru:e.en);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({lang:S.lang,theme:S.theme,base:S.base,font:S.font,temp:S.temp,dens:S.dens,
+  sound:S.sound,motion:S.motion,view:S.view,sort:S.sort,colorBy:S.colorBy,filters:S.filters,set:[...S.set],cfg:S.cfg}))}catch(e){}}
+/* ============================ PROPS & UNITS ============================ */
+const PROPS=["z","mass","density","melt","boil","fusion","vap","eneg","ie1","ea","rAt","rCov","rVdw","year"];
+function tempVal(k){if(!k)return 0;return S.temp==="C"?k-273.15:S.temp==="F"?(k-273.15)*9/5+32:k}
+function tempUnit(){return S.temp==="C"?"°C":S.temp==="F"?"°F":"K"}
+function densVal(v){return S.dens==="g"?v:v*1000}
+function densUnit(){return S.dens==="g"?t("u_gcm"):t("u_kgm")}
+function rawVal(e,k){return k==="name"?e.name:e[k]}
+function propVal(e,k){
+  if(k==="melt"||k==="boil")return e[k]?tempVal(e[k]):0;
+  if(k==="density")return e[k]?densVal(e[k]):0;
+  return e[k]||0;}
+function fmtProp(e,k){
+  const v=e[k];
+  if(k==="name")return e.name;
+  if(!v&&v!==0)return "—";
+  if(!v)return "—";
+  switch(k){
+    case "z":return nfi(v);
+    case "year":return nfi(v);
+    case "mass":return nf(v,3)+" "+t("u_amu");
+    case "density":return nfs(densVal(v))+" "+densUnit();
+    case "melt":case "boil":return nf(tempVal(v),1)+" "+tempUnit();
+    case "fusion":case "vap":case "ie1":case "ea":return nf(v,1)+" "+t("u_kj");
+    case "eneg":return nf(v,2);
+    case "rAt":case "rCov":case "rVdw":return nfi(v)+" "+t("u_pm");
+    default:return nf(v,2);
+  }}
+function propBounds(k){const vs=ELEMENTS.map(e=>propVal(e,k)).filter(v=>v>0||k==="eneg");
+  return[Math.min(...vs),Math.max(...vs)]}
+/* ============================ COLOR ============================ */
+const GRAD=[[59,30,110],[37,99,235],[6,182,212],[34,197,94],[234,179,8],[239,68,68]];
+function gradColor(p){p=clamp(p,0,1);const x=p*(GRAD.length-1),i=Math.floor(x),f=x-i;
+  const a=GRAD[i],b=GRAD[Math.min(i+1,GRAD.length-1)];
+  return a.map((v,j)=>Math.round(v+(b[j]-v)*f));}
+function textOn(rgb){const l=window.__hsl.lum(rgb);
+  return window.__hsl.cr(rgb,[12,12,16])>=window.__hsl.cr(rgb,[255,255,255])?"#0c0c10":"#ffffff";}
+function catVars(cat){return`--cbg:var(--c-${cat}-bg);--cfg:var(--c-${cat}-fg);--cb:var(--c-${cat}-bd)`}
+/* ============================ SOUND ============================ */
+const Snd={ctx:null,
+  play(kind){if(!S.sound)return;
+    try{this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)();
+      if(this.ctx.state==="suspended")this.ctx.resume();
+      const c=this.ctx,now=c.currentTime;
+      const seq={tick:[[660,.05]],ok:[[660,.07],[990,.12]],bad:[[220,.1],[150,.16]],start:[[523,.06],[659,.06],[784,.12]],toggle:[[440,.05]]}[kind]||[[440,.05]];
+      let at=now;
+      seq.forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();
+        o.type=kind==="bad"?"sawtooth":"sine";o.frequency.setValueAtTime(f,at);
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(kind==="tick"?.035:.06,at+.012);
+        g.gain.exponentialRampToValueAtTime(.0001,at+d);
+        o.connect(g);g.connect(c.destination);o.start(at);o.stop(at+d+.02);at+=d*.85;});
+    }catch(e){}}
+};
+/* ============================ TOAST ============================ */
+let toastTimer=[];
+function toast(msg,actionLabel,fn){
+  const box=$("#toasts"),el=document.createElement("div");
+  el.className="toast";el.innerHTML=`<span>${esc(msg)}</span>`;
+  if(actionLabel){const b=document.createElement("button");b.textContent=actionLabel;
+    b.onclick=()=>{fn&&fn();el.remove()};el.appendChild(b);}
+  box.appendChild(el);
+  const id=setTimeout(()=>{el.style.opacity="0";setTimeout(()=>el.remove(),250)},4200);
+  toastTimer.push(id);if(box.children.length>3)box.firstChild.remove();
+}
+/* ============================ FILTER / SORT ============================ */
+function matches(e){
+  const f=S.filters;
+  if(f.q){const q=norm(f.q);
+    if(!(norm(e.ru).includes(q)||norm(e.en).includes(q)||norm(e.sym).includes(q)||String(e.z)===q))return false;}
+  if(f.cats.length&&!f.cats.includes(e.cat))return false;
+  if(f.blocks.length&&!f.blocks.includes(e.block))return false;
+  if(f.periods.length&&!f.periods.includes(e.period))return false;
+  if(f.group&&e.group!==f.group)return false;
+  if(f.states.length&&!f.states.includes(e.state))return false;
+  if(f.stab==="stable"&&e.radio)return false;
+  if(f.stab==="radio"&&!e.radio)return false;
+  if(f.inGame&&!S.set.has(e.z))return false;
+  if(f.rmin!==null&&f.rmax!==null){
+    const v=propVal(e,f.prop);
+    if(!v)return false;
+    const[b1,b2]=propBounds(f.prop);
+    if(v<f.rmin-1e-9||v>f.rmax+1e-9)return false;
+    if(f.rmin<=b1+1e-9&&f.rmax>=b2-1e-9)return true;
+  }
+  return true;
+}
+function sortList(arr){
+  const{k,d}=S.sort;
+  return arr.slice().sort((a,b)=>{
+    if(k==="name")return d*a.name.localeCompare(b.name,S.lang==="ru"?"ru":"en");
+    const va=a[k]||0,vb=b[k]||0;
+    if(!va&&vb)return 1;if(va&&!vb)return -1;
+    return d*(va-vb)||a.z-b.z;});
+}
+function activeFilterCount(){
+  const f=S.filters;let n=0;
+  if(f.q)n++;n+=f.cats.length?1:0;n+=f.blocks.length?1:0;n+=f.periods.length?1:0;n+=f.group?1:0;
+  n+=f.states.length?1:0;n+=f.stab!=="all"?1:0;n+=f.inGame?1:0;
+  if(f.rmin!==null){const[b1,b2]=propBounds(f.prop);if(f.rmin>b1+1e-9||f.rmax<b2-1e-9)n++;}
+  return n;
+}
+/* ============================ CHROME ============================ */
+function applyI18n(){
+  document.documentElement.lang=S.lang;
+  $$("[data-i18n]").forEach(n=>n.textContent=t(n.dataset.i18n));
+  $("#tab-table").textContent=t("tabTable");$("#tab-game").textContent=t("tabGame");$("#tab-settings").textContent=t("tabSettings");
+  $$("#langsw button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===S.lang)));
+  const sb=$("#soundBtn");sb.textContent=S.sound?"🔊":"🔇";sb.classList.toggle("off",!S.sound);
+  sb.setAttribute("aria-pressed",String(S.sound));sb.title=t("sound")+": "+(S.sound?t("on"):t("off"));
+  const dark=document.documentElement.dataset.resolved==="dark";
+  const tb=$("#themeBtn");tb.textContent=S.theme==="system"?"◐":dark?"☾":"☀";
+  tb.title=t("theme")+": "+t("th_"+S.theme);
+  ELEMENTS.forEach(e=>e.name=S.lang==="ru"?e.ru:e.en);
+}
+function paint(){window.__paint(S.base,S.theme,S.font);
+  document.documentElement.dataset.motion=S.motion==="off"?"off":"on";applyI18n();}
+function setTab(name){
+  S.tab=name;
+  $$(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===name)));
+  $$(".view").forEach(v=>{const on=v.id==="v-"+name;v.classList.toggle("on",on);v.hidden=!on});
+  if(name==="table")renderTable();
+  if(name==="game")renderGame();
+  if(name==="settings")renderSettings();
+  window.scrollTo({top:0,behavior:S.motion==="off"?"auto":"smooth"});
+}
+/* ============================ TABLE VIEW ============================ */
+function renderToolbar(){
+  const sortOpts=["z","name","mass","eneg","density","melt","boil","ie1","year"];
+  const colorOpts=["cat",...PROPS.filter(p=>p!=="z")];
+  $("#toolbar").innerHTML=`
+  <div class="field"><label for="q">${t("search")}</label><input id="q" type="search" placeholder="${t("searchPh")}" value="${esc(S.filters.q)}" autocomplete="off"></div>
+  <div class="seg" role="group" aria-label="${t("view")}">
+    ${[["grid","vGrid"],["list","vList"],["tiles","vTiles"]].map(([v,k])=>`<button data-act="view" data-v="${v}" aria-pressed="${S.view===v}">${t(k)}</button>`).join("")}
+  </div>
+  <div class="field"><label for="sortSel">${t("sortBy")}</label>
+    <select id="sortSel">${sortOpts.map(k=>`<option value="${k}" ${S.sort.k===k?"selected":""}>${t("prop_"+k)}</option>`).join("")}</select>
+    <button class="ib" style="width:28px;height:28px" data-act="dir" title="${S.sort.d>0?t("asc"):t("desc")}">${S.sort.d>0?"↑":"↓"}</button>
+  </div>
+  <div class="field"><label for="colorSel">${t("colorBy")}</label>
+    <select id="colorSel">${colorOpts.map(k=>`<option value="${k}" ${S.colorBy===k?"selected":""}>${k==="cat"?t("byCat"):t("prop_"+k)}</option>`).join("")}</select>
+  </div>
+  <button class="btn" data-act="toggleFilters" aria-expanded="${!$("#filters").hidden}">${t("filters")}${activeFilterCount()?` <span class="badge">${activeFilterCount()}</span>`:""}</button>
+  ${S.view==="grid"?`<div class="zoomrow">
+    <button class="ib" data-act="zoom" data-d="-1" title="${t("zoomOut")}">−</button>
+    <span class="zv num" id="zv">${Math.round(S.zoom*100)}%</span>
+    <button class="ib" data-act="zoom" data-d="1" title="${t("zoomIn")}">+</button>
+    <button class="btn sm" data-act="zoomfit">${t("zoomFit")}</button></div>`:""}`;
+  $("#gridHint").textContent=S.view==="grid"?t("gridHint"):"";
+}
+function renderFilters(){
+  const f=S.filters,[b1,b2]=propBounds(f.prop);
+  const lo=f.rmin===null?b1:f.rmin, hi=f.rmax===null?b2:f.rmax;
+  const span=b2-b1||1;
+  $("#filters").innerHTML=`
+  <div class="fgroup" style="grid-column:1/-1"><h4>${t("category")}</h4><div class="chips">
+    ${CATS.map(c=>`<button class="chip" data-act="fcat" data-c="${c}" aria-pressed="${f.cats.includes(c)}" style="--dotc:var(--c-${c}-raw)"><i class="dot"></i>${t("cat_"+c)}</button>`).join("")}
+  </div></div>
+  <div class="fgroup"><h4>${t("block")}</h4><div class="chips">
+    ${["s","p","d","f"].map(b=>`<button class="chip" data-act="fblock" data-b="${b}" aria-pressed="${f.blocks.includes(b)}">${b}</button>`).join("")}
+  </div></div>
+  <div class="fgroup"><h4>${t("period")}</h4><div class="chips">
+    ${[1,2,3,4,5,6,7].map(p=>`<button class="chip" data-act="fperiod" data-p="${p}" aria-pressed="${f.periods.includes(p)}">${p}</button>`).join("")}
+  </div></div>
+  <div class="fgroup"><h4>${t("group")}</h4>
+    <div class="field" style="width:100%"><select id="fgroup" style="width:100%">
+      <option value="0">${t("all")}</option>${Array.from({length:18},(_,i)=>i+1).map(g=>`<option value="${g}" ${f.group===g?"selected":""}>${g}</option>`).join("")}
+    </select></div></div>
+  <div class="fgroup"><h4>${t("state")}</h4><div class="chips">
+    ${["s","l","g","u"].map(s=>`<button class="chip" data-act="fstate" data-s="${s}" aria-pressed="${f.states.includes(s)}">${t("st_"+s)}</button>`).join("")}
+  </div></div>
+  <div class="fgroup"><h4>${t("stability")}</h4><div class="chips">
+    ${[["all","all"],["stable","stable"],["radio","radio"]].map(([v,k])=>`<button class="chip" data-act="fstab" data-v="${v}" aria-pressed="${f.stab===v}">${t(k)}</button>`).join("")}
+  </div></div>
+  <div class="fgroup" style="grid-column:span 2"><h4>${t("rangeProp")}</h4>
+    <div class="field" style="width:100%;margin-bottom:6px"><select id="rprop" style="width:100%">
+      ${PROPS.filter(p=>p!=="z").map(p=>`<option value="${p}" ${f.prop===p?"selected":""}>${t("prop_"+p)}</option>`).join("")}
+    </select></div>
+    <div class="dual"><div class="track"></div><div class="fill" style="left:${(lo-b1)/span*100}%;right:${100-(hi-b1)/span*100}%"></div>
+      <input type="range" id="rmin" min="${b1}" max="${b2}" step="${span/500}" value="${lo}" aria-label="${t("rangeProp")} min">
+      <input type="range" id="rmax" min="${b1}" max="${b2}" step="${span/500}" value="${hi}" aria-label="${t("rangeProp")} max">
+    </div>
+    <div class="spread small num muted"><span id="rlo">${nfs(lo)}</span><span id="rhi">${nfs(hi)}</span></div>
+  </div>
+  <div class="fgroup"><h4>${t("inGame")}</h4>
+    <label class="switch"><input type="checkbox" id="fingame" ${f.inGame?"checked":""}><span class="tr"></span><span>${t("inGameOnly")}</span></label>
+    <div style="margin-top:12px"><button class="btn sm" data-act="resetFilters">${t("resetFilters")}</button></div>
+  </div>`;
+}
+function cellHTML(e,pos,dim,rank){
+  let style=`${catVars(e.cat)};grid-column:${pos[0]};grid-row:${pos[1]}`;
+  if(S.colorBy!=="cat"){
+    const[b1,b2]=propBounds(S.colorBy),v=propVal(e,S.colorBy);
+    if(v){const rgb=gradColor((v-b1)/((b2-b1)||1));style+=`;background:rgb(${rgb.join(",")});color:${textOn(rgb)};border-color:rgba(255,255,255,.22)`}
+    else style+=";background:var(--surface2);color:var(--muted);border-color:var(--line)";
+  }
+  return `<button class="cell${dim?" dim":""}" style="${style}" data-z="${e.z}" data-col="${pos[0]}" data-row="${pos[1]}" tabindex="${dim?-1:0}"
+    aria-label="${esc(e.name)}, ${e.sym}, ${t("prop_z")} ${e.z}">
+    <span class="cn">${e.z}</span><span class="cs">${e.sym}</span><span class="cname">${esc(e.name)}</span><span class="cm">${nf(e.mass,3)}</span>
+    ${rank?`<span class="rk">${rank}</span>`:""}${S.set.has(e.z)?`<span class="gm" title="${t("inGame")}"></span>`:""}</button>`;
+}
+function gridPos(e){
+  if(e.cat==="ln")return[e.z-57+4,10];
+  if(e.cat==="an")return[e.z-89+4,11];
+  return[e.group+1,e.period+1];
+}
+let cellMap={};
+function renderTableArea(){
+  const area=$("#tableArea"),vis=ELEMENTS.filter(matches),sorted=sortList(vis);
+  $("#foundN").textContent=nfi(vis.length);
+  $("#foundL").textContent=t("found")+" · "+t("of")+" 118";
+  const ranks={};if(S.sort.k!=="z")sorted.forEach((e,i)=>ranks[e.z]=i+1);
+  if(S.view==="grid"){
+    cellMap={};
+    let h=`<div class="gridwrap" id="gridwrap"><div class="gridpad" id="gridpad"><div class="gridscale" id="gridscale"><div class="ptable" id="ptable" role="group" aria-label="${t("tableTitle")}">`;
+    h+=`<div class="axis" style="grid-column:1;grid-row:1"></div>`;
+    for(let g=1;g<=18;g++)h+=`<div class="axis" style="grid-column:${g+1};grid-row:1">${g}</div>`;
+    for(let p=1;p<=7;p++)h+=`<div class="axis" style="grid-column:1;grid-row:${p+1}">${p}</div>`;
+    ELEMENTS.forEach(e=>{const pos=gridPos(e);cellMap[pos[0]+","+pos[1]]=e.z;h+=cellHTML(e,pos,!matches(e),ranks[e.z])});
+    h+=`<button class="cell ph" style="${catVars("ln")};grid-column:4;grid-row:7" data-act="jump" data-target="ln">57–71</button>`;
+    h+=`<button class="cell ph" style="${catVars("an")};grid-column:4;grid-row:8" data-act="jump" data-target="an">89–103</button>`;
+    h+=`<div class="flabel" style="grid-row:10">${t("lanth")}</div><div class="flabel" style="grid-row:11">${t("act")}</div>`;
+    h+=`</div></div></div></div>`;
+    area.innerHTML=h;
+    const first=$(".cell:not(.dim)",area);if(first)first.tabIndex=0;
+    applyZoom();
+  } else if(S.view==="list"){
+    const cols=["z","name","mass","density","eneg","ie1","melt","boil","year"];
+    area.innerHTML=`<div class="listwrap"><table class="lt"><thead><tr>
+      <th style="width:34px"></th><th data-act="sort" data-k="z">№${S.sort.k==="z"?`<span class="ar">${S.sort.d>0?"↑":"↓"}</span>`:""}</th>
+      <th data-act="sort" data-k="name">${t("symbol")} / ${t("name")}${S.sort.k==="name"?`<span class="ar">${S.sort.d>0?"↑":"↓"}</span>`:""}</th>
+      <th>${t("category")}</th>
+      ${cols.slice(2).map(k=>`<th data-act="sort" data-k="${k}">${t("prop_"+k)}${S.sort.k===k?`<span class="ar">${S.sort.d>0?"↑":"↓"}</span>`:""}</th>`).join("")}
+      <th>${t("block")}</th></tr></thead><tbody>
+      ${sorted.map(e=>`<tr data-z="${e.z}" style="${catVars(e.cat)}">
+        <td><input type="checkbox" data-act="pick" data-z="${e.z}" ${S.set.has(e.z)?"checked":""} aria-label="${t("inGame")}: ${esc(e.name)}" style="accent-color:var(--primary)"></td>
+        <td>${e.z}</td>
+        <td class="nm"><span class="sym">${e.sym}</span> ${esc(e.name)}</td>
+        <td><span class="catpill">${t("cat_"+e.cat)}</span></td>
+        ${cols.slice(2).map(k=>`<td>${fmtProp(e,k)}</td>`).join("")}
+        <td>${e.block}</td></tr>`).join("")}
+      </tbody></table></div>`;
+  } else {
+    const groups={};sorted.forEach(e=>{(groups[e.cat]=groups[e.cat]||[]).push(e)});
+    area.innerHTML=`<div class="tiles">${CATS.filter(c=>groups[c]).map(c=>`
+      <div class="tgroup"><h3><i style="--dotc:var(--c-${c}-raw)"></i>${t("cat_"+c)} <span>${groups[c].length}</span></h3>
+      <div class="tgrid">${groups[c].map(e=>`<button class="tile" style="${catVars(e.cat)}" data-z="${e.z}">
+        <span class="big">${e.sym}</span>
+        <span class="meta"><b>${esc(e.name)}</b><em>№ ${e.z} · ${nf(e.mass,3)}</em>
+        <span class="shellbar">${e.shells.filter(Boolean).map(s=>`<i style="width:${4+s*1.1}px"></i>`).join("")}</span></span>
+      </button>`).join("")}</div></div>`).join("")}</div>`;
+  }
+  renderLegend(vis);
+}
+function renderLegend(vis){
+  const box=$("#legend");
+  if(S.colorBy==="cat"){
+    box.innerHTML=CATS.map(c=>`<span class="lg"><i style="background:var(--c-${c}-raw)"></i>${t("cat_"+c)}</span>`).join("");
+  }else{
+    const[b1,b2]=propBounds(S.colorBy);
+    box.innerHTML=`<span class="lg"><b>${t("prop_"+S.colorBy)}</b></span><span class="num small">${nfs(b1)}</span>
+      <span class="gradbar"></span><span class="num small">${nfs(b2)}</span>
+      <span class="lg">${t("noData")}: <i style="background:var(--surface2);border:1px solid var(--line)"></i></span>`;
+  }
+}
+let rafPending=false;
+function renderTable(){
+  renderToolbar();if(!$("#filters").hidden)renderFilters();renderTableArea();
+}
+function scheduleTable(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;renderTableArea();renderToolbar()})}
+function applyZoom(){
+  const sc=$("#gridscale"),pad=$("#gridpad");if(!sc||!pad)return;
+  sc.style.transform=`scale(${S.zoom})`;
+  pad.style.width=(sc.offsetWidth*S.zoom)+"px";pad.style.height=(sc.offsetHeight*S.zoom)+"px";
+  const zv=$("#zv");if(zv)zv.textContent=Math.round(S.zoom*100)+"%";
+}
+function zoomFit(){
+  const w=$("#gridwrap"),sc=$("#gridscale");if(!w||!sc)return;
+  S.zoom=clamp((w.clientWidth-24)/sc.offsetWidth,.45,2.4);applyZoom();
+}
+/* ============================ PIXEL ATOM ============================ */
+const Atom={
+  cv:null,ctx:null,el:null,sel:null,raf:0,layout:[],running:false,
+  mount(el){
+    this.el=el;this.sel=el.orb[el.orb.length-1].key;
+    this.cv=$("#atomCanvas");this.ctx=this.cv.getContext("2d");
+    this.cv.width=128;this.cv.height=128;this.ctx.imageSmoothingEnabled=false;
+    this.stop();
+    const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches||S.motion==="off";
+    if(reduce){this.draw(0);this.running=false;}
+    else{this.running=true;const loop=ts=>{if(!this.running)return;this.draw(ts/1000);this.raf=requestAnimationFrame(loop)};this.raf=requestAnimationFrame(loop);}
+    this.cv.onclick=ev=>{
+      const r=this.cv.getBoundingClientRect();
+      const x=(ev.clientX-r.left)/r.width*128,y=(ev.clientY-r.top)/r.height*128;
+      const hit=this.hit(x,y);
+      if(hit){this.sel=hit;Snd.play("tick");this.draw(performance.now()/1000);renderOrbDetail(this.el,this.sel)}
+    };
+    renderOrbDetail(el,this.sel);
+  },
+  stop(){this.running=false;if(this.raf)cancelAnimationFrame(this.raf);this.raf=0},
+  build(time){
+    const shells=[];
+    for(let n=1;n<=7;n++){
+      const subs=this.el.orb.filter(o=>o.n===n);if(!subs.length)continue;
+      const total=subs.reduce((s,o)=>s+o.e,0),r=13+n*7,base=time*(0.5/n)+n*0.8;
+      let acc=0;const sectors=subs.map(o=>{const a0=base+acc/total*Math.PI*2;acc+=o.e;
+        return{o,a0,a1:base+acc/total*Math.PI*2}});
+      shells.push({n,r,total,sectors});
+    }
+    this.layout=shells;return shells;
+  },
+  draw(time){
+    const c=this.ctx;if(!c)return;const cx=64,cy=64;
+    c.clearRect(0,0,128,128);
+    c.fillStyle="#07060f";c.fillRect(0,0,128,128);
+    for(let y=4;y<128;y+=8)for(let x=4;x<128;x+=8){c.fillStyle="rgba(120,140,255,.07)";c.fillRect(x,y,1,1)}
+    const shells=this.build(time);
+    const LC=["#ffd166","#4cc9f0","#ff5d8f","#80ed99"];
+    shells.forEach(sh=>{
+      const selShell=sh.sectors.some(s=>s.o.key===this.sel);
+      for(let a=0;a<360;a+=2){
+        if(a%6>3)continue;
+        const rad=a*Math.PI/180;
+        c.fillStyle=selShell?"rgba(150,170,255,.55)":"rgba(110,130,220,.28)";
+        c.fillRect(Math.round(cx+sh.r*Math.cos(rad)),Math.round(cy+sh.r*Math.sin(rad)),1,1);
+      }
+      sh.sectors.forEach(sec=>{
+        const on=sec.o.key===this.sel;
+        if(on){for(let a=sec.a0;a<sec.a1;a+=.035){
+          for(let d=-1;d<=1;d++){c.fillStyle=d===0?"#ffffff":"rgba(255,255,255,.45)";
+            c.fillRect(Math.round(cx+(sh.r+d)*Math.cos(a)),Math.round(cy+(sh.r+d)*Math.sin(a)),1,1)}}}
+        const cnt=sec.o.e;
+        for(let i=0;i<cnt;i++){
+          const a=sec.a0+(i+.5)/cnt*(sec.a1-sec.a0);
+          const x=Math.round(cx+sh.r*Math.cos(a)),y=Math.round(cy+sh.r*Math.sin(a));
+          if(on){c.fillStyle="rgba(255,255,255,.22)";c.fillRect(x-2,y-2,5,5)}
+          c.fillStyle=LC[sec.o.l];c.fillRect(x-1,y-1,on?3:2,on?3:2);
+          c.fillStyle="#ffffff";c.fillRect(x,y,1,1);
+        }
+      });
+      const la=2.4,lx=Math.round(cx+sh.r*Math.cos(la)),ly=Math.round(cy+sh.r*Math.sin(la));
+      c.fillStyle="#07060f";c.fillRect(lx-3,ly-4,8,9);
+      c.fillStyle=selShell?"#ffffff":"#7f8cd6";c.font="bold 8px ui-monospace,monospace";c.textAlign="center";c.textBaseline="middle";
+      c.fillText(SH[sh.n-1],lx+1,ly+1);
+    });
+    const pr=8+(Math.sin(time*2.2)>.6?1:0);
+    for(let dy=-pr;dy<=pr;dy++)for(let dx=-pr;dx<=pr;dx++){
+      if(dx*dx+dy*dy>pr*pr)continue;
+      const edge=dx*dx+dy*dy>(pr-1)*(pr-1);
+      c.fillStyle=edge?"#2b1a4d":(((dx+dy)&1)?"#ff5d8f":"#4cc9f0");
+      c.fillRect(cx+dx,cy+dy,1,1);
+    }
+    if(this.sel==="nucleus"){c.fillStyle="#ffffff";
+      for(let a=0;a<360;a+=12){const rad=a*Math.PI/180;c.fillRect(Math.round(cx+(pr+2)*Math.cos(rad)),Math.round(cy+(pr+2)*Math.sin(rad)),1,1)}}
+    c.fillStyle="rgba(255,255,255,.5)";c.fillRect(cx-1,cy-1,2,2);
+  },
+  hit(x,y){
+    const dx=x-64,dy=y-64,dist=Math.hypot(dx,dy);
+    if(dist<=10)return"nucleus";
+    let ang=Math.atan2(dy,dx);
+    for(const sh of this.layout){
+      if(Math.abs(dist-sh.r)>5)continue;
+      for(const sec of sh.sectors){
+        let a=ang;while(a<sec.a0)a+=Math.PI*2;while(a>sec.a0+Math.PI*2)a-=Math.PI*2;
+        if(a>=sec.a0&&a<=sec.a1)return sec.o.key;
+      }
+      return sh.sectors[0].o.key;
+    }
+    return null;
+  },
+  png(){
+    const out=document.createElement("canvas");out.width=512;out.height=512;
+    const g=out.getContext("2d");g.imageSmoothingEnabled=false;g.drawImage(this.cv,0,0,512,512);
+    const a=document.createElement("a");a.download=this.el.sym+"-atom.png";a.href=out.toDataURL("image/png");a.click();
+  }
+};
+function slater(el,n,l){
+  let s=0;
+  el.orb.forEach(o=>{
+    if(o.n===n&&o.l===l){s+=(o.e-1)*(l>=2?.35:(n===1?.30:.35));return}
+    if(l>=2){if(o.n<n||(o.n===n&&o.l<l))s+=o.e}
+    else{if(o.n===n)s+=o.e*.35;else if(o.n===n-1)s+=o.e*.85;else if(o.n<n-1)s+=o.e}
+  });
+  return Math.max(.65,el.z-s);
+}
+function renderOrbDetail(el,key){
+  const box=$("#orbDetail");if(!box)return;
+  $$("#subchips button").forEach(b=>b.classList.toggle("on",b.dataset.k===key));
+  if(key==="nucleus"){
+    const neutrons=Math.round(el.mass)-el.z;
+    box.innerHTML=`<div class="spread"><b>${t("nucleus")} · ${el.sym}</b><span class="num muted">Z=${el.z}</span></div>
+      <div class="props" style="margin-top:8px">
+        <div class="prop"><small>${t("protons")}</small><b>${el.z}</b></div>
+        <div class="prop"><small>${t("neutrons")}</small><b>${neutrons}</b></div>
+        <div class="prop"><small>${t("secIsotopes")}</small><b>${el.iso.length}</b></div>
+      </div>`;
+    return;
+  }
+  const o=el.orb.find(x=>x.key===key)||el.orb[0];
+  const zeff=slater(el,o.n,o.l),energy=-13.6*zeff*zeff/(o.n*o.n);
+  const ml=[];for(let m=-o.l;m<=o.l;m++)ml.push(m>0?"+"+m:String(m));
+  const boxes=2*o.l+1,fill=[];
+  for(let i=0;i<boxes;i++)fill.push(0);
+  let left=o.e;for(let i=0;i<boxes&&left>0;i++){fill[i]++;left--}
+  for(let i=0;i<boxes&&left>0;i++){fill[i]++;left--}
+  const order=AUF.findIndex(([n,l])=>n===o.n&&l===o.l)+1;
+  box.innerHTML=`
+    <div class="spread"><b style="font-family:var(--mono);font-size:1.05rem">${o.key}</b>
+      <span class="num muted">${o.e} / ${CAP[o.l]} ${t("electrons")}</span></div>
+    <div class="props" style="margin-top:8px">
+      <div class="prop"><small>n · ${t("period")}</small><b>${o.n} (${SH[o.n-1]})</b></div>
+      <div class="prop"><small>l</small><b>${o.l} · ${LLET[o.l]}</b></div>
+      <div class="prop"><small>m<sub>l</sub></small><b>${ml.join(", ")}</b></div>
+      <div class="prop"><small>m<sub>s</sub></small><b>+½, −½</b></div>
+      <div class="prop"><small>${t("energyEst")}</small><b>${nf(energy,1)} ${t("u_ev")}</b></div>
+      <div class="prop"><small>${t("fillOrder")}</small><b>#${order} · n+l=${o.n+o.l}</b></div>
+    </div>
+    <div class="small muted" style="margin-top:10px">${t("hund")}</div>
+    <div class="boxes">${fill.map(f=>`<span class="obox">${f===2?"↑↓":f===1?"↑":"·"}</span>`).join("")}</div>`;
+}
+/* ============================ ELEMENT SHEET ============================ */
+let lastFocus=null,openZ=null;
+function openElement(z){
+  const el=ELEMENTS[z-1];if(!el)return;
+  openZ=z;lastFocus=document.activeElement;
+  const inSet=S.set.has(z);
+  const ieList=el.ie.map((v,i)=>`<div class="prop"><small>${t("step")} ${i+1}</small><b>${nf(v,1)} ${t("u_kj")}</b></div>`).join("");
+  const shellChips=el.shells.map((v,i)=>v?`<span class="lg"><b>${SH[i]}</b> ${v}</span>`:"").join("");
+  const desc=S.lang==="ru"
+    ? `${el.ru} (${el.sym}) — ${t("cat_"+el.cat).toLowerCase()}, элемент ${el.period}-го периода${el.group?`, группы ${el.group}`:""}, блок ${el.block}. Атомная масса ${nf(el.mass,3)} ${t("u_amu")}. При стандартных условиях — ${t("st_"+el.state).toLowerCase()}. ${el.radio?"Все изотопы радиоактивны.":"Имеет стабильные изотопы."} ${el.z>=100?t("predicted")+".":""}`
+    : `${el.en} (${el.sym}) is a ${t("cat_"+el.cat).toLowerCase()} in period ${el.period}${el.group?`, group ${el.group}`:""}, block ${el.block}. Atomic mass ${nf(el.mass,3)} ${t("u_amu")}. At standard conditions it is ${t("st_"+el.state).toLowerCase()}. ${el.radio?"All of its isotopes are radioactive.":"It has stable isotopes."} ${el.z>=100?t("predicted")+".":""}`;
+  $("#sheet").innerHTML=`
+  <div class="handle" id="handle"></div>
+  <div class="shead" style="${catVars(el.cat)}">
+    <div class="etile"><span class="z">${el.z}</span><span class="s">${el.sym}</span><span class="m">${nf(el.mass,3)}</span></div>
+    <div style="min-width:0">
+      <h2 id="sheetTitle">${esc(el.name)}</h2>
+      <div class="sub"><span class="catpill">${t("cat_"+el.cat)}</span><span>${t("block")} ${el.block}</span>
+      <span>${t("period")} ${el.period}</span>${el.group?`<span>${t("group")} ${el.group}</span>`:""}
+      <span class="${el.radio?"tagbad":"tagok"}">${el.radio?t("radio"):t("stable")}</span></div>
+    </div>
+    <div class="acts">
+      <button class="ib" data-act="prevEl" title="${t("prevEl")}">←</button>
+      <button class="ib" data-act="nextEl" title="${t("nextEl")}">→</button>
+      <button class="btn sm ${inSet?"":"primary"}" data-act="toggleSet" data-z="${el.z}">${inSet?t("removeGame"):t("addGame")}</button>
+      <button class="ib" data-act="close" title="${t("close")}">✕</button>
+    </div>
+  </div>
+  <div class="sbody">
+    <div class="sec"><h3>${t("secOverview")}</h3><p class="desc" style="margin:0">${esc(desc)}</p>
+      <div class="row" style="margin-top:10px">${shellChips}</div></div>
+    <div class="sec"><h3>${t("secConfig")}</h3>
+      <div class="atomgrid">
+        <div>
+          <div class="atombox"><span class="atomtag">${el.sym} · ${el.z}e⁻</span><canvas id="atomCanvas" width="128" height="128" role="img" aria-label="${t("secConfig")} ${esc(el.name)}"></canvas></div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn sm" data-act="png">⤓ ${t("download")}</button>
+            <button class="btn sm" data-act="copycfg">⧉ ${t("copyCfg")}</button>
+          </div>
+          <p class="small muted" style="margin:8px 0 0">${t("pixelHint")}</p>
+        </div>
+        <div>
+          <div class="cfgtext">${el.cfgFull}</div>
+          <div class="small muted" style="margin:8px 0 4px">${t("shortCfg")}</div>
+          <div class="cfgtext">${el.cfgShort}</div>
+          <div class="subchips" id="subchips">
+            <button data-act="sub" data-k="nucleus" class="${Atom.sel==="nucleus"?"on":""}">${t("nucleus")}</button>
+            ${el.orb.slice().sort((a,b)=>a.n-b.n||a.l-b.l).map(o=>`<button data-act="sub" data-k="${o.key}">${o.key}${sup(o.e)}</button>`).join("")}
+          </div>
+          <div id="orbDetail"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><h3>${t("secPhysical")}</h3><div class="props">
+      ${[["density",fmtProp(el,"density")],["state",t("st_"+el.state)],["melt",fmtProp(el,"melt")],["boil",fmtProp(el,"boil")],
+        ["fusion",el.fusion?nf(el.fusion,2)+" "+t("u_kj"):"—"],["vap",el.vap?nf(el.vap,2)+" "+t("u_kj"):"—"],
+        ["lattice",t("cr_"+el.struct)]].map(([k,v])=>`<div class="prop"><small>${t(k==="lattice"?"lattice":k==="state"?"state":"prop_"+k)}</small><b>${v}</b></div>`).join("")}
+    </div></div>
+    <div class="sec"><h3>${t("secAtomic")}</h3><div class="props">
+      ${[["mass",fmtProp(el,"mass")],["eneg",el.eneg?nf(el.eneg,2):"—"],["ea",el.ea?nf(el.ea,1)+" "+t("u_kj"):"—"],
+        ["rAt",fmtProp(el,"rAt")],["rCov",fmtProp(el,"rCov")],["rVdw",fmtProp(el,"rVdw")],["ox",el.ox]]
+        .map(([k,v])=>`<div class="prop"><small>${t(k==="ox"?"ox":"prop_"+k)}</small><b>${v}</b></div>`).join("")}
+    </div>
+    <div class="small muted" style="margin:12px 0 6px">${t("ieAll")}</div><div class="props">${ieList}</div></div>
+    <div class="sec"><h3>${t("secIsotopes")}</h3>
+      <table class="isot"><thead><tr><th>${t("isoA")}</th><th>${t("isoHalf")}</th><th>${t("isoDecay")}</th><th>${t("isoStab")}</th></tr></thead>
+      <tbody>${el.iso.map(i=>`<tr><td><b>${el.sym}-${i.a}</b></td><td>${fmtHalf(i.half)}</td><td>${DEC[i.decay]||i.decay}</td>
+        <td class="${i.stable?"tagok":"tagbad"}">${i.stable?t("isoStable"):t("isoRadio")}</td></tr>`).join("")}</tbody></table></div>
+    <div class="sec"><h3>${t("secHistory")}</h3><div class="props">
+      <div class="prop"><small>${t("prop_year")}</small><b>${el.year?nfi(el.year):t("ancient")}</b></div>
+      <div class="prop" style="grid-column:span 2"><small>${t("discoverer")}</small><b style="font-family:var(--sans)">${esc(L(el.disc))}</b></div>
+      <div class="prop" style="grid-column:1/-1"><small>${t("origin")}</small><b style="font-family:var(--sans)">${esc(L(el.origin))}</b></div>
+    </div></div>
+    <div class="sec"><h3>${t("secUses")}</h3>
+      <div class="prop" style="margin-bottom:8px"><small>${t("uses")}</small><b style="font-family:var(--sans);font-size:.86rem">${esc(L(el.use))}</b></div>
+      <div class="prop" style="border-left:3px solid var(--acc-amber)"><small>${t("fact")}</small><b style="font-family:var(--sans);font-size:.86rem">${esc(L(el.fact))}</b></div>
+    </div>
+  </div>`;
+  $("#sheetwrap").hidden=false;document.body.style.overflow="hidden";
+  Atom.mount(el);
+  const cl=$('[data-act="close"]',$("#sheet"));cl&&cl.focus();
+  $("#sheet").scrollTop=0;
+  bindSheetDrag();
+}
+function closeSheet(){
+  Atom.stop();$("#sheetwrap").hidden=true;document.body.style.overflow="";openZ=null;
+  if(lastFocus&&lastFocus.focus)lastFocus.focus();
+}
+function bindSheetDrag(){
+  const h=$("#handle"),sheet=$("#sheet");if(!h)return;
+  let y0=null,dy=0;
+  h.addEventListener("touchstart",e=>{y0=e.touches[0].clientY;dy=0;sheet.style.transition="none"},{passive:true});
+  h.addEventListener("touchmove",e=>{if(y0===null)return;dy=Math.max(0,e.touches[0].clientY-y0);sheet.style.transform=`translateY(${dy}px)`},{passive:true});
+  h.addEventListener("touchend",()=>{sheet.style.transition="";sheet.style.transform="";if(dy>90)closeSheet();y0=null});
+}
+function toggleSet(z,quiet){
+  const el=ELEMENTS[z-1],had=S.set.has(z);
+  if(had)S.set.delete(z);else S.set.add(z);
+  persist();
+  if(!quiet){Snd.play("tick");
+    toast(el.name+" "+(had?t("removed"):t("added")),t("undo"),()=>{if(had)S.set.add(z);else S.set.delete(z);persist();refreshAll()});}
+  refreshAll();
+}
+function refreshAll(){
+  if(S.tab==="table")renderTableArea();
+  if(S.tab==="game"&&S.phase==="setup")renderGame();
+  if(openZ){const b=$('[data-act="toggleSet"]',$("#sheet"));
+    if(b){const inSet=S.set.has(openZ);b.textContent=inSet?t("removeGame"):t("addGame");b.classList.toggle("primary",!inSet)}}
+}
+/* ============================ GAME ============================ */
+const PRESETS=[["p_all",()=>ELEMENTS.map(e=>e.z)],["p_20",()=>ELEMENTS.slice(0,20).map(e=>e.z)],
+["p_nm",()=>ELEMENTS.filter(e=>NONMET.includes(e.cat)).map(e=>e.z)],
+["p_metal",()=>ELEMENTS.filter(e=>METALS.includes(e.cat)).map(e=>e.z)],
+["p_f",()=>ELEMENTS.filter(e=>e.cat==="ln"||e.cat==="an").map(e=>e.z)],
+["p_radio",()=>ELEMENTS.filter(e=>e.radio).map(e=>e.z)],
+["p_ng",()=>ELEMENTS.filter(e=>e.cat==="ng").map(e=>e.z)],
+["p_hl",()=>ELEMENTS.filter(e=>e.cat==="hl").map(e=>e.z)],
+["p_tm",()=>ELEMENTS.filter(e=>e.cat==="tm").map(e=>e.z)],
+["p_life",()=>[1,6,7,8,11,12,15,16,17,19,20,26].slice()]];
+function miniTable(){
+  let h=`<div class="mini" role="group" aria-label="${t("manual")}">`;
+  const at={};ELEMENTS.forEach(e=>{const p=gridPos(e);at[p[0]+","+p[1]]=e});
+  for(let r=2;r<=11;r++){
+    if(r===9){for(let c=1;c<=19;c++)h+=`<span class="sp"></span>`;continue}
+    for(let c=2;c<=19;c++){
+      const e=at[c+","+r];
+      if(!e){h+=`<span class="sp"></span>`;continue}
+      h+=`<button data-act="pick" data-z="${e.z}" class="${S.set.has(e.z)?"on":""}" style="${catVars(e.cat)}"
+        title="${esc(e.name)}" aria-pressed="${S.set.has(e.z)}">${e.sym}</button>`;
+    }}
+  return h+"</div>";
+}
+function renderGame(){
+  const area=$("#gameArea");
+  if(S.phase==="setup"){
+    const nums=[...S.set].sort((a,b)=>a-b),lo=nums[0]||1,hi=nums[nums.length-1]||118;
+    area.innerHTML=`
+    <div class="hero"><div><h1>${t("gameTitle")}</h1><p>${t("gameLead")}</p></div>
+      <div class="bigcount"><b>${S.set.size}</b><span>${t("selected")} · 118</span></div></div>
+    <div class="gcols">
+      <div class="card">
+        <div class="sechead"><span class="n">1</span><h3>${t("set")}</h3></div>
+        <div class="small muted" style="margin-bottom:6px">${t("presets")}</div>
+        <div class="chips">${PRESETS.map(([k],i)=>`<button class="chip" data-act="preset" data-i="${i}">${t(k)}</button>`).join("")}</div>
+        <div class="small muted" style="margin:14px 0 4px">${t("rangeNum")}</div>
+        <div class="row">
+          <div class="field"><label for="glo">${t("min")||"от"}</label><input id="glo" type="number" min="1" max="118" value="${lo}" style="width:64px;border:0;background:transparent;color:var(--text);font:inherit;outline:none"></div>
+          <div class="field"><label for="ghi">${t("max")||"до"}</label><input id="ghi" type="number" min="1" max="118" value="${hi}" style="width:64px;border:0;background:transparent;color:var(--text);font:inherit;outline:none"></div>
+          <button class="btn sm" data-act="applyRange">OK</button>
+        </div>
+        <div class="counter"><div class="ring" style="--p:${S.set.size/118*100}%"><span>${Math.round(S.set.size/118*100)}%</span></div>
+          <div><b class="num">${S.set.size}</b> <span class="muted small">${t("of")} 118 ${t("selected").toLowerCase()}</span>
+          <div class="row" style="margin-top:6px"><button class="btn sm" data-act="selAll">${t("selectAll")}</button><button class="btn sm" data-act="selNone">${t("clearAll")}</button></div></div>
+        </div>
+        <div class="small muted" style="margin-top:6px">${t("manual")}</div>
+        ${miniTable()}
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="sechead"><span class="n">2</span><h3>${t("modes")}</h3></div>
+          <div class="modelist">${["number","symbol","desc","prop","pos"].map(m=>`
+            <label class="mode ${S.cfg.modes.includes(m)?"on":""}"><input type="checkbox" data-act="mode" data-m="${m}" ${S.cfg.modes.includes(m)?"checked":""}>
+            <span><b>${t("m_"+m)}</b><small>${t("m_"+m+"_d")}</small></span></label>`).join("")}</div>
+        </div>
+        <div class="card">
+          <div class="sechead"><span class="n">3</span><h3>${t("answerType")}</h3></div>
+          <div class="seg" style="width:100%">
+            ${[["choice","a_choice"],["text","a_text"]].map(([v,k])=>`<button style="flex:1" data-act="atype" data-v="${v}" aria-pressed="${S.cfg.answer===v}">${t(k)}</button>`).join("")}
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="field"><label for="qcount">${t("qcount")}</label>
+              <select id="qcount">${[5,10,15,20,30].map(n=>`<option value="${n}" ${S.cfg.count===n?"selected":""}>${n}</option>`).join("")}</select></div>
+            <label class="switch"><input type="checkbox" id="hintsOn" ${S.cfg.hints?"checked":""}><span class="tr"></span><span>${t("hints")}</span></label>
+          </div>
+          <div style="margin-top:16px"><button class="btn primary" data-act="start" style="width:100%;justify-content:center">▶ ${t("start")}</button></div>
+        </div>
+      </div>
+    </div>`;
+  } else if(S.phase==="play"){
+    const r=S.round,q=r.qs[r.i],el=ELEMENTS[q.z-1];
+    const dots=r.qs.map((x,i)=>`<i class="${x.answered?(x.ok?"ok":"no"):i===r.i?"cur":""}"></i>`).join("");
+    let prompt="";
+    if(q.mode==="number")prompt=`<div class="qbig">${q.z}</div><div class="qtext">${t("qNumber")}</div>`;
+    else if(q.mode==="symbol")prompt=`<div class="qbig">${el.sym}</div><div class="qtext">${t("qSymbol")}</div>`;
+    else if(q.mode==="desc")prompt=`<div class="qtext" style="font-size:1.15rem">«${esc(q.text)}»</div><div class="qtext muted">${t("qDesc")}</div>`;
+    else if(q.mode==="prop")prompt=`<div class="qtext">${t("qProp")}</div><div class="qprops">${q.props.map(([k,v])=>`<div class="qprop"><small>${t("prop_"+k)}</small><b>${v}</b></div>`).join("")}</div>`;
+    else prompt=`<div class="qtext">${t("qPos")}</div><div class="qprops">${q.props.map(([k,v])=>`<div class="qprop"><small>${k}</small><b>${v}</b></div>`).join("")}</div>`;
+    const answered=q.answered;
+    let answerUI="";
+    if(S.cfg.answer==="choice"){
+      answerUI=`<div class="opts">${q.opts.map((z,i)=>{
+        const o=ELEMENTS[z-1];let cls="opt";
+        if(answered){if(z===q.z)cls+=" right";else if(z===q.given)cls+=" wrong"}
+        if(q.removed.includes(z))cls+=" gone";
+        const label=q.mode==="symbol"?`${esc(o.name)} <span class="nm">№ ${o.z}</span>`:`<span class="sy">${o.sym}</span><span class="nm">${esc(o.name)}</span>`;
+        return `<button class="${cls}" data-act="answer" data-z="${z}" ${answered||q.removed.includes(z)?"disabled":""}><span class="k">${i+1}</span>${label}</button>`}).join("")}</div>`;
+    } else {
+      answerUI=`<div class="answerrow">
+        <input id="answerInput" type="text" placeholder="${t("typePh")}" autocomplete="off" ${answered?"disabled":""} value="${esc(q.typed||"")}" aria-label="${t("typePh")}">
+        <button class="btn primary" data-act="submitText" ${answered?"disabled":""}>${t("submit")}</button></div>
+        <div class="sugg" id="sugg"></div>`;
+    }
+    const hintUI=S.cfg.hints&&!answered?`<div class="hintrow">
+      <button class="btn sm" data-act="hint" data-h="letter" ${q.hints.includes("letter")?"disabled":""}>🔤 ${t("hintLetter")}</button>
+      <button class="btn sm" data-act="hint" data-h="info" ${q.hints.includes("info")?"disabled":""}>ℹ ${t("hintInfo")}</button>
+      ${S.cfg.answer==="choice"?`<button class="btn sm" data-act="hint" data-h="5050" ${q.hints.includes("5050")?"disabled":""}>½ ${t("hint5050")}</button>`:""}
+    </div>`:"";
+    const hintBox=q.hintText?`<div class="hintbox">${q.hintText}</div>`:"";
+    let fb="";
+    if(answered){
+      fb=`<div class="fb ${q.ok?"ok":"no"}"><div class="icon">${q.ok?"✓":"✕"}</div>
+        <div style="flex:1;min-width:0"><b>${q.ok?t("correct"):t("wrong")}</b>
+        <small>${t("rightAnswer")}: <b style="display:inline">${el.sym} · ${esc(el.name)} · № ${el.z}</b>${q.ok?"":` · ${t("yourAnswer")}: ${esc(q.givenText||t("empty"))}`}</small></div>
+        <button class="btn sm" data-act="openFromGame" data-z="${el.z}">${t("openCard")}</button></div>
+      <div class="row" style="margin-top:14px;justify-content:flex-end">
+        <button class="btn primary" data-act="next">${r.i+1<r.qs.length?t("next")+" →":t("finish")+" ✓"}</button></div>`;
+    }
+    area.innerHTML=`<div class="playwrap">
+      <div class="spread" style="margin-bottom:10px">
+        <span class="small muted num">${t("question")} ${r.i+1} / ${r.qs.length}</span>
+        <button class="btn sm ghost" data-act="abort">${t("backSetup")}</button></div>
+      <div class="prog">${dots}</div>
+      <div class="frame"><div class="inner">
+        <div class="qmode">${t("m_"+q.mode)}</div>
+        ${prompt}${answerUI}${hintUI}${hintBox}${fb}
+      </div></div></div>`;
+    if(S.cfg.answer==="text"&&!answered){const inp=$("#answerInput");if(inp){inp.focus();inp.oninput=()=>{q.typed=inp.value;renderSuggest(q)}}}
+  } else {
+    const r=S.round,okN=r.qs.filter(q=>q.ok).length,bad=r.qs.filter(q=>!q.ok);
+    area.innerHTML=`<div class="playwrap">
+      <div class="hero"><div><h1>${t("results")}</h1><p>${t("roundStarted")}: ${r.started}</p></div></div>
+      <div class="card">
+        <div class="sumline">
+          <div><b style="color:var(--ok)">${okN}</b> <span class="muted small">${t("right")}</span></div>
+          <div><b style="color:var(--bad)">${bad.length}</b> <span class="muted small">${t("missed")}</span></div>
+          <div class="muted small">${okN===r.qs.length?t("flawless"):""}</div>
+        </div>
+        ${r.qs.map((q,i)=>{const e=ELEMENTS[q.z-1];return `<div class="resrow ${q.ok?"ok":"no"}">
+          <span class="st">${q.ok?"✓":"✕"}</span>
+          <span class="q">${esc(q.short)}<small>${t("m_"+q.mode)}${q.hints.length?" · "+t("withHint"):""}${q.ok?"":" · "+t("yourAnswer")+": "+esc(q.givenText||t("empty"))}</small></span>
+          <span class="a" style="${catVars(e.cat)}"><span class="sym">${e.sym}</span> ${esc(e.name)}<br><span class="muted">№ ${e.z}</span></span>
+          <button class="ib" data-act="openFromGame" data-z="${e.z}" title="${t("openCard")}">↗</button></div>`}).join("")}
+        <div class="row" style="margin-top:16px">
+          ${bad.length?`<button class="btn primary" data-act="retry">↻ ${t("retry")}</button>`:""}
+          <button class="btn ${bad.length?"":"primary"}" data-act="newRound">▶ ${t("newGame")}</button>
+          <button class="btn ghost" data-act="abort">${t("backSetup")}</button>
+        </div>
+      </div></div>`;
+  }
+}
+function makeQuestion(z,mode,pool){
+  const e=ELEMENTS[z-1],q={z,mode,answered:false,ok:false,given:null,givenText:"",hints:[],hintText:"",removed:[],typed:""};
+  if(mode==="desc"){q.text=L(Math.random()<.55?e.use:e.fact);q.short="«"+q.text+"»"}
+  else if(mode==="prop"){
+    const keys=["mass","density","melt","boil","eneg","ie1"].filter(k=>e[k]);
+    q.props=shuffle(keys).slice(0,Math.min(3,keys.length)).map(k=>[k,fmtProp(e,k)]);
+    q.short=q.props.map(([k,v])=>t("prop_"+k)+" "+v).join(" · ");
+  } else if(mode==="pos"){
+    q.props=[[t("group"),e.group||"—"],[t("period"),e.period],[t("category"),t("cat_"+e.cat)],[t("block"),e.block]];
+    q.short=q.props.map(([k,v])=>k+" "+v).join(" · ");
+  } else if(mode==="number")q.short="№ "+z;
+  else q.short=e.sym;
+  if(S.cfg.answer==="choice"){
+    const others=pool.filter(x=>x!==z);
+    const same=others.filter(x=>ELEMENTS[x-1].cat===e.cat);
+    const pick=shuffle(same.slice()).slice(0,3);
+    while(pick.length<3&&others.length>pick.length){
+      const c=shuffle(others.slice())[0];if(!pick.includes(c))pick.push(c)}
+    q.opts=shuffle([z,...pick]);
+  }
+  return q;
+}
+function startRound(pool){
+  const zs=(pool||[...S.set]).filter(z=>S.set.has(z)||pool);
+  if(zs.length<2||!S.cfg.modes.length){toast(t("needMore"));return}
+  const chosen=shuffle(zs.slice()).slice(0,Math.min(S.cfg.count,zs.length));
+  S.round={qs:chosen.map(z=>makeQuestion(z,S.cfg.modes[Math.floor(Math.random()*S.cfg.modes.length)],zs)),i:0,
+    started:new Intl.DateTimeFormat(S.lang==="ru"?"ru-RU":"en-US",{hour:"2-digit",minute:"2-digit"}).format(new Date())};
+  S.phase="play";Snd.play("start");renderGame();
+}
+function answerQuestion(z,text){
+  const r=S.round,q=r.qs[r.i],e=ELEMENTS[q.z-1];
+  if(q.answered)return;
+  q.answered=true;q.given=z;q.givenText=text!==undefined?text:(z?ELEMENTS[z-1].sym+" · "+ELEMENTS[z-1].name:"");
+  q.ok=z===q.z;
+  Snd.play(q.ok?"ok":"bad");
+  renderGame();
+}
+function submitText(){
+  const r=S.round,q=r.qs[r.i],inp=$("#answerInput");if(!inp)return;
+  const val=inp.value.trim();if(!val)return;
+  q.typed=val;
+  const n=norm(val);
+  const hit=ELEMENTS.find(e=>norm(e.ru)===n||norm(e.en)===n||norm(e.sym)===n||String(e.z)===val);
+  answerQuestion(hit?hit.z:null,val);
+}
+function renderSuggest(q){
+  const box=$("#sugg");if(!box)return;
+  const v=norm(q.typed||"");
+  if(!v){box.innerHTML="";return}
+  const hits=ELEMENTS.filter(e=>e.z!==q.z&&(norm(e.ru).startsWith(v)||norm(e.en).startsWith(v)||norm(e.sym).startsWith(v))).slice(0,6);
+  box.innerHTML=`<div>${t("hintLabel")}</div><div class="srow">${hits.length?hits.map(e=>`<button type="button" data-act="fill" data-v="${esc(e.name)}">${e.sym} · ${esc(e.name)}</button>`).join(""):`<span>${t("noMatch")}</span>`}</div>`;
+}
+function useHint(h){
+  const r=S.round,q=r.qs[r.i],e=ELEMENTS[q.z-1];
+  if(q.hints.includes(h))return;
+  q.hints.push(h);Snd.play("toggle");
+  if(h==="letter")q.hintText=(q.hintText?q.hintText+"<br>":"")+t("hintLetter")+": <b>"+esc(e.name[0])+"…</b> ("+e.name.length+" "+(S.lang==="ru"?"букв":"letters")+")";
+  if(h==="info")q.hintText=(q.hintText?q.hintText+"<br>":"")+t("cat_"+e.cat)+" · "+t("period")+" "+e.period+" · "+t("prop_mass")+" ≈ "+nf(Math.round(e.mass),0);
+  if(h==="5050"){const wrong=q.opts.filter(z=>z!==q.z);q.removed=shuffle(wrong).slice(0,2)}
+  renderGame();
+}
+function nextQuestion(){
+  const r=S.round;
+  if(r.i+1<r.qs.length){r.i++;renderGame()}
+  else{S.phase="result";renderGame()}
+}
+/* ============================ SETTINGS ============================ */
+const SWATCH=[["#6C4BF6","Индиго","Indigo"],["#0EA5A4","Радий","Radium"],["#E0533D","Железо","Iron"],["#2563EB","Кобальт","Cobalt"],
+["#C026D3","Магента","Magenta"],["#65A30D","Хлорофилл","Chlorophyll"],["#D97706","Янтарь","Amber"],["#0891B2","Криптон","Krypton"]];
+function renderSettings(){
+  const h=window.__hsl.r2h.apply(null,window.__hsl.h2r(S.base))[0];
+  $("#settingsArea").innerHTML=`
+  <div class="card">
+    <div class="sechead"><span class="n">1</span><h3>${t("appearance")}</h3></div>
+    <div class="small muted">${t("theme")}</div>
+    <div class="seg" style="margin:6px 0 14px">${[["light","th_light"],["dark","th_dark"],["system","th_system"]].map(([v,k])=>
+      `<button style="flex:1" data-act="setTheme" data-v="${v}" aria-pressed="${S.theme===v}">${t(k)}</button>`).join("")}</div>
+    <div class="small muted">${t("baseColor")}</div>
+    <div class="swatches">${SWATCH.map(([c,ru,en])=>`<button class="sw" style="background:${c}" data-act="base" data-c="${c}" aria-pressed="${S.base.toLowerCase()===c.toLowerCase()}" title="${S.lang==="ru"?ru:en}"></button>`).join("")}
+      <input type="color" id="basePick" value="${S.base}" aria-label="${t("custom")}"></div>
+    <div class="small muted">${t("custom")} · H ${Math.round(h)}°</div>
+    <input type="range" id="hueRange" min="0" max="359" value="${Math.round(h)}" aria-label="${t("baseColor")}">
+    <p class="small muted">${t("baseLead")}</p>
+    <div class="spread" style="margin-top:10px"><span class="small">${t("motion")}</span>
+      <label class="switch"><input type="checkbox" id="motionOn" ${S.motion!=="off"?"checked":""}><span class="tr"></span><span>${S.motion!=="off"?t("on"):t("off")}</span></label></div>
+    <div class="spread" style="margin-top:10px"><span class="small">${t("sound")}</span>
+      <label class="switch"><input type="checkbox" id="soundOn" ${S.sound?"checked":""}><span class="tr"></span><span>${S.sound?t("on"):t("off")}</span></label></div>
+  </div>
+  <div class="card">
+    <div class="sechead"><span class="n">2</span><h3>${t("language")} & ${t("unitsTitle")}</h3></div>
+    <div class="small muted">${t("language")}</div>
+    <div class="seg" style="margin:6px 0 14px">${[["ru","Русский"],["en","English"]].map(([v,k])=>
+      `<button style="flex:1" data-act="lang" data-lang="${v}" aria-pressed="${S.lang===v}">${k}</button>`).join("")}</div>
+    <div class="small muted">${t("temp")}</div>
+    <div class="seg" style="margin:6px 0 14px">${["C","F","K"].map(v=>`<button style="flex:1" data-act="temp" data-v="${v}" aria-pressed="${S.temp===v}">°${v==="K"?"":v}${v==="K"?"K":""}</button>`).join("")}</div>
+    <div class="small muted">${t("density")}</div>
+    <div class="seg" style="margin:6px 0 14px">${[["g","u_gcm"],["kg","u_kgm"]].map(([v,k])=>
+      `<button style="flex:1" data-act="dens" data-v="${v}" aria-pressed="${S.dens===v}">${t(k)}</button>`).join("")}</div>
+    <div class="spread"><span class="small muted">${t("fontSize")}</span><b class="num small">${S.font}%</b></div>
+    <input type="range" id="fontRange" min="90" max="135" step="5" value="${S.font}" aria-label="${t("fontSize")}">
+  </div>
+  <div class="card">
+    <div class="sechead"><span class="n">3</span><h3>${t("keys")}</h3></div>
+    <div class="klist">
+      <div><span class="muted">${t("kArrows")}</span><span><span class="kbd">←</span> <span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">→</span></span></div>
+      <div><span class="muted">${t("kEnter")}</span><span class="kbd">Enter</span></div>
+      <div><span class="muted">${t("kEsc")}</span><span class="kbd">Esc</span></div>
+      <div><span class="muted">${t("k14")}</span><span><span class="kbd">1</span>–<span class="kbd">4</span></span></div>
+      <div><span class="muted">${t("kLR")}</span><span><span class="kbd">←</span> <span class="kbd">→</span></span></div>
+    </div>
+    <div style="margin-top:16px"><button class="btn" data-act="resetSettings">↺ ${t("resetSettings")}</button></div>
+  </div>
+  <div class="card">
+    <div class="sechead"><span class="n">4</span><h3>${t("about")}</h3></div>
+    <p class="small muted">${t("aboutText")}</p>
+    <div class="props">
+      <div class="prop"><small>${t("elements")}</small><b>118</b></div>
+      <div class="prop"><small>${t("secIsotopes")}</small><b>${ELEMENTS.reduce((s,e)=>s+e.iso.length,0)}</b></div>
+      <div class="prop"><small>${t("radio")}</small><b>${ELEMENTS.filter(e=>e.radio).length}</b></div>
+      <div class="prop"><small>${t("ieAll")}</small><b>${ELEMENTS.reduce((s,e)=>s+e.ie.length,0)}</b></div>
+    </div>
+  </div>`;
+}
+/* ============================ EVENTS ============================ */
+document.addEventListener("click",ev=>{
+  const cell=ev.target.closest(".cell[data-z], .tile[data-z], .lt tbody tr[data-z]");
+  const act=ev.target.closest("[data-act]");
+  if(act){
+    const a=act.dataset.act;
+    if(a!=="pick"||act.tagName!=="INPUT"){if(a==="pick"&&act.tagName==="INPUT"){/*handled on change*/}}
+    switch(a){
+      case "tab":ev.preventDefault();setTab(act.dataset.tab);return;
+      case "sound":S.sound=!S.sound;persist();applyI18n();Snd.play("toggle");toast(S.sound?t("soundOn"):t("soundOff"));if(S.tab==="settings")renderSettings();return;
+      case "theme":{const order=["light","dark","system"];S.theme=order[(order.indexOf(S.theme)+1)%3];paint();persist();Snd.play("toggle");if(S.tab==="settings")renderSettings();return}
+      case "lang":S.lang=act.dataset.lang;paint();persist();renderToolbar();renderFilters();renderTableArea();renderGame();renderSettings();if(openZ)openElement(openZ);return;
+      case "view":S.view=act.dataset.v;persist();renderTable();return;
+      case "dir":S.sort.d*=-1;persist();renderTable();return;
+      case "sort":{const k=act.dataset.k;if(S.sort.k===k)S.sort.d*=-1;else S.sort={k,d:1};persist();renderTable();return}
+      case "toggleFilters":{const p=$("#filters");p.hidden=!p.hidden;if(!p.hidden)renderFilters();renderToolbar();return}
+      case "fcat":{const c=act.dataset.c,arr=S.filters.cats;const i=arr.indexOf(c);i<0?arr.push(c):arr.splice(i,1);persist();renderFilters();scheduleTable();return}
+      case "fblock":{const c=act.dataset.b,arr=S.filters.blocks;const i=arr.indexOf(c);i<0?arr.push(c):arr.splice(i,1);persist();renderFilters();scheduleTable();return}
+      case "fperiod":{const c=+act.dataset.p,arr=S.filters.periods;const i=arr.indexOf(c);i<0?arr.push(c):arr.splice(i,1);persist();renderFilters();scheduleTable();return}
+      case "fstate":{const c=act.dataset.s,arr=S.filters.states;const i=arr.indexOf(c);i<0?arr.push(c):arr.splice(i,1);persist();renderFilters();scheduleTable();return}
+      case "fstab":S.filters.stab=act.dataset.v;persist();renderFilters();scheduleTable();return;
+      case "resetFilters":{const old=JSON.parse(JSON.stringify(S.filters));
+        S.filters={q:"",cats:[],blocks:[],periods:[],group:0,states:[],stab:"all",prop:S.filters.prop,rmin:null,rmax:null,inGame:false};
+        persist();renderFilters();renderTable();toast(t("filtersReset"),t("undo"),()=>{S.filters=old;persist();renderFilters();renderTable()});return}
+      case "zoom":S.zoom=clamp(S.zoom+(+act.dataset.d)*.15,.45,2.4);applyZoom();return;
+      case "zoomfit":zoomFit();return;
+      case "jump":{const target=act.dataset.target;const row=target==="ln"?10:11;
+        const c=$(`.cell[data-row="${row}"]`);if(c){c.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});c.focus();
+          c.animate([{transform:"scale(1)"},{transform:"scale(1.18)"},{transform:"scale(1)"}],{duration:520});}return}
+      case "close":closeSheet();return;
+      case "prevEl":openElement(openZ<=1?118:openZ-1);return;
+      case "nextEl":openElement(openZ>=118?1:openZ+1);return;
+      case "toggleSet":toggleSet(+act.dataset.z);return;
+      case "sub":Atom.sel=act.dataset.k;Snd.play("tick");Atom.draw(performance.now()/1000);renderOrbDetail(Atom.el,Atom.sel);return;
+      case "png":Atom.png();return;
+      case "copycfg":{const txt=Atom.el.cfgFull;
+        if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast(t("copied")),()=>toast(txt));
+        else toast(txt);return}
+      case "preset":{const list=PRESETS[+act.dataset.i][1]();S.set=new Set(list);persist();Snd.play("tick");renderGame();return}
+      case "applyRange":{const lo=clamp(+$("#glo").value||1,1,118),hi=clamp(+$("#ghi").value||118,1,118);
+        S.set=new Set(Array.from({length:Math.abs(hi-lo)+1},(_,i)=>Math.min(lo,hi)+i));persist();renderGame();return}
+      case "selAll":S.set=new Set(ELEMENTS.map(e=>e.z));persist();renderGame();return;
+      case "selNone":S.set=new Set();persist();renderGame();return;
+      case "pick":{if(act.tagName==="INPUT")return;toggleSet(+act.dataset.z,true);Snd.play("tick");renderGame();return}
+      case "atype":S.cfg.answer=act.dataset.v;persist();renderGame();return;
+      case "start":startRound();return;
+      case "answer":answerQuestion(+act.dataset.z);return;
+      case "submitText":submitText();return;
+      case "fill":{const inp=$("#answerInput");if(inp){inp.value=act.dataset.v;S.round.qs[S.round.i].typed=inp.value;renderSuggest(S.round.qs[S.round.i]);inp.focus()}return}
+      case "hint":useHint(act.dataset.h);return;
+      case "next":nextQuestion();return;
+      case "abort":S.phase="setup";S.round=null;renderGame();return;
+      case "retry":{const bad=S.round.qs.filter(q=>!q.ok).map(q=>q.z);startRound(bad);return}
+      case "newRound":startRound();return;
+      case "openFromGame":openElement(+act.dataset.z);return;
+      case "setTheme":S.theme=act.dataset.v;paint();persist();renderSettings();return;
+      case "base":S.base=act.dataset.c;paint();persist();renderSettings();return;
+      case "temp":S.temp=act.dataset.v;persist();renderSettings();renderTableArea();return;
+      case "dens":S.dens=act.dataset.v;persist();renderSettings();renderTableArea();return;
+      case "resetSettings":{try{localStorage.removeItem(KEY)}catch(e){}
+        S.theme="system";S.base="#6C4BF6";S.font=100;S.temp="C";S.dens="g";S.motion="auto";S.sound=true;
+        S.filters={q:"",cats:[],blocks:[],periods:[],group:0,states:[],stab:"all",prop:"mass",rmin:null,rmax:null,inGame:false};
+        S.view="grid";S.sort={k:"z",d:1};S.colorBy="cat";paint();persist();renderSettings();renderTable();toast(t("resetDone"));return}
+    }
+  }
+  if(cell&&!ev.target.closest("input")){Snd.play("tick");openElement(+cell.dataset.z)}
+});
+document.addEventListener("change",ev=>{
+  const el=ev.target;
+  if(el.dataset.act==="pick"&&el.tagName==="INPUT"){toggleSet(+el.dataset.z,true);renderTableArea();return}
+  if(el.dataset.act==="mode"){const m=el.dataset.m,arr=S.cfg.modes,i=arr.indexOf(m);
+    if(el.checked&&i<0)arr.push(m);if(!el.checked&&i>=0)arr.splice(i,1);persist();renderGame();return}
+  switch(el.id){
+    case "sortSel":S.sort.k=el.value;persist();renderTable();break;
+    case "colorSel":S.colorBy=el.value;persist();renderTableArea();break;
+    case "fgroup":S.filters.group=+el.value;persist();scheduleTable();break;
+    case "rprop":S.filters.prop=el.value;S.filters.rmin=null;S.filters.rmax=null;persist();renderFilters();scheduleTable();break;
+    case "fingame":S.filters.inGame=el.checked;persist();scheduleTable();break;
+    case "qcount":S.cfg.count=+el.value;persist();break;
+    case "hintsOn":S.cfg.hints=el.checked;persist();break;
+    case "basePick":S.base=el.value;paint();persist();renderSettings();break;
+    case "motionOn":S.motion=el.checked?"auto":"off";paint();persist();renderSettings();break;
+    case "soundOn":S.sound=el.checked;persist();applyI18n();renderSettings();Snd.play("toggle");break;
+  }
+});
+document.addEventListener("input",ev=>{
+  const el=ev.target;
+  if(el.id==="q"){S.filters.q=el.value;persist();scheduleTable();return}
+  if(el.id==="rmin"||el.id==="rmax"){
+    const[b1,b2]=propBounds(S.filters.prop);
+    let lo=+$("#rmin").value,hi=+$("#rmax").value;
+    if(lo>hi){if(el.id==="rmin")hi=lo;else lo=hi;$("#rmin").value=lo;$("#rmax").value=hi}
+    S.filters.rmin=lo;S.filters.rmax=hi;persist();
+    const span=b2-b1||1;
+    $("#rlo").textContent=nfs(lo);$("#rhi").textContent=nfs(hi);
+    const fill=$(".dual .fill");if(fill){fill.style.left=((lo-b1)/span*100)+"%";fill.style.right=(100-(hi-b1)/span*100)+"%"}
+    scheduleTable();return}
+  if(el.id==="hueRange"){const hsl=window.__hsl.r2h.apply(null,window.__hsl.h2r(S.base));
+    S.base=window.__hsl.hex(window.__hsl.hsl2r(+el.value,Math.max(55,hsl[1]),clamp(hsl[2],35,60)));
+    paint();persist();const bp=$("#basePick");if(bp)bp.value=S.base;
+    $$(".sw").forEach(s=>s.setAttribute("aria-pressed",String(s.dataset.c.toLowerCase()===S.base.toLowerCase())));return}
+  if(el.id==="fontRange"){S.font=+el.value;paint();persist();const b=el.previousElementSibling.querySelector("b");if(b)b.textContent=S.font+"%";return}
+});
+document.addEventListener("keydown",ev=>{
+  if(ev.key==="Escape"&&!$("#sheetwrap").hidden){closeSheet();return}
+  if(!$("#sheetwrap").hidden){
+    if(ev.key==="ArrowLeft"&&!/input|textarea|select/i.test(ev.target.tagName)){openElement(openZ<=1?118:openZ-1);return}
+    if(ev.key==="ArrowRight"&&!/input|textarea|select/i.test(ev.target.tagName)){openElement(openZ>=118?1:openZ+1);return}
+    if(ev.key==="Tab"){
+      const f=$$('button, [href], input, select, canvas[tabindex], [tabindex]:not([tabindex="-1"])',$("#sheet")).filter(n=>!n.disabled&&n.offsetParent!==null);
+      if(!f.length)return;const first=f[0],last=f[f.length-1];
+      if(ev.shiftKey&&document.activeElement===first){ev.preventDefault();last.focus()}
+      else if(!ev.shiftKey&&document.activeElement===last){ev.preventDefault();first.focus()}
+    }
+    return;
+  }
+  if(S.tab==="game"&&S.phase==="play"){
+    const q=S.round.qs[S.round.i];
+    if(ev.key==="Enter"){ev.preventDefault();q.answered?nextQuestion():(S.cfg.answer==="text"?submitText():null);return}
+    if(/^[1-4]$/.test(ev.key)&&S.cfg.answer==="choice"&&!q.answered){
+      const z=q.opts[+ev.key-1];if(z&&!q.removed.includes(z))answerQuestion(z);return}
+  }
+  const cell=ev.target.closest&&ev.target.closest(".cell[data-z]");
+  if(cell&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(ev.key)){
+    ev.preventDefault();
+    let col=+cell.dataset.col,row=+cell.dataset.row;
+    const dc=ev.key==="ArrowLeft"?-1:ev.key==="ArrowRight"?1:0;
+    const dr=ev.key==="ArrowUp"?-1:ev.key==="ArrowDown"?1:0;
+    for(let step=1;step<=20;step++){
+      const c=col+dc*step,r=row+dr*step;
+      if(c<1||c>19||r<1||r>11)break;
+      const z=cellMap[c+","+r];
+      if(z){const next=$(`.cell[data-z="${z}"]`);if(next){$$(".cell").forEach(x=>x.tabIndex=-1);next.tabIndex=0;next.focus();
+        next.scrollIntoView({block:"nearest",inline:"nearest"});}break}
+    }
+  }
+});
+/* pinch + ctrl-wheel zoom inside the grid */
+let pinch=null;
+document.addEventListener("touchstart",ev=>{
+  const w=ev.target.closest&&ev.target.closest("#gridwrap");
+  if(w&&ev.touches.length===2){
+    pinch={d:Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY),z:S.zoom};
+  }
+},{passive:true});
+document.addEventListener("touchmove",ev=>{
+  if(!pinch||ev.touches.length!==2)return;
+  ev.preventDefault();
+  const d=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);
+  S.zoom=clamp(pinch.z*d/pinch.d,.45,2.4);applyZoom();
+},{passive:false});
+document.addEventListener("touchend",()=>{pinch=null},{passive:true});
+document.addEventListener("wheel",ev=>{
+  if(!ev.ctrlKey)return;
+  const w=ev.target.closest&&ev.target.closest("#gridwrap");if(!w)return;
+  ev.preventDefault();S.zoom=clamp(S.zoom-ev.deltaY*.002,.45,2.4);applyZoom();
+},{passive:false});
+window.addEventListener("resize",()=>{if(S.tab==="table"&&S.view==="grid")applyZoom()});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(S.theme==="system"){paint();if(S.tab==="settings")renderSettings()}});
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)Atom.stop();
+  else if(openZ&&!Atom.running&&S.motion!=="off"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    Atom.running=true;const loop=ts=>{if(!Atom.running)return;Atom.draw(ts/1000);Atom.raf=requestAnimationFrame(loop)};Atom.raf=requestAnimationFrame(loop);}
+});
+/* ============================ INIT ============================ */
+paint();renderToolbar();renderFilters();renderTableArea();renderGame();renderSettings();
+requestAnimationFrame(()=>{if(S.view==="grid"&&window.innerWidth<900)zoomFit();});
+</script>
+</body>
+</html>

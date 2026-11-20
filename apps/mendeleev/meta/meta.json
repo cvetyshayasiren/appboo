@@ -1,0 +1,22 @@
+{
+  "title": "Менделеев",
+  "description": "Периодическая таблица: 118 элементов с полными карточками — свойства, изотопы, история и пиксельные электронные оболочки. Есть игра-викторина.",
+  "info": "Тема, базовый цвет, язык и размер текста настраиваются; всё хранится локально.",
+  "icon": "icon.svg",
+  "color": "#6C4BF6",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Science",
+    "Education",
+    "Game"
+  ],
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}
