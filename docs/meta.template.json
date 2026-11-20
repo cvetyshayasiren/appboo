@@ -1,0 +1,12 @@
+{
+  "title": "Название приложения",
+  "description": "Короткое описание для карточки и README",
+  "info": "Дополнительная информация",
+  "icon": "icon.svg",
+  "color": "#86C26B",
+  "ai": "ChatGPT",
+  "platform": "both",
+  "tags": ["game", "tool"],
+  "languages": ["ru"],
+  "screenshots": ["screenshots/screenshot-1.webp", "screenshots/screenshot-2.webp"]
+}
