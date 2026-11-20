@@ -1,0 +1,20 @@
+{
+  "title": "Treequiz",
+  "description": "Узнавай деревья в лицо: 250 видов с фото и пиксель-арт портретами, фильтры по регионам мира и викторина на определение породы.",
+  "info": "Текст и фото — Википедия, CC BY-SA. Один файл, без трекеров.",
+  "icon": "icon.svg",
+  "color": "#257f55",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Education",
+    "Game"
+  ],
+  "languages": [
+    "ru"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}
