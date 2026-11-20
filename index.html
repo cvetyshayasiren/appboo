@@ -690,7 +690,7 @@ main {
 .card-icon {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   background-color: #223319;
   background-image:
     radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.14), transparent 55%),
@@ -699,6 +699,7 @@ main {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  touch-action: pan-y; /* вертикальный скролл не перехватываем */
 }
 .icon-glyph {
   font-size: clamp(2rem, 7vw, 3rem);
@@ -735,6 +736,82 @@ main {
 }
 .card-icon:has(.icon-img) .icon-glyph,
 .card-icon:has(.icon-mask) .icon-glyph { display: none; }
+/* --- Карусель скриншотов на обложке --- */
+.cover-slides {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none; /* свайп ловим на самой обложке */
+}
+.card-icon.show-shots .cover-slides { opacity: 1; }
+.cover-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.cover-slide.active { opacity: 1; }
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Точки-переключатели: у нижнего края обложки, кнопки с крупной зоной нажатия */
+.cover-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  z-index: 2;
+}
+.cover-dot {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.cover-dot::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(215, 235, 204, 0.45);
+  transition: background 0.2s, transform 0.2s;
+}
+.cover-dot.active::after { background: #d7ebcc; transform: scale(1.15); }
+.cover-dot:hover::after { background: rgba(215, 235, 204, 0.75); }
+/* Бейдж языка: в ряду с platform, нейтральный стиль платформенного */
+.lang-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  cursor: default;
+}
+:root[data-theme="light"] .lang-badge { color: var(--accent); }
+/* Без анимаций, если пользователь просил их убавить */
+@media (prefers-reduced-motion: reduce) {
+  .cover-slides, .cover-slide, .cover-dot::after { transition: none !important; }
+}
 .card-content {
   padding: 14px 16px 16px;
   display: flex;
@@ -938,7 +1015,7 @@ main {
   border-radius: var(--radius);
   overflow: hidden;
 }
-.sk-icon { aspect-ratio: 16 / 9; background: var(--sk-color); }
+.sk-icon { aspect-ratio: 16 / 10; background: var(--sk-color); }
 .sk-line { height: 12px; margin: 12px 16px 0; border-radius: 6px; background: var(--sk-color); }
 .sk-line.sk-title { height: 18px; width: 60%; }
 .sk-line.sk-short { width: 40%; }
@@ -1177,6 +1254,95 @@ function escapeHtml(s) {
 }
 const escapeAttr = escapeHtml;
 
+/* --- Мягкий парс JSON (терпимость к рукописным файлам) ---
+   Обычный JSON.parse; при ошибке — повтор после удаления комментариев
+   (строчные «//», блочные «слэш-звезда…звезда-слэш» и «#») и висячих запятых.
+   Удаление учитывает строковые литералы: «//» внутри URL ("https://...") не режется. */
+function stripJsonComments(text) {
+  let out = "";
+  let i = 0;
+  const n = text.length;
+  let inStr = false;
+  while (i < n) {
+    const ch = text[i];
+    if (inStr) {
+      out += ch;
+      if (ch === "\\") {           // экранированный символ внутри строки
+        if (i + 1 < n) { out += text[i + 1]; i += 2; continue; }
+      } else if (ch === '"') {
+        inStr = false;
+      }
+      i++;
+      continue;
+    }
+    if (ch === '"') { inStr = true; out += ch; i++; continue; }
+    if (ch === "/" && text[i + 1] === "/") {          // // до конца строки
+      while (i < n && text[i] !== "\n") i++;
+      continue;
+    }
+    if (ch === "/" && text[i + 1] === "*") {          // /* ... */
+      const end = text.indexOf("*/", i + 2);
+      i = end === -1 ? n : end + 2;
+      continue;
+    }
+    if (ch === "#") {                                  // # до конца строки
+      while (i < n && text[i] !== "\n") i++;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+// Висячие запятые перед } и ] (вне строковых литералов)
+function removeTrailingCommas(text) {
+  let out = "";
+  let inStr = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) {
+      out += ch;
+      if (ch === "\\") {
+        if (i + 1 < text.length) { out += text[i + 1]; i++; }
+      } else if (ch === '"') {
+        inStr = false;
+      }
+      continue;
+    }
+    if (ch === '"') { inStr = true; out += ch; continue; }
+    if (ch === ",") {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) j++;
+      if (j < text.length && (text[j] === "}" || text[j] === "]")) continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+function softParseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return JSON.parse(removeTrailingCommas(stripJsonComments(text)));
+  }
+}
+
+// Санитизация реестра: trim записей, отброс не-строк, пустых и дубликатов
+function sanitizeRegistry(ids) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of ids) {
+    if (typeof raw !== "string") continue;
+    const id = raw.trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
 // Похоже ли значение icon на путь к файлу (icon.png, logo.svg и т.п.)
 function isIconFile(val) {
   return /\.[a-z0-9]{2,4}$/i.test(String(val));
@@ -1215,8 +1381,8 @@ function appUrl(id) {
   return `apps/${encodeURIComponent(id)}/src/index.html`;
 }
 
-// Разрешение пути иконки: абсолютный URL / data-URI как есть, иначе относительно meta/ приложения
-function resolveIconPath(val, id) {
+// Разрешение пути файла из meta/: абсолютный URL / data-URI как есть, иначе относительно meta/ приложения
+function resolveMetaPath(val, id) {
   if (/^(https?:)?\/\//i.test(val) || val.startsWith("data:")) return val;
   const clean = String(val).replace(/^\/+/, ""); // убираем ведущие слэши
   return `apps/${encodeURIComponent(id)}/meta/${clean}`;
@@ -1233,7 +1399,9 @@ function defaultMeta(id) {
     color: "",
     ai: "",
     platform: "",
-    tags: []
+    tags: [],
+    languages: [],
+    screenshots: []
   };
 }
 
@@ -1246,8 +1414,8 @@ async function loadMeta(id) {
     if (!res.ok) return meta; // файла нет — используем дефолт
     const text = await res.text();
     if (!text.trim()) return meta; // пустой файл — дефолт
-    const data = JSON.parse(text);
-    // Мерджим известные поля, tags приводим к массиву
+    const data = softParseJson(text); // битый JSON — дефолт, каталог не роняем
+    // Мерджим известные поля, списки приводим к массивам строк
     Object.assign(meta, {
       title: data.title != null ? String(data.title) : id,
       description: data.description != null ? String(data.description) : "",
@@ -1256,7 +1424,12 @@ async function loadMeta(id) {
       color: data.color != null ? String(data.color) : "",
       ai: data.ai != null ? String(data.ai) : "",
       platform: data.platform != null ? String(data.platform) : "",
-      tags: Array.isArray(data.tags) ? data.tags.map(String) : []
+      tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+      languages: Array.isArray(data.languages)
+        ? [...new Set(data.languages.map(v => String(v).trim().toLowerCase()).filter(Boolean))]
+        : [],
+      screenshots: Array.isArray(data.screenshots) ? data.screenshots.map(String).filter(Boolean) : []
+      // неизвестные поля игнорируем
     });
   } catch (e) {
     // Битый JSON или сетевая ошибка — тихо используем дефолт
@@ -1272,8 +1445,9 @@ async function loadApps() {
   try {
     const res = await fetch(`apps.json?v=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    ids = await res.json();
-    if (!Array.isArray(ids)) throw new Error("apps.json не является массивом");
+    const data = softParseJson(await res.text());
+    if (!Array.isArray(data)) throw new Error("apps.json не является массивом");
+    ids = sanitizeRegistry(data);
   } catch (e) {
     showError(`Не удалось загрузить apps.json — ${e.message}`);
     return;
@@ -1337,8 +1511,8 @@ function buildAiFilters() {
   }).join("");
 }
 
-/* --- Рендер иконки --- */
-function renderIcon(meta) {
+/* --- Рендер обложки карточки: иконка + карусель скриншотов --- */
+function renderCover(meta) {
   // Цвет подложки: поле color, иначе автогенер из названия
   const color = meta.color && meta.color.trim() ? meta.color.trim() : autoColor(meta.title);
   const iconVal = (meta.icon || "").trim();
@@ -1346,7 +1520,7 @@ function renderIcon(meta) {
   let imgHtml = "";
 
   if (iconVal && isIconFile(iconVal)) {
-    const src = resolveIconPath(iconVal, meta.id);
+    const src = resolveMetaPath(iconVal, meta.id);
     if (/\.svg$/i.test(iconVal)) {
       imgHtml = `<span class="icon-mask" style="--icon-src:url('${escapeAttr(src)}')" aria-hidden="true"></span>`;
     } else {
@@ -1361,10 +1535,97 @@ function renderIcon(meta) {
     glyph = firstLetter(meta.title);
   }
 
-  return `<div class="card-icon" style="--icon-color:${escapeAttr(color)}">
+  // Слайды объявлены в meta.json (пути относительно meta/); битые отбрасываются при загрузке
+  const shots = Array.isArray(meta.screenshots) ? meta.screenshots : [];
+  let carouselHtml = "";
+  if (shots.length) {
+    const slides = shots.map((shot, i) =>
+      `<div class="cover-slide" data-index="${i}" data-shot="${escapeAttr(resolveMetaPath(shot, meta.id))}"></div>`
+    ).join("");
+    const dots = shots.length > 1
+      ? `<div class="cover-dots" aria-label="Скриншоты приложения">${shots.map((_, i) =>
+          `<button type="button" class="cover-dot" data-dot="${i}" aria-label="Скриншот ${i + 1}"></button>`).join("")}</div>`
+      : "";
+    carouselHtml = `<div class="cover-slides">${slides}</div>${dots}`;
+  }
+
+  return `<div class="card-icon" style="--icon-color:${escapeAttr(color)}"${shots.length ? ` data-shots="${shots.length}" data-title="${escapeAttr(meta.title)}"` : ""}>
     <span class="icon-glyph">${escapeHtml(glyph)}</span>
     ${imgHtml}
+    ${carouselHtml}
   </div>`;
+}
+
+/* --- Поведение карусели: lazy-load, точки, свайп, толерантность к битым картинкам --- */
+const gridEl = () => document.getElementById("grid");
+
+// Слайды конкретной обложки (в порядке объявления)
+function coverSlides(cover) {
+  return [...cover.querySelectorAll(".cover-slide")];
+}
+function coverActiveIndex(cover) {
+  const i = parseInt(cover.dataset.active || "0", 10);
+  return Number.isFinite(i) ? i : 0;
+}
+
+// Ленивая загрузка: <img> создаётся при первом показе слайда
+function ensureSlide(cover, declaredIndex) {
+  const slide = cover.querySelector(`.cover-slide[data-index="${declaredIndex}"]`);
+  if (!slide || slide.dataset.loaded) return;
+  slide.dataset.loaded = "1";
+  const img = document.createElement("img");
+  img.className = "cover-img";
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.alt = `Скриншот ${cover.dataset.title || ""} — ${declaredIndex + 1}`;
+  img.onerror = () => {
+    // Битый/недоступный скриншот: слайд и его точка пропадают, каталог не падает
+    const dot = cover.querySelector(`.cover-dot[data-dot="${declaredIndex}"]`);
+    if (dot) dot.remove();
+    slide.remove();
+    const left = coverSlides(cover);
+    if (!left.length) {
+      // Все битые → остаётся иконка
+      cover.classList.remove("show-shots");
+      cover.querySelectorAll(".cover-slides, .cover-dots").forEach(el => el.remove());
+      delete cover.dataset.shots;
+      delete cover.dataset.active;
+      if (coverObserver) coverObserver.unobserve(cover);
+    } else if (cover.dataset.active === String(declaredIndex)) {
+      setCoverSlide(cover, Number(left[0].dataset.index));
+    }
+  };
+  img.src = slide.dataset.shot;
+  slide.appendChild(img);
+}
+
+// Показ слайда по объявленному индексу (или первого оставшегося)
+function setCoverSlide(cover, declaredIndex) {
+  const slides = coverSlides(cover);
+  if (!slides.length) return;
+  let target = slides.find(s => s.dataset.index === String(declaredIndex)) || slides[0];
+  slides.forEach(s => s.classList.toggle("active", s === target));
+  cover.dataset.active = target.dataset.index;
+  cover.querySelectorAll(".cover-dot").forEach(d =>
+    d.classList.toggle("active", d.dataset.dot === target.dataset.index));
+  ensureSlide(cover, Number(target.dataset.index));
+}
+
+// Первый скриншот догружается при попадании карточки в viewport
+let coverObserver = null;
+function observeCovers() {
+  if (coverObserver) coverObserver.disconnect();
+  if (!("IntersectionObserver" in window)) return;
+  coverObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      if (entry.target.dataset.shots) {
+        setCoverSlide(entry.target, 0);
+        coverObserver.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: "240px" });
+  gridEl().querySelectorAll(".card-icon[data-shots]").forEach(el => coverObserver.observe(el));
 }
 
 /* --- Рендер бейджа нейросети --- */
@@ -1388,6 +1649,49 @@ function renderPlatformBadge(platform) {
   return `<span class="platform-badge" title="Платформа: ${escapeAttr(p.label)}">${p.icon} ${escapeHtml(p.label)}</span>`;
 }
 
+/* --- Рендер бейджей языков (не фильтр, только подпись) ---
+   Код ISO 639-1 → флаг-emoji по таблице соответствий; неизвестный код —
+   бейдж с самим кодом. Подсказка — эндоним через Intl.DisplayNames
+   (на Windows флаги рендерятся буквами — принято). */
+const LANG_FLAG_MAP = {
+  ru: "RU", uk: "UA", be: "BY", kk: "KZ",
+  en: "GB", de: "DE", fr: "FR", es: "ES", it: "IT", pt: "PT", nl: "NL",
+  pl: "PL", cs: "CZ", sk: "SK", bg: "BG", sr: "RS", hr: "HR", sl: "SI",
+  mk: "MK", hu: "HU", ro: "RO", el: "GR", et: "EE", lv: "LV", lt: "LT",
+  sv: "SE", no: "NO", nb: "NO", nn: "NO", da: "DK", fi: "FI", is: "IS",
+  zh: "CN", ja: "JP", ko: "KR", th: "TH", vi: "VN", id: "ID", ms: "MY",
+  tl: "PH", sw: "KE", ar: "SA", he: "IL", fa: "IR", ur: "PK", hi: "IN",
+  bn: "BD", ta: "IN", tr: "TR", ka: "GE", hy: "AM", az: "AZ", uz: "UZ"
+};
+function flagEmoji(countryCode) {
+  return String(countryCode).toUpperCase()
+    .replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+// Эндоним: название языка на самом языке («русский», «English», «Deutsch»)
+function langEndonym(code) {
+  try {
+    if (typeof Intl !== "undefined" && Intl.DisplayNames) {
+      const name = new Intl.DisplayNames([code], { type: "language" }).of(code);
+      if (name && name.toLowerCase() !== String(code).toLowerCase()) {
+        return name.charAt(0).toLocaleUpperCase(code) + name.slice(1);
+      }
+    }
+  } catch (e) { /* толерантно: подсказка не критична */ }
+  return String(code).toUpperCase();
+}
+function renderLangBadges(langs) {
+  // Пусто → дефолт «ru» на стороне плеера
+  const list = (Array.isArray(langs) && langs.length) ? langs : ["ru"];
+  return list.map(raw => {
+    const code = String(raw).trim().toLowerCase();
+    if (!code) return "";
+    const country = LANG_FLAG_MAP[code];
+    const label = country ? flagEmoji(country) : escapeHtml(code.toUpperCase());
+    const name = langEndonym(code);
+    return `<span class="lang-badge" title="${escapeAttr(name)}" aria-label="${escapeAttr(name)}" lang="${escapeAttr(code)}">${label}</span>`;
+  }).join("");
+}
+
 /* --- Рендер одной карточки --- */
 function renderCard(app) {
   const tagsHtml = (app.tags || []).map(t => {
@@ -1397,14 +1701,15 @@ function renderCard(app) {
 
   const descHtml = app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : "";
   const infoHtml = app.info ? `<p class="card-info">${escapeHtml(app.info)}</p>` : "";
+  const langHtml = renderLangBadges(app.languages);
   const aiHtml = renderAiBadge(app.ai);
   const platformHtml = renderPlatformBadge(app.platform);
-  const metaHtml = (aiHtml || platformHtml)
-    ? `<div class="card-meta">${aiHtml}${platformHtml}</div>` : "";
+  const metaHtml = (langHtml || aiHtml || platformHtml)
+    ? `<div class="card-meta">${langHtml}${aiHtml}${platformHtml}</div>` : "";
   const tagsWrap = tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : "";
 
   return `<article class="card" data-id="${escapeAttr(app.id)}" data-open="${escapeAttr(appUrl(app.id))}">
-    ${renderIcon(app)}
+    ${renderCover(app)}
     <div class="card-content">
       <h3 class="card-title">${escapeHtml(app.title)}</h3>
       ${descHtml}
@@ -1469,6 +1774,7 @@ function render() {
   }
 
   grid.innerHTML = list.map(renderCard).join("");
+  observeCovers(); // первый скриншот каждой обложки — лениво по viewport
 }
 
 /* --- Управление состоянием кнопки «Сбросить фильтры» и счётчика фильтров --- */
@@ -1626,7 +1932,7 @@ function decorIconSources() {
   const sources = [];
   allApps.forEach(app => {
     const iconVal = (app.icon || "").trim();
-    if (iconVal && isIconFile(iconVal)) sources.push(resolveIconPath(iconVal, app.id));
+    if (iconVal && isIconFile(iconVal)) sources.push(resolveMetaPath(iconVal, app.id));
   });
   return sources;
 }
@@ -1804,8 +2110,65 @@ function bindEvents() {
   // Сброс
   document.getElementById("reset-btn").addEventListener("click", resetFilters);
 
+  /* --- Карусель скриншотов: hover (только мышь), свайп (тач/перо) --- */
+  // Mouse-only события фильтруем по pointerType; relatedTarget гасит дребезг между детьми
+  gridEl().addEventListener("pointerover", e => {
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    const cover = e.target.closest(".card-icon[data-shots]");
+    if (!cover || (e.relatedTarget && cover.contains(e.relatedTarget))) return;
+    cover.classList.add("show-shots");
+    setCoverSlide(cover, 0); // hover → первый скриншот
+  });
+  gridEl().addEventListener("pointerout", e => {
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    const cover = e.target.closest(".card-icon[data-shots]");
+    if (!cover || (e.relatedTarget && cover.contains(e.relatedTarget))) return;
+    cover.classList.remove("show-shots"); // уход курсора → иконка
+    cover.dataset.active = "0";
+    cover.querySelectorAll(".cover-dot").forEach(d =>
+      d.classList.toggle("active", d.dataset.dot === "0"));
+  });
+
+  // Свайп внутри обложки: touch-action: pan-y оставляет вертикальный скролл браузеру
+  let swipeState = null;
+  gridEl().addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse") return;
+    const cover = e.target.closest(".card-icon[data-shots]");
+    if (!cover) return;
+    swipeState = { cover, x: e.clientX, y: e.clientY };
+  });
+  gridEl().addEventListener("pointermove", e => {
+    if (!swipeState || swipeState.cover !== e.target.closest(".card-icon")) return;
+    const dx = e.clientX - swipeState.x;
+    const dy = e.clientY - swipeState.y;
+    if (Math.abs(dx) <= Math.abs(dy) || Math.abs(dx) < 28) return; // не горизонтальный жест
+    swipeState.x = e.clientX; // перезарядка: жест можно продолжить
+    const cover = swipeState.cover;
+    const slides = coverSlides(cover);
+    const pos = slides.findIndex(s => s.dataset.index === String(coverActiveIndex(cover)));
+    const next = slides[dx < 0 ? Math.min(slides.length - 1, pos + 1) : Math.max(0, pos - 1)];
+    if (!next) return;
+    cover.classList.add("show-shots");
+    setCoverSlide(cover, Number(next.dataset.index));
+  });
+  const endSwipe = () => { swipeState = null; };
+  gridEl().addEventListener("pointerup", endSwipe);
+  gridEl().addEventListener("pointercancel", endSwipe);
+
   // Копирование прямой ссылки на приложение из карточки
   document.getElementById("grid").addEventListener("click", async e => {
+    // Точка карусели: переключить слайд, карточку не открывать
+    const dot = e.target.closest(".cover-dot");
+    if (dot) {
+      e.preventDefault();
+      e.stopPropagation();
+      const cover = dot.closest(".card-icon");
+      if (cover) {
+        cover.classList.add("show-shots");
+        setCoverSlide(cover, Number(dot.dataset.dot));
+      }
+      return;
+    }
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
       e.preventDefault();
