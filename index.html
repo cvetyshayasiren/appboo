@@ -2456,6 +2456,51 @@ function observeCovers() {
   gridEl().querySelectorAll(".card-icon[data-shots]").forEach(el => coverObserver.observe(el));
 }
 
+/* --- Замена карточки на смартфоне: когда по ширине помещается одна
+       карточка, наведённого просмотра нет, а закреплённый на тач-экране
+       неудобен. По кнопке «крупно» (лупа) компактная карточка заменяется
+       настоящей крупной с её нативным поведением; минус на крупной
+       возвращает компактную обратно --- */
+let swappedCompact = null; // {compact, large} — заменённая пара карточек
+
+// Одна карточка в ряд? Меряем саму карточку: колонок = (ширина сетки + зазор) / (ширина карточки + зазор)
+function singleColumnLayout(card) {
+  const grid = gridEl();
+  card = card || grid.querySelector(".card-compact");
+  if (!card) return false;
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const cols = Math.round((grid.clientWidth + gap) / (card.offsetWidth + gap));
+  return cols <= 1;
+}
+
+function swapToLargeCard(card) {
+  if (swappedCompact) unswapLargeCard(swappedCompact.large, false); // прежнюю — обратно без прокрутки
+  const app = allApps.find(a => a.id === card.dataset.id);
+  if (!app) return false;
+  const host = document.createElement("div");
+  host.innerHTML = renderCardLarge(app);
+  const large = host.firstElementChild;
+  if (!large) return false;
+  // Минус слева сверху — как в закреплённом просмотре: правый угол обложки занят разворотом
+  large.insertAdjacentHTML("afterbegin", `<button type="button" class="card-collapse" data-unswap aria-label="Свернуть карточку" title="Свернуть">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+  </button>`);
+  card.replaceWith(large);
+  swappedCompact = { compact: card, large };
+  observeCovers(); // скриншоты крупной карточки — лениво по viewport
+  large.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  return true;
+}
+
+function unswapLargeCard(large, scroll = true) {
+  if (!swappedCompact || swappedCompact.large !== large) return;
+  const { compact } = swappedCompact;
+  swappedCompact = null;
+  large.replaceWith(compact);
+  observeCovers(); // компактная вернулась — её обложка снова в наблюдении
+  if (scroll) compact.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 /* --- Рендер бейджа нейросети --- */
 function renderAiBadge(ai) {
   if (!ai || !ai.trim()) return "";
@@ -2628,6 +2673,7 @@ function renderCard(app) {
 /* --- Основной рендер с учётом фильтров и сортировки --- */
 function render() {
   const grid = document.getElementById("grid");
+  swappedCompact = null; // сетка пересобрана — заменённая пара больше не в DOM
 
   if (allApps.length === 0) {
     grid.innerHTML = `<div class="empty">Приложений пока нет</div>`;
@@ -3640,6 +3686,15 @@ function bindEvents() {
 
   // Копирование прямой ссылки на приложение из карточки
   document.getElementById("grid").addEventListener("click", async e => {
+    // Минус на заменённой крупной карточке (смартфон): вернуть компактную
+    const unswapBtn = e.target.closest("[data-unswap]");
+    if (unswapBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const large = unswapBtn.closest(".card");
+      if (large) unswapLargeCard(large);
+      return;
+    }
     // «Свернуть»: вернуть крупный просмотр компактной карточки к обычному виду
     const collapseBtn = e.target.closest("[data-collapse]");
     if (collapseBtn) {
@@ -3672,13 +3727,18 @@ function bindEvents() {
       if (card) setPreviewPinned(card, true);
       return;
     }
-    // Кнопка «крупно»: наведение уже показывает превью, клик закрепляет его
+    // Кнопка «крупно»: наведение уже показывает превью, клик закрепляет его;
+    // если в ряд помещается одна карточка (смартфон) — заменяем компактную
+    // карточку настоящей крупной с нативным поведением
     const infoBtn = e.target.closest("[data-info]");
     if (infoBtn) {
       e.preventDefault();
       e.stopPropagation();
       const card = infoBtn.closest(".card-compact");
-      if (card) setPreviewPinned(card, !card.classList.contains("preview-pinned"));
+      if (card) {
+        if (singleColumnLayout(card) && swapToLargeCard(card)) return;
+        setPreviewPinned(card, !card.classList.contains("preview-pinned"));
+      }
       return;
     }
     // «Развернуть» на элементе скриншотов: развернуть или вернуть как было
@@ -3801,6 +3861,7 @@ function bindEvents() {
       closeTextPopup();
       document.querySelectorAll(".card-icon.cover-expanded").forEach(collapseCover);
       unpinPreviews();
+      if (swappedCompact) unswapLargeCard(swappedCompact.large);
       closeAllDropdowns();
       setToolbarOpen(false);
     }
