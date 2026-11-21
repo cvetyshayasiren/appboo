@@ -353,6 +353,16 @@ body { overflow-x: clip; }
   transition: transform 0.2s ease;
   outline: none;
 }
+/* На ПК окно заметно шире и занимает почти всю рабочую область */
+@media (min-width: 640px) {
+  .settings-panel {
+    width: min(880px, 100%);
+    min-height: calc(100dvh - 72px);
+    display: flex;
+    flex-direction: column;
+  }
+  .settings-head { padding: 18px 24px 0; }
+}
 .settings-backdrop.open .settings-panel { transform: none; }
 .settings-head {
   display: flex;
@@ -383,6 +393,17 @@ body { overflow-x: clip; }
   flex-direction: column;
   gap: 18px;
   padding: 14px 18px 18px;
+}
+/* На ПК секции настроек в две колонки и распределены по высоте окна */
+@media (min-width: 640px) {
+  .settings-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 36px;
+    padding: 16px 24px 24px;
+    align-content: space-evenly;
+    flex: 1 1 auto;
+  }
 }
 .settings-section { display: flex; flex-direction: column; gap: 10px; }
 .settings-label {
@@ -492,6 +513,33 @@ body { overflow-x: clip; }
 .color-swatch:active { transform: scale(0.96); }
 .color-swatch.active { border-color: var(--text); }
 .color-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Свой цвет: радужный свотч-пикер, клик открывает системный выбор цвета.
+   Внутри — текущий выбранный цвет (когда он задан), снаружи — радуга */
+.color-swatch-custom {
+  position: relative;
+  background: conic-gradient(from 210deg,
+    #e5484d, #e5993f, #e9c542, #7fbf5a, #4bb8a9,
+    #5a9bd8, #8a7fd6, #d264b6, #e5484d);
+  cursor: pointer;
+}
+.color-swatch-custom .custom-swatch-face {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--custom-face, transparent);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+}
+.color-swatch-custom input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 :root[data-theme="light"] .card-icon {
   background-color: #e8f3e1;
   background-image:
@@ -1022,9 +1070,12 @@ main {
 /* Обложка разворачивается на весь экран и из превью: слой не должен
    перехватывать position: fixed своей трансформацией. Специфичность —
    выше правила .card.preview-shown .card-large-preview, иначе сдвиг
-   translateX(-50%) остаётся и уводит fixed-окно с центра экрана */
+   translateX(-50%) остаётся и уводит fixed-окно с центра экрана.
+   И z-index поднимаем выше затемнения (1090): слой — стекинг-контекст
+   (z-index: 60), и без этого окно с его 1100 рисуется на уровне слоя,
+   под вуалью */
 .card-large-preview.cover-open-host,
-.card.preview-shown .card-large-preview.cover-open-host { transform: none; transition: none; }
+.card.preview-shown .card-large-preview.cover-open-host { transform: none; transition: none; z-index: 1101; }
 .card.preview-shown .card-large-preview {
   opacity: 1;
   visibility: visible;
@@ -1903,6 +1954,10 @@ main {
           <button class="color-swatch" type="button" data-base-color="amber" style="--swatch:#DFAF68" title="Янтарный" aria-label="Янтарный"></button>
           <button class="color-swatch" type="button" data-base-color="rose" style="--swatch:#D98FA6" title="Розовый" aria-label="Розовый"></button>
           <button class="color-swatch" type="button" data-base-color="teal" style="--swatch:#6FC7B2" title="Бирюзовый" aria-label="Бирюзовый"></button>
+          <label class="color-swatch color-swatch-custom" title="Свой цвет">
+            <span class="custom-swatch-face" id="custom-color-face" aria-hidden="true"></span>
+            <input type="color" id="base-color-input" value="#86C26B" aria-label="Свой цвет">
+          </label>
         </div>
       </section>
       <section class="settings-section">
@@ -2815,7 +2870,7 @@ function normalizeSettings() {
   if (!THEMES.some(t => t.value === settings.theme)) settings.theme = DEFAULT_SETTINGS.theme;
   if (!HEADER_STYLES.includes(settings.headerStyle)) settings.headerStyle = DEFAULT_SETTINGS.headerStyle;
   if (!CARD_VIEWS.some(v => v.value === settings.cardView)) settings.cardView = DEFAULT_SETTINGS.cardView;
-  if (!(settings.baseColor in BASE_COLORS)) settings.baseColor = DEFAULT_SETTINGS.baseColor;
+  if (!(settings.baseColor in BASE_COLORS) && !isHexColor(settings.baseColor)) settings.baseColor = DEFAULT_SETTINGS.baseColor;
   if (!LANGS.some(l => l.value === settings.lang)) settings.lang = DEFAULT_SETTINGS.lang;
 }
 
@@ -2888,16 +2943,25 @@ function mixHex(a, b, t) {
   return "#" + [r, g, b2].map(v => v.toString(16).padStart(2, "0")).join("");
 }
 
+// Выбранный цвет: ключ шаблона или свой цвет в hex (#rrggbb)
+function isHexColor(value) {
+  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+}
+// Hex выбранного цвета: для шаблона — из палитры, для своего — как есть
+function baseColorHex(key) {
+  if (isHexColor(key)) return key;
+  return BASE_COLORS[key] ? BASE_COLORS[key].hex : null;
+}
+
 function applyBaseColor(key) {
   const root = document.documentElement;
   // Сначала сброс: снимаем прошлые переопределения и читаем чистые цвета темы
   BASE_COLOR_VAR_MIX.forEach(([name]) => root.style.removeProperty(name));
   ["--accent", "--accent-hover", "--accent-soft"].forEach(name => root.style.removeProperty(name));
-  const pal = BASE_COLORS[key];
+  const accent = baseColorHex(key);
   updateThemeMeta();
-  if (!pal || key === "green") return; // зелёный — родная палитра темы
-  const cs = getComputedStyle(root);
-  const accent = pal.hex;
+  if (!accent || key === "green") return; // зелёный — родная палитра темы
+  const cs = getComputedStyle(root); // чистые цвета темы после сброса
   BASE_COLOR_VAR_MIX.forEach(([name, pct]) => {
     const base = cs.getPropertyValue(name).trim();
     if (base) root.style.setProperty(name, `color-mix(in srgb, ${accent} ${pct}%, ${base})`);
@@ -2912,9 +2976,9 @@ function applyBaseColor(key) {
 function updateThemeMeta() {
   const resolved = resolveTheme(currentThemeValue || "system");
   const base = THEME_UI_COLORS[resolved] || "#0a0c10";
-  const pal = BASE_COLORS[settings.baseColor];
+  const accent = baseColorHex(settings.baseColor);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", pal && settings.baseColor !== "green" ? mixHex(base, pal.hex, 0.08) : base);
+  if (meta) meta.setAttribute("content", accent && settings.baseColor !== "green" ? mixHex(base, accent, 0.08) : base);
 }
 
 /* --- Синхронизация UI окна настроек с текущими настройками --- */
@@ -2937,8 +3001,16 @@ function updateSettingsUI() {
     opt.setAttribute("aria-selected", String(opt.dataset.value === settings.theme)));
   document.querySelectorAll("#lang-dropdown [data-value]").forEach(opt =>
     opt.setAttribute("aria-selected", String(opt.dataset.value === settings.lang)));
+  // Шаблоны активны при точном совпадении; радужный пикер — когда задан свой цвет
   document.querySelectorAll("#base-color-options [data-base-color]").forEach(sw =>
     sw.classList.toggle("active", sw.dataset.baseColor === settings.baseColor));
+  const customSwatch = document.querySelector(".color-swatch-custom");
+  if (customSwatch) {
+    const isCustom = isHexColor(settings.baseColor);
+    customSwatch.classList.toggle("active", isCustom);
+    customSwatch.style.setProperty("--custom-face", isCustom ? settings.baseColor : "transparent");
+    if (isCustom) document.getElementById("base-color-input").value = settings.baseColor;
+  }
 }
 
 /* --- Разбросанные фоновые иконки: книжка appboo + иконки мини-приложений,
@@ -3015,13 +3087,13 @@ function showCopyToast() {
   }, 2200);
 }
 
-/* --- Liquid glass для шапки: WebGL-шейдер рисует живые блики на канвасе
+/* --- Liquid glass для шапки: WebGL-шейдер рисует блики на канвасе
        поверх матового слоя backdrop-filter. Оттенок берётся из --accent,
-       поэтому следует базовому цвету. Нет WebGL — канвас убирается,
-       остаётся обычное CSS-стекло. Анимация останавливается, когда стиль
-       не «стекло», вкладка скрыта или пользователь просил меньше движения --- */
+       поэтому следует базовому цвету. Кадр статичный: узор не движется
+       сам по себе — перерисовка только при изменении размера, смене
+       акцента, темы или показе шапки. Нет WebGL — канвас убирается,
+       остаётся обычное CSS-стекло --- */
 const GlassHeader = (() => {
-  const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
   const VERT = "attribute vec2 a_pos; void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }";
   const FRAG = [
     "precision mediump float;",
@@ -3063,7 +3135,8 @@ const GlassHeader = (() => {
   let gl = null;
   let program = null;
   let uRes = null, uTime = null, uTint = null;
-  let rafId = 0, running = false, start = performance.now(), frame = 0;
+  // Фиксированная фаза узора: кадр всегда один и тот же, без движения
+  const STATIC_TIME = 6.5;
   let tint = [0.52, 0.76, 0.42];
 
   function isActive() {
@@ -3122,7 +3195,6 @@ const GlassHeader = (() => {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     canvas.addEventListener("webglcontextlost", e => {
       e.preventDefault();
-      stop();
       gl = null;
       if (canvas) canvas.style.display = "none"; // CSS-стекло продолжает работать
     });
@@ -3142,47 +3214,28 @@ const GlassHeader = (() => {
     }
   }
 
-  function render(now) {
+  function render() {
     if (!gl) return;
     resize();
-    const t = (now - start) / 1000;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform1f(uTime, t);
-    if (frame % 120 === 0) tint = readAccentRgb(); // акцент мог смениться
+    gl.uniform1f(uTime, STATIC_TIME);
+    tint = readAccentRgb(); // акцент мог смениться с прошлого кадра
     gl.uniform3f(uTint, tint[0], tint[1], tint[2]);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    frame++;
-  }
-
-  function loop(now) {
-    if (!isActive()) { running = false; return; }
-    render(now);
-    rafId = requestAnimationFrame(loop);
   }
 
   function ensure() {
-    if (!isActive()) return;
-    if (REDUCE_MOTION.matches) { render(performance.now()); return; } // статичный кадр
-    if (!running) { running = true; rafId = requestAnimationFrame(loop); }
+    if (isActive()) render(); // статичный кадр при показе шапки со стеклом
   }
 
-  function stop() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = 0;
-    running = false;
-  }
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stop();
-    else ensure();
-  });
+  // Перерисовка при изменении размера окна (пока стиль — «стекло»)
   window.addEventListener("resize", () => {
-    if (REDUCE_MOTION.matches && isActive()) render(performance.now());
+    if (canvas && canvas.style.display !== "none") ensure();
   });
 
-  return { init, ensure, refreshTint() { if (gl) tint = readAccentRgb(); } };
+  return { init, ensure, refreshTint() { if (gl) render(); } };
 })();
 
 /* --- Раскрытие/сворачивание секций фильтров (общее для всех аккордеонов) --- */
@@ -3223,16 +3276,17 @@ function initToolbar() {
   window.addEventListener("resize", alignFiltersDropdown);
 }
 
-/* --- Ширина выпадающего меню фильтров: ровно от иконки поиска
-       до иконки фильтров (на телефоне меню фиксировано на всю ширину) --- */
+/* --- Ширина выпадающего меню фильтров: от левой границы поля поиска
+       (а не иконки — она внутри поля) до иконки фильтров
+       (на телефоне меню фиксировано на всю ширину) --- */
 function alignFiltersDropdown() {
   const body = document.getElementById("toolbar-body");
   if (!body) return;
   if (window.innerWidth <= 600) { body.style.width = ""; return; }
-  const icon = document.querySelector(".header-search-zone .search-icon");
+  const search = document.getElementById("catalog-search");
   const btn = document.getElementById("toolbar-toggle");
-  if (!icon || !btn) return;
-  const w = Math.round(btn.getBoundingClientRect().right - icon.getBoundingClientRect().left);
+  if (!search || !btn) return;
+  const w = Math.round(btn.getBoundingClientRect().right - search.getBoundingClientRect().left);
   body.style.width = w >= 240 ? w + "px" : ""; // слишком узко — оставить обычное поведение
 }
 
@@ -3263,9 +3317,9 @@ function ensurePreview(card) {
   holder.innerHTML = renderCardLarge(app);
   holder.dataset.built = "1";
   holder.setAttribute("aria-hidden", "false");
-  // Кнопка «свернуть» слева сверху: правый угол обложки занят разворотом скриншотов
+  // Кнопка «свернуть» (минус) слева сверху: правый угол обложки занят разворотом скриншотов
   holder.insertAdjacentHTML("afterbegin", `<button type="button" class="card-collapse" data-collapse aria-label="Свернуть карточку" title="Свернуть">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10V4h6"/><path d="M4 4l7 7"/><path d="M20 14v6h-6"/><path d="M20 20l-7-7"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
   </button>`);
   updateEllipsisButtons(); // в превью могли оказаться обрезанные тексты
   observeCovers(); // обложка превью подхватит ленивую загрузку скриншотов
@@ -3771,10 +3825,14 @@ function bindEvents() {
   setupDropdown("theme-dropdown", value => updateSetting("theme", value));
   // Язык: выбор запоминается, локализация пока не подключена
   setupDropdown("lang-dropdown", value => updateSetting("lang", value));
-  // Базовый цвет: оттенок фона и акцентов
+  // Базовый цвет: оттенок фона и акцентов — шаблоны или свой цвет из пикера
   document.getElementById("base-color-options").addEventListener("click", e => {
     const swatch = e.target.closest("[data-base-color]");
     if (swatch) updateSetting("baseColor", swatch.dataset.baseColor);
+  });
+  // Свой цвет: live-обновление при перетаскивании в системном пикере
+  document.getElementById("base-color-input").addEventListener("input", e => {
+    if (isHexColor(e.target.value)) updateSetting("baseColor", e.target.value);
   });
   // Вид карточек: компактно или крупно
   document.querySelectorAll("#settings-modal [data-view]").forEach(button => {
