@@ -729,11 +729,11 @@ main {
   color: hsl(var(--hue), 50%, 30%);
 }
 
-/* --- Сетка карточек --- */
+/* --- Сетка карточек (крупный вид: чуть компактнее прежнего) --- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 16px;
 }
 
 /* --- Карточка приложения --- */
@@ -911,8 +911,15 @@ main {
 .card-info-close:hover { color: var(--text); background: var(--accent-soft); }
 .card-info-close svg { display: block; width: 14px; height: 14px; }
 .card-pop-title { margin: 0 30px 0 0; font-size: 1rem; font-weight: 700; word-break: break-word; }
+/* В плашке подробностей текст показывается целиком, без построчных ограничений */
 .card-info-pop .card-desc,
-.card-info-pop .card-info { font-size: 0.85rem; }
+.card-info-pop .card-info {
+  display: block;
+  -webkit-line-clamp: none;
+  -webkit-box-orient: unset;
+  overflow: visible;
+  font-size: 0.85rem;
+}
 .card-info-pop .card-meta,
 .card-info-pop .card-tags { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) {
@@ -924,7 +931,7 @@ main {
 .card-icon {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background-color: #223319;
   background-image:
     radial-gradient(circle at 28% 22%, rgba(134, 194, 107, 0.14), transparent 55%),
@@ -970,42 +977,44 @@ main {
 }
 .card-icon:has(.icon-img) .icon-glyph,
 .card-icon:has(.icon-mask) .icon-glyph { display: none; }
-/* --- Карусель скриншотов на обложке --- */
+/* --- Карусель скриншотов на обложке: слайд-трек, стрелки, точки --- */
 .cover-slides {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  display: flex;
+  transform: translateX(calc(var(--slide-pos, 0) * -100%));
+  transition: transform 0.3s ease;
   pointer-events: none; /* свайп ловим на самой обложке */
 }
-.card-icon.show-shots .cover-slides { opacity: 1; }
 .cover-slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  min-width: 0;
 }
-.cover-slide.active { opacity: 1; }
 .cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-/* Точки-переключатели: у нижнего края обложки, кнопки с крупной зоной нажатия */
+/* Точки-индикаторы: у нижнего края обложки, активная вытянута в пилюлю */
 .cover-dots {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 6px;
+  bottom: 0;
   display: flex;
   justify-content: center;
   gap: 2px;
   z-index: 2;
+  padding: 16px 0 4px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.38), transparent);
+  pointer-events: none;
 }
 .cover-dot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   margin: 0;
   border: none;
@@ -1016,17 +1025,56 @@ main {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
+  pointer-events: auto;
 }
 .cover-dot::after {
   content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(215, 235, 204, 0.45);
-  transition: background 0.2s, transform 0.2s;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: width 0.2s, background 0.2s;
 }
-.cover-dot.active::after { background: #d7ebcc; transform: scale(1.15); }
-.cover-dot:hover::after { background: rgba(215, 235, 204, 0.75); }
+.cover-dot.active::after { width: 18px; background: #fff; }
+.cover-dot:hover::after { background: rgba(255, 255, 255, 0.8); }
+/* Стрелки по краям обложки: видны на наведении (мышь), всегда — на тач-экранах */
+.cover-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(10, 14, 10, 0.45);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, background 0.15s ease, visibility 0s linear 0.18s;
+}
+.cover-arrow.prev { left: 8px; }
+.cover-arrow.next { right: 8px; }
+.cover-arrow svg { display: block; width: 16px; height: 16px; }
+.card:hover .cover-arrow,
+.cover-arrow:focus-visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.18s ease, background 0.15s ease;
+}
+.cover-arrow:hover { background: rgba(10, 14, 10, 0.68); }
+.cover-arrow:active { transform: translateY(-50%) scale(0.94); }
+.cover-arrow:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (hover: none) {
+  .cover-arrow { opacity: 1; visibility: visible; }
+}
 /* Бейдж языка: в ряду с platform, нейтральный стиль платформенного */
 .lang-badge {
   display: inline-flex;
@@ -1044,27 +1092,35 @@ main {
 :root[data-theme="light"] .lang-badge { color: var(--accent); }
 /* Без анимаций, если пользователь просил их убавить */
 @media (prefers-reduced-motion: reduce) {
-  .cover-slides, .cover-slide, .cover-dot::after { transition: none !important; }
+  .cover-slides, .cover-dot::after, .cover-arrow { transition: none !important; }
 }
 .card-content {
-  padding: 14px 16px 16px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   flex: 1;
 }
 .card-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.03rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card-desc {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.92rem;
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card-info {
   margin: 0;
@@ -1072,6 +1128,10 @@ main {
   font-size: 0.85rem;
   font-style: italic;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card-meta {
   display: flex;
@@ -1249,7 +1309,7 @@ main {
   border-radius: var(--radius);
   overflow: hidden;
 }
-.sk-icon { aspect-ratio: 16 / 10; background: var(--sk-color); }
+.sk-icon { aspect-ratio: 16 / 9; background: var(--sk-color); }
 .sk-line { height: 12px; margin: 12px 16px 0; border-radius: 6px; background: var(--sk-color); }
 .sk-line.sk-title { height: 18px; width: 60%; }
 .sk-line.sk-short { width: 40%; }
@@ -1810,7 +1870,8 @@ function coverColor(meta) {
   return meta.color && meta.color.trim() ? meta.color.trim() : autoColor(meta.title);
 }
 
-/* --- Обложка крупной карточки: иконка + карусель скриншотов --- */
+/* --- Обложка крупной карточки: скриншоты сразу, иконка — до загрузки
+       и как запасной вариант, если все скриншоты битые --- */
 function renderCover(meta) {
   const { glyph, imgHtml } = renderIconLayers(meta);
 
@@ -1825,7 +1886,12 @@ function renderCover(meta) {
       ? `<div class="cover-dots" aria-label="Скриншоты приложения">${shots.map((_, i) =>
           `<button type="button" class="cover-dot" data-dot="${i}" aria-label="Скриншот ${i + 1}"></button>`).join("")}</div>`
       : "";
-    carouselHtml = `<div class="cover-slides">${slides}</div>${dots}`;
+    // Стрелки по краям: листают с зацикливанием
+    const arrows = shots.length > 1
+      ? `<button type="button" class="cover-arrow prev" data-dir="-1" aria-label="Предыдущий скриншот" title="Предыдущий скриншот"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button type="button" class="cover-arrow next" data-dir="1" aria-label="Следующий скриншот" title="Следующий скриншот"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`
+      : "";
+    carouselHtml = `<div class="cover-slides">${slides}</div>${arrows}${dots}`;
   }
 
   return `<div class="card-icon" style="--icon-color:${escapeAttr(coverColor(meta))}"${shots.length ? ` data-shots="${shots.length}" data-title="${escapeAttr(meta.title)}"` : ""}>
@@ -1864,11 +1930,11 @@ function ensureSlide(cover, declaredIndex) {
     slide.remove();
     const left = coverSlides(cover);
     if (!left.length) {
-      // Все битые → остаётся иконка
-      cover.classList.remove("show-shots");
-      cover.querySelectorAll(".cover-slides, .cover-dots").forEach(el => el.remove());
+      // Все битые → остаётся иконка, карусель со стрелками и точками убирается
+      cover.querySelectorAll(".cover-slides, .cover-dots, .cover-arrow").forEach(el => el.remove());
       delete cover.dataset.shots;
       delete cover.dataset.active;
+      cover.style.removeProperty("--slide-pos");
       if (coverObserver) coverObserver.unobserve(cover);
     } else if (cover.dataset.active === String(declaredIndex)) {
       setCoverSlide(cover, Number(left[0].dataset.index));
@@ -1882,12 +1948,27 @@ function ensureSlide(cover, declaredIndex) {
 function setCoverSlide(cover, declaredIndex) {
   const slides = coverSlides(cover);
   if (!slides.length) return;
-  let target = slides.find(s => s.dataset.index === String(declaredIndex)) || slides[0];
-  slides.forEach(s => s.classList.toggle("active", s === target));
+  const target = slides.find(s => s.dataset.index === String(declaredIndex)) || slides[0];
+  const pos = Math.max(0, slides.indexOf(target));
   cover.dataset.active = target.dataset.index;
+  cover.style.setProperty("--slide-pos", String(pos)); // сдвиг слайд-трека
   cover.querySelectorAll(".cover-dot").forEach(d =>
     d.classList.toggle("active", d.dataset.dot === target.dataset.index));
   ensureSlide(cover, Number(target.dataset.index));
+  // Соседние слайды готовим заранее, чтобы переключение было мгновенным
+  const prev = slides[pos - 1];
+  const next = slides[pos + 1];
+  if (prev) ensureSlide(cover, Number(prev.dataset.index));
+  if (next) ensureSlide(cover, Number(next.dataset.index));
+}
+
+// Соседний слайд с зацикливанием (стрелки и клавиши ←/→)
+function stepCover(cover, dir) {
+  const slides = coverSlides(cover);
+  if (!slides.length) return;
+  const pos = slides.findIndex(s => s.dataset.index === String(coverActiveIndex(cover)));
+  const next = slides[(pos + dir + slides.length) % slides.length];
+  if (next) setCoverSlide(cover, Number(next.dataset.index));
 }
 
 // Первый скриншот догружается при попадании карточки в viewport
@@ -2516,23 +2597,12 @@ function bindEvents() {
   // Сброс
   document.getElementById("reset-btn").addEventListener("click", resetFilters);
 
-  /* --- Карусель скриншотов: hover (только мышь), свайп (тач/перо) --- */
-  // Mouse-only события фильтруем по pointerType; relatedTarget гасит дребезг между детьми
-  gridEl().addEventListener("pointerover", e => {
-    if (e.pointerType && e.pointerType !== "mouse") return;
+  /* --- Карусель скриншотов: клавиши ←/→ на обложке, свайп (тач/перо) --- */
+  gridEl().addEventListener("keydown", e => {
     const cover = e.target.closest(".card-icon[data-shots]");
-    if (!cover || (e.relatedTarget && cover.contains(e.relatedTarget))) return;
-    cover.classList.add("show-shots");
-    setCoverSlide(cover, 0); // hover → первый скриншот
-  });
-  gridEl().addEventListener("pointerout", e => {
-    if (e.pointerType && e.pointerType !== "mouse") return;
-    const cover = e.target.closest(".card-icon[data-shots]");
-    if (!cover || (e.relatedTarget && cover.contains(e.relatedTarget))) return;
-    cover.classList.remove("show-shots"); // уход курсора → иконка
-    cover.dataset.active = "0";
-    cover.querySelectorAll(".cover-dot").forEach(d =>
-      d.classList.toggle("active", d.dataset.dot === "0"));
+    if (!cover) return;
+    if (e.key === "ArrowLeft") { e.preventDefault(); stepCover(cover, -1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); stepCover(cover, 1); }
   });
 
   // Свайп внутри обложки: touch-action: pan-y оставляет вертикальный скролл браузеру
@@ -2554,7 +2624,6 @@ function bindEvents() {
     const pos = slides.findIndex(s => s.dataset.index === String(coverActiveIndex(cover)));
     const next = slides[dx < 0 ? Math.min(slides.length - 1, pos + 1) : Math.max(0, pos - 1)];
     if (!next) return;
-    cover.classList.add("show-shots");
     setCoverSlide(cover, Number(next.dataset.index));
   });
   const endSwipe = () => { swipeState = null; };
@@ -2590,16 +2659,22 @@ function bindEvents() {
       if (card) setInfoPinned(card, !card.classList.contains("info-pinned"));
       return;
     }
+    // Стрелка карусели: соседний слайд (с зацикливанием), карточку не открывать
+    const arrow = e.target.closest(".cover-arrow");
+    if (arrow) {
+      e.preventDefault();
+      e.stopPropagation();
+      const cover = arrow.closest(".card-icon");
+      if (cover) stepCover(cover, Number(arrow.dataset.dir));
+      return;
+    }
     // Точка карусели: переключить слайд, карточку не открывать
     const dot = e.target.closest(".cover-dot");
     if (dot) {
       e.preventDefault();
       e.stopPropagation();
       const cover = dot.closest(".card-icon");
-      if (cover) {
-        cover.classList.add("show-shots");
-        setCoverSlide(cover, Number(dot.dataset.dot));
-      }
+      if (cover) setCoverSlide(cover, Number(dot.dataset.dot));
       return;
     }
     const copyBtn = e.target.closest("[data-copy]");
