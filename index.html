@@ -160,7 +160,7 @@ body {
 body { overflow-x: clip; }
 
 /* --- Шапка --- */
-/* Стиль шапки (обычная / полупрозрачная / стекло) выбирается в настройках плеера */
+/* Стиль шапки (обычная / прозрачная / стекло) выбирается в настройках плеера */
 .app-header {
   position: sticky;
   top: 0;
@@ -178,26 +178,30 @@ body { overflow-x: clip; }
   backdrop-filter: saturate(160%) blur(16px);
   -webkit-backdrop-filter: saturate(160%) blur(16px);
 }
-/* Стеклянная: матовое стекло — сильное размытие, блики, внутренние подсветки, глубина */
+/* Стекло (liquid glass): шейдер рисует живые блики на канвасе поверх
+   матового слоя. Нет WebGL — канвас просто не показывается, остаётся CSS */
 .app-header[data-header-style="glass"] {
-  background:
-    linear-gradient(105deg,
-      transparent 42%,
-      color-mix(in srgb, #ffffff 9%, transparent) 50%,
-      transparent 58%),
-    linear-gradient(to bottom,
-      color-mix(in srgb, #ffffff 14%, transparent),
-      color-mix(in srgb, #ffffff 4%, transparent) 55%,
-      color-mix(in srgb, #ffffff 2%, transparent)),
-    color-mix(in srgb, var(--bg-elevated) 52%, transparent);
-  border-bottom-color: color-mix(in srgb, #ffffff 28%, transparent);
-  backdrop-filter: blur(26px) saturate(190%) brightness(1.06);
-  -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.06);
+  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+  border-bottom-color: color-mix(in srgb, #ffffff 26%, transparent);
+  backdrop-filter: blur(22px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(1.05);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 35%, transparent),
-    inset 0 -14px 28px -20px color-mix(in srgb, #ffffff 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent),
     0 12px 36px rgba(0, 0, 0, 0.18);
 }
+/* Канвас с шейдером внутри шапки: за контентом, не ловит указатель.
+   color: var(--accent) — JS читает вычисленный цвет как оттенок шейдера */
+.header-glass-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  pointer-events: none;
+  color: var(--accent);
+}
+.app-header[data-header-style="glass"] .header-glass-canvas { display: block; }
+.header-inner { position: relative; z-index: 1; }
 .header-inner {
   max-width: 1200px;
   margin: 0 auto;
@@ -396,17 +400,59 @@ body { overflow-x: clip; }
   .settings-backdrop, .settings-panel { transition: none; }
 }
 
-/* --- Выбор темы в окне настроек (бывшее выпадающее меню) --- */
-.theme-menu {
+/* --- Выпадающие списки в окне настроек: тема, язык. Панель раскрывается
+       под кнопкой-значением, закрывается выбором или кликом мимо --- */
+.settings-dropdown { position: relative; }
+.settings-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.settings-dropdown-btn:hover { background: var(--card-hover); border-color: var(--border-strong); }
+.settings-dropdown-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.settings-dropdown-btn .sd-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-dropdown-btn .sd-chevron { margin-left: auto; color: var(--text-muted); transition: transform 0.18s ease; flex: 0 0 auto; }
+.settings-dropdown.open .settings-dropdown-btn .sd-chevron { transform: rotate(180deg); }
+.settings-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 6px;
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--card);
+  box-shadow: var(--shadow-hover);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
 }
-.theme-menu button {
+.settings-dropdown.open .settings-dropdown-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.settings-dropdown-panel button {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -423,11 +469,29 @@ body { overflow-x: clip; }
   text-align: left;
   white-space: nowrap;
 }
-.theme-menu button:hover { background: var(--accent-soft); }
-.theme-menu button[aria-checked="true"] { background: var(--accent-soft); font-weight: 700; }
-.theme-menu .theme-menu-icon { font-size: 1rem; line-height: 1; }
-.theme-menu .theme-check { margin-left: auto; color: var(--accent); font-weight: 800; visibility: hidden; }
-.theme-menu button[aria-checked="true"] .theme-check { visibility: visible; }
+.settings-dropdown-panel button:hover { background: var(--accent-soft); }
+.settings-dropdown-panel button[aria-selected="true"] { background: var(--accent-soft); font-weight: 700; }
+.settings-dropdown .sd-icon { font-size: 1rem; line-height: 1; flex: 0 0 auto; }
+.sd-check { margin-left: auto; color: var(--accent); font-weight: 800; visibility: hidden; flex: 0 0 auto; }
+.settings-dropdown-panel button[aria-selected="true"] .sd-check { visibility: visible; }
+
+/* --- Базовый цвет: ряд свотчей, оттенки фона и акцентов (Material You) --- */
+.color-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.color-swatch {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+.color-swatch:hover { transform: scale(1.08); }
+.color-swatch:active { transform: scale(0.96); }
+.color-swatch.active { border-color: var(--text); }
+.color-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 :root[data-theme="light"] .card-icon {
   background-color: #e8f3e1;
   background-image:
@@ -475,7 +539,9 @@ main {
   padding: 22px 20px 60px;
 }
 
-/* --- Кнопка «Фильтры» в шапке: открывает выпадающее меню настроек --- */
+/* --- Кнопка «Фильтры» в шапке: открывает выпадающее меню настроек.
+       На узких экранах подпись прячется — остаётся иконка-воронка:
+       сначала жертвуем кнопкой фильтров, поиск важнее --- */
 .toolbar-toggle {
   flex: 0 0 auto;
   display: inline-flex;
@@ -494,9 +560,16 @@ main {
   transition: background 0.18s, border-color 0.18s;
 }
 .toolbar-toggle:hover { background: var(--card-hover); border-color: var(--border-strong); }
+.toolbar-toggle .filters-funnel { display: none; }
 .toolbar-toggle .accordion-chevron { flex: 0 0 16px; }
 .toolbar-toggle .accordion-chevron svg { width: 15px; height: 15px; }
 .toolbar-toggle[aria-expanded="true"] .accordion-chevron { transform: rotate(180deg); }
+@media (max-width: 600px) {
+  .toolbar-toggle { width: 38px; padding: 0; justify-content: center; gap: 0; }
+  .toolbar-toggle .toolbar-toggle-text,
+  .toolbar-toggle .accordion-chevron { display: none; }
+  .toolbar-toggle .filters-funnel { display: block; width: 18px; height: 18px; flex: 0 0 18px; }
+}
 .filters-count {
   display: inline-flex;
   align-items: center;
@@ -800,12 +873,11 @@ main {
   gap: 12px;
   padding: 12px 12px 0;
 }
-.card-compact > .card-head .card-icon {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
+/* Общая маленькая плитка иконки: в компактной карточке и в ряду с названием
+   крупной карточки. Тёмная тема — глубокий зелёный градиент с оттенком
+   цвета приложения; светло-зелёные — наоборот */
+.card-icon-tile {
   aspect-ratio: auto;
-  border-radius: 14px;
   background-image:
     radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.16), transparent 55%),
     linear-gradient(145deg,
@@ -813,15 +885,15 @@ main {
       color-mix(in srgb, var(--icon-color, #86c26b) 22%, #223319) 100%);
 }
 /* Светлые темы: светло-зелёная гамма с лёгким оттенком цвета приложения */
-:root[data-theme="light"] .card-compact > .card-head .card-icon,
-:root[data-theme="dawn"] .card-compact > .card-head .card-icon {
+:root[data-theme="light"] .card-icon-tile,
+:root[data-theme="dawn"] .card-icon-tile {
   background-image:
     radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.30), transparent 55%),
     linear-gradient(145deg,
       color-mix(in srgb, var(--icon-color, #86c26b) 24%, #d7ebcc) 0%,
       color-mix(in srgb, var(--icon-color, #86c26b) 16%, #bfd9af) 100%);
 }
-:root[data-theme="overcast"] .card-compact > .card-head .card-icon {
+:root[data-theme="overcast"] .card-icon-tile {
   background-image:
     radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.28), transparent 55%),
     linear-gradient(145deg,
@@ -829,7 +901,7 @@ main {
       color-mix(in srgb, var(--icon-color, #86c26b) 16%, #7e915f) 100%);
 }
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme]) .card-compact > .card-head .card-icon {
+  :root:not([data-theme]) .card-icon-tile {
     background-image:
       radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.30), transparent 55%),
       linear-gradient(145deg,
@@ -837,9 +909,29 @@ main {
         color-mix(in srgb, var(--icon-color, #86c26b) 16%, #bfd9af) 100%);
   }
 }
-.card-compact > .card-head .icon-glyph { font-size: 1.45rem; }
-.card-compact > .card-head .icon-img { inset: 16%; max-width: 68%; max-height: 68%; }
-.card-compact > .card-head .icon-mask { width: 58%; height: 58%; }
+.card-icon-tile .icon-glyph { font-size: 1.45rem; }
+.card-icon-tile .icon-img { inset: 16%; max-width: 68%; max-height: 68%; }
+.card-icon-tile .icon-mask { width: 58%; height: 58%; }
+.card-compact > .card-head .card-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 14px;
+}
+/* Ряд «иконка + название» крупной карточки */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.card-title-row .card-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+}
+.card-title-row .card-title { flex: 1 1 auto; min-width: 0; }
 .card-compact > .card-head .card-title {
   font-size: 1rem;
   line-height: 1.25;
@@ -928,8 +1020,11 @@ main {
 /* Пока превью показано: без обрезки и без подъёма-наведения, слои поверх сетки */
 .card.preview-shown { overflow: visible; transform: none; }
 /* Обложка разворачивается на весь экран и из превью: слой не должен
-   перехватывать position: fixed своей трансформацией */
-.card-large-preview.cover-open-host { transform: none; transition: none; }
+   перехватывать position: fixed своей трансформацией. Специфичность —
+   выше правила .card.preview-shown .card-large-preview, иначе сдвиг
+   translateX(-50%) остаётся и уводит fixed-окно с центра экрана */
+.card-large-preview.cover-open-host,
+.card.preview-shown .card-large-preview.cover-open-host { transform: none; transition: none; }
 .card.preview-shown .card-large-preview {
   opacity: 1;
   visibility: visible;
@@ -1127,14 +1222,33 @@ main {
 @media (hover: none) {
   .cover-expand { opacity: 1; visibility: visible; }
 }
-/* Развёрнутый элемент скриншотов: во весь экран, по центру, фон затемнён,
-   клик по нему листает слайды, иконка «развернуть» превращается в «закрыть» */
+/* --- Режим просмотра скриншотов: отдельная сущность. Затемнение на весь экран
+       плюс окно по центру: с отступами от краёв (небольшими на смартфоне,
+       значительными на больших экранах) и разумным максимумом размера.
+       Работает одинаково откуда бы его ни открыли — из карточки или из превью --- */
+:root { --viewer-gap: clamp(8px, 3.5vw, 56px); }
+.cover-viewer-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: rgba(4, 7, 5, 0.78);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.cover-viewer-dim.show { opacity: 1; visibility: visible; transition: opacity 0.2s ease; }
 .card-icon.cover-expanded {
   position: fixed;
   inset: 0;
+  margin: auto; /* центрирование окна при заданных ширине и высоте */
+  width: min(1240px, calc(100vw - 2 * var(--viewer-gap)));
+  height: min(820px, calc(100vh - 2 * var(--viewer-gap)));
+  height: min(820px, calc(100dvh - 2 * var(--viewer-gap)));
   z-index: 1100;
-  border-radius: 0;
-  background: rgba(8, 11, 9, 0.92);
+  border-radius: 16px;
+  background: rgba(10, 13, 10, 0.94);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   animation: cover-pop 0.18s ease;
 }
@@ -1146,38 +1260,147 @@ main {
 .card-icon.cover-expanded .icon-mask { display: none; }
 .card-icon.cover-expanded .cover-slides {
   position: absolute;
-  inset: 44px 56px 64px;
-  border-radius: 12px;
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.55);
+  inset: 0;
+  border-radius: 16px;
 }
 .card-icon.cover-expanded .cover-img { object-fit: contain; }
 .card-icon.cover-expanded .cover-dots {
-  bottom: 22px;
+  bottom: 12px;
   z-index: 6;
-  padding: 16px 0 6px;
-  background: none;
+  padding: 18px 0 6px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
 }
 .card-icon.cover-expanded .cover-arrow { opacity: 1; visibility: visible; width: 40px; height: 40px; }
-.card-icon.cover-expanded .cover-arrow.prev { left: 18px; }
-.card-icon.cover-expanded .cover-arrow.next { right: 18px; }
+.card-icon.cover-expanded .cover-arrow.prev { left: 14px; }
+.card-icon.cover-expanded .cover-arrow.next { right: 14px; }
 .card-icon.cover-expanded .cover-arrow svg { width: 20px; height: 20px; }
-.card-icon.cover-expanded .cover-expand { width: 38px; height: 38px; top: 16px; right: 16px; }
+.card-icon.cover-expanded .cover-expand { width: 38px; height: 38px; top: 12px; right: 12px; }
 .card-icon.cover-expanded .cover-expand svg { width: 18px; height: 18px; }
 .card-icon.cover-expanded .cover-expand .ic-expand { display: none; }
 .card-icon.cover-expanded .cover-expand .ic-close { display: block; }
-/* Пока обложка развёрнута (position: fixed), карточка не должна ловить её
+/* Пока окно просмотра открыто (position: fixed), карточка не должна ловить его
    трансформацией наведения и обрезкой */
 .card.cover-open { transform: none; overflow: visible; }
 @media (max-width: 600px) {
-  .card-icon.cover-expanded .cover-slides { inset: 18px 16px 58px; }
-  .card-icon.cover-expanded .cover-arrow { width: 36px; height: 36px; }
-  .card-icon.cover-expanded .cover-arrow.prev { left: 10px; }
-  .card-icon.cover-expanded .cover-arrow.next { right: 10px; }
-  .card-icon.cover-expanded .cover-dots { bottom: 14px; }
+  .card-icon.cover-expanded { border-radius: 12px; }
+  .card-icon.cover-expanded .cover-slides { border-radius: 12px; }
+  .card-icon.cover-expanded .cover-arrow { width: 34px; height: 34px; }
+  .card-icon.cover-expanded .cover-arrow.prev { left: 8px; }
+  .card-icon.cover-expanded .cover-arrow.next { right: 8px; }
+  .card-icon.cover-expanded .cover-dots { bottom: 10px; }
+  .card-icon.cover-expanded .cover-expand { width: 36px; height: 36px; top: 10px; right: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-icon.cover-expanded { animation: none; }
-  .cover-expand { transition: none; }
+  .cover-viewer-dim, .cover-expand { transition: none; }
+}
+/* --- Кнопка «свернуть» на крупном просмотре компактной карточки: слева сверху,
+       правый угол занят разворотом скриншотов. Тап вне превью тоже сворачивает --- */
+.card-collapse {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(10, 14, 10, 0.45);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.card-collapse:hover { background: rgba(10, 14, 10, 0.68); }
+.card-collapse:active { transform: scale(0.94); }
+.card-collapse:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.card-collapse svg { display: block; width: 16px; height: 16px; }
+/* --- Обрезанный текст с кнопкой «⋯»: кнопка видна, только если текст
+       реально не влёкся (класс is-clamped ставит JS после рендера) --- */
+.card-text-wrap { position: relative; }
+.text-ellipsis {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: none;
+  align-items: center;
+  padding: 0 0 0 20px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--card) 46%);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.45;
+  cursor: pointer;
+  animation: ellipsis-pulse 2.6s ease-in-out infinite;
+}
+.card-text-wrap.is-clamped .text-ellipsis { display: inline-flex; }
+.text-ellipsis:hover, .text-ellipsis:focus-visible { color: var(--accent-hover); }
+.text-ellipsis:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 4px; }
+@keyframes ellipsis-pulse {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+/* --- Всплывающее окно с полным текстом: привязано к кнопке «⋯»
+       (приоритет — справа снизу), фон затемнён слабее, чем у скриншотов --- */
+.text-popup-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(5, 8, 6, 0.34);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+}
+.text-popup-dim.show { opacity: 1; visibility: visible; transition: opacity 0.18s ease; }
+.text-popup {
+  position: fixed;
+  z-index: 1050;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(46vh, 430px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
+}
+.text-popup.open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.text-popup-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.text-popup-section { margin: 0 0 10px; }
+.text-popup-section:last-child { margin-bottom: 0; }
+.text-popup-section h5 {
+  margin: 0 0 4px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.text-popup-section p { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--text); }
+@media (prefers-reduced-motion: reduce) {
+  .text-ellipsis { animation: none; }
+  .text-popup, .text-popup-dim, .card-collapse { transition: none; }
 }
 /* Бейдж языка: в ряду с platform, нейтральный стиль платформенного */
 .lang-badge {
@@ -1535,8 +1758,13 @@ main {
 
 <!-- Затемнение фона под крупным просмотром компактной карточки -->
 <div class="preview-dim" id="preview-dim" aria-hidden="true"></div>
+<!-- Затемнение под окном просмотра скриншотов (клик по нему закрывает) -->
+<div class="cover-viewer-dim" id="cover-viewer-dim" aria-hidden="true"></div>
+<!-- Слабое затемнение под всплывающим окном полного текста -->
+<div class="text-popup-dim" id="text-popup-dim" aria-hidden="true"></div>
 
 <header class="app-header">
+  <canvas class="header-glass-canvas" id="header-glass-canvas" aria-hidden="true"></canvas>
   <div class="header-inner">
     <a class="logo" href="./" aria-label="appboo">
       <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" stroke="#527D3D" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" stroke="#527D3D" stroke-width="3" stroke-linecap="round"/></svg></span>
@@ -1549,7 +1777,8 @@ main {
       </div>
       <div class="header-filters-wrap">
         <button class="toolbar-toggle" id="toolbar-toggle" type="button" aria-expanded="false" aria-controls="toolbar-body">
-          <span>Фильтры</span>
+          <svg class="filters-funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5L3 5Z"/></svg>
+          <span class="toolbar-toggle-text">Фильтры</span>
           <span class="filters-count" id="filters-count" hidden>0</span>
           <span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
         </button>
@@ -1640,22 +1869,40 @@ main {
     </div>
     <div class="settings-body">
       <section class="settings-section">
-        <h3 class="settings-label" id="theme-label">Тема оформления</h3>
-        <div class="theme-menu" id="theme-menu" role="menu" aria-labelledby="theme-label">
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="system"><span class="theme-menu-icon" aria-hidden="true">🌗</span>Системная<span class="theme-check" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="light"><span class="theme-menu-icon" aria-hidden="true">☀️</span>Светлая<span class="theme-check" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dawn"><span class="theme-menu-icon" aria-hidden="true">🌅</span>Рассвет<span class="theme-check" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="overcast"><span class="theme-menu-icon" aria-hidden="true">☁️</span>Пасмурно<span class="theme-check" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dusk"><span class="theme-menu-icon" aria-hidden="true">🌆</span>Сумерки<span class="theme-check" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dark"><span class="theme-menu-icon" aria-hidden="true">🌙</span>Тёмная<span class="theme-check" aria-hidden="true">✓</span></button>
+        <h3 class="settings-label" id="theme-label">Тема</h3>
+        <div class="settings-dropdown" id="theme-dropdown">
+          <button class="settings-dropdown-btn" type="button" aria-expanded="false" aria-haspopup="listbox" aria-labelledby="theme-label">
+            <span class="sd-icon" id="theme-current-icon" aria-hidden="true">🌗</span>
+            <span class="sd-value" id="theme-current-name">Системная</span>
+            <span class="sd-chevron accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="settings-dropdown-panel" role="listbox" aria-labelledby="theme-label">
+            <button type="button" role="option" aria-selected="false" data-value="system"><span class="sd-icon" aria-hidden="true">🌗</span>Системная<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="light"><span class="sd-icon" aria-hidden="true">☀️</span>Светлая<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="dawn"><span class="sd-icon" aria-hidden="true">🌅</span>Рассвет<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="overcast"><span class="sd-icon" aria-hidden="true">☁️</span>Пасмурно<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="dusk"><span class="sd-icon" aria-hidden="true">🌆</span>Сумерки<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="dark"><span class="sd-icon" aria-hidden="true">🌙</span>Тёмная<span class="sd-check" aria-hidden="true">✓</span></button>
+          </div>
         </div>
       </section>
       <section class="settings-section">
-        <h3 class="settings-label" id="header-style-label">Прозрачность шапки</h3>
+        <h3 class="settings-label" id="header-style-label">Стиль шапки</h3>
         <div class="seg" role="group" aria-labelledby="header-style-label">
           <button class="seg-btn" type="button" data-header-style="default">Обычная</button>
-          <button class="seg-btn" type="button" data-header-style="translucent">Полупрозрачная</button>
+          <button class="seg-btn" type="button" data-header-style="translucent">Прозрачная</button>
           <button class="seg-btn" type="button" data-header-style="glass">Стекло</button>
+        </div>
+      </section>
+      <section class="settings-section">
+        <h3 class="settings-label" id="base-color-label">Базовый цвет</h3>
+        <div class="color-options" id="base-color-options" role="group" aria-labelledby="base-color-label">
+          <button class="color-swatch" type="button" data-base-color="green" style="--swatch:#86C26B" title="Зелёный" aria-label="Зелёный"></button>
+          <button class="color-swatch" type="button" data-base-color="blue" style="--swatch:#6FA6D9" title="Синий" aria-label="Синий"></button>
+          <button class="color-swatch" type="button" data-base-color="violet" style="--swatch:#A48BDB" title="Фиолетовый" aria-label="Фиолетовый"></button>
+          <button class="color-swatch" type="button" data-base-color="amber" style="--swatch:#DFAF68" title="Янтарный" aria-label="Янтарный"></button>
+          <button class="color-swatch" type="button" data-base-color="rose" style="--swatch:#D98FA6" title="Розовый" aria-label="Розовый"></button>
+          <button class="color-swatch" type="button" data-base-color="teal" style="--swatch:#6FC7B2" title="Бирюзовый" aria-label="Бирюзовый"></button>
         </div>
       </section>
       <section class="settings-section">
@@ -1663,6 +1910,20 @@ main {
         <div class="seg" role="group" aria-labelledby="view-label">
           <button class="seg-btn" type="button" data-view="compact">Компактно</button>
           <button class="seg-btn" type="button" data-view="large">Крупно</button>
+        </div>
+      </section>
+      <section class="settings-section">
+        <h3 class="settings-label" id="lang-label">Язык</h3>
+        <div class="settings-dropdown" id="lang-dropdown">
+          <button class="settings-dropdown-btn" type="button" aria-expanded="false" aria-haspopup="listbox" aria-labelledby="lang-label">
+            <span class="sd-icon" id="lang-current-icon" aria-hidden="true">🇷🇺</span>
+            <span class="sd-value" id="lang-current-name">Русский</span>
+            <span class="sd-chevron accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
+          </button>
+          <div class="settings-dropdown-panel" role="listbox" aria-labelledby="lang-label">
+            <button type="button" role="option" aria-selected="false" data-value="ru"><span class="sd-icon" aria-hidden="true">🇷🇺</span>Русский<span class="sd-check" aria-hidden="true">✓</span></button>
+            <button type="button" role="option" aria-selected="false" data-value="en"><span class="sd-icon" aria-hidden="true">🇬🇧</span>English<span class="sd-check" aria-hidden="true">✓</span></button>
+          </div>
         </div>
       </section>
     </div>
@@ -2188,15 +2449,20 @@ function renderLangBadges(langs) {
   }).join("");
 }
 
-/* --- Рендер крупной карточки: обложка, описание, мета, подписанные кнопки --- */
+/* --- Рендер крупной карточки: обложка, иконка с названием, описание, мета --- */
+// Текст с плавающей кнопкой «⋯», если он обрезался (класс ставит JS)
+function clampedText(app, text, kind) {
+  return `<div class="card-text-wrap"><p class="card-${kind}">${escapeHtml(text)}</p><button type="button" class="text-ellipsis" data-full-text="${kind}" aria-label="Показать текст полностью" title="Показать полностью">⋯</button></div>`;
+}
+
 function renderCardLarge(app) {
   const tagsHtml = (app.tags || []).map(t => {
     const hue = hueFor(t);
     return `<button class="tag" type="button" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
   }).join("");
 
-  const descHtml = app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : "";
-  const infoHtml = app.info ? `<p class="card-info">${escapeHtml(app.info)}</p>` : "";
+  const descHtml = app.description ? clampedText(app, app.description, "desc") : "";
+  const infoHtml = app.info ? clampedText(app, app.info, "info") : "";
   const langHtml = renderLangBadges(app.languages);
   const aiHtml = renderAiBadge(app.ai);
   const platformHtml = renderPlatformBadge(app.platform);
@@ -2207,7 +2473,10 @@ function renderCardLarge(app) {
   return `<article class="card" data-id="${escapeAttr(app.id)}" data-open="${escapeAttr(appUrl(app.id))}">
     ${renderCover(app)}
     <div class="card-content">
-      <h3 class="card-title">${escapeHtml(app.title)}</h3>
+      <div class="card-title-row">
+        ${renderTileCompact(app)}
+        <h3 class="card-title">${escapeHtml(app.title)}</h3>
+      </div>
       ${descHtml}
       ${infoHtml}
       ${metaHtml}
@@ -2232,7 +2501,7 @@ const COMPACT_TAG_LIMIT = 3;
 
 function renderTileCompact(meta) {
   const { glyph, imgHtml } = renderIconLayers(meta);
-  return `<div class="card-icon" style="--icon-color:${escapeAttr(coverColor(meta))}">
+  return `<div class="card-icon card-icon-tile" style="--icon-color:${escapeAttr(coverColor(meta))}">
     <span class="icon-glyph">${escapeHtml(glyph)}</span>
     ${imgHtml}
   </div>`;
@@ -2331,6 +2600,7 @@ function render() {
   grid.innerHTML = list.map(renderCard).join("");
   observeCovers(); // первый скриншот каждой обложки — лениво по viewport
   updatePreviewDim(); // сетка пересобрана — превью больше нет, гасим затемнение
+  queueEllipsisUpdate(); // обрезанные тексты получили кнопку «⋯»
 }
 
 /* --- Управление состоянием кнопки «Сбросить фильтры» и счётчика фильтров --- */
@@ -2432,25 +2702,24 @@ function resolveTheme(value) {
   return value;
 }
 
-// Выбранная в меню тема (может быть "system"); хранится и при отсутствии выбора
+// Выбранная в списке тема (может быть "system")
 let currentThemeValue = null;
 
-// Пока выбрана «Системная» — переключаемся следом за темой ОС
+// Пока выбрана «Системная» — переключаемся следом за темой ОС и пере-подкрашиваем фон
 if (typeof SYSTEM_SCHEME.addEventListener === "function") {
   SYSTEM_SCHEME.addEventListener("change", () => {
-    if (currentThemeValue === "system") applyTheme("system", false);
+    if (currentThemeValue === "system") {
+      applyTheme("system");
+      applyBaseColor(settings.baseColor); // оттенки фона считаются от новой темы
+      updateSettingsUI();
+    }
   });
 }
 
-function applyTheme(value, persist) {
+function applyTheme(value) {
   const resolved = resolveTheme(value);
   currentThemeValue = value;
   document.documentElement.setAttribute("data-theme", resolved);
-  if (persist) localStorage.setItem("appboo-theme", value);
-  document.querySelectorAll("#theme-menu [data-theme-value]").forEach(btn =>
-    btn.setAttribute("aria-checked", String(btn.dataset.themeValue === value)));
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta && THEME_UI_COLORS[resolved]) meta.setAttribute("content", THEME_UI_COLORS[resolved]);
   // Иконки на фоне: пересобираем при каждом входе в переходную тему, вне их — убираем
   if (DECOR_THEMES.includes(resolved)) buildBgDecor();
   else {
@@ -2459,45 +2728,217 @@ function applyTheme(value, persist) {
   }
 }
 
-function initTheme() {
-  const saved = localStorage.getItem("appboo-theme");
-  applyTheme(THEMES.some(t => t.value === saved) ? saved : systemTheme(), false);
-}
-
-/* --- Вид карточек: компактный или крупный, выбор в настройках с запоминанием --- */
+/* --- Вид карточек: компактный или крупный --- */
 const CARD_VIEWS = [
   { value: "compact", name: "Компактно" },
   { value: "large",   name: "Крупно" }
 ];
 
-function applyCardView(value, persist) {
+function applyCardView(value) {
   if (!CARD_VIEWS.some(v => v.value === value)) value = "compact";
   cardView = value;
   document.documentElement.setAttribute("data-card-view", value);
-  if (persist) localStorage.setItem("appboo-card-view", value);
-  document.querySelectorAll("#settings-modal [data-view]").forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.view === value));
   if (allApps.length) render(); // на старте каталог ещё пуст — рендерит loadApps
 }
 
-function initCardView() {
-  applyCardView(localStorage.getItem("appboo-card-view"), false);
-}
-
-/* --- Стиль шапки: обычная / полупрозрачная / стекло — выбор в настройках --- */
+/* --- Стиль шапки: обычная / прозрачная / стекло --- */
 const HEADER_STYLES = ["default", "translucent", "glass"];
-function applyHeaderStyle(style, persist) {
+function applyHeaderStyle(style) {
   const header = document.querySelector(".app-header");
   if (!header) return;
   if (style === "default") header.removeAttribute("data-header-style");
   else header.setAttribute("data-header-style", style);
-  if (persist) localStorage.setItem("appboo-header-style", style);
-  document.querySelectorAll("#settings-modal [data-header-style]").forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.headerStyle === style));
+  if (style === "glass") GlassHeader.ensure(); // шейдер живёт только пока выбрано «стекло»
 }
-function initHeaderStyle() {
-  const saved = localStorage.getItem("appboo-header-style");
-  applyHeaderStyle(HEADER_STYLES.includes(saved) ? saved : "default", false);
+
+/* ============================================================
+   Настройки плеера: единое хранилище с валидацией.
+   Любая проблема при загрузке (битый JSON, недоступный localStorage,
+   неизвестное значение) сбрасывает опцию к дефолту — проблемную одну,
+   нечитаемое хранилище — всё сразу.
+   ============================================================ */
+const SETTINGS_KEY = "appboo-settings";
+// Прежние отдельные ключи: переносим их выбор один раз при первом запуске
+const LEGACY_KEYS = {
+  theme: "appboo-theme",
+  cardView: "appboo-card-view",
+  headerStyle: "appboo-header-style"
+};
+// Дефолты для новых пользователей (п.15): системная тема, прозрачная шапка,
+// крупный вид, родной зелёный базовый цвет, русский язык
+const DEFAULT_SETTINGS = {
+  theme: "system",
+  headerStyle: "translucent",
+  cardView: "large",
+  baseColor: "green",
+  lang: "ru"
+};
+// Для тех, кто пользовался прежними ключами: несохранённые опции остаются
+// при старом поведении, а не внезапно меняются
+const LEGACY_DEFAULTS = {
+  theme: "system",
+  headerStyle: "default",
+  cardView: "compact",
+  baseColor: "green",
+  lang: "ru"
+};
+
+/* --- Базовый цвет: акценты и лёгкий оттенок поверхностей (Material You) --- */
+const BASE_COLORS = {
+  green:  { hex: "#86C26B", name: "Зелёный" },
+  blue:   { hex: "#6FA6D9", name: "Синий" },
+  violet: { hex: "#A48BDB", name: "Фиолетовый" },
+  amber:  { hex: "#DFAF68", name: "Янтарный" },
+  rose:   { hex: "#D98FA6", name: "Розовый" },
+  teal:   { hex: "#6FC7B2", name: "Бирюзовый" }
+};
+const BASE_COLOR_VAR_MIX = [
+  ["--bg", 8], ["--bg-elevated", 6], ["--card", 5], ["--card-hover", 5],
+  ["--border", 10], ["--border-strong", 12], ["--sk-color", 10]
+];
+/* --- Язык интерфейса: выбор запоминается, локализация пока не подключена --- */
+const LANGS = [
+  { value: "ru", name: "Русский", icon: "🇷🇺" },
+  { value: "en", name: "English", icon: "🇬🇧" }
+];
+
+let settings = { ...DEFAULT_SETTINGS };
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) { /* недоступное хранилище — настройки живут до перезагрузки */ }
+}
+
+// Проблемная опция — к дефолту одной, остальное не трогаем
+function normalizeSettings() {
+  if (!THEMES.some(t => t.value === settings.theme)) settings.theme = DEFAULT_SETTINGS.theme;
+  if (!HEADER_STYLES.includes(settings.headerStyle)) settings.headerStyle = DEFAULT_SETTINGS.headerStyle;
+  if (!CARD_VIEWS.some(v => v.value === settings.cardView)) settings.cardView = DEFAULT_SETTINGS.cardView;
+  if (!(settings.baseColor in BASE_COLORS)) settings.baseColor = DEFAULT_SETTINGS.baseColor;
+  if (!LANGS.some(l => l.value === settings.lang)) settings.lang = DEFAULT_SETTINGS.lang;
+}
+
+function loadSettings() {
+  let stored = null;
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) stored = JSON.parse(raw); // битый JSON — null → все настройки к дефолту
+  } catch (e) { stored = null; }       // недоступный localStorage — к дефолту
+  if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+    settings = { ...DEFAULT_SETTINGS };
+    Object.keys(DEFAULT_SETTINGS).forEach(k => {
+      if (stored[k] !== undefined && stored[k] !== null) settings[k] = stored[k];
+    });
+  } else {
+    settings = { ...DEFAULT_SETTINGS };
+    try {
+      const legacy = {
+        theme: localStorage.getItem(LEGACY_KEYS.theme),
+        cardView: localStorage.getItem(LEGACY_KEYS.cardView),
+        headerStyle: localStorage.getItem(LEGACY_KEYS.headerStyle)
+      };
+      const hasLegacy = Object.values(legacy).some(v => v != null);
+      if (hasLegacy) {
+        // Прежний пользователь: переносим выбор, несохранённые опции — старые дефолты
+        settings = { ...LEGACY_DEFAULTS };
+        Object.keys(legacy).forEach(k => { if (legacy[k] != null) settings[k] = legacy[k]; });
+        Object.values(LEGACY_KEYS).forEach(k => {
+          try { localStorage.removeItem(k); } catch (e) { /* не критично */ }
+        });
+      }
+    } catch (e) { /* дефолты */ }
+  }
+  normalizeSettings();
+  saveSettings(); // нормализуем хранилище — единый ключ вместо разрозненных
+}
+
+// Смена одной опции: сохранить и применить только её
+function updateSetting(key, value) {
+  if (!(key in DEFAULT_SETTINGS)) return;
+  settings[key] = value;
+  normalizeSettings();
+  saveSettings();
+  if (key === "theme") { applyTheme(settings.theme); applyBaseColor(settings.baseColor); }
+  else if (key === "headerStyle") applyHeaderStyle(settings.headerStyle);
+  else if (key === "cardView") applyCardView(settings.cardView);
+  else if (key === "baseColor") applyBaseColor(settings.baseColor);
+  updateSettingsUI();
+}
+
+// Применить всё при старте: тема → шапка → вид → базовый цвет → UI-состояния
+function applySettings() {
+  applyTheme(settings.theme);
+  applyHeaderStyle(settings.headerStyle);
+  applyCardView(settings.cardView);
+  applyBaseColor(settings.baseColor); // в конце — meta theme-color от темы и цвета
+  updateSettingsUI();
+}
+
+/* --- Подкрашивание поверхностей базовым цветом --- */
+function mixHex(a, b, t) {
+  const pa = /^#?([0-9a-f]{6})$/i.exec(String(a).trim());
+  const pb = /^#?([0-9a-f]{6})$/i.exec(String(b).trim());
+  if (!pa || !pb) return a;
+  const A = parseInt(pa[1], 16), B = parseInt(pb[1], 16);
+  const ch = (sa, sb) => Math.round(sa + (sb - sa) * t);
+  const r = ch((A >> 16) & 255, (B >> 16) & 255);
+  const g = ch((A >> 8) & 255, (B >> 8) & 255);
+  const b2 = ch(A & 255, B & 255);
+  return "#" + [r, g, b2].map(v => v.toString(16).padStart(2, "0")).join("");
+}
+
+function applyBaseColor(key) {
+  const root = document.documentElement;
+  // Сначала сброс: снимаем прошлые переопределения и читаем чистые цвета темы
+  BASE_COLOR_VAR_MIX.forEach(([name]) => root.style.removeProperty(name));
+  ["--accent", "--accent-hover", "--accent-soft"].forEach(name => root.style.removeProperty(name));
+  const pal = BASE_COLORS[key];
+  updateThemeMeta();
+  if (!pal || key === "green") return; // зелёный — родная палитра темы
+  const cs = getComputedStyle(root);
+  const accent = pal.hex;
+  BASE_COLOR_VAR_MIX.forEach(([name, pct]) => {
+    const base = cs.getPropertyValue(name).trim();
+    if (base) root.style.setProperty(name, `color-mix(in srgb, ${accent} ${pct}%, ${base})`);
+  });
+  root.style.setProperty("--accent", accent);
+  root.style.setProperty("--accent-hover", `color-mix(in srgb, ${accent} 82%, #000)`);
+  root.style.setProperty("--accent-soft", `color-mix(in srgb, ${accent} 16%, transparent)`);
+  GlassHeader.refreshTint();
+}
+
+// Цвет мобильной browser-панели: фон темы, чуть подкрашенный базовым цветом
+function updateThemeMeta() {
+  const resolved = resolveTheme(currentThemeValue || "system");
+  const base = THEME_UI_COLORS[resolved] || "#0a0c10";
+  const pal = BASE_COLORS[settings.baseColor];
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", pal && settings.baseColor !== "green" ? mixHex(base, pal.hex, 0.08) : base);
+}
+
+/* --- Синхронизация UI окна настроек с текущими настройками --- */
+function updateSettingsUI() {
+  document.querySelectorAll("#settings-modal [data-header-style]").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.headerStyle === settings.headerStyle));
+  document.querySelectorAll("#settings-modal [data-view]").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.view === settings.cardView));
+  const theme = THEMES.find(t => t.value === settings.theme);
+  const themeIcon = document.getElementById("theme-current-icon");
+  const themeName = document.getElementById("theme-current-name");
+  if (themeIcon) themeIcon.textContent = theme ? theme.icon : "🌗";
+  if (themeName) themeName.textContent = theme ? theme.name : "Системная";
+  const lang = LANGS.find(l => l.value === settings.lang);
+  const langIcon = document.getElementById("lang-current-icon");
+  const langName = document.getElementById("lang-current-name");
+  if (langIcon) langIcon.textContent = lang ? lang.icon : "🇷🇺";
+  if (langName) langName.textContent = lang ? lang.name : "Русский";
+  document.querySelectorAll("#theme-dropdown [data-value]").forEach(opt =>
+    opt.setAttribute("aria-selected", String(opt.dataset.value === settings.theme)));
+  document.querySelectorAll("#lang-dropdown [data-value]").forEach(opt =>
+    opt.setAttribute("aria-selected", String(opt.dataset.value === settings.lang)));
+  document.querySelectorAll("#base-color-options [data-base-color]").forEach(sw =>
+    sw.classList.toggle("active", sw.dataset.baseColor === settings.baseColor));
 }
 
 /* --- Разбросанные фоновые иконки: книжка appboo + иконки мини-приложений,
@@ -2574,6 +3015,176 @@ function showCopyToast() {
   }, 2200);
 }
 
+/* --- Liquid glass для шапки: WebGL-шейдер рисует живые блики на канвасе
+       поверх матового слоя backdrop-filter. Оттенок берётся из --accent,
+       поэтому следует базовому цвету. Нет WebGL — канвас убирается,
+       остаётся обычное CSS-стекло. Анимация останавливается, когда стиль
+       не «стекло», вкладка скрыта или пользователь просил меньше движения --- */
+const GlassHeader = (() => {
+  const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const VERT = "attribute vec2 a_pos; void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }";
+  const FRAG = [
+    "precision mediump float;",
+    "uniform vec2 u_res;",
+    "uniform float u_time;",
+    "uniform vec3 u_tint;",
+    "float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }",
+    "float vnoise(vec2 p) {",
+    "  vec2 i = floor(p); vec2 f = fract(p);",
+    "  vec2 u = f * f * (3.0 - 2.0 * f);",
+    "  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),",
+    "             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);",
+    "}",
+    "float fbm(vec2 p) {",
+    "  float v = 0.0; float a = 0.5;",
+    "  for (int i = 0; i < 4; i++) { v += a * vnoise(p); p = p * 2.07 + vec2(1.7, 4.3); a *= 0.5; }",
+    "  return v;",
+    "}",
+    "void main() {",
+    "  vec2 uv = gl_FragCoord.xy / u_res;",
+    "  float t = u_time * 0.10;",
+    "  vec2 p = vec2(uv.x * 3.2, uv.y * 1.4);",
+    "  float n1 = fbm(p + vec2(t, -t * 0.7));",
+    "  float n2 = fbm(p * 1.8 + n1 * 0.8 - vec2(t * 0.6, t * 0.35));",
+    "  float liquid = n1 * 0.62 + n2 * 0.38;",
+    // тонкие светлые «прожилки» жидкого стекла
+    "  float vein = smoothstep(0.52, 0.60, liquid) * (1.0 - smoothstep(0.66, 0.74, liquid));",
+    "  float glow = smoothstep(0.35, 0.85, liquid) * 0.08;",
+    // стеклянные кромки: светлая сверху, слабее снизу
+    "  float rimTop = smoothstep(0.78, 1.0, uv.y) * 0.14;",
+    "  float rimBottom = (1.0 - smoothstep(0.0, 0.22, uv.y)) * 0.09;",
+    "  float a = vein * 0.30 + glow + rimTop + rimBottom;",
+    "  vec3 col = mix(vec3(1.0), u_tint, 0.35);",
+    "  gl_FragColor = vec4(col * a, a);", // премультиплицированная альфа
+    "}"
+  ].join("\n");
+
+  let canvas = null;
+  let gl = null;
+  let program = null;
+  let uRes = null, uTime = null, uTint = null;
+  let rafId = 0, running = false, start = performance.now(), frame = 0;
+  let tint = [0.52, 0.76, 0.42];
+
+  function isActive() {
+    if (!gl || !canvas || !canvas.isConnected || document.hidden) return false;
+    const header = canvas.closest(".app-header");
+    return !!header && header.getAttribute("data-header-style") === "glass";
+  }
+
+  // Вычисленный цвет акцента: канвас стилизован color: var(--accent),
+  // computed color всегда встречается как rgb(...)
+  function readAccentRgb() {
+    if (!canvas) return tint;
+    try {
+      const c = getComputedStyle(canvas).color;
+      const m = /rgba?\(([^)]+)\)/.exec(c);
+      if (!m) return tint;
+      const parts = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+      if (parts.length < 3 || parts.some(n => !Number.isFinite(n))) return tint;
+      return [parts[0] / 255, parts[1] / 255, parts[2] / 255];
+    } catch (e) { return tint; }
+  }
+
+  function init() {
+    canvas = document.getElementById("header-glass-canvas");
+    if (!canvas) return;
+    gl = canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: true })
+      || canvas.getContext("experimental-webgl", { alpha: true, antialias: false, premultipliedAlpha: true });
+    if (!gl) { canvas.remove(); canvas = null; return; } // шейдеры недоступны — CSS-стекло
+    const compile = (type, src) => {
+      const sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) || "shader");
+      return sh;
+    };
+    try {
+      program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error("link");
+    } catch (e) {
+      canvas.remove(); canvas = null; gl = null; return; // fallback на CSS-стекло
+    }
+    gl.useProgram(program);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(program, "a_pos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    uRes = gl.getUniformLocation(program, "u_res");
+    uTime = gl.getUniformLocation(program, "u_time");
+    uTint = gl.getUniformLocation(program, "u_tint");
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    canvas.addEventListener("webglcontextlost", e => {
+      e.preventDefault();
+      stop();
+      gl = null;
+      if (canvas) canvas.style.display = "none"; // CSS-стекло продолжает работать
+    });
+    tint = readAccentRgb();
+    resize();
+  }
+
+  function resize() {
+    if (!gl || !canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
+  }
+
+  function render(now) {
+    if (!gl) return;
+    resize();
+    const t = (now - start) / 1000;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    if (frame % 120 === 0) tint = readAccentRgb(); // акцент мог смениться
+    gl.uniform3f(uTint, tint[0], tint[1], tint[2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    frame++;
+  }
+
+  function loop(now) {
+    if (!isActive()) { running = false; return; }
+    render(now);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function ensure() {
+    if (!isActive()) return;
+    if (REDUCE_MOTION.matches) { render(performance.now()); return; } // статичный кадр
+    if (!running) { running = true; rafId = requestAnimationFrame(loop); }
+  }
+
+  function stop() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    running = false;
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop();
+    else ensure();
+  });
+  window.addEventListener("resize", () => {
+    if (REDUCE_MOTION.matches && isActive()) render(performance.now());
+  });
+
+  return { init, ensure, refreshTint() { if (gl) tint = readAccentRgb(); } };
+})();
+
 /* --- Раскрытие/сворачивание секций фильтров (общее для всех аккордеонов) --- */
 function setAccordionOpen(section, open) {
   section.classList.toggle("open", open);
@@ -2592,6 +3203,7 @@ function setAccordionOpen(section, open) {
        кликом мимо, по Esc или выбором фильтра) --- */
 function setToolbarOpen(open) {
   const body = document.getElementById("toolbar-body");
+  if (open) alignFiltersDropdown(); // ширина могла измениться с прошлого показа
   body.classList.toggle("open", open);
   body.setAttribute("aria-hidden", String(!open));
   document.getElementById("toolbar-toggle").setAttribute("aria-expanded", String(open));
@@ -2607,6 +3219,21 @@ function initToolbar() {
   };
   applySearchPlaceholder();
   window.addEventListener("resize", applySearchPlaceholder);
+  alignFiltersDropdown();
+  window.addEventListener("resize", alignFiltersDropdown);
+}
+
+/* --- Ширина выпадающего меню фильтров: ровно от иконки поиска
+       до иконки фильтров (на телефоне меню фиксировано на всю ширину) --- */
+function alignFiltersDropdown() {
+  const body = document.getElementById("toolbar-body");
+  if (!body) return;
+  if (window.innerWidth <= 600) { body.style.width = ""; return; }
+  const icon = document.querySelector(".header-search-zone .search-icon");
+  const btn = document.getElementById("toolbar-toggle");
+  if (!icon || !btn) return;
+  const w = Math.round(btn.getBoundingClientRect().right - icon.getBoundingClientRect().left);
+  body.style.width = w >= 240 ? w + "px" : ""; // слишком узко — оставить обычное поведение
 }
 
 /* --- Окно настроек: открытие, закрытие, возврат фокуса --- */
@@ -2636,6 +3263,11 @@ function ensurePreview(card) {
   holder.innerHTML = renderCardLarge(app);
   holder.dataset.built = "1";
   holder.setAttribute("aria-hidden", "false");
+  // Кнопка «свернуть» слева сверху: правый угол обложки занят разворотом скриншотов
+  holder.insertAdjacentHTML("afterbegin", `<button type="button" class="card-collapse" data-collapse aria-label="Свернуть карточку" title="Свернуть">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10V4h6"/><path d="M4 4l7 7"/><path d="M20 14v6h-6"/><path d="M20 20l-7-7"/></svg>
+  </button>`);
+  updateEllipsisButtons(); // в превью могли оказаться обрезанные тексты
   observeCovers(); // обложка превью подхватит ленивую загрузку скриншотов
 }
 function showPreview(card) {
@@ -2667,9 +3299,11 @@ function setPreviewPinned(card, pinned) {
     });
     showPreview(card);
   } else {
-    // Снимаем закрепление: если курсор ещё на кнопке или самом превью — не прячем
-    const over = card.querySelector("[data-info]")?.matches(":hover")
-      || card.querySelector(".card-large-preview")?.matches(":hover");
+    // Снимаем закрепление. Липкий :hover после тапа на тач-экране не учитываем:
+    // на телефонах превью всегда прячется, курсор-ловушка только для мыши
+    const hoverable = window.matchMedia("(hover: hover)").matches;
+    const over = hoverable && (card.querySelector("[data-info]")?.matches(":hover")
+      || card.querySelector(".card-large-preview")?.matches(":hover"));
     if (!over) hidePreview(card);
   }
 }
@@ -2679,10 +3313,96 @@ function unpinPreviews() {
   document.querySelectorAll(".card.preview-shown").forEach(hidePreview);
 }
 
-/* --- Развёрнутый элемент скриншотов: на весь экран, возврат по кнопке или Esc --- */
+/* --- Кнопка «⋯» у обрезанного текста: показывается, только если текст
+       реально не влёкся; клик открывает привязанное прокручиваемое окно
+       со всем описанием и инфо. Клик/тап вне окна закрывает его --- */
+function updateEllipsisButtons() {
+  document.querySelectorAll(".card-text-wrap").forEach(wrap => {
+    const p = wrap.querySelector(".card-desc, .card-info");
+    if (!p) return;
+    wrap.classList.toggle("is-clamped", p.scrollHeight > p.clientHeight + 1);
+  });
+}
+let ellipsisRaf = 0;
+function queueEllipsisUpdate() {
+  if (ellipsisRaf) return;
+  ellipsisRaf = requestAnimationFrame(() => { ellipsisRaf = 0; updateEllipsisButtons(); });
+}
+window.addEventListener("resize", queueEllipsisUpdate);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateEllipsisButtons);
+
+const textPopupState = { btn: null, popup: null, dim: null };
+
+function ensureTextPopup() {
+  if (textPopupState.popup) return;
+  const popup = document.createElement("div");
+  popup.className = "text-popup";
+  popup.setAttribute("role", "dialog");
+  popup.setAttribute("aria-label", "Полный текст приложения");
+  document.body.appendChild(popup);
+  textPopupState.popup = popup;
+  const dim = document.getElementById("text-popup-dim");
+  if (dim) {
+    dim.addEventListener("click", closeTextPopup);
+    textPopupState.dim = dim;
+  }
+}
+
+// Позиция у кнопки: приоритет — справа снизу (низ окна по низу кнопки),
+// не влезло — слева, потом ниже кнопки с прижатием к краям экрана
+function positionTextPopup() {
+  const popup = textPopupState.popup, btn = textPopupState.btn;
+  if (!popup || !btn || !btn.isConnected) return;
+  const r = btn.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight, M = 10;
+  const pw = popup.offsetWidth, ph = popup.offsetHeight;
+  let left = r.right + 10;
+  if (left + pw > vw - M) left = r.left - 10 - pw;
+  if (left < M) left = M;
+  let top = r.bottom - ph;
+  if (top < M) top = r.bottom + 10;
+  if (top + ph > vh - M) top = Math.max(M, vh - M - ph);
+  popup.style.left = Math.round(left) + "px";
+  popup.style.top = Math.round(top) + "px";
+}
+
+function openTextPopup(btn) {
+  const card = btn.closest(".card");
+  const app = card ? allApps.find(a => a.id === card.dataset.id) : null;
+  if (!app) return;
+  // Повторный клик по той же кнопке закрывает окно
+  if (textPopupState.popup && textPopupState.btn === btn && textPopupState.popup.classList.contains("open")) {
+    closeTextPopup();
+    return;
+  }
+  ensureTextPopup();
+  const popup = textPopupState.popup;
+  const sections = [];
+  if (app.description) sections.push(`<div class="text-popup-section"><h5>Описание</h5><p>${escapeHtml(app.description)}</p></div>`);
+  if (app.info) sections.push(`<div class="text-popup-section"><h5>Инфо</h5><p>${escapeHtml(app.info)}</p></div>`);
+  if (!sections.length) return;
+  popup.innerHTML = `<h4 class="text-popup-title">${escapeHtml(app.title)}</h4>${sections.join("")}`;
+  popup.scrollTop = 0;
+  textPopupState.btn = btn;
+  popup.classList.add("open");
+  if (textPopupState.dim) textPopupState.dim.classList.add("show");
+  positionTextPopup(); // после вставки есть реальные размеры
+}
+
+function closeTextPopup() {
+  if (!textPopupState.popup) return;
+  textPopupState.popup.classList.remove("open");
+  if (textPopupState.dim) textPopupState.dim.classList.remove("show");
+  textPopupState.btn = null;
+}
+
+/* --- Режим просмотра скриншотов: отдельное окно на затемнённом фоне.
+       Показывается одинаково откуда угодно — из карточки или из превью --- */
 function expandCover(cover) {
   if (cover.classList.contains("cover-expanded")) return;
   cover.classList.add("cover-expanded");
+  const dim = document.getElementById("cover-viewer-dim");
+  if (dim) dim.classList.add("show");
   const card = cover.closest(".card");
   if (card) card.classList.add("cover-open");
   const host = cover.closest(".card-large-preview");
@@ -2693,11 +3413,41 @@ function expandCover(cover) {
 function collapseCover(cover) {
   if (!cover.classList.contains("cover-expanded")) return;
   cover.classList.remove("cover-expanded");
+  const dim = document.getElementById("cover-viewer-dim");
+  if (dim && !document.querySelector(".card-icon.cover-expanded")) dim.classList.remove("show");
   const card = cover.closest(".card");
   if (card) card.classList.remove("cover-open");
   const host = cover.closest(".card-large-preview");
   if (host) host.classList.remove("cover-open-host");
   document.body.style.overflow = "";
+}
+
+/* --- Выпадающие списки окна настроек: кнопка раскрывает панель,
+       выбор опции сохраняет значение и закрывает, клик мимо закрывает --- */
+function closeAllDropdowns() {
+  document.querySelectorAll(".settings-dropdown.open").forEach(root => {
+    root.classList.remove("open");
+    const btn = root.querySelector(".settings-dropdown-btn");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  });
+}
+function setupDropdown(id, onChange) {
+  const root = document.getElementById(id);
+  if (!root) return;
+  const btn = root.querySelector(".settings-dropdown-btn");
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const willOpen = !root.classList.contains("open");
+    closeAllDropdowns();
+    root.classList.toggle("open", willOpen);
+    btn.setAttribute("aria-expanded", String(willOpen));
+  });
+  root.querySelector(".settings-dropdown-panel").addEventListener("click", e => {
+    const opt = e.target.closest("[data-value]");
+    if (!opt) return;
+    onChange(opt.dataset.value);
+    closeAllDropdowns();
+  });
 }
 
 /* --- Навешивание событий --- */
@@ -2807,6 +3557,23 @@ function bindEvents() {
 
   // Копирование прямой ссылки на приложение из карточки
   document.getElementById("grid").addEventListener("click", async e => {
+    // «Свернуть»: вернуть крупный просмотр компактной карточки к обычному виду
+    const collapseBtn = e.target.closest("[data-collapse]");
+    if (collapseBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const card = collapseBtn.closest(".card-compact");
+      if (card) setPreviewPinned(card, false);
+      return;
+    }
+    // «⋯» у обрезанного текста: привязанное окно со всем описанием и инфо
+    const ellipsisBtn = e.target.closest(".text-ellipsis");
+    if (ellipsisBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openTextPopup(ellipsisBtn);
+      return;
+    }
     // «+N» вместо обрезанных тегов: крупный просмотр карточки с закреплением
     const tagMore = e.target.closest(".tag-more");
     if (tagMore) {
@@ -2934,24 +3701,48 @@ function bindEvents() {
   document.getElementById("app-modal").addEventListener("click", e => {
     if (e.target.id === "app-modal") closeIframe();
   });
+  // Клик по затемнению закрывает окно просмотра скриншотов
+  document.getElementById("cover-viewer-dim").addEventListener("click", () => {
+    document.querySelectorAll(".card-icon.cover-expanded").forEach(collapseCover);
+  });
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       closeIframe();
       closeSettings();
+      closeTextPopup();
       document.querySelectorAll(".card-icon.cover-expanded").forEach(collapseCover);
       unpinPreviews();
+      closeAllDropdowns();
       setToolbarOpen(false);
     }
   });
-  // Клик мимо карточек закрывает закреплённые просмотры и меню фильтров
+  /* Клик/тап мимо закрывает всё всплывшее. Для закреплённого крупного
+     просмотра исключение — клики внутри самого превью и по его кнопке
+     «крупно»: тап вне области возвращает карточку к компактному виду,
+     что особенно важно на тач-экранах, где наведения нет */
   document.addEventListener("click", e => {
-    if (!e.target.closest(".card")) {
-      document.querySelectorAll(".card.preview-pinned").forEach(card => setPreviewPinned(card, false));
+    const pinnedCard = document.querySelector(".card.preview-pinned");
+    if (pinnedCard) {
+      const preview = pinnedCard.querySelector(".card-large-preview");
+      const onToggle = !!e.target.closest("[data-info]") && e.target.closest(".card") === pinnedCard;
+      const inPreview = !!preview && (preview === e.target || preview.contains(e.target));
+      const inTextPopup = !!(textPopupState.popup && (textPopupState.popup === e.target || textPopupState.popup.contains(e.target)));
+      const onEllipsis = !!e.target.closest(".text-ellipsis");
+      if (!onToggle && !inPreview && !inTextPopup && !onEllipsis) {
+        setPreviewPinned(pinnedCard, false);
+      }
     }
+    if (!e.target.closest(".text-popup") && !e.target.closest(".text-ellipsis")) {
+      closeTextPopup();
+    }
+    if (!e.target.closest(".settings-dropdown")) closeAllDropdowns();
     if (!e.target.closest(".header-filters-wrap") && !e.target.closest("#toolbar-toggle")) {
       setToolbarOpen(false);
     }
   });
+  // Окно полного текста держится у своей кнопки при скролле и смене размера
+  window.addEventListener("scroll", () => { if (textPopupState.btn) positionTextPopup(); }, { passive: true });
+  window.addEventListener("resize", () => { if (textPopupState.btn) positionTextPopup(); });
 
   // Крупный просмотр: показ по наведению на кнопку «крупно» или само превью (только мышь)
   gridEl().addEventListener("pointerover", e => {
@@ -2976,17 +3767,22 @@ function bindEvents() {
   /* --- Окно настроек: открытие, закрытие по крестику/фону/Esc, ловушка фокуса --- */
   document.getElementById("settings-open").addEventListener("click", openSettings);
   document.getElementById("settings-close").addEventListener("click", closeSettings);
-  // Выбор темы — тот же список, что был в выпадающем меню
-  document.querySelectorAll("#theme-menu [data-theme-value]").forEach(button => {
-    button.addEventListener("click", () => applyTheme(button.dataset.themeValue, true));
+  // Тема: выпадающий список со всеми вариантами
+  setupDropdown("theme-dropdown", value => updateSetting("theme", value));
+  // Язык: выбор запоминается, локализация пока не подключена
+  setupDropdown("lang-dropdown", value => updateSetting("lang", value));
+  // Базовый цвет: оттенок фона и акцентов
+  document.getElementById("base-color-options").addEventListener("click", e => {
+    const swatch = e.target.closest("[data-base-color]");
+    if (swatch) updateSetting("baseColor", swatch.dataset.baseColor);
   });
   // Вид карточек: компактно или крупно
   document.querySelectorAll("#settings-modal [data-view]").forEach(button => {
-    button.addEventListener("click", () => applyCardView(button.dataset.view, true));
+    button.addEventListener("click", () => updateSetting("cardView", button.dataset.view));
   });
-  // Прозрачность шапки: обычная / полупрозрачная / стекло
+  // Стиль шапки: обычная / прозрачная / стекло
   document.querySelectorAll("#settings-modal [data-header-style]").forEach(button => {
-    button.addEventListener("click", () => applyHeaderStyle(button.dataset.headerStyle, true));
+    button.addEventListener("click", () => updateSetting("headerStyle", button.dataset.headerStyle));
   });
   document.getElementById("settings-modal").addEventListener("click", e => {
     if (e.target.id === "settings-modal") closeSettings();
@@ -3043,9 +3839,9 @@ function smoothScrollTo(top) {
 }
 
 /* --- Старт --- */
-initTheme();
-initCardView();
-initHeaderStyle();
+loadSettings();       // настройки с миграцией и сбросом проблемных опций
+GlassHeader.init();   // шейдер шапки: контекст готов заранее, рисует только в стиле «стекло»
+applySettings();
 initToolbar();
 bindEvents();
 loadApps();
