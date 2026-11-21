@@ -90,8 +90,8 @@ h2 svg{width:18px;height:18px;color:var(--acc-strong)}
 h3{font-size:15px;font-weight:800;margin-bottom:8px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm)}
 .card+.card{margin-top:16px}
-.grid2{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
-.grid2r{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+.grid2{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+.grid2r{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 .muted{color:var(--text2)}.small{font-size:13px}.tiny{font-size:12px}
 .mono{font-family:var(--mono)}
 /* controls */
@@ -150,6 +150,7 @@ input[type="search"]:focus-visible,input[type="text"]:focus-visible{outline:2px 
 .piano-wrap{overflow-x:auto;padding-bottom:4px}
 .piano{position:relative;display:flex;height:var(--ph,140px);min-width:var(--pw,0);border-radius:0 0 10px 10px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.18))}
 .wk{flex:1;position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--key-w) 92%,var(--acc)) 0%,var(--key-w) 22%);border:1px solid var(--key-line);border-top:none;border-radius:0 0 8px 8px;margin-right:-1px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;transition:background .12s,transform .06s;color:var(--key-w-fg)}
+.wk:last-child{margin-right:0}
 .wk:first-child{border-radius:0 0 8px 8px}
 .wk:hover{background:color-mix(in srgb,var(--key-w) 86%,var(--acc))}
 .wk:active,.wk.hit{transform:translateY(2px)}
@@ -366,7 +367,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 @media (max-width:960px){
 nav.mainnav{display:none}
 .modebtn{display:flex}
-.grid2,.grid2r{grid-template-columns:1fr}
+/* minmax(0,1fr): трек не раздувается min-content пианино/таблицы/стана —
+   широкие виджеты прокручиваются внутри своих .piano-wrap/.staffbox/.tblwrap */
+.grid2,.grid2r{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:600px){
 .wrap,.headin{padding:0 14px}
