@@ -1211,7 +1211,7 @@ function renderIvEar(box){
   '<div class="sep"></div>'+soundToggleHTML()+'</div></div>';
   $('#earFrom').value=p.earFrom;$('#earTo').value=p.earTo;
   bindChips(box,'earints',vals=>{if(!vals.length){toast('Оставьте хотя бы один интервал');renderIvEar(box);return;}p.earIntervals=vals;save();validateRange();});
-  bindSeg(box,'earmode',v=>{p.earMode=v;save();$('#earDirField').style.display=v==='melodic'?'':'none';});
+  bindSeg(box,'earmode',v=>{p.earMode=v;save();$('#earDirField').style.display=v==='melodic'?'':'none';if(ivState.earPhase==='answer')drawEarAnswer();});
   bindSeg(box,'eardir',v=>{p.earDir=v;save();});
   $('#earDirField').style.display=p.earMode==='melodic'?'':'none';
   $('#earFrom').addEventListener('change',e=>{p.earFrom=parseInt(e.target.value,10);save();validateRange();});
@@ -1236,21 +1236,23 @@ function renderIvEar(box){
       const lo=dir>0?p.earFrom:p.earFrom+iv.semi;
       const hi=dir>0?p.earTo-iv.semi:p.earTo;
       const base=rndi(lo,hi);
-      ivState.earQ={iv,base,dir,mode:p.earMode};ivState.earSel=null;ivState.earPhase='answer';
+      ivState.earQ={iv,base,dir};ivState.earSel=null;ivState.earPhase='answer';
       playEarQ();drawEarAnswer();
     });
   }
   function playEarQ(){
     const q=ivState.earQ;if(!q)return;
-    const a=60+q.base-60+q.base; // midi base directly
+    /* режим читаем из настроек «на живую»: смена «Мелодически ↔ Гармонически»
+       действует и на уже открытую карточку, а не только на следующие */
+    const mode=p.earMode;
     const m1=q.base,m2=q.base+q.dir*q.iv.semi;
-    const btn=$('#earPlayBig');if(btn){btn.classList.add('playing');setTimeout(()=>btn.classList.remove('playing'),q.mode==='melodic'?1100:1600);}
-    if(q.mode==='harmonic')AE.playNow([m1,m2],{dur:1.6});
+    const btn=$('#earPlayBig');if(btn){btn.classList.add('playing');setTimeout(()=>btn.classList.remove('playing'),mode==='melodic'?1100:1600);}
+    if(mode==='harmonic')AE.playNow([m1,m2],{dur:1.6});
     else AE.playNow([m1,m2],{arp:true,gap:0.55});
   }
   function drawEarAnswer(){
     const q=ivState.earQ;
-    $('#earCard').innerHTML='<div class="roundtag">Карточка '+ivState.earRound+' · что за интервал?</div><div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap"><button class="bigplay" id="earPlayBig" aria-label="Прослушать">'+I.play+'</button><div><div class="qline">'+(q.mode==='harmonic'?'Гармонический интервал':'Мелодический интервал')+'</div><p class="small muted" style="margin-top:4px">Слушайте сколько угодно. Затем выберите ответ ниже и нажмите «Проверить».</p><button class="btn btn-sm btn-ghost" id="earReplay" style="margin-top:10px">'+I.repeat+'Ещё раз</button></div></div>';
+    $('#earCard').innerHTML='<div class="roundtag">Карточка '+ivState.earRound+' · что за интервал?</div><div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap"><button class="bigplay" id="earPlayBig" aria-label="Прослушать">'+I.play+'</button><div><div class="qline">'+(p.earMode==='harmonic'?'Гармонический интервал':'Мелодический интервал')+'</div><p class="small muted" style="margin-top:4px">Слушайте сколько угодно. Затем выберите ответ ниже и нажмите «Проверить».</p><button class="btn btn-sm btn-ghost" id="earReplay" style="margin-top:10px">'+I.repeat+'Ещё раз</button></div></div>';
     $('#earPlayBig').addEventListener('click',playEarQ);
     $('#earReplay').addEventListener('click',playEarQ);
     const opts=p.earIntervals.map(id=>IV_BY_ID[id]);
