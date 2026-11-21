@@ -4,3 +4,8 @@ node_modules/
 # npm install создаёт лок-файл; в репозитории он не нужен:
 # sharp — опциональная devDependency, сборки и CI в проекте нет
 package-lock.json
+
+*.patch
+*.diff
+*.orig
+*.rej
