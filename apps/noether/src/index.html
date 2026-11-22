@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#14101f">
+<title>NOETHER — прогулка по жизни Эмми Нётер</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0b0913;position:fixed;inset:0;overscroll-behavior:none}
+canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<noscript><p style="color:#e8d5b0;font-family:monospace;padding:20px">NOETHER requires JavaScript / нужен JavaScript.</p></noscript>
+<script>
+"use strict";
+/* ============================================================
+   NOETHER — a pixel walking biography of Amalie Emmy Noether
+   pure HTML+CSS+JS · offline · canvas · Web Audio
+   ============================================================ */
+
+/* ---------- tiny utils ---------- */
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function hx(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];}
+function rgb(r,g,b){return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');}
+function mixc(a,b,t){const A=hx(a),B=hx(b);return rgb(lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t));}
+function shade(c,f){const A=hx(c);return rgb(A[0]*f,A[1]*f,A[2]*f);}
+function rgba(c,a){const A=hx(c);return 'rgba('+A[0]+','+A[1]+','+A[2]+','+a+')';}
+function mkC(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c;}
+
+/* ---------- bitmap font (5x8, RU+EN+math) ---------- */
+const GLYPH_SRC={
+'A':'01110 10001 10001 11111 10001 10001 10001 00000','B':'11110 10001 10001 11110 10001 10001 11110 00000',
+'C':'01111 10000 10000 10000 10000 10000 01111 00000','D':'11110 10001 10001 10001 10001 10001 11110 00000',
+'E':'11111 10000 10000 11110 10000 10000 11111 00000','F':'11111 10000 10000 11110 10000 10000 10000 00000',
+'G':'01111 10000 10000 10111 10001 10001 01111 00000','H':'10001 10001 10001 11111 10001 10001 10001 00000',
+'I':'11111 00100 00100 00100 00100 00100 11111 00000','J':'00111 00010 00010 00010 00010 10010 01100 00000',
+'K':'10001 10010 10100 11000 10100 10010 10001 00000','L':'10000 10000 10000 10000 10000 10000 11111 00000',
+'M':'10001 11011 10101 10101 10001 10001 10001 00000','N':'10001 11001 10101 10011 10001 10001 10001 00000',
+'O':'01110 10001 10001 10001 10001 10001 01110 00000','P':'11110 10001 10001 11110 10000 10000 10000 00000',
+'Q':'01110 10001 10001 10001 10101 10010 01101 00000','R':'11110 10001 10001 11110 10100 10010 10001 00000',
+'S':'01111 10000 10000 01110 00001 00001 11110 00000','T':'11111 00100 00100 00100 00100 00100 00100 00000',
+'U':'10001 10001 10001 10001 10001 10001 01110 00000','V':'10001 10001 10001 10001 10001 01010 00100 00000',
+'W':'10001 10001 10001 10101 10101 11011 10001 00000','X':'10001 10001 01010 00100 01010 10001 10001 00000',
+'Y':'10001 10001 01010 00100 00100 00100 00100 00000','Z':'11111 00001 00010 00100 01000 10000 11111 00000',
+'a':'00000 00000 01110 00001 01111 10001 01111 00000','b':'10000 10000 11110 10001 10001 10001 11110 00000',
+'c':'00000 00000 01111 10000 10000 10000 01111 00000','d':'00001 00001 01111 10001 10001 10001 01111 00000',
+'e':'00000 00000 01110 10001 11111 10000 01111 00000','f':'00110 01001 01000 11100 01000 01000 01000 00000',
+'g':'00000 00000 01111 10001 10001 01111 00001 01110','h':'10000 10000 11110 10001 10001 10001 10001 00000',
+'i':'00100 00000 01100 00100 00100 00100 01110 00000','j':'00010 00000 00110 00010 00010 00010 10010 01100',
+'k':'10000 10000 10010 10100 11000 10100 10010 00000','l':'01100 00100 00100 00100 00100 00100 01110 00000',
+'m':'00000 00000 11010 10101 10101 10101 10101 00000','n':'00000 00000 11110 10001 10001 10001 10001 00000',
+'o':'00000 00000 01110 10001 10001 10001 01110 00000','p':'00000 00000 11110 10001 10001 11110 10000 10000',
+'q':'00000 00000 01111 10001 10001 01111 00001 00001','r':'00000 00000 10110 11001 10000 10000 10000 00000',
+'s':'00000 00000 01111 10000 01110 00001 11110 00000','t':'01000 01000 11100 01000 01000 01001 00110 00000',
+'u':'00000 00000 10001 10001 10001 10011 01101 00000','v':'00000 00000 10001 10001 10001 01010 00100 00000',
+'w':'00000 00000 10001 10001 10101 10101 01010 00000','x':'00000 00000 10001 01010 00100 01010 10001 00000',
+'y':'00000 00000 10001 10001 10001 01111 00001 01110','z':'00000 00000 11111 00010 00100 01000 11111 00000',
+'0':'01110 10001 10011 10101 11001 10001 01110 00000','1':'00100 01100 00100 00100 00100 00100 01110 00000',
+'2':'01110 10001 00001 00110 01000 10000 11111 00000','3':'11110 00001 00001 01110 00001 00001 11110 00000',
+'4':'00010 00110 01010 10010 11111 00010 00010 00000','5':'11111 10000 11110 00001 00001 10001 01110 00000',
+'6':'00110 01000 10000 11110 10001 10001 01110 00000','7':'11111 00001 00010 00100 01000 01000 01000 00000',
+'8':'01110 10001 10001 01110 10001 10001 01110 00000','9':'01110 10001 10001 01111 00001 00010 01100 00000',
+' ':'00000 00000 00000 00000 00000 00000 00000 00000',
+'.':'00000 00000 00000 00000 00000 01100 01100 00000',',':'00000 00000 00000 00000 00000 01100 01100 01000',
+':':'00000 01100 01100 00000 01100 01100 00000 00000',';':'00000 00000 01100 01100 00000 01100 01100 01000',
+'!':'00100 00100 00100 00100 00100 00000 00100 00000','?':'01110 10001 00001 00110 00100 00000 00100 00000',
+"'":'00100 00100 00000 00000 00000 00000 00000 00000','"':'01010 01010 00000 00000 00000 00000 00000 00000',
+'-':'00000 00000 00000 01110 00000 00000 00000 00000','–':'00000 00000 00000 01110 00000 00000 00000 00000',
+'—':'00000 00000 00000 11111 00000 00000 00000 00000','(':'00010 00100 01000 01000 01000 00100 00010 00000',
+')':'01000 00100 00010 00010 00010 00100 01000 00000','[':'01110 01000 01000 01000 01000 01000 01110 00000',
+']':'01110 00010 00010 00010 00010 00010 01110 00000','/':'00001 00010 00010 00100 01000 01000 10000 00000',
+'+':'00000 00100 00100 11111 00100 00100 00000 00000','=':'00000 00000 11111 00000 11111 00000 00000 00000',
+'%':'11001 11010 00010 00100 01000 01011 10011 00000','&':'01100 10010 10100 01000 10101 10010 01101 00000',
+'*':'00000 00100 10101 01110 10101 00100 00000 00000','#':'01010 11111 01010 01010 11111 01010 00000 00000',
+'@':'01110 10001 10111 10101 10111 10000 01110 00000','_':'00000 00000 00000 00000 00000 00000 00000 11111',
+'<':'00010 00100 01000 10000 01000 00100 00010 00000','>':'01000 00100 00010 00001 00010 00100 01000 00000',
+'«':'00000 00101 01010 10100 01010 00101 00000 00000','»':'00000 10100 01010 00101 01010 10100 00000 00000',
+'…':'00000 00000 00000 00000 00000 00000 10101 00000','·':'00000 00000 00000 00100 00000 00000 00000 00000',
+'×':'00000 10001 01010 00100 01010 10001 00000 00000','°':'01100 10010 10010 01100 00000 00000 00000 00000',
+'•':'00000 00000 00100 01110 00100 00000 00000 00000','№':'10010 11010 10110 10010 00000 01110 00000 00000',
+'Б':'11111 10000 10000 11110 10001 10001 11110 00000','Г':'11111 10000 10000 10000 10000 10000 10000 00000',
+'Д':'00110 01010 01010 01010 01010 11111 10001 00000','Ж':'10101 10101 10101 11111 10101 10101 10101 00000',
+'З':'01110 10001 00001 00110 00001 10001 01110 00000','И':'10001 10001 10011 10101 11001 10001 10001 00000',
+'Й':'01110 10001 10011 10101 11001 10001 10001 00000','Л':'00111 01001 01001 01001 01001 01001 10001 00000',
+'П':'11111 10001 10001 10001 10001 10001 10001 00000','У':'10001 10001 10001 01111 00001 00010 01100 00000',
+'Ф':'00100 01110 10101 10101 10101 01110 00100 00000','Ц':'10010 10010 10010 10010 10010 11111 00001 00000',
+'Ч':'10001 10001 10001 01111 00001 00001 00001 00000','Ш':'10101 10101 10101 10101 10101 10101 11111 00000',
+'Щ':'10101 10101 10101 10101 10101 11111 00001 00000','Ъ':'11000 01000 01000 01110 01001 01001 01110 00000',
+'Ы':'10001 10001 10001 11101 10011 10011 11101 00000','Ь':'10000 10000 10000 11110 10001 10001 11110 00000',
+'Э':'01110 10001 00001 00111 00001 10001 01110 00000','Ю':'10010 10101 10101 11101 10101 10101 10010 00000',
+'Я':'01111 10001 10001 01111 00101 01001 10001 00000','Ё':'01010 11111 10000 11110 10000 10000 11111 00000',
+'б':'00111 01000 11110 10001 10001 10001 01110 00000','в':'00000 00000 11110 10001 11110 10001 11110 00000',
+'г':'00000 00000 11111 10000 10000 10000 10000 00000','д':'00000 00000 00110 01010 01010 11111 10001 00000',
+'ж':'00000 00000 10101 10101 11111 10101 10101 00000','з':'00000 00000 01110 00001 00110 00001 01110 00000',
+'и':'00000 00000 10001 10011 10101 11001 10001 00000','й':'00000 01110 10001 10011 10101 11001 10001 00000',
+'к':'00000 00000 10001 10010 11100 10010 10001 00000','л':'00000 00000 00111 01001 01001 01001 10001 00000',
+'м':'00000 00000 10001 11011 10101 10001 10001 00000','н':'00000 00000 10001 10001 11111 10001 10001 00000',
+'п':'00000 00000 11111 10001 10001 10001 10001 00000','т':'00000 00000 11111 00100 00100 00100 00100 00000',
+'ф':'00000 00100 01110 10101 10101 01110 00100 00100','ц':'00000 00000 10010 10010 10010 11111 00001 00000',
+'ч':'00000 00000 10001 10001 01111 00001 00001 00000','ш':'00000 00000 10101 10101 10101 10101 11111 00000',
+'щ':'00000 00000 10101 10101 10101 11111 00001 00000','ъ':'00000 00000 11000 01000 01110 01001 01110 00000',
+'ы':'00000 00000 10001 10001 11101 10011 11101 00000','ь':'00000 00000 10000 10000 11110 10001 11110 00000',
+'э':'00000 00000 01110 00001 00111 00001 01110 00000','ю':'00000 00000 10010 10101 11101 10101 10010 00000',
+'я':'00000 00000 01111 10001 01111 00101 01001 00000','ё':'01010 00000 01110 10001 11111 10000 01111 00000',
+'✓':'00000 00000 00001 00010 10100 11000 01000 00000','✦':'00100 00100 01110 11111 01110 00100 00100 00000',
+'←':'00000 00100 01000 11111 01000 00100 00000 00000','→':'00000 00100 00010 11111 00010 00100 00000 00000',
+'↑':'00100 01110 10101 00100 00100 00100 00100 00000','↓':'00100 00100 00100 00100 10101 01110 00100 00000',
+'↗':'00000 01111 00011 00101 01001 10000 00000 00000','∞':'00000 00000 01010 10101 10101 01010 00000 00000',
+'π':'00000 11111 01010 01010 01010 01010 01011 00000','Σ':'11111 10000 01000 00100 01000 10000 11111 00000',
+'∫':'00011 00100 00100 00100 00100 00100 11000 00000','Δ':'00100 00100 01010 01010 10001 10001 11111 00000',
+'λ':'01100 00010 00100 01010 10001 10001 00000 00000','φ':'00100 01110 10101 10101 10101 01110 00100 00000',
+'Ω':'01110 10001 10001 10001 10001 01010 11011 00000','±':'00100 00100 11111 00100 00000 11111 00000 00000',
+'≈':'00000 01001 10110 00000 01001 10110 00000 00000','∈':'00000 01111 10000 11110 10000 01111 00000 00000',
+'⊕':'01110 10101 11111 10101 01110 00000 00000 00000','⊗':'01110 11011 10101 11011 01110 00000 00000 00000',
+'∂':'01110 00001 00001 01111 10001 10001 01110 00000','≠':'00010 00100 11111 01000 11111 10000 00000 00000'
+};
+const ALIAS={'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','а':'a','е':'e','о':'o','р':'p','с':'c','х':'x','у':'y','’':"'",'‘':"'",'“':'"','”':'"','‹':'<','›':'>'};
+const FONT={};
+for(const ch in GLYPH_SRC){const rows=GLYPH_SRC[ch].split(' ');const a=new Uint8Array(8);for(let r=0;r<8;r++)a[r]=parseInt(rows[r],2);FONT[ch]=a;}
+for(const ch in ALIAS)FONT[ch]=FONT[ALIAS[ch]];
+(function(){
+  const extra={'ä':'01010 00000 01110 00001 01111 10001 01111 00000','ö':'01010 00000 01110 10001 10001 10001 01110 00000',
+  'ü':'01010 00000 10001 10001 10001 10011 01101 00000','Ä':'01010 01110 10001 11111 10001 10001 10001 00000',
+  'Ö':'01010 01110 10001 10001 10001 10001 01110 00000','Ü':'01010 10001 10001 10001 10001 10001 01110 00000',
+  'ß':'01110 10001 10010 10100 10010 10001 10110 00000'};
+  for(const ch in extra){const rows=extra[ch].split(' ');const a=new Uint8Array(8);for(let r=0;r<8;r++)a[r]=parseInt(rows[r],2);FONT[ch]=a;}
+})();
+
+/* ---------- text rendering (cached) ---------- */
+const tcache=new Map();
+function textSprite(str,col,sc){
+  const key=str+'\u0001'+col+'\u0001'+sc;
+  let s=tcache.get(key);
+  if(s)return s;
+  if(tcache.size>700)tcache.clear();
+  const w=Math.max(1,str.length*6*sc),h=9*sc;
+  const c=mkC(w,h),g=c.getContext('2d');
+  g.fillStyle=col;
+  for(let i=0;i<str.length;i++){
+    const gl=FONT[str[i]]||FONT['?'];
+    for(let r=0;r<8;r++){const bits=gl[r];if(!bits)continue;
+      for(let b=0;b<5;b++)if(bits&(16>>b))g.fillRect((i*6+b)*sc,r*sc,sc,sc);}
+  }
+  tcache.set(key,c);return c;
+}
+function drawText(g,str,x,y,col,sc,align){
+  sc=sc||1;const s=textSprite(str,col,sc);
+  let dx=x;if(align===1)dx=x-s.width/2;else if(align===2)dx=x-s.width;
+  g.drawImage(s,Math.round(dx),Math.round(y));
+}
+const textW=(str,sc)=>str.length*6*(sc||1);
+function wrapText(str,maxW,sc){
+  sc=sc||1;const out=[];
+  for(const para of String(str).split('\n')){
+    const words=para.split(' ');let line='';
+    for(const wd of words){
+      const test=line?line+' '+wd:wd;
+      if(textW(test,sc)<=maxW||!line)line=test;
+      else{out.push(line);line=wd;}
+    }
+    out.push(line);
+  }
+  return out;
+}
+function fitText(str,maxW,sc){
+  sc=sc||1;
+  if(textW(str,sc)<=maxW)return str;
+  const maxCh=Math.max(1,Math.floor(maxW/(6*sc))-1);
+  return str.slice(0,maxCh)+'…';
+}
+
+/* ---------- save system ---------- */
+const SAVE_KEY='noether.save.v1';
+let save=null;
+function defaultSave(){return {lang:'ru',sound:true,seed:(Math.random()*0xFFFFFFFF)>>>0,unlocks:{bonus:false,free:false},modes:{chrono:{reads:{},done:[]},bonus:{reads:{},done:[]}}};}
+function loadSave(){
+  let s=null;
+  try{const raw=localStorage.getItem(SAVE_KEY);if(raw)s=JSON.parse(raw);}catch(e){}
+  const d=defaultSave();
+  if(s&&typeof s==='object'){
+    d.lang=(s.lang==='en')?'en':'ru';
+    d.sound=s.sound!==false;
+    if(typeof s.seed==='number')d.seed=s.seed>>>0;
+    if(s.unlocks){d.unlocks.bonus=!!s.unlocks.bonus;d.unlocks.free=!!s.unlocks.free;}
+    if(s.modes)for(const m of ['chrono','bonus']){
+      const src=s.modes[m];if(src&&typeof src==='object'){
+        if(src.reads&&typeof src.reads==='object')d.modes[m].reads=src.reads;
+        if(Array.isArray(src.done))d.modes[m].done=src.done;
+      }
+    }
+  }
+  save=d;
+}
+function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
+
+/* ============================================================
+   CONTENT — the biography rooms (real facts, RU + EN)
+   axes: 0 weather · 1 time · 2 detail · 3 palette · 4 glitch
+         5 particles · 6 abstraction · 7 archival age
+   ============================================================ */
+const WG=['Emmy_Noether','Эмми_Нётер'];
+function ROOM(id,year,scene,tru,ten,ax,objs){
+  return {id,year,scene,title:{ru:tru,en:ten},ax:ax||{},
+    objs:objs.map(o=>({k:o[0],t:{ru:o[1],en:o[2]},d:{ru:o[3],en:o[4]},w:o[5]||WG}))};
+}
+const ROOMS_C=[
+ROOM('c1882',1882,'nursery','Эрланген. Начало','Erlangen. The Beginning',{0:[0,.45],1:[.15,.55],4:[0,.1],6:[0,.2],3:[0,.5]},[
+['crib','Колыбель','The Cradle',
+'23 марта 1882 года в Эрлангене (Бавария) родилась Амалия Эмма Нётер — все звали её Эмми. Она была первенцем в еврейской семье профессора; впереди — три брата и век, который ей придётся менять.',
+'On 23 March 1882, Amalie Emmy Noether was born in Erlangen, Bavaria — everyone called her Emmy. She was the first child of a Jewish professor\'s family; three brothers and a century she would reshape lay ahead.'],
+['portrait','Отец — Макс Нётер','Father — Max Noether',
+'Макс Нётер (1844–1921) — профессор математики Эрлангенского университета, один из создателей алгебраической геометрии; его имя носят теоремы Бриля–Нётера. В 14 лет он перенёс полиомиелит и на всю жизнь остался хромым.',
+'Max Noether (1844–1921) was professor of mathematics at Erlangen and a founder of algebraic geometry; the Brill–Noether theorems bear his name. Polio at fourteen left him lame for life.',['Max_Noether','Нётер,_Макс']],
+['portrait','Мать — Ида Кауфман','Mother — Ida Kaufmann',
+'Ида Амалия Кауфман происходила из богатой купеческой семьи Кёльна. Она принесла в дом музыку и достаток: Эмми росла в тёплой, обеспеченной и очень учёной атмосфере — гостиная Нётеров была полна разговоров о науке.',
+'Ida Amalia Kaufmann came from a wealthy Cologne merchant family. She brought music and comfort into the house: Emmy grew up in a warm, prosperous, deeply learned home, its parlour full of talk about science.'],
+['window','Окно на Эрланген','A Window on Erlangen',
+'Эрланген конца XIX века — тихий баварский университетский городок: фахверковые дома, пивные сады, крепостная башня. Университет, где преподавал отец, стоял в нескольких минутах ходьбы от дома Нётеров.',
+'Late-19th-century Erlangen was a quiet Bavarian university town: half-timbered houses, beer gardens, a castle tower. The university where her father taught stood a few minutes\' walk from the Noether home.',['Erlangen','Эрланген']]]),
+ROOM('c1890',1890,'childroom','Детство','Childhood',{0:[0,.45],1:[.15,.6],4:[0,.1],6:[0,.22],3:[0,.5]},[
+['toybox','Коробка загадок','A Box of Puzzles',
+'Маленькая Эмми не была вундеркиндом: она обожала загадки и головоломки, была ласковой и шумной, любила детей и возню с ними. Математический гений проснулся в ней позже — из этого самого детского любопытства.',
+'Little Emmy was no prodigy: she adored riddles and puzzles, was affectionate and lively, and loved playing with children. Her mathematical genius woke later — out of this very childhood curiosity.'],
+['piano','Пианино','The Piano',
+'Ида играла на пианино, и Эмми брала уроки музыки. Она мечтала о танцах и праздниках: домашние вечера Нётеров заканчивались музыкой, а девочка Эмми — танцами, которые она любила всю жизнь.',
+'Ida played the piano, and Emmy took music lessons. She dreamed of dances and parties: Noether evenings ended in music, and little Emmy — who loved dancing all her life — in dancing.'],
+['glasses','Очки','Spectacles',
+'Эмми была близорукой и носила очки, говорила с лёгкой шепелявостью. Друзья семьи запоминали её не как «девочку-гения», а как доброго, живого ребёнка в круглых очках — очень обычного и очень счастливого.',
+'Emmy was short-sighted, wore spectacles and had a slight lisp. Family friends remembered not a "girl genius" but a kind, lively child in round glasses — very ordinary and very happy.'],
+['plaque','Четверо Нётеров','The Four Noethers',
+'После Эмми родились Альфред (1883, стал химиком), Фриц (1884, математик, как и сестра) и Роберт (1889). Дом был полон детей, книг и споров; отец поощрял любознательность всех четверых, но именно Эмми пошла по его стопам.',
+'After Emmy came Alfred (1883, became a chemist), Fritz (1884, a mathematician like his sister) and Robert (1889). The house was full of children, books and arguments; their father encouraged all four, but Emmy followed his path.']]),
+ROOM('c1897',1897,'classroom','Школа для девочек','The Girls\' School',{0:[0,.5],1:[.2,.6],4:[0,.12],6:[0,.25],3:[0,.5]},[
+['diploma','Аттестат 1897 года','The 1897 Certificate',
+'В 1897 году Эмми окончила Городскую высшую школу для девочек в Эрлангене. Программа готовила «образованных дам»: языки, литература, немного арифметики — но не к университету. Путь к науке ей пришлось прокладывать самой.',
+'In 1897 Emmy graduated from the Municipal Higher School for Girls in Erlangen. The curriculum trained "educated ladies": languages, literature, a little arithmetic — not university. She had to build her own road to science.'],
+['book','Французский и английский','French and English',
+'Её любимыми предметами были языки: французский и английский давались легко и с удовольствием. Позже, в Америке, именно эти школьные языки помогут ей читать лекции студенткам Брин-Мор.',
+'Her favourite subjects were languages: French and English came easily and joyfully. Later, in America, these very school languages would let her lecture to the students of Bryn Mawr.'],
+['board','Школьная доска','The School Blackboard',
+'Аттестат школы давал право сдавать экзамен на учительницу языков в баварских женских школах. Это была одна из немногих «приличных» профессий для девушки 1890-х — и первая ступенька, с которой Эмми шагнёт дальше всех.',
+'The school certificate entitled her to sit the examination for language teachers at Bavarian girls\' schools. It was one of the few "respectable" careers for a girl of the 1890s — and the first step from which Emmy would go further than anyone.']]),
+ROOM('c1900',1900,'examhall','Экзамен на учительницу','The Teacher\'s Examination',{0:[0,.5],1:[.2,.65],4:[0,.12],6:[0,.25],3:[0,.55]},[
+['certificate','Свидетельство 1900 года','The 1900 Certificate',
+'В 1900 году Эмми сдала баварский государственный экзамен на право преподавать французский и английский в женских школах — с оценкой «очень хорошо». Ей восемнадцать, и у неё уже есть профессия. Но она выбирает другую дорогу.',
+'In 1900 Emmy passed the Bavarian state examination qualifying her to teach French and English at girls\' schools — graded "very good". She is eighteen and already has a profession. But she chooses another road.'],
+['quill','Перо и решение','Pen and Decision',
+'Вместо тёплого места учительницы Эмми решает поступать в университет — туда, где женщинам учиться почти нельзя. Семья, к её счастью, не запрещает: отец-профессор понимает, что спорить с её упрямством бесполезно.',
+'Instead of a comfortable teaching post Emmy decides to enter university — where women were barely allowed to study. Luckily her family does not forbid it: her professor father knows it is useless to argue with her determination.'],
+['poster','Правила приёма','Admission Rules',
+'Баварские университеты не принимали женщин на полноценное обучение. Можно было лишь «слушать» лекции с личного разрешения каждого профессора. Сенат Эрлангена называл совместное обучение угрозой «всему академическому порядку».',
+'Bavarian universities did not admit women as full students. One could only "audit" lectures with each professor\'s personal permission. The Erlangen senate called coeducation a threat to "all academic order".']]),
+ROOM('c1901',1901,'lecturehall','Вольнослушательница','The Auditor',{0:[.1,.6],1:[.2,.7],4:[0,.15],6:[.05,.3],3:[0,.55]},[
+['ledger','Журнал: 2 из 986','The Register: 2 of 986',
+'С 1900 по 1902 год Эмми — вольнослушательница Эрлангенского университета: одна из двух женщин среди 986 студентов. Без права экзаменов и диплома, она просто сидит в аудиториях и работает больше всех.',
+'From 1900 to 1902 Emmy audited at Erlangen: one of two women among 986 students. With no right to exams or a degree, she simply sat in the lecture halls and worked harder than anyone.'],
+['petition','Прошение профессору','A Petition to a Professor',
+'Каждый курс — отдельное разрешение. Эмми ходит от профессора к профессору с прошениями; большинство соглашается. Среди её учителей — отец Макс и его коллега Пауль Гордан, король теории инвариантов.',
+'Each course meant a separate permission. Emmy went from professor to professor with petitions; most agreed. Among her teachers were her father Max and his colleague Paul Gordan, the king of invariant theory.'],
+['door','Дверь аудитории','The Lecture Hall Door',
+'Женщинам запрещалось даже полноценно записываться на курсы — дверь аудитории открывалась для Эмми лишь наполовину. Она привыкла к этому раньше, чем к формулам: терпение станет её главным инструментом наравне с умом.',
+'Women could not even properly enrol — the lecture hall door opened only halfway for Emmy. She grew used to this before she grew used to formulas: patience would become her chief tool alongside her mind.']]),
+ROOM('c1903',1903,'goettingenstreet','Гёттинген','Göttingen',{0:[.15,.7],1:[.2,.75],4:[.05,.2],6:[.1,.35],3:[.2,.6]},[
+['ticket','Экзамен в Нюрнберге','The Nuremberg Exam',
+'Женские школы не давали права на университет. Летом 1903 года Эмми сдаёт выпускной экзамен экстерном в нюрнбергском Realgymnasium — и получает формальное право поступать. Зимой она уже в Гёттингене.',
+'Girls\' schools gave no right to university. In summer 1903 Emmy passed the matriculation exam externally at the Nuremberg Realgymnasium — gaining the formal right to enrol. By winter she was in Göttingen.',['Nuremberg','Нюрнберг']],
+['poster','Афиша лекций','The Lecture List',
+'Зимний семестр 1903/04: Эмми слушает Карла Шварцшильда, Германа Минковского, Феликса Клейна и Давида Гильберта — цвет мировой математики. Всё ещё вольнослушательница, она сидит в первых рядах на лекциях гениев.',
+'Winter semester 1903/04: Emmy audited Karl Schwarzschild, Hermann Minkowski, Felix Klein and David Hilbert — the flower of world mathematics. Still only an auditor, she sat in the front rows at the lectures of geniuses.',['University_of_Göttingen','Гёттингенский_университет']],
+['telescope','Телескоп Шварцшильда','Schwarzschild\'s Telescope',
+'Карл Шварцшильд вскоре решит уравнения Эйнштейна для того, что мы называем чёрной дырой, — а пока читает здесь небесную механику. Эмми запоминает его ясность: позже симметрии и астрономия встретятся в её теореме.',
+'Karl Schwarzschild would soon solve Einstein\'s equations for what we now call a black hole — for now he lectured on celestial mechanics here. Emmy remembered his clarity: later, symmetry and astronomy would meet in her theorem.',['Karl_Schwarzschild','Шварцшильд,_Карл']],
+['board','Доска Минковского','Minkowski\'s Board',
+'Герман Минковский строит геометрию чисел, а вскоре — и пространство-время. Эмми впитывает стиль Гёттингена: думать структурами, а не вычислениями. Этот стиль она позже привезёт обратно в Эрланген и изменит им алгебру.',
+'Hermann Minkowski was building the geometry of numbers and, soon, spacetime. Emmy absorbed the Göttingen style: think in structures, not computations. She would later carry this style back to Erlangen and change algebra with it.',['Hermann_Minkowski','Минковский,_Герман']]]),
+ROOM('c1904',1904,'office','Своя студентка','A Student at Last',{0:[0,.5],1:[.2,.6],4:[0,.12],6:[.05,.3],3:[0,.55]},[
+['recordbook','Зачётная книжка','The Matriculation Book',
+'В 1904 году Эрланген наконец разрешает женщинам полноценную учёбу. 24 октября 1904 года Эмми Нётер официально зачислена на математическое отделение — одна из первых женщин-студенток университета.',
+'In 1904 Erlangen finally allowed women full enrolment. On 24 October 1904 Emmy Noether was officially matriculated in mathematics — one of the university\'s first women students.'],
+['desk','Место в аудитории','A Seat in the Hall',
+'Теперь можно сдавать экзамены, получать оценки и диплом. Эмми выбирает математику окончательно и бесповоротно — ей 22, и она начинает с того же курса, что и вчерашние гимназисты, но идёт быстрее их.',
+'Now she could sit exams, earn grades and a degree. Emmy chose mathematics finally and for good — at 22 she started alongside yesterday\'s schoolboys, but moved faster than them.'],
+['notes','Конспекты','The Notebooks',
+'Годы аудиторских разрешений не прошли даром: конспекты Эмми уже полны инвариантов — величин, не меняющихся при преобразованиях. Эта детская игра «что остаётся тем же?» станет делом её жизни.',
+'The years of auditing permissions had not been wasted: Emmy\'s notebooks were already full of invariants — quantities unchanged by transformations. That childhood game of "what stays the same?" would become her life\'s work.']]),
+ROOM('c1907',1907,'defensehall','Докторская','The Doctorate',{0:[0,.55],1:[.2,.65],4:[.1,.3],6:[.2,.5],3:[.1,.6]},[
+['thesis','Диссертация','The Dissertation',
+'Декабрь 1907: Эмми защищает диссертацию «О построении системы форм для тернарной биквадратичной формы» и получает степень summa cum laude — высшую отметку. Ей 25 лет. Позади годы без права учиться, впереди — годы без права работать.',
+'December 1907: Emmy defended "On the Construction of the System of Forms for a Ternary Biquadratic Form" and received her doctorate summa cum laude, the highest distinction. She was 25. Years without the right to study lay behind; years without the right to work lay ahead.'],
+['portrait','Пауль Гордан','Paul Gordan',
+'Научный руководитель — Пауль Гордан, «король теории инвариантов»: громогласный, бородатый, с трубкой. Он ценил явные вычисления и называл абстрактные доказательства Гильберта «не математикой, а теологией» — позже признал и их правоту.',
+'Her supervisor was Paul Gordan, the "king of invariant theory": loud, bearded, pipe in hand. He prized explicit computation and called Hilbert\'s abstract proofs "not mathematics but theology" — later admitting their merit too.',['Paul_Gordan','Гордан,_Пауль']],
+['board331','331 форма','331 Forms',
+'Диссертация — подвиг вычисления: Эмми явно выписала 331 инвариантную форму тернарной биквадратичной формы. Гигантские таблицы, ни одной ошибки. Позже она сама назовёт эту работу «джунглями формул» — и пойдёт другим путём.',
+'The dissertation was a feat of computation: Emmy explicitly listed 331 invariant forms of the ternary biquadratic form. Vast tables, not a single error. She herself would later call it a "jungle of formulas" — and take another path.'],
+['quote','«Джунгли формул»','"A Jungle of Formulas"',
+'«Formelngestrüpp» — так Эмми отзывалась о своей докторской. Ей стало тесно в мире громоздких вычислений: она хотела понимать, почему всё работает, а не пересчитывать. Впереди — поворот к абстракции, который изменит алгебру.',
+'"Formelngestrüpp" — that was Emmy\'s verdict on her own thesis. The world of bulky computations had grown too small: she wanted to understand why things work, not recount them. Ahead lay the turn to abstraction that would change algebra.']]),
+ROOM('c1908',1908,'study','Без жалованья','Without Pay',{0:[.2,.7],1:[.3,.8],4:[.05,.2],6:[.15,.4],3:[.1,.6]},[
+['chair','Кафедра отца','Her Father\'s Chair',
+'После докторской Эмми семь лет работает в Математическом институте Эрлангена без всякой оплаты. Когда отец болеет, она замещает его на лекциях: должность для неё не предусмотрена, но работа есть всегда.',
+'After her doctorate Emmy worked seven years at the Erlangen Mathematical Institute without any pay. When her father was ill she took over his lectures: no position existed for her, but there was always work.'],
+['papers','Статьи об инвариантах','Papers on Invariants',
+'Она публикует работы по теории инвариантов, развивая методы Гордана, — без зарплаты, без должности, из чистой любви к делу. Университет принимает её труд, но не принимает её как женщину.',
+'She published papers on invariant theory, extending Gordan\'s methods — no salary, no post, for pure love of the work. The university accepted her labour but not her as a woman.'],
+['envelope','Пустой конверт','The Empty Envelope',
+'Женщина — доктор математики в Германии 1908 года была научным курьёзом для чиновников: ставки для неё просто нет. Эмми живёт на семейные средства и продолжает работать; её терпение уже стало легендой среди коллег.',
+'A woman doctor of mathematics in 1908 Germany was an administrative curiosity: there was simply no paid post for her. Emmy lived on family means and kept working; her patience was already legendary among colleagues.']]),
+ROOM('c1911',1911,'study','Поворот к абстракции','The Turn to Abstraction',{0:[.1,.6],1:[.25,.7],4:[.15,.4],6:[.3,.6],3:[.2,.7]},[
+['letter','Письма Фишеру','Letters to Fischer',
+'В 1911 году Гордан уходит на пенсию, и его место занимает Эрнст Фишер. Он открывает Эмми новый мир: вместо километров формул — общие структуры. Их переписка полна вопросов, из которых родится её стиль.',
+'In 1911 Gordan retired and Ernst Fischer took his chair. He opened a new world for Emmy: general structures instead of miles of formulas. Their correspondence brimmed with questions from which her style would be born.',['Ernst_Fischer_(mathematician)','Эмми_Нётер']],
+['board','Символы вместо формул','Symbols Instead of Formulas',
+'Фишер знакомит её с абстрактным подходом Гильберта: доказывать существование, не выписывая объектов. Эмми переходит от вычислений к понятиям — кольцо, идеал, модуль. Так начинается «нётеровская» алгебра.',
+'Fischer introduced her to Hilbert\'s abstract approach: prove existence without writing objects out. Emmy moved from computation to concepts — ring, ideal, module. This is where "Noether-style" algebra begins.'],
+['book','Теорема Гильберта о базисе','Hilbert\'s Basis Theorem',
+'В 1890 году Гильберт доказал: любой идеал в кольце многочленов конечно порождён — коротко и неконструктивно. Гордан ворчал, но был побеждён. Эмми сделает этот стиль своим главным оружием и доведёт его до совершенства.',
+'In 1890 Hilbert proved that every ideal in a polynomial ring is finitely generated — briefly, non-constructively. Gordan grumbled but was won over. Emmy would make this style her chief weapon and bring it to perfection.',['Hilbert%27s_basis_theorem','Теорема_Гильберта_о_базисе']]]),
+ROOM('c1915',1915,'goettingenhall','Приглашение в Гёттинген','The Invitation to Göttingen',{0:[.2,.75],1:[.3,.8],4:[.2,.45],6:[.3,.6],3:[.25,.7]},[
+['letter','Письмо Гильберта','Hilbert\'s Letter',
+'Весна 1915: Гильберт и Клейн зовут Эмми в Гёттинген. Общая теория относительности почти готова, но энергия в ней «не сохраняется» как положено. Нужен человек, который понимает симметрии лучше всех. Этот человек — она.',
+'Spring 1915: Hilbert and Klein called Emmy to Göttingen. General relativity was nearly ready, but its energy did not "conserve" properly. They needed someone who understood symmetry better than anyone. That person was her.',['David_Hilbert','Гильберт,_Давид']],
+['board','Задача об энергии','The Energy Problem',
+'В ОТО энергия ведёт себя странно: её «сохранение» зависит от координат. Гильберт мучается с законом сохранения; Клейн пишет Эмми. Она приезжает в апреле 1915 — и берётся за задачу, перед которой пасуют профессора.',
+'In general relativity energy behaved strangely: its "conservation" depended on coordinates. Hilbert struggled with the conservation law; Klein wrote to Emmy. She arrived in April 1915 and took on the problem that defeated professors.',['General_relativity','Общая_теория_относительности']],
+['poster','Лекции под чужим именем','Lectures Under Another\'s Name',
+'Факультет не пускает женщину к хабилитации. По воспоминаниям Вейля, Гильберт вспыхнул: «Господа, сенат — не баня!» Но правила не меняются: курсы Эмми объявляют как лекции Гильберта «при содействии фр. Нётер». Без оплаты.',
+'The faculty blocked a woman\'s habilitation. In Weyl\'s recollection Hilbert burst out: "Gentlemen, the senate is not a bathhouse!" Yet the rules stood: Emmy\'s courses were announced as Hilbert\'s lectures "with the assistance of Fräulein Noether". Unpaid.'],
+['portrait','Феликс Клейн','Felix Klein',
+'Феликс Клейн — геометр, создатель «Эрлангенской программы»: геометрия есть наука о симметриях. Именно он станет её союзником и позже прочитает её главный доклад. Клейн и Гильберт — двое против целого факультета — за неё.',
+'Felix Klein was the geometer of the Erlangen Programme: geometry as the study of symmetries. He would become her ally and later read her greatest paper aloud. Klein and Hilbert — two against a whole faculty — stood for her.',['Felix_Klein','Клейн,_Феликс']]])
+];
+const ROOMS_C2=[
+ROOM('c1918',1918,'symmetry','Теорема Нётер','Noether\'s Theorem',{0:[0,1],1:[0,1],4:[.35,.75],6:[.6,1],3:[.5,1],5:[.4,.9]},[
+['manuscript','«Инвариантные вариационные проблемы»','"Invariant Variation Problems"',
+'26 июля 1918 года Клейн зачитывает её работу Гёттингенскому обществу: женщин в члены не пускали. Две теоремы связывают симметрии действия с законами сохранения — это фундамент всей современной физики.',
+'On 26 July 1918 Klein read her paper to the Göttingen Society — women were not admitted as members. Two theorems linked symmetries of the action to conservation laws: the foundation of all modern physics.',['Noether%27s_theorem','Теорема_Нётер']],
+['mirror','Зеркало симметрии','The Mirror of Symmetry',
+'Первая теорема: каждой непрерывной симметрии отвечает сохраняющаяся величина. Мир не меняется от сдвига во времени — сохраняется энергия. От сдвига в пространстве — импульс. От поворота — момент. Красота, ставшая законом.',
+'The first theorem: every continuous symmetry yields a conserved quantity. If the world is unchanged by shifts in time, energy is conserved; by shifts in space, momentum; by rotation, angular momentum. Beauty made law.'],
+['pendulum','Маятник и время','The Pendulum and Time',
+'Однородность времени даёт энергию, однородность пространства — импульс, изотропность — момент импульса. Эмми показала: законы сохранения — не отдельные чудеса, а тени симметрий. Физика увидела свой скрытый скелет.',
+'Homogeneity of time gives energy, homogeneity of space gives momentum, isotropy gives angular momentum. Emmy showed conservation laws are not separate miracles but shadows of symmetries. Physics saw its hidden skeleton.'],
+['board','Вторая теорема','The Second Theorem',
+'Вторая теорема — о локальных (калибровочных) симметриях: они дают тождества между уравнениями. Именно она объясняет «странную» энергию в ОТО: сохранение там «несобственное». Спор Гильберта решён — рукой Эмми Нётер.',
+'The second theorem concerns local (gauge) symmetries: they yield identities among the equations. It explains the "strange" energy of general relativity: conservation there is "improper". Hilbert\'s puzzle was solved — by Emmy Noether\'s hand.']]),
+ROOM('c1918e',1918,'einsteinoffice','Письмо Эйнштейна','Einstein\'s Letter',{0:[.1,.6],1:[.3,.75],4:[.2,.45],6:[.35,.65],3:[.25,.7]},[
+['letter','24 мая 1918','24 May 1918',
+'Эйнштейн пишет Гильберту: «Вчера я получил от фройляйн Нётер очень интересную работу об инвариантах. Меня поражает, что такие вещи можно понять так общим образом. Старой гвардии Гёттингена не мешало бы поучиться у фройляйн Нётер!»',
+'Einstein wrote to Hilbert: "Yesterday I received from Miss Noether a very interesting paper on invariant formation. I am impressed that such things can be understood in such a general way. The old guard at Göttingen should take some lessons from Miss Noether!"',['Albert_Einstein','Эйнштейн,_Альберт']],
+['board','Энергия в ОТО','Energy in Relativity',
+'Эйнштейн бился с сохранением энергии в искривлённом пространстве. Теоремы Нётер показали: в ОТО энергия сохраняется «несобственно» — из-за калибровочной свободы. То, что казалось дефектом теории, оказалось её глубокой симметрией.',
+'Einstein had wrestled with energy conservation in curved spacetime. Noether\'s theorems showed that in general relativity energy is conserved "improperly" — because of gauge freedom. What seemed a defect of the theory was its deep symmetry.'],
+['quill','Работа без должности','Work Without a Post',
+'Пока Эйнштейн восхищается её работой, Эмми всё ещё не имеет права преподавать под своим именем и не получает жалованья. Гёттингенские студенты заполняют её «неофициальные» семинары: слухи о её уме бегут впереди дипломов.',
+'While Einstein admired her work, Emmy still could not teach under her own name or draw a salary. Göttingen students filled her "unofficial" seminars: word of her brilliance ran ahead of her diplomas.']]),
+ROOM('c1919',1919,'hall','Хабилитация','Habilitation',{0:[0,.55],1:[.2,.65],4:[.1,.3],6:[.2,.5],3:[.2,.65]},[
+['diploma','Хабилитация 1919','The 1919 Habilitation',
+'После войны и ноябрьской революции 1918 года правила меняются: женщины получают права, в том числе университетские. В июне 1919 года Эмми защищает хабилитацию и становится приват-доцентом — наконец официально.',
+'After the war and the November Revolution of 1918 the rules changed: women gained rights, including at universities. In June 1919 Emmy completed her habilitation and became a Privatdozent — officially, at last.',['Habilitation','Хабилитация']],
+['poster','Своё имя на афише','Her Own Name on the Poster',
+'Впервые афиша несёт её имя: «Приват-доцент Эмми Нётер». Четыре года лекций под чужой вывеской закончены. Ей 37; она ждала этого дольше, чем длилась сама Первая мировая война.',
+'For the first time a poster bore her name: "Privatdozent Emmy Noether". Four years of lecturing under someone else\'s sign were over. She was 37; she had waited longer than the First World War itself had lasted.'],
+['newspaper','Газеты ноября 1918','Newspapers of November 1918',
+'Германская революция принесла женщинам избирательное право — и открыла женщинам университеты. История сдвинулась, и щель, в которую Эмми протискивалась годами, стала дверью. Она вошла в неё с достоинством, без тени злорадства.',
+'The German revolution brought women the vote — and opened universities to them. History shifted, and the crack Emmy had squeezed through for years became a door. She walked through it with dignity, without a trace of gloating.']]),
+ROOM('c1921',1921,'ringabstract','Идеалы в кольцах','Ideals in Rings',{0:[0,1],1:[0,1],4:[.4,.8],6:[.7,1],3:[.6,1],5:[.4,.9]},[
+['manuscript','«Idealtheorie in Ringbereichen»','"Ideal Theory in Rings"',
+'1921 год, Mathematische Annalen: статья «Теория идеалов в кольцах» переворачивает алгебру. Эмми переносит теорию идеалов из конкретных числовых областей в любые коммутативные кольца — и задаёт язык, на котором алгебра говорит до сих пор.',
+'1921, Mathematische Annalen: "Idealtheorie in Ringbereichen" turned algebra upside down. Emmy lifted ideal theory from concrete number domains to arbitrary commutative rings — and set the language algebra still speaks today.',['Ideal_(ring_theory)','Идеал_(теория_колец)']],
+['chain','Цепочки идеалов','Chains of Ideals',
+'Условие обрыва возрастающих цепей: любая цепь идеалов I1 < I2 < I3 < … останавливается. Это «условие Нётер» — критерий конечности, который делает бесконечную алгебру обозримой. Кольца с ним назовут нётеровыми.',
+'The ascending chain condition: every chain of ideals I1 < I2 < I3 < … eventually stops. This "Noether condition" is a finiteness criterion that makes infinite algebra surveyable. Rings satisfying it would be called Noetherian.',['Noetherian_ring','Нётерово_кольцо']],
+['chess','Шахматист Ласкер','Lasker the Chess Player',
+'Эмануэль Ласкер — чемпион мира по шахматам 1894–1921 и математик: в 1905 он доказал разложение идеалов в кольцах многочленов. Эмми обобщила его теорему на все нётеровы кольца — так родилась теорема Ласкера–Нётер.',
+'Emanuel Lasker — world chess champion 1894–1921 and mathematician — proved primary decomposition for polynomial ideals in 1905. Emmy generalised his theorem to all Noetherian rings: the Lasker–Noether theorem was born.',['Lasker–Noether_theorem','Теорема_Ласкера_—_Нётер']],
+['plaque','Имя: нётерово','A Name: Noetherian',
+'Термин «нётерово кольцо» ввёл Клод Шевалле в 1943 году. Её условие стало определением целого класса объектов — редчайшая честь: когда твоё имя превращается в прилагательное, которым пользуются каждый день.',
+'The term "Noetherian ring" was coined by Claude Chevalley in 1943. Her condition became the definition of a whole class of objects — the rarest honour: your name turning into an adjective used every day.',['Noetherian_ring','Нётерово_кольцо']]]),
+ROOM('c1923',1923,'apartment','Лектор без кафедры','A Lecturer Without a Chair',{0:[.2,.7],1:[.35,.85],4:[.1,.3],6:[.2,.5],3:[.2,.65]},[
+['order','Приказ 1922 года','The 1922 Decree',
+'В 1922 году Эмми дают звание «нештатного экстраординарного профессора» — почётное, но без ставки. Лишь в 1923 министерство утверждает ей скромный Lehrauftrag — платное преподавательское поручение. Кафедры она не получит никогда.',
+'In 1922 Emmy was made a "non-civil-service extraordinary professor" — honorary, unpaid. Only in 1923 did the ministry grant a modest paid teaching assignment (Lehrauftrag). A full chair she would never receive.'],
+['envelope','Скромное жалованье','A Modest Salary',
+'Ей платят мало, она живёт бережливо: скромная квартира, простая еда, никаких роскошей. Но она помогает студентам деньгами, делится последним — и никогда не жалуется. Коллеги поражались её бескорыстию всю её жизнь.',
+'She was paid little and lived frugally: a modest flat, simple food, no luxuries. Yet she helped students with money, shared her last, and never complained. Colleagues marvelled at her selflessness all her life.'],
+['key','Ключ от квартиры','The Flat Key',
+'Её квартира в Гёттингене — неформальный математический клуб: чай, споры до полуночи, студенты на полу. «Нётеровские» семинары продолжались у неё дома; она умела делать математику воздухом, которым дышат.',
+'Her Göttingen flat was an informal mathematics club: tea, arguments past midnight, students on the floor. "Noether" seminars continued at her home; she had a gift for making mathematics the very air people breathed.']]),
+ROOM('c1924',1924,'seminar','Нётер-boys','The Noether Boys',{0:[.1,.6],1:[.25,.7],4:[.2,.45],6:[.35,.65],3:[.25,.7]},[
+['table','Семинарский стол','The Seminar Table',
+'Вокруг неё собирается школа: Макс Дойринг, Ганс Фиттинг, Цюнгце Тсен, Эрнст Витт… Студенты зовут себя «Noether boys». Её семинары — не лекции, а совместное думание: она спорит, перебивает, радуется чужой удаче.',
+'A school gathered around her: Max Deuring, Hans Fitting, Chiungtze Tsen, Ernst Witt… The students called themselves the "Noether boys". Her seminars were not lectures but shared thinking: she argued, interrupted, rejoiced at others\' luck.'],
+['letter','Ван дер Варден','Van der Waerden',
+'В 1924 году в Гёттинген приезжает Бартел ван дер Варден — и попадает в её орбиту. Он позже напишет «Современную алгебру» по её идеям. Эмми отдаёт ученикам свои лучшие мысли и настаивает, чтобы они публиковали их сами.',
+'In 1924 Bartel van der Waerden came to Göttingen and entered her orbit. He would later write "Modern Algebra" from her ideas. Emmy gave students her best thoughts and insisted they publish them themselves.',['Bartel_Leendert_van_der_Waerden','Ван_дер_Варден,_Бартел_Леендерт']],
+['board','Щедрость идей','Generosity of Ideas',
+'Многие её теоремы опубликованы в работах учеников — она не считала идеи собственностью. «Это уже есть у Дедекинда», — любила повторять она, отдавая должное предшественнику. Её щедрость стала стилем целой школы.',
+'Many of her theorems appeared in her students\' papers — she did not treat ideas as property. "It is already in Dedekind," she loved to repeat, crediting her predecessor. Her generosity became the style of an entire school.']]),
+ROOM('c1928',1928,'moscowstreet','Москва','Moscow',{0:[.6,.86],1:[.3,.8],4:[.1,.3],6:[.3,.6],3:[.2,.6]},[
+['ticket','Зима 1928/29','Winter 1928/29',
+'Зимний семестр 1928/29 Эмми проводит в Москве: читает курс абстрактной алгебры в МГУ и ведёт семинар по алгебраической геометрии в Коммунистической академии. Советская математика впитывает её методы на целое поколение вперёд.',
+'Emmy spent the winter semester of 1928/29 in Moscow: a course on abstract algebra at Moscow University and a seminar on algebraic geometry at the Communist Academy. Soviet mathematics absorbed her methods a generation ahead.',['Moscow_State_University','Московский_государственный_университет']],
+['samovar','Самовар Александрова','Alexandrov\'s Samovar',
+'Её друг Павел Сергеевич Александров — тополог, душа московского математического круга. Чай, самовар, споры до утра: Эмми прижилась в «московском быту» удивительно легко, и её полюбили как свою.',
+'Her friend Pavel Sergeyevich Alexandrov, topologist and soul of the Moscow mathematical circle. Tea, the samovar, arguments till morning: Emmy settled into "Moscow ways" remarkably easily, and was loved as one of their own.',['Pavel_Alexandrov','Александров,_Павел_Сергеевич']],
+['board','Алгебра встречает топологию','Algebra Meets Topology',
+'Эмми убеждает топологов думать группами, а не числами: гомология — это группы и отображения, а не просто «числа Бетти». Эта идея перестроит топологию XX века; Александров и Хопф признают её влияние.',
+'Emmy urged topologists to think in groups, not numbers: homology is groups and maps, not just "Betti numbers". This idea would rebuild 20th-century topology; Alexandrov and Hopf acknowledged her influence.']]),
+ROOM('c1930',1930,'frankfurtstudy','«Современная алгебра»','"Modern Algebra"',{0:[.2,.7],1:[.3,.8],4:[.2,.45],6:[.4,.7],3:[.25,.7]},[
+['book','Moderne Algebra','Moderne Algebra',
+'1930–1931: ван дер Варден выпускает двухтомную «Современную алгебру», выросшую из лекций Нётер и Артина. Книга сделает её подход мировым стандартом: целые поколения выучат алгебру «по Нётер», даже не зная её имени.',
+'1930–1931: van der Waerden published the two-volume "Moderne Algebra", grown from the lectures of Noether and Artin. The book made her approach the world standard: generations learned algebra "after Noether" without even knowing her name.'],
+['poster','Франкфурт, зима 1930/31','Frankfurt, Winter 1930/31',
+'Зимний семестр 1930/31 она замещает профессора во Франкфурте-на-Майне. Её лекции — поток живой мысли: она может стереть доску трижды за минуту, но студенты видят, как рождается математика, а не как её переписывают.',
+'In the winter semester of 1930/31 she substituted for a professor in Frankfurt am Main. Her lectures were a stream of living thought: she might wipe the board three times a minute, but students saw mathematics being born, not copied.'],
+['letter','Письма ученикам','Letters to Students',
+'Она пишет ученикам длинные письма с задачами и поправками, хлопочет о стипендиях, устраивает встречи. Её школа — не здание, а переписка: нётеровская алгебра расходится по миру в конвертах.',
+'She wrote students long letters of problems and corrections, fought for their scholarships, arranged meetings. Her school was not a building but a correspondence: Noether-style algebra travelled the world in envelopes.']]),
+ROOM('c1932',1932,'congresshall','Цюрих. Вершина','Zurich. The Summit',{0:[0,.5],1:[.2,.65],4:[.25,.5],6:[.45,.75],3:[.3,.75]},[
+['poster','Конгресс в Цюрихе','The Zurich Congress',
+'Сентябрь 1932: Международный конгресс математиков в Цюрихе. Эмми Нётер читает пленарный доклад — высшее признание, которое математический мир может дать. Женщина без кафедры стоит перед всей мировой математикой.',
+'September 1932: the International Congress of Mathematicians in Zurich. Emmy Noether delivered a plenary lecture — the highest recognition the mathematical world can give. A woman without a chair stood before all of world mathematics.',['International_Congress_of_Mathematicians','Международный_конгресс_математиков']],
+['board','Брауэр–Хассе–Нётер','Brauer–Hasse–Noether',
+'В том же 1932 году выходит теорема Брауэра–Хассе–Нётер: каждая центральная простая алгебра над полем алгебраических чисел циклична. Триумф её школы некоммутативной алгебры — вершина, с которой видно всё поле.',
+'In the same year, 1932, came the Brauer–Hasse–Noether theorem: every central simple algebra over an algebraic number field is cyclic. A triumph of her noncommutative school — a summit overlooking the whole field.',['Brauer–Hasse–Noether_theorem','Эмми_Нётер']],
+['postcard','Пятьдесят лет','Fifty Years',
+'23 марта 1932 года ей исполняется 50. Гёттингенские коллеги и ученики собираются поздравить её — тёплый, шумный вечер. Через год этот мир рухнет, но сейчас он полон друзей, чая и теорем.',
+'On 23 March 1932 she turned fifty. Göttingen colleagues and students gathered to celebrate — a warm, noisy evening. Within a year this world would collapse, but now it was full of friends, tea and theorems.'],
+['plaque','Премия Аккермана–Тойбнера','The Ackermann–Teubner Prize',
+'В 1932 году Эмми и Эмиль Артин получают премию памяти Альфреда Аккермана–Тойбнера «за содействие математическому знанию» — 500 рейхсмарок. Скромная сумма, огромное признание: её имя стоит в одном ряду с лучшими.',
+'In 1932 Emmy and Emil Artin received the Alfred Ackermann–Teubner Memorial Award for the advancement of mathematical knowledge — 500 Reichsmarks. A modest sum, an enormous recognition: her name among the very best.',['Ackermann–Teubner_Memorial_Award','Эмми_Нётер']]]),
+ROOM('c1933a',1933,'apartmentdark','Апрель 1933','April 1933',{0:[.55,1],1:[.5,1],4:[.25,.55],6:[.2,.5],3:[.1,.5],5:[.1,.5]},[
+['notice','Уведомление','The Notice',
+'7 апреля 1933 года принят «Закон о восстановлении профессионального чиновничества»: евреев увольняют с государственных служб. Эмми Нётер — в числе первых изгнанных из Гёттингена. Ей 51, и её университет отнят.',
+'On 7 April 1933 the "Law for the Restoration of the Professional Civil Service" was passed: Jews were dismissed from state service. Emmy Noether was among the first expelled from Göttingen. She was 51, and her university was taken from her.'],
+['board','Доска в квартире','The Blackboard at Home',
+'Она продолжает преподавать — тихо, у себя дома: маленькая доска, несколько верных студентов, чайник на плите. Нацистский приказ не может отменить математику; семинар Нётер просто переезжает в гостиную.',
+'She kept teaching — quietly, at home: a small blackboard, a few loyal students, a kettle on the stove. A Nazi decree could not cancel mathematics; the Noether seminar simply moved into the living room.'],
+['letter','Письмо Хассе','The Letter to Hasse',
+'Другу Гельмуту Хассе она пишет об увольнении почти шутливо — без жалобы и злобы. Её достоинство поражает всех: «она не была озлобленной», — вспоминают друзья. Она уже думает о том, где сможет работать дальше.',
+'To her friend Helmut Hasse she wrote of her dismissal almost jokingly — no complaint, no bitterness. Her dignity astonished everyone: "she was not embittered," friends recalled. She was already thinking about where she could work next.',['Helmut_Hasse','Хассе,_Гельмут']]]),
+ROOM('c1933b',1933,'campus','Брин-Мор','Bryn Mawr',{0:[0,.5],1:[0,.35],4:[.1,.3],6:[.15,.45],3:[.2,.65]},[
+['ticket','Октябрь 1933: отплытие','October 1933: Sailing',
+'Помогают все: Герман Вейль, Соломон Лефшец, чрезвычайный комитет фонда Рокфеллера оплачивает её место. В октябре 1933 года Эмми отплывает в Америку. Женский колледж Брин-Мор в Пенсильвании предлагает ей работу — первую настоящую в её жизни.',
+'Everyone helped: Hermann Weyl, Solomon Lefschetz, and the Rockefeller Foundation\'s Emergency Committee funded her position. In October 1933 Emmy sailed for America. Bryn Mawr, a women\'s college in Pennsylvania, offered her a job — the first real one of her life.',['Bryn_Mawr_College','Брин-Мор_(колледж)']],
+['letter','Фонд Рокфеллера','The Rockefeller Fund',
+'Чрезвычайный комитет помощи изгнанным немецким учёным спасает сотни людей от нацизма. Стипендия фонда позволяет Брин-Мору пригласить Эмми — так американский женский колледж получает величайшего алгебраиста эпохи.',
+'The Emergency Committee to Aid Displaced German Scholars rescued hundreds of scholars from Nazism. Its grant let Bryn Mawr invite Emmy — and so an American women\'s college received the greatest algebraist of the age.',['Rockefeller_Foundation','Фонд_Рокфеллера']],
+['gate','Ворота Брин-Мор','The Gates of Bryn Mawr',
+'Брин-Мор — женский колледж с готическими воротами и серьёзной математикой. Её коллега Анна Пелл Уилер, тоже учившаяся в Гёттингене, помогает обустроиться. Впервые Эмми работает среди женщин — и среди равных.',
+'Bryn Mawr was a women\'s college with Gothic gates and serious mathematics. Her colleague Anna Pell Wheeler, who had also studied in Göttingen, helped her settle. For the first time Emmy worked among women — and among equals.',['Anna_Pell_Wheeler','Эмми_Нётер']],
+['poster','Лекции в Принстоне','Lectures at Princeton',
+'Раз в неделю Эмми ездит в Институт перспективных исследований в Принстоне и читает лекции — там же работает Эйнштейн. Принстонский университет женщин не нанимал, но Институт принял её без оговорок.',
+'Once a week Emmy travelled to the Institute for Advanced Study in Princeton to lecture — Einstein worked there too. Princeton University did not hire women, but the Institute welcomed her without caveats.',['Institute_for_Advanced_Study','Институт_перспективных_исследований']]]),
+ROOM('c1934',1934,'brynmawrroom','Новый круг','A New Circle',{0:[0,.55],1:[.15,.6],4:[.1,.3],6:[.25,.55],3:[.25,.7]},[
+['photo','«Noether girls»','The Noether Girls',
+'Вокруг неё — четыре ученицы: Мари Вайс, Грейс Шовер Куинн, Ольга Таусски-Тодд и аспирантка Рут Штауффер. Впервые в жизни Эмми преподаёт женщинам всерьёз — и расцветает: её семинары снова полны смеха и открытий.',
+'Around her were four students: Marie Weiss, Grace Shover Quinn, Olga Taussky-Todd and doctoral student Ruth Stauffer. For the first time Emmy taught women in earnest — and blossomed: her seminars were again full of laughter and discovery.',['Olga_Taussky-Todd','Таусски-Тодд,_Ольга']],
+['notes','Лекции на английском','Lectures in English',
+'Она читает на английском — языке, который учила в школе для девочек в Эрлангене сорок лет назад. Сначала трудно, потом свободно: студентки обожают её живость, её мел, летящий в доску, её полную отдачу.',
+'She lectured in English — the language she had learned at the Erlangen girls\' school forty years earlier. Hard at first, then fluent: the students adored her liveliness, her chalk flying at the board, her total devotion.'],
+['suitcase','Лето 1934: прощание','Summer 1934: Farewell',
+'Летом 1934 она ненадолго возвращается в Германию: разобрать гёттингенскую квартиру, обнять друзей, закрыть старую жизнь. В Брин-Мор она возвращается с чемоданом книг и планами на годы вперёд.',
+'In summer 1934 she briefly returned to Germany: to pack up her Göttingen flat, embrace friends, close the old life. She came back to Bryn Mawr with a suitcase of books and plans for years ahead.'],
+['letter','Письмо Таусски','Taussky\'s Letter',
+'Ольга Таусски-Тодд позже напишет воспоминания: Эмми была щедра, тепла, целиком занята математикой и людьми. Она успела вырастить американский круг учениц — её школа продолжилась по обе стороны океана.',
+'Olga Taussky-Todd later wrote her recollections: Emmy was generous, warm, wholly devoted to mathematics and to people. She had time to grow an American circle of students — her school continued on both sides of the ocean.']])
+];
+ROOMS_C.push.apply(ROOMS_C,ROOMS_C2);
+const ROOMS_B=[
+ROOM('b_ring',null,'ringabstract','Кольцо','The Ring',{4:[.3,.7],6:[.7,1],3:[.75,1],5:[.4,.9]},[
+['ring','Кольцо','The Ring',
+'Кольцо — множество, где можно складывать и умножать: целые числа, многочлены, матрицы. Эмми увидела за примерами общую структуру и сделала кольца главным объектом алгебры. Современная алгебра стоит на этом понятии.',
+'A ring is a set where you can add and multiply: integers, polynomials, matrices. Emmy saw the common structure behind the examples and made rings algebra\'s central object. Modern algebra stands on this concept.',['Ring_(mathematics)','Кольцо_(математика)']],
+['chain','Условие Нётер','The Noether Condition',
+'Нётерово кольцо — то, где любая возрастающая цепь идеалов обрывается. Эквивалентно: каждый идеал конечно порождён. Это условие — золотой стандарт «хорошей» алгебры: от него до сих пор отталкиваются все.',
+'A Noetherian ring is one where every ascending chain of ideals stops. Equivalently: every ideal is finitely generated. This condition is the gold standard of "good" algebra: everything still starts from it.'],
+['plaque','Шевалле, 1943','Chevalley, 1943',
+'Клод Шевалле вводит термин «нётерово кольцо» в 1943 году. Имя Эмми становится частью языка: нётеровы кольца, нётеровы модули, нётерова индукция. Математики произносят его ежедневно, часто не зная, чьё оно.',
+'Claude Chevalley coined the term "Noetherian ring" in 1943. Emmy\'s name became part of the language: Noetherian rings, Noetherian modules, Noetherian induction. Mathematicians say it daily, often without knowing whose name it is.']]),
+ROOM('b_sym',null,'symmetry','Симметрия','Symmetry',{4:[.35,.75],6:[.7,1],3:[.6,1],5:[.5,1]},[
+['mirror','Симметрия → сохранение','Symmetry → Conservation',
+'Теорема Нётер — рабочий инструмент физики: калибровочные симметрии Стандартной модели, сохранение заряда, энергии, импульса. Каждый раз, когда физики находят новую симметрию, они пользуются её теоремой — спустя век.',
+'Noether\'s theorem is a working tool of physics: the gauge symmetries of the Standard Model, conservation of charge, energy, momentum. Every time physicists find a new symmetry, they use her theorem — a century on.',['Noether%27s_theorem','Теорема_Нётер']],
+['gauge','Калибровочные поля','Gauge Fields',
+'Вторая теорема Нётер лежит в основе калибровочных теорий: электромагнетизм, слабые и сильные взаимодействия. Тождества Нётер связывают уравнения поля — без них не было бы современной физики частиц.',
+'Noether\'s second theorem underlies gauge theories: electromagnetism, the weak and strong interactions. Noether identities tie the field equations together — without them there would be no modern particle physics.',['Gauge_theory','Калибровочная_инвариантность']],
+['pendulum','Энергия времени','The Energy of Time',
+'Почему энергия сохраняется? Потому что законы физики сегодня и завтра одинаковы. Эмми превратила этот философский вопрос в точную теорему — и дала физике её самый глубокий принцип организации.',
+'Why is energy conserved? Because the laws of physics are the same today and tomorrow. Emmy turned this philosophical question into a precise theorem — and gave physics its deepest organising principle.']]),
+ROOM('b_ideal',null,'chessabstract','Ласкер и идеалы','Lasker and Ideals',{4:[.25,.6],6:[.55,.9],3:[.5,1],5:[.3,.8]},[
+['chess','Чемпион и математик','Champion and Mathematician',
+'Эмануэль Ласкер держал шахматную корону 27 лет (1894–1921) — дольше всех в истории. Но он был и серьёзным математиком: в 1905 году доказал теорему о разложении идеалов в кольцах многочленов.',
+'Emanuel Lasker held the chess crown for 27 years (1894–1921) — the longest reign in history. But he was also a serious mathematician: in 1905 he proved a decomposition theorem for ideals in polynomial rings.',['Emanuel_Lasker','Ласкер,_Эмануэль']],
+['manuscript','Статья 1905 года','The 1905 Paper',
+'Ласкер доказал: идеалы в кольцах многочленов разлагаются в пересечение примарных. Теорема красивая, но узкая. Эмми увидела в ней общий принцип — и перенесла его на все нётеровы кольца.',
+'Lasker proved that ideals in polynomial rings decompose into intersections of primary ideals. A beautiful but narrow theorem. Emmy saw the general principle in it — and carried it over to all Noetherian rings.'],
+['ring','Теорема Ласкера–Нётер','The Lasker–Noether Theorem',
+'Первичное разложение — алгебраический аналог разложения числа на простые множители. Теорема Ласкера–Нётер — фундамент коммутативной алгебры и алгебраической геометрии: из неё выросли схемы Гротендика.',
+'Primary decomposition is algebra\'s analogue of factoring numbers into primes. The Lasker–Noether theorem is a foundation of commutative algebra and algebraic geometry: Grothendieck\'s schemes grew from it.']]),
+ROOM('b_mod',null,'moduleabstract','Модули и алгебры','Modules and Algebras',{4:[.35,.75],6:[.7,1],3:[.7,1],5:[.4,.9]},[
+['lattice','Модули','Modules',
+'Модуль — векторное пространство над кольцом. В 1920 году Эмми со Шмайдлером вводит левые и правые идеалы, условия цепей — и создаёт общую теорию модулей. Язык модулей стал универсальным языком алгебры.',
+'A module is a vector space over a ring. In 1920 Emmy, with Schmeidler, introduced left and right ideals and chain conditions — creating the general theory of modules. Module language became algebra\'s universal tongue.',['Module_(mathematics)','Модуль_(математика)']],
+['board','Гиперкомплексные величины','Hypercomplex Quantities',
+'1929 год: «Гиперкомплексные величины и теория представлений». Эмми строит алгебры как системы с умножением — и объясняет их представления через модули. Некоммутативная алгебра получает свой фундамент.',
+'1929: "Hypercomplex Quantities and Representation Theory". Emmy built algebras as systems with multiplication — and explained their representations through modules. Noncommutative algebra gained its foundation.'],
+['ring','Брауэр–Хассе–Нётер','Brauer–Hasse–Noether',
+'Совместно с Рихардом Брауэром и Гельмутом Хассе она доказывает: центральные простые алгебры над полями алгебраических чисел цикличны. Теорема 1932 года — жемчужина теории алгебр и теории чисел.',
+'With Richard Brauer and Helmut Hasse she proved that central simple algebras over algebraic number fields are cyclic. The 1932 theorem is a jewel of the theory of algebras and of number theory.']]),
+ROOM('b_school',null,'seminar','Школа','The School',{0:[.1,.6],1:[.25,.7],4:[.15,.4],6:[.3,.6],3:[.25,.7]},[
+['tree','Дерево учеников','The Tree of Students',
+'Её ученики и собеседники: ван дер Варден, Дойринг, Фиттинг, Тсен, Витт, Артин, Брауэр, Хассе, Александров… «Нётеровская школа» — не кафедра, а сеть умов, разошедшаяся по всему миру.',
+'Her students and interlocutors: van der Waerden, Deuring, Fitting, Tsen, Witt, Artin, Brauer, Hasse, Alexandrov… The "Noether school" was not a chair but a network of minds spread across the world.'],
+['book','«Уже у Дедекинда»','"Already in Dedekind"',
+'«Es steht schon bei Dedekind» — её присказка. Эмми видела корни своих идей у Рихарда Дедекинда и щедро это признавала. А её собственные идеи ученики находили «уже у Нётер» — и несли дальше.',
+'"Es steht schon bei Dedekind" — her refrain. Emmy saw the roots of her ideas in Richard Dedekind and generously said so. And her own ideas her students found "already in Noether" — and carried further.',['Richard_Dedekind','Дедекинд,_Рихард']],
+['table','Семинар как метод','The Seminar as Method',
+'Она не читала готовых лекций: думала вслух, ошибалась, исправлялась, вовлекала всех. Ученики вспоминали этот хаос как высшую школу мышления. Многие её результаты впервые прозвучали именно в этих спорах.',
+'She did not deliver finished lectures: she thought aloud, erred, corrected herself, drew everyone in. Students remembered this chaos as the highest school of thinking. Many of her results first sounded in these very arguments.']]),
+ROOM('b_topo',null,'topoabstract','Топология','Topology',{4:[.3,.7],6:[.65,1],3:[.6,1],5:[.4,.9]},[
+['mobius','Лента и группы','The Strip and the Groups',
+'Эмми убедила топологов: гомологии — это группы, а не числа. Александров и Хопф перестроили топологию на этом языке; их книга «Топология» (1935) несёт след её идей. Алгебраизация топологии — её революция.',
+'Emmy convinced topologists that homology is groups, not numbers. Alexandrov and Hopf rebuilt topology in this language; their 1935 book "Topologie" bears the mark of her ideas. The algebraisation of topology was her revolution.',['Homology_(mathematics)','Гомология_(математика)']],
+['letter','Александров','Alexandrov',
+'Павел Александров был её ближайшим другом в московском круге: они говорили о математике часами, гуляли, пили чай. Он вспоминал её заразительный смех, её полную поглощённость идеями — и её человеческое тепло.',
+'Pavel Alexandrov was her closest friend in the Moscow circle: they talked mathematics for hours, walked, drank tea. He remembered her infectious laugh, her total absorption in ideas — and her human warmth.'],
+['lattice','Группы вместо чисел','Groups Instead of Numbers',
+'Числа Бетти считали «дырки» в пространстве. Эмми предложила смотреть на сами группы и отображения между ними — так топология стала алгеброй. Этот взгляд лежит в основе всей современной алгебраической топологии.',
+'Betti numbers counted the "holes" in a space. Emmy proposed looking at the groups themselves and the maps between them — and topology became algebra. This view underlies all of modern algebraic topology.']]),
+ROOM('b_sky',null,'observatory','Память в небе','Memory in the Sky',{0:[0,.44],1:[.75,1],4:[.05,.25],6:[.2,.5],3:[.2,.6],5:[.5,1]},[
+['telescope','Кратер Нётер','The Noether Crater',
+'На обратной стороне Луны есть кратер Нётер — деталь лунного рельефа, невидимая с Земли. Как и её работа долгое время: фундамент, который не видно, но на котором всё держится.',
+'On the far side of the Moon lies the crater Nöther — a feature of the lunar surface invisible from Earth. Like her work for a long time: a foundation unseen, yet holding everything up.',['Nöther_(crater)','Нётер_(кратер)']],
+['plaque','Астероид 7001','Asteroid 7001',
+'Астероид главного пояса (7001) Нётер назван в её честь. Номер 7001 — круглое, почти юбилейное число для объекта, парящего между Марсом и Юпитером: маленькая планета памяти о большом уме.',
+'The main-belt asteroid (7001) Noether is named in her honour. Number 7001 — a round, almost jubilee number for an object drifting between Mars and Jupiter: a small planet of memory for a great mind.',['7001_Noether','(7001)_Нётер']],
+['screen','Дудл 2015','The 2015 Doodle',
+'23 марта 2015 года, в 133-й день рождения Эмми, Google посвятил ей дудл: кольца, идеалы и симметрии на главной странице мира. Миллионы людей впервые узнали имя женщины, изменившей алгебру и физику.',
+'On 23 March 2015, Emmy\'s 133rd birthday, Google dedicated a doodle to her: rings, ideals and symmetries on the world\'s front page. Millions first learned the name of the woman who changed algebra and physics.',['Google_Doodle','Эмми_Нётер']]]),
+ROOM('b_map',null,'modernstreet','Имя на карте','A Name on the Map',{0:[0,.5],1:[.2,.65],4:[.05,.25],6:[.15,.45],3:[.25,.7]},[
+['sign','Программа DFG','The DFG Programme',
+'Немецкое научное общество (DFG) ведёт программу имени Эмми Нётер: она даёт молодым учёным собственную группу и независимость. Её имя стало синонимом шанса — того, которого когда-то не дали ей.',
+'The German Research Foundation (DFG) runs the Emmy Noether Programme: it gives young scientists their own group and independence. Her name became a synonym for the chance she herself was once denied.',['List_of_things_named_after_Emmy_Noether','Эмми_Нётер']],
+['sign','Лекция Нётер','The Noether Lecture',
+'С 1980 года Ассоциация женщин в математике (AWM) проводит ежегодную лекцию имени Эмми Нётер — её читают выдающиеся математики мира. Каждая лекция — продолжение того пути, который она проложила.',
+'Since 1980 the Association for Women in Mathematics has held the annual Emmy Noether Lecture, delivered by outstanding mathematicians. Each lecture continues the path she laid.',['Noether_Lecture','Эмми_Нётер']],
+['sign','Гимназия в Эрлангене','The Erlangen Gymnasium',
+'В её родном Эрлангене есть гимназия имени Эмми Нётер; её имя носят улицы, школы и кампус университета Зигена. Город, где ей когда-то пришлось просить разрешения слушать лекции, теперь гордится её именем.',
+'In her native Erlangen there is the Emmy-Noether-Gymnasium; streets, schools and the University of Siegen\'s campus bear her name. The town where she once had to beg permission to attend lectures now proudly carries her name.']])
+];
+
+/* ---------- rooms registry / modes / ages ---------- */
+const ALL_ROOMS=ROOMS_C.concat(ROOMS_B);
+const ROOM_BY_ID={};ALL_ROOMS.forEach(r=>ROOM_BY_ID[r.id]=r);
+function orderFor(mode,seed){
+  if(mode==='chrono')return ROOMS_C.map(r=>r.id);
+  if(mode==='bonus')return ROOMS_B.map(r=>r.id);
+  const ids=ALL_ROOMS.map(r=>r.id);
+  const rnd=mulberry32((seed^0x5F3EE7)>>>0);
+  for(let i=ids.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=ids[i];ids[i]=ids[j];ids[j]=t;}
+  return ids;
+}
+function ageFor(year){
+  if(!year)return 'mature';
+  const a=year-1882;
+  return a<13?'child':a<22?'teen':a<33?'young':a<48?'mature':'elder';
+}
+function wikiUrl(w){
+  const slug=lang==='ru'?w[1]:w[0];
+  return 'https://'+(lang==='ru'?'ru':'en')+'.wikipedia.org/wiki/'+encodeURI(slug).replace(/%2527/g,'%27');
+}
+
+/* ---------- seed axes ---------- */
+function roomAxes(room,seed){
+  const out=[];
+  for(let i=0;i<8;i++){
+    let rg=room.ax[i]||[0,1];
+    if(i===7){
+      if(room.year){const e=clamp((1936-room.year)/60,0,1);rg=[clamp(e-.12,0,1),clamp(e+.12,0,1)];}
+      else rg=[0,.35];
+    }
+    const rnd=mulberry32((seed^hashStr(room.id)^Math.imul(i+1,0x9E3779B9))>>>0);
+    out.push(clamp(rg[0]+rnd()*(rg[1]-rg[0]),rg[0],rg[1]));
+  }
+  return out;
+}
+function derive(ax){
+  return {
+    weather:ax[0]<.22?0:ax[0]<.44?1:ax[0]<.66?2:ax[0]<.86?3:4,
+    time:Math.min(3,Math.floor(ax[1]*4)),
+    detail:ax[2],pal:Math.min(3,Math.floor(ax[3]*4)),
+    glitch:ax[4],dust:ax[5],abs:ax[6],age:ax[7]
+  };
+}
+
+/* ---------- palettes ---------- */
+const PALS=[
+ {sky:['#2e2440','#7a4a52','#e8a06a'],far:'#4a3550',mid:'#6a4a52',wall:'#c9a878',wall2:'#b08a5c',wains:'#7a5236',floor:'#8a5a36',floor2:'#6e4527',wood:'#7a4e2e',wood2:'#5c3a20',paper:'#efe0bd',ink:'#3a2c1e',acc:'#b04a32',acc2:'#d9a441',glow:'#ffcf8a',metal:'#c9a86a',leaf:'#5c7a3a'},
+ {sky:['#1c2438','#3a5570','#9ab4c4'],far:'#2e3c52',mid:'#46586e',wall:'#b9c2c6',wall2:'#9aa6ac',wains:'#4e5a64',floor:'#6e5a48',floor2:'#54432f',wood:'#5c4a38',wood2:'#403226',paper:'#e8ecec',ink:'#22303a',acc:'#2e5f9e',acc2:'#c9a86a',glow:'#bcd9ff',metal:'#8a9aa6',leaf:'#4a6e4a'},
+ {sky:['#0a0620','#241448','#4a1e6e'],far:'#1c1040',mid:'#301a58',wall:'#1e1440',wall2:'#160e30',wains:'#2a1a52',floor:'#141034',floor2:'#0c0a24',wood:'#241a4e',wood2:'#181038',paper:'#1a1440',ink:'#d8d0ff',acc:'#ff2e88',acc2:'#21e6c1',glow:'#8a5cff',metal:'#5a4a9e',leaf:'#21e6c1'},
+ {sky:['#3a2e22','#8a6e4a','#d9b98a'],far:'#5c4a34',mid:'#7a6244',wall:'#d3bd94',wall2:'#b89e72',wains:'#8a6e48',floor:'#96774e',floor2:'#755a38',wood:'#82643e',wood2:'#5e4628',paper:'#e9d9b0',ink:'#4a3826',acc:'#a0522d',acc2:'#b8912e',glow:'#ffd9a0',metal:'#b09468',leaf:'#7a7a44'}
+];
+const TIME_SKY=[['#4a3060','#c46a6a','#ffc98a'],['#3a6ea0','#7ab0d9','#d9ecf4'],['#3a2050','#a04a6a','#ff9a5c'],['#060a1e','#101a3e','#2a3a66']];
+const TIME_TINT=['#ffb27a','#ffffff','#ff9a5c','#4a5a9e'];
+const TIME_AMB=[.14,0,.16,.4];
+const LAMP_STR=[.55,.18,.8,1];
+function buildPalette(d){
+  const P=Object.assign({},PALS[d.pal]);
+  const T=d.time,sm=TIME_SKY[T];
+  P.sky=[mixc(P.sky[0],sm[0],.55),mixc(P.sky[1],sm[1],.55),mixc(P.sky[2],sm[2],.55)];
+  P.amb=TIME_TINT[T];P.ambA=TIME_AMB[T];P.lamp=LAMP_STR[T];
+  P.night=T===3;P.dusk=T===2;P.dawn=T===0;
+  P.far=mixc(P.far,P.sky[1],.25);P.mid=mixc(P.mid,P.sky[2],.12);
+  return P;
+}
+
+/* ---------- scene table ---------- */
+const SCENES={
+ nursery:{base:'in',sky:'erlangen',floor:'wood',win:2,decor:'home'},
+ childroom:{base:'in',sky:'erlangen',floor:'wood',win:1,decor:'home'},
+ classroom:{base:'in',sky:'erlangen',floor:'wood',win:2,decor:'school'},
+ examhall:{base:'in',sky:'erlangen',floor:'stone',win:2,decor:'hall'},
+ lecturehall:{base:'in',sky:'erlangen',floor:'wood',win:2,decor:'hall'},
+ goettingenstreet:{base:'out',sky:'goettingen',ground:'cobble'},
+ office:{base:'in',sky:'erlangen',floor:'wood',win:1,decor:'office'},
+ defensehall:{base:'in',sky:'erlangen',floor:'stone',win:2,decor:'hall'},
+ study:{base:'in',sky:'erlangen',floor:'wood',win:1,decor:'study'},
+ goettingenhall:{base:'in',sky:'goettingen',floor:'stone',win:3,decor:'hall'},
+ symmetry:{base:'abs',sky:'abstract',ground:'grid'},
+ einsteinoffice:{base:'in',sky:'goettingen',floor:'wood',win:1,decor:'office'},
+ hall:{base:'in',sky:'goettingen',floor:'stone',win:2,decor:'hall'},
+ ringabstract:{base:'abs',sky:'abstract',ground:'grid'},
+ apartment:{base:'in',sky:'goettingen',floor:'wood',win:1,decor:'home'},
+ seminar:{base:'in',sky:'goettingen',floor:'wood',win:2,decor:'study'},
+ moscowstreet:{base:'out',sky:'moscow',ground:'cobble'},
+ frankfurtstudy:{base:'in',sky:'goettingen',floor:'wood',win:1,decor:'study'},
+ congresshall:{base:'in',sky:'goettingen',floor:'stone',win:3,decor:'hall'},
+ apartmentdark:{base:'in',sky:'goettingen',floor:'wood',win:1,decor:'home'},
+ campus:{base:'out',sky:'brynmawr',ground:'grass'},
+ brynmawrroom:{base:'in',sky:'brynmawr',floor:'wood',win:2,decor:'study'},
+ chessabstract:{base:'abs',sky:'abstract',ground:'grid'},
+ moduleabstract:{base:'abs',sky:'abstract',ground:'grid'},
+ topoabstract:{base:'abs',sky:'abstract',ground:'grid'},
+ observatory:{base:'out',sky:'night',ground:'grass'},
+ modernstreet:{base:'out',sky:'modern',ground:'cobble'}
+};
+
+/* ============================================================
+   AUDIO — Web Audio API, no files
+   ============================================================ */
+const Snd={
+ ctx:null,master:null,music:null,sfx:null,noise:null,pad:null,padG:null,padF:null,
+ rainG:null,windG:null,ambRoom:null,nextNote:0,
+ init(){
+  if(this.ctx)return;
+  const AC=(typeof window!=='undefined')&&(window.AudioContext||window.webkitAudioContext);
+  if(!AC)return;
+  try{this.ctx=new AC();}catch(e){return;}
+  const c=this.ctx;
+  this.master=c.createGain();this.master.gain.value=save.sound?0.85:0;this.master.connect(c.destination);
+  this.music=c.createGain();this.music.gain.value=1;this.music.connect(this.master);
+  this.sfx=c.createGain();this.sfx.gain.value=1;this.sfx.connect(this.master);
+  const len=c.sampleRate*2,buf=c.createBuffer(1,len,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  this.noise=buf;
+  this.padG=c.createGain();this.padG.gain.value=0.035;
+  this.padF=c.createBiquadFilter();this.padF.type='lowpass';this.padF.frequency.value=520;
+  this.padG.connect(this.padF);this.padF.connect(this.music);
+  this.pad=[];
+  const mk=(type,f,det)=>{const o=c.createOscillator();o.type=type;o.frequency.value=f;o.detune.value=det;o.connect(this.padG);o.start();this.pad.push(o);return o;};
+  mk('sine',110,0);mk('triangle',165,4);mk('sine',220,-5);
+  const lfo=c.createOscillator(),lg=c.createGain();lfo.frequency.value=0.07;lg.gain.value=140;
+  lfo.connect(lg);lg.connect(this.padF.frequency);lfo.start();
+  const rs=c.createBufferSource();rs.buffer=buf;rs.loop=true;
+  const rf=c.createBiquadFilter();rf.type='bandpass';rf.frequency.value=4200;rf.Q.value=0.6;
+  this.rainG=c.createGain();this.rainG.gain.value=0;
+  rs.connect(rf);rf.connect(this.rainG);this.rainG.connect(this.music);rs.start();
+  const ws=c.createBufferSource();ws.buffer=buf;ws.loop=true;
+  const wf=c.createBiquadFilter();wf.type='lowpass';wf.frequency.value=320;
+  this.windG=c.createGain();this.windG.gain.value=0;
+  ws.connect(wf);wf.connect(this.windG);this.windG.connect(this.music);ws.start();
+ },
+ resume(){if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});},
+ setOn(v){if(!this.ctx)return;const t=this.ctx.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(v?0.85:0,t,0.05);},
+ duck(v){if(!this.ctx)return;const t=this.ctx.currentTime;this.music.gain.setTargetAtTime(v,t,0.08);this.sfx.gain.setTargetAtTime(v,t,0.08);},
+ room(d,base,root){
+  if(!this.ctx)return;
+  const t=this.ctx.currentTime;
+  const freqs=[root,root*1.5,root*2];
+  for(let i=0;i<3;i++)this.pad[i].frequency.setTargetAtTime(freqs[i],t,0.4);
+  this.padG.gain.setTargetAtTime(0.05+(base==='abs'?0.02:0),t,0.6);
+  this.padF.frequency.setTargetAtTime(base==='abs'?900:520,t,0.5);
+  const rainy=d.weather===2||d.weather===4;
+  const rg=rainy?(base==='in'?0.02:0.055)*(d.weather===4?1.5:1):0;
+  this.rainG.gain.setTargetAtTime(rg,t,0.8);
+  this.windG.gain.setTargetAtTime(base==='out'?0.035:0.008,t,0.8);
+  this.ambRoom={d,base,root};
+ },
+ tone(f,dur,type,vol,when){
+  if(!this.ctx||!save.sound)return;
+  const c=this.ctx,t=(when||c.currentTime);
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.12,t+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(this.sfx);o.start(t);o.stop(t+dur+0.05);
+ },
+ burst(dur,freq,vol,type){
+  if(!this.ctx||!save.sound)return;
+  const c=this.ctx,t=c.currentTime;
+  const s=c.createBufferSource();s.buffer=this.noise;
+  const f=c.createBiquadFilter();f.type=type||'highpass';f.frequency.value=freq;
+  const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f);f.connect(g);g.connect(this.sfx);s.start(t);s.stop(t+dur+0.05);
+ },
+ click(){this.tone(660,0.06,'square',0.05);},
+ step(alt){this.burst(0.05,900,0.05);this.tone(alt?82:70,0.07,'sine',0.06);},
+ open(){this.tone(523,0.12,'sine',0.09);this.tone(784,0.16,'sine',0.07,this.ctx?this.ctx.currentTime+0.07:0);},
+ page(){this.tone(440,0.05,'triangle',0.05);},
+ close(){this.tone(392,0.08,'sine',0.06);},
+ complete(){if(!this.ctx)return;const t=this.ctx.currentTime;[523,659,784].forEach((f,i)=>this.tone(f,0.22,'sine',0.09,t+i*0.09));},
+ unlock(){if(!this.ctx)return;const t=this.ctx.currentTime;[523,659,784,1046].forEach((f,i)=>this.tone(f,0.3,'triangle',0.1,t+i*0.12));},
+ error(){this.tone(110,0.18,'sawtooth',0.07);},
+ whoosh(){this.burst(0.5,600,0.06,'bandpass');},
+ thunder(){this.burst(1.2,140,0.12,'lowpass');this.tone(46,1.0,'sine',0.08);},
+ note(f){this.tone(f,0.9,'sine',0.035);},
+ tick(){
+  if(!this.ctx||!save.sound||!this.ambRoom)return;
+  const d=this.ambRoom.d;
+  if(d.abs>0.45&&this.ctx.currentTime>this.nextNote){
+    const scale=[1,1.2,1.5,1.8,2,2.4];
+    const r=mulberry32((save.seed+Math.floor(this.ctx.currentTime*10))>>>0);
+    this.note(this.ambRoom.root*2*scale[Math.floor(r()*scale.length)]);
+    this.nextNote=this.ctx.currentTime+1.2+r()*2.2;
+  }
+ }
+};
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+const Input={left:false,right:false,ptr:new Map()};
+let uiButtons=[];
+function btn(id,x,y,w,h,hold){uiButtons.push({id,x,y,w,h,hold:!!hold});}
+function hitBtn(x,y){for(let i=uiButtons.length-1;i>=0;i--){const b=uiButtons[i];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return b;}return null;}
+
+/* ============================================================
+   PIXEL PROPS
+   ============================================================ */
+const FORMULAS=['∂L/∂q','dS = 0','E = const','∫ L dt','Δt → ΔE','φ(x) = φ(-x)','I1 < I2 < I3','a ∈ I','R/I','A ⊕ B','∂J = 0','det A ≠ 0','f: R → R','ker f','im f','[a,b]','ab ≠ ba','p(x) ∈ R','Σ','π','λ','Ω','∞'];
+function px(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));}
+function outline(g,x,y,w,h,c,t){t=t||1;px(g,x,y,w,t,c);px(g,x,y+h-t,w,t,c);px(g,x,y,t,h,c);px(g,x+w-t,y,t,h,c);}
+function sheet(g,x,y,w,h,P,lines,rnd){
+  px(g,x,y,w,h,P.paper);outline(g,x,y,w,h,shade(P.paper,0.6));
+  px(g,x,y,w,1,shade(P.paper,1.08));
+  const n=lines||Math.max(2,Math.floor(h/5));
+  for(let i=0;i<n;i++){const ly=y+3+i*(h-5)/n;const lw=w*(0.5+rnd()*0.4);px(g,x+2,ly,lw,1,rgba(P.ink,0.55));}
+}
+function stand(g,cx,gy,s,P,h){
+  const w=0.34*s;
+  px(g,cx-w/2,gy-h*s,w,h*s,P.wood2);
+  px(g,cx-w/2,gy-h*s,w*0.3,h*s,P.wood);
+  px(g,cx-0.3*s,gy-0.06*s,0.6*s,0.06*s,P.wood2);
+}
+function waxSeal(g,x,y,r,c){px(g,x-r,y-r,r*2,r*2,c);px(g,x-r*0.5,y-r*0.5,r,r,mixc(c,'#ffffff',0.3));}
+function chalkBoard(g,cx,gy,s,P,rnd,big){
+  const w=(big?1.7:1.3)*s,h=(big?1.15:0.95)*s,top=gy-(big?1.9:1.6)*s;
+  px(g,cx-w/2-2,top-2,w+4,h+4,P.wood);
+  px(g,cx-w/2,top,w,h,mixc(P.wains,'#101418',0.55));
+  px(g,cx-w/2,top,w,2,rgba('#ffffff',0.06));
+  const n=big?7:4;
+  for(let i=0;i<n;i++){
+    const f=FORMULAS[Math.floor(rnd()*FORMULAS.length)];
+    const fx=cx-w/2+4+rnd()*Math.max(1,(w-textW(f,1)-8));
+    const fy=top+5+i*(h-10)/n;
+    drawText(g,f,fx,fy,rgba('#e8f0e8',0.5+rnd()*0.4),1);
+  }
+  px(g,cx-w/2,gy-0.5*s,3,0.5*s,P.wood2);px(g,cx+w/2-3,gy-0.5*s,3,0.5*s,P.wood2);
+  px(g,cx-w/2,gy-0.52*s,w,3,P.wood);
+  px(g,cx+w*0.2,gy-0.55*s,0.09*s,2,'#e8e8e8');
+}
+function framed(g,cx,cy,w,h,P,inner){
+  px(g,cx-w/2-2,cy-h/2-2,w+4,h+4,P.wood);
+  px(g,cx-w/2-1,cy-h/2-1,w+2,h+2,P.acc2);
+  inner();
+}
+function bust(g,cx,cy,w,h,P,kind){
+  px(g,cx-w/2,cy-h/2,w,h,mixc(P.paper,P.wall,0.3));
+  const sk=mixc('#d9a878',P.paper,0.25),hr=kind==='grey'?'#b8b0a4':kind==='wild'?'#d8d4cc':'#3a2c20';
+  const hx0=cx-w*0.16,hy0=cy-h*0.28;
+  px(g,hx0,hy0,w*0.32,h*0.3,sk);
+  px(g,hx0-w*0.03,hy0-h*0.06,w*0.38,h*0.12,hr);
+  if(kind==='beard')px(g,hx0,hy0+h*0.2,w*0.32,h*0.14,hr);
+  if(kind==='wild'){px(g,hx0-w*0.1,hy0-h*0.1,w*0.52,h*0.1,hr);px(g,hx0-w*0.08,hy0,w*0.06,h*0.16,hr);px(g,hx0+w*0.34,hy0,w*0.06,h*0.16,hr);}
+  if(kind==='woman'){px(g,hx0-w*0.05,hy0,w*0.08,h*0.26,hr);px(g,hx0+w*0.29,hy0,w*0.08,h*0.26,hr);px(g,hx0+w*0.1,hy0-h*0.1,w*0.14,h*0.08,hr);}
+  px(g,cx-w*0.26,cy+h*0.06,w*0.52,h*0.4,kind==='woman'?P.acc:mixc(P.ink,P.wall,0.35));
+  px(g,hx0+w*0.06,hy0+h*0.1,2,2,'#2a2018');px(g,hx0+w*0.2,hy0+h*0.1,2,2,'#2a2018');
+}
+const PROPS={};
+function defProp(k,h,w,fn){PROPS[k]={h,w,fn};}
+function paperProp(kind){
+  return function(g,cx,gy,s,P,rnd){
+    if(kind==='quill'){
+      const w=1.1*s,h=0.78*s,top=gy-h;
+      px(g,cx-w/2,top,w,0.09*s,P.wood);px(g,cx-w/2,top,0.09*s,h,P.wood2);px(g,cx+w/2-0.09*s,top,0.09*s,h,P.wood2);
+      px(g,cx-w/2,top,w,2,mixc(P.wood,'#ffffff',0.2));
+      sheet(g,cx-w*0.3,top-0.16*s,w*0.42,0.2*s,P,3,rnd);
+      px(g,cx+w*0.16,top-0.3*s,2,0.3*s,'#e8e0d0');px(g,cx+w*0.16-3,top-0.34*s,5,0.1*s,'#d8d0c0');
+      px(g,cx+w*0.3,top-0.1*s,0.1*s,0.1*s,P.ink);
+      return;
+    }
+    if(kind==='envelope'){
+      stand(g,cx,gy,s,P,0.85);
+      const w=0.5*s,h=0.3*s,y=gy-0.95*s;
+      px(g,cx-w/2,y,w,h,P.paper);outline(g,cx-w/2,y,w,h,shade(P.paper,0.6));
+      px(g,cx-w/2,y,w*0.5,1,rgba(P.ink,0.4));px(g,cx,y,w*0.5,1,rgba(P.ink,0.4));
+      px(g,cx-w/2,y+1,w*0.28,1,rgba(P.ink,0.3));px(g,cx+w*0.22,y+1,w*0.28,1,rgba(P.ink,0.3));
+      waxSeal(g,cx,y+h*0.6,3,P.acc);
+      return;
+    }
+    if(kind==='newspaper'){
+      stand(g,cx,gy,s,P,0.9);
+      const w=0.72*s,h=0.5*s,y=gy-1.05*s;
+      px(g,cx-w/2,y,w,h,mixc(P.paper,'#c8c0b0',0.3));outline(g,cx-w/2,y,w,h,shade(P.paper,0.55));
+      px(g,cx-w/2+3,y+3,w-6,4,rgba(P.ink,0.75));
+      for(let i=0;i<6;i++){px(g,cx-w/2+3,y+10+i*5,w*0.42,1,rgba(P.ink,0.45));px(g,cx+2,y+10+i*5,w*0.42,1,rgba(P.ink,0.45));}
+      px(g,cx-1,y+8,1,h-10,rgba(P.ink,0.3));
+      return;
+    }
+    if(kind==='photo'){
+      stand(g,cx,gy,s,P,0.95);
+      const w=0.6*s,h=0.44*s,y=gy-1.15*s;
+      framed(g,cx,y+h/2,w,h,P,()=>{
+        px(g,cx-w/2,y,w,h,mixc(P.paper,'#8a8070',0.4));
+        for(let i=0;i<4;i++){const fx=cx-w*0.36+i*w*0.24;px(g,fx,y+h*0.3,w*0.12,h*0.22,'#d9a878');px(g,fx-w*0.02,y+h*0.24,w*0.16,h*0.1,'#3a2c20');px(g,fx-w*0.03,y+h*0.52,w*0.18,h*0.4,mixc(P.ink,P.paper,0.3));}
+      });
+      return;
+    }
+    if(kind==='ticket'){
+      const w=0.16*s,h=1.05*s;
+      px(g,cx-w/2,gy-h,w,h,P.wood2);
+      const cw=0.5*s,ch=0.3*s,y=gy-h-0.05*s;
+      px(g,cx-cw/2,y,cw,ch,P.paper);outline(g,cx-cw/2,y,cw,ch,shade(P.paper,0.55));
+      px(g,cx-cw/2+3,y+3,cw-6,2,P.acc);
+      for(let i=0;i<3;i++)px(g,cx-cw/2+3,y+9+i*4,cw*(0.4+rnd()*0.4),1,rgba(P.ink,0.5));
+      px(g,cx+cw/2-6,y+ch-6,4,4,P.acc2);
+      return;
+    }
+    if(kind==='quote'||kind==='postcard'){
+      stand(g,cx,gy,s,P,0.95);
+      const w=0.56*s,h=0.36*s,y=gy-1.12*s;
+      sheet(g,cx-w/2,y,w,h,P,3,rnd);
+      px(g,cx-w/2+3,y+3,w*0.3,2,P.acc);
+      if(kind==='postcard')waxSeal(g,cx+w/2-6,y+5,3,P.acc2);
+      return;
+    }
+    stand(g,cx,gy,s,P,0.9);
+    const w=(kind==='thesis'||kind==='manuscript'?0.6:0.46)*s,h=(kind==='thesis'||kind==='manuscript'?0.72:0.56)*s;
+    const y=gy-0.9*s-h;
+    sheet(g,cx-w/2,y,w,h,P,Math.floor(h/6),rnd);
+    if(kind==='diploma'||kind==='certificate'||kind==='order'||kind==='notice'){
+      px(g,cx-w/2+3,y+3,w-6,3,P.acc);
+      waxSeal(g,cx+w*0.22,y+h-8,4,kind==='notice'?mixc(P.acc,'#000000',0.3):P.acc);
+      if(kind==='notice')px(g,cx-w/2+3,y+h*0.4,w-6,2,rgba(P.ink,0.7));
+    }
+    if(kind==='recordbook'){px(g,cx-w/2,y,w,4,P.acc);px(g,cx-w/2+2,y+6,w*0.5,2,P.acc2);}
+    if(kind==='petition'||kind==='letter'){px(g,cx-w*0.1,y+h*0.55,w*0.3,1,rgba(P.ink,0.6));}
+    if(kind==='notes'||kind==='papers'){px(g,cx-w/2+3,y-3,w-4,h,shade(P.paper,0.92));sheet(g,cx-w/2+1,y-1,w-2,h-2,P,Math.floor(h/6),rnd);}
+  };
+}
+['diploma','certificate','petition','recordbook','notes','thesis','manuscript','letter','order','notice','newspaper','papers','envelope','ticket','quote','postcard','photo','quill'].forEach(k=>defProp(k,1.5,0.7,paperProp(k)));
+defProp('board',1.9,1.5,(g,cx,gy,s,P,rnd)=>chalkBoard(g,cx,gy,s,P,rnd,false));
+defProp('board331',2.0,1.8,(g,cx,gy,s,P,rnd)=>{
+  chalkBoard(g,cx,gy,s,P,rnd,true);
+  const w=1.7*s,top=gy-1.9*s;
+  for(let r=0;r<5;r++)for(let c=0;c<9;c++){
+    if(rnd()<0.8)px(g,cx-w/2+6+c*(w-12)/9,top+6+r*8,3,3,rgba('#e8f0e8',0.35+rnd()*0.4));
+  }
+  drawText(g,'331',cx+w/2-24,top+1.15*s-12,'#ffd98a',1);
+});
+defProp('portrait',2.1,0.8,(g,cx,gy,s,P,rnd)=>{
+  const w=0.62*s,h=0.8*s,cy=gy-1.7*s;
+  const kinds=['beard','woman','wild','grey','beard'];
+  const kind=kinds[Math.floor(rnd()*kinds.length)];
+  framed(g,cx,cy,w,h,P,()=>bust(g,cx,cy,w,h,P,kind));
+  px(g,cx-0.14*s,cy+h/2+3,0.28*s,4,P.acc2);
+});
+defProp('plaque',1.5,0.7,(g,cx,gy,s,P,rnd)=>{
+  stand(g,cx,gy,s,P,0.95);
+  const w=0.56*s,h=0.34*s,y=gy-1.12*s;
+  px(g,cx-w/2,y,w,h,P.metal);outline(g,cx-w/2,y,w,h,shade(P.metal,0.55));
+  px(g,cx-w/2+1,y+1,w-2,1,mixc(P.metal,'#ffffff',0.4));
+  for(let i=0;i<3;i++)px(g,cx-w/2+4,y+6+i*6,w*(0.5+rnd()*0.35),1,shade(P.metal,0.5));
+  px(g,cx-w/2+2,y+2,2,2,shade(P.metal,0.5));px(g,cx+w/2-4,y+2,2,2,shade(P.metal,0.5));
+});
+defProp('book',1.3,0.7,(g,cx,gy,s,P,rnd)=>{
+  stand(g,cx,gy,s,P,0.8);
+  const w=0.4*s,h=0.5*s,y=gy-0.8*s-h;
+  px(g,cx-w/2,y,w,h,P.acc);outline(g,cx-w/2,y,w,h,shade(P.acc,0.55));
+  px(g,cx-w/2,y,4,h,shade(P.acc,0.7));
+  px(g,cx-w/2+6,y+5,w-10,2,P.acc2);px(g,cx-w/2+6,y+10,w-14,1,rgba(P.paper,0.7));
+  px(g,cx+w/2-3,y+2,2,h-4,mixc(P.paper,'#ffffff',0.2));
+  px(g,cx-w/2-4,y+h-4,w+8,4,P.wood2);
+});
+defProp('desk',1.0,1.3,(g,cx,gy,s,P,rnd)=>{
+  const w=1.25*s,h=0.78*s,top=gy-h;
+  px(g,cx-w/2,top,w,0.1*s,P.wood);px(g,cx-w/2,top,w,2,mixc(P.wood,'#ffffff',0.22));
+  px(g,cx-w/2+3,top+0.1*s,0.1*s,h-0.1*s,P.wood2);px(g,cx+w/2-3-0.1*s,top+0.1*s,0.1*s,h-0.1*s,P.wood2);
+  px(g,cx-w*0.2,top+0.14*s,w*0.4,0.2*s,P.wood2);px(g,cx-w*0.05,top+0.2*s,0.1*s,2,P.acc2);
+  sheet(g,cx-w*0.32,top-0.14*s,w*0.34,0.16*s,P,2,rnd);
+  px(g,cx+w*0.22,top-0.22*s,0.09*s,0.22*s,P.acc2);px(g,cx+w*0.2,top-0.26*s,0.13*s,0.05*s,P.acc);
+});
+defProp('table',1.0,1.7,(g,cx,gy,s,P,rnd)=>{
+  const w=1.7*s,h=0.76*s,top=gy-h;
+  px(g,cx-w/2,top,w,0.1*s,P.wood);px(g,cx-w/2,top,w,2,mixc(P.wood,'#ffffff',0.2));
+  for(const lx of [-w/2+4,-w*0.15,w*0.15,w/2-8])px(g,cx+lx,top+0.1*s,4,h-0.1*s,P.wood2);
+  for(let i=0;i<3;i++)sheet(g,cx-w*0.35+i*w*0.28,top-0.1*s,w*0.2,0.12*s,P,2,rnd);
+  px(g,cx+w*0.3,top-0.16*s,0.08*s,0.16*s,P.paper);px(g,cx+w*0.3-1,top-0.18*s,0.1*s,3,P.acc2);
+});
+defProp('chair',1.2,0.7,(g,cx,gy,s,P)=>{
+  const w=0.5*s;
+  px(g,cx-w/2,gy-0.46*s,w,0.08*s,P.wood);
+  px(g,cx-w/2,gy-1.15*s,0.08*s,0.7*s,P.wood2);
+  px(g,cx-w/2,gy-1.15*s,w,0.1*s,P.wood);
+  px(g,cx-w/2+2,gy-1.0*s,w-4,0.06*s,P.wood);
+  px(g,cx-w/2+2,gy-0.46*s,4,0.46*s,P.wood2);px(g,cx+w/2-6,gy-0.46*s,4,0.46*s,P.wood2);
+  px(g,cx-w/2,gy-0.5*s,w,0.05*s,P.acc);
+});
+defProp('piano',1.4,1.6,(g,cx,gy,s,P,rnd,t)=>{
+  const w=1.5*s,h=1.15*s,top=gy-h;
+  px(g,cx-w/2,top,w,h,mixc(P.wood2,'#1a1210',0.4));
+  px(g,cx-w/2,top,w,3,mixc(P.wood,'#ffffff',0.15));
+  px(g,cx-w/2+3,top+0.18*s,w-6,0.3*s,mixc(P.wood2,'#000000',0.3));
+  const ky=gy-0.62*s,kw=w-10;
+  px(g,cx-kw/2,ky,kw,0.14*s,'#f0ead8');
+  for(let i=0;i<12;i++)px(g,cx-kw/2+i*kw/12,ky,1,0.14*s,'#b8b0a0');
+  for(let i=0;i<11;i++)if(i%7!==2&&i%7!==6)px(g,cx-kw/2+i*kw/12+kw/24,ky,kw/24,0.08*s,'#1a1614');
+  px(g,cx-w/2+4,gy-0.4*s,4,0.4*s,mixc(P.wood2,'#000000',0.3));px(g,cx+w/2-8,gy-0.4*s,4,0.4*s,mixc(P.wood2,'#000000',0.3));
+  sheet(g,cx-0.14*s,top+0.06*s,0.28*s,0.14*s,P,2,rnd);
+  const fl=0.5+0.5*Math.sin(t*3);
+  px(g,cx+w/2-0.16*s,top+0.1*s,0.06*s,0.1*s,P.acc2);
+  px(g,cx+w/2-0.15*s,top+0.06*s-2,3,3,rgba('#ffd98a',0.4+0.5*fl));
+});
+defProp('crib',1.0,1.2,(g,cx,gy,s,P)=>{
+  const w=1.1*s,h=0.7*s,top=gy-h;
+  px(g,cx-w/2,top+0.15*s,w,h-0.15*s,P.wood);
+  px(g,cx-w/2,top,w,0.16*s,P.wood2);
+  for(let i=0;i<8;i++)px(g,cx-w/2+4+i*(w-8)/8,top+0.16*s,2,h-0.2*s,shade(P.wood,0.75));
+  px(g,cx-w/2+3,top+0.2*s,w-6,0.14*s,mixc(P.paper,P.acc,0.25));
+  px(g,cx-w/2+3,top+0.16*s,w*0.3,0.1*s,P.paper);
+  px(g,cx-w/2,gy-3,w,3,P.wood2);
+  px(g,cx+w*0.1,top-0.24*s,2,0.24*s,P.wood2);
+  px(g,cx+w*0.06,top-0.3*s,0.12*s,0.08*s,P.acc2);
+});
+defProp('toybox',0.8,0.9,(g,cx,gy,s,P)=>{
+  const w=0.8*s,h=0.5*s,top=gy-h;
+  px(g,cx-w/2,top,w,h,P.acc);outline(g,cx-w/2,top,w,h,shade(P.acc,0.55));
+  px(g,cx-w/2,top,w,0.1*s,shade(P.acc,0.8));
+  px(g,cx-w*0.1,top+h*0.4,w*0.2,h*0.2,P.acc2);
+  px(g,cx-w/2+4,top-0.14*s,0.14*s,0.14*s,P.acc2);
+  px(g,cx-w*0.1,top-0.2*s,0.12*s,0.2*s,mixc(P.leaf,'#ffffff',0.1));
+  px(g,cx+w*0.16,top-0.1*s,0.1*s,0.1*s,'#d9a441');
+});
+defProp('glasses',1.2,0.6,(g,cx,gy,s,P)=>{
+  stand(g,cx,gy,s,P,0.85);
+  const y=gy-0.95*s,r=0.09*s;
+  px(g,cx-0.2*s,y-r,0.4*s,2*r*0.9,mixc(P.paper,P.wall,0.2));
+  for(const dx of [-0.11*s,0.11*s]){
+    px(g,cx+dx-r,y-r,r*2,r*2,'#3a3226');
+    px(g,cx+dx-r+1,y-r+1,r*2-2,r*2-2,rgba('#bcd9ff',0.5));
+    px(g,cx+dx-r+1,y-r+1,2,2,rgba('#ffffff',0.8));
+  }
+  px(g,cx-0.02*s,y-1,0.04*s,2,'#3a3226');
+});
+defProp('window',2.3,1.2,(g,cx,gy,s,P)=>{
+  const w=1.1*s,h=1.5*s,top=gy-2.2*s;
+  px(g,cx-w/2-3,top-3,w+6,h+6,P.wood);
+  px(g,cx-w/2,top,w,h,P.sky[1]);
+  px(g,cx-1,top,2,h,P.wood);px(g,cx-w/2,top+h*0.5,w,2,P.wood);
+  px(g,cx-w/2-5,top+h,w+10,4,P.wood2);
+});
+defProp('door',2.2,1.0,(g,cx,gy,s,P)=>{
+  const w=0.95*s,h=2.1*s,top=gy-h;
+  px(g,cx-w/2-3,top-3,w+6,h+3,P.wood2);
+  px(g,cx-w/2,top,w,h,P.wood);
+  px(g,cx-w/2+3,top+3,w-6,h*0.4,shade(P.wood,0.85));
+  px(g,cx-w/2+3,top+h*0.5,w-6,h*0.42,shade(P.wood,0.85));
+  px(g,cx+w/2-0.12*s,top+h*0.48,0.07*s,0.07*s,P.acc2);
+  px(g,cx-w/2,top,w,2,mixc(P.wood,'#ffffff',0.18));
+  px(g,cx-0.2*s,top+0.12*s,0.4*s,0.12*s,P.paper);
+});
+defProp('ledger',1.4,0.8,(g,cx,gy,s,P)=>{
+  stand(g,cx,gy,s,P,0.95);
+  const w=0.6*s,h=0.42*s,y=gy-1.1*s;
+  px(g,cx-w/2,y,w,h,P.paper);outline(g,cx-w/2,y,w,h,shade(P.paper,0.55));
+  px(g,cx-1,y,2,h,shade(P.paper,0.7));
+  for(let i=0;i<5;i++){px(g,cx-w/2+3,y+4+i*6,w*0.4,1,rgba(P.ink,0.5));px(g,cx+3,y+4+i*6,w*0.4,1,rgba(P.ink,0.5));}
+  drawText(g,'986',cx+w/2-22,y+h-10,P.acc,1);
+});
+defProp('telescope',1.9,1.0,(g,cx,gy,s,P)=>{
+  const top=gy-1.5*s;
+  px(g,cx-2,top,4,1.5*s,P.wood2);
+  px(g,cx-0.22*s,gy-0.5*s,0.44*s,0.5*s,P.wood2);
+  g.save();g.translate(cx,top+0.1*s);g.rotate(-0.5);
+  px(g,-0.1*s,-0.09*s,0.85*s,0.18*s,P.metal);
+  px(g,-0.1*s,-0.09*s,0.85*s,2,mixc(P.metal,'#ffffff',0.35));
+  px(g,0.72*s,-0.11*s,0.1*s,0.22*s,P.acc2);
+  px(g,-0.16*s,-0.06*s,0.08*s,0.12*s,P.wood2);
+  g.restore();
+});
+defProp('mirror',2.0,1.0,(g,cx,gy,s,P,rnd,t)=>{
+  const w=0.8*s,h=1.5*s,top=gy-1.9*s;
+  px(g,cx-w/2-3,top-3,w+6,h+6,P.acc2);
+  px(g,cx-w/2,top,w,h,mixc(P.sky[1],'#ffffff',0.25));
+  px(g,cx-w/2,top,w*0.3,h,rgba('#ffffff',0.25));
+  const sy=top+((t*30)%(h+20))-10;
+  px(g,cx-w/2,sy,w,3,rgba('#ffffff',0.35));
+  px(g,cx-w/2,top+h*0.55,w,1,rgba(P.ink,0.2));
+  px(g,cx-0.1*s,gy-0.4*s,0.2*s,0.4*s,P.wood2);
+});
+defProp('pendulum',2.3,0.8,(g,cx,gy,s,P,rnd,t)=>{
+  const w=0.6*s,h=2.2*s,top=gy-h;
+  px(g,cx-w/2,top,w,h,P.wood);outline(g,cx-w/2,top,w,h,P.wood2);
+  px(g,cx-w/2+3,top+3,w-6,0.4*s,P.paper);
+  px(g,cx-1,top+0.12*s,2,0.16*s,P.ink);
+  const a=Math.sin(t*2)*0.35;
+  px(g,cx-w/2+4,top+0.5*s,w-8,h-0.6*s,mixc(P.wood2,'#000000',0.35));
+  const bx=cx+Math.sin(a)*0.16*s,by=top+0.6*s;
+  px(g,bx-1,by,2,h*0.5,P.acc2);
+  px(g,bx-0.07*s,by+h*0.5,0.14*s,0.14*s,P.acc2);
+  px(g,bx-0.05*s,by+h*0.5+2,0.06*s,0.06*s,mixc(P.acc2,'#ffffff',0.4));
+});
+defProp('chess',1.1,1.0,(g,cx,gy,s,P,rnd)=>{
+  const w=0.9*s,top=gy-0.75*s;
+  px(g,cx-w/2,top,w,0.08*s,P.wood);
+  px(g,cx-w/2+3,top+0.08*s,4,0.67*s,P.wood2);px(g,cx+w/2-7,top+0.08*s,4,0.67*s,P.wood2);
+  const bs=0.56*s,bx=cx-bs/2,by=top-bs*0.35;
+  px(g,bx-2,by-2,bs+4,bs*0.7+4,P.wood2);
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)px(g,bx+c*bs/8,by+r*bs*0.7/8,bs/8+0.5,bs*0.7/8+0.5,(r+c)%2?mixc(P.paper,P.ink,0.55):P.paper);
+  for(let i=0;i<6;i++){const fx=bx+4+rnd()*(bs-10),fy=by+2+rnd()*(bs*0.7-10);px(g,fx,fy,3,6,rnd()<0.5?P.ink:'#f0ead8');px(g,fx-1,fy+6,5,2,rnd()<0.5?P.ink:'#f0ead8');}
+});
+defProp('samovar',1.3,0.7,(g,cx,gy,s,P,rnd,t)=>{
+  const w=0.4*s,h=0.7*s,top=gy-0.8*s-h;
+  px(g,cx-0.3*s,gy-0.8*s,0.6*s,0.8*s,P.wood);
+  px(g,cx-w/2,top,w,h,P.acc2);
+  px(g,cx-w/2,top,w,3,mixc(P.acc2,'#ffffff',0.4));
+  px(g,cx-w*0.3,top-0.1*s,w*0.6,0.1*s,P.acc2);
+  px(g,cx-w*0.1,top-0.16*s,w*0.2,0.06*s,P.wood2);
+  px(g,cx+w/2,top+h*0.5,0.1*s,3,P.acc2);
+  px(g,cx-w/2-0.06*s,top+h*0.2,0.06*s,0.16*s,P.acc2);
+  px(g,cx-w*0.35,top+h,w*0.7,0.06*s,P.wood2);
+  const st=Math.sin(t*2)*2;
+  px(g,cx-1,top-0.24*s+st,2,0.1*s,rgba('#ffffff',0.25));
+});
+defProp('suitcase',0.7,0.9,(g,cx,gy,s,P)=>{
+  const w=0.8*s,h=0.5*s,top=gy-h;
+  px(g,cx-w/2,top,w,h,P.wood);outline(g,cx-w/2,top,w,h,P.wood2);
+  px(g,cx-w/2,top+h*0.45,w,2,P.wood2);
+  px(g,cx-w*0.25,top,3,h,P.acc2);px(g,cx+w*0.25-3,top,3,h,P.acc2);
+  px(g,cx-0.08*s,top-0.08*s,0.16*s,0.08*s,P.wood2);
+  px(g,cx-w/2+3,top+3,0.12*s,0.08*s,P.paper);
+});
+defProp('key',1.3,0.6,(g,cx,gy,s,P)=>{
+  stand(g,cx,gy,s,P,0.9);
+  const y=gy-1.0*s;
+  px(g,cx-0.16*s,y,0.32*s,0.2*s,P.wood2);
+  px(g,cx-2,y+0.06*s,4,0.16*s,P.acc2);
+  px(g,cx-0.05*s,y+0.04*s,0.1*s,0.1*s,P.acc2);
+  px(g,cx-0.02*s,y+0.06*s,0.04*s,0.06*s,P.wood2);
+  px(g,cx+2,y+0.16*s,0.06*s,2,P.acc2);
+});
+defProp('gate',2.6,2.2,(g,cx,gy,s,P)=>{
+  const w=2.1*s,h=2.5*s,top=gy-h;
+  for(const dx of [-w/2,w/2-0.3*s]){
+    px(g,cx+dx,top,0.3*s,h,P.wall2);
+    px(g,cx+dx,top,0.3*s,3,mixc(P.wall2,'#ffffff',0.2));
+    px(g,cx+dx-2,top-0.14*s,0.3*s+4,0.14*s,P.wall);
+    px(g,cx+dx+0.08*s,top-0.3*s,0.14*s,0.16*s,P.wall2);
+  }
+  px(g,cx-w/2+0.3*s,top+0.1*s,w-0.6*s,0.16*s,P.wood2);
+  for(let i=0;i<7;i++)px(g,cx-w/2+0.4*s+i*(w-0.8*s)/7,top+0.26*s,2,0.5*s,P.ink);
+  px(g,cx-w/2+0.3*s,top+0.76*s,w-0.6*s,3,P.wood2);
+});
+defProp('sign',1.9,1.0,(g,cx,gy,s,P)=>{
+  px(g,cx-2,gy-1.7*s,4,1.7*s,P.metal);
+  const w=0.9*s,h=0.4*s,y=gy-1.85*s;
+  px(g,cx-w/2,y,w,h,P.acc);outline(g,cx-w/2,y,w,h,shade(P.acc,0.55));
+  px(g,cx-w/2+3,y+4,w-6,2,P.paper);
+  px(g,cx-w/2+3,y+10,w*0.6,1,rgba(P.paper,0.7));
+  px(g,cx-w/2+3,y+14,w*0.4,1,rgba(P.paper,0.7));
+});
+defProp('screen',1.6,1.2,(g,cx,gy,s,P,rnd,t)=>{
+  const w=1.1*s,h=0.75*s,top=gy-1.5*s;
+  px(g,cx-2,top+h,4,gy-(top+h),P.metal);
+  px(g,cx-w/2-3,top-3,w+6,h+6,mixc(P.metal,'#000000',0.4));
+  px(g,cx-w/2,top,w,h,mixc(P.sky[0],'#000000',0.3));
+  const cols=[P.acc,P.acc2,P.glow,'#ffd98a'];
+  for(let i=0;i<4;i++){
+    const a=t*0.8+i*1.57;
+    const rx=cx+Math.cos(a)*w*0.28,ry=top+h/2+Math.sin(a)*h*0.28;
+    px(g,rx-4,ry-4,8,8,cols[i]);px(g,rx-2,ry-2,4,4,mixc(cols[i],'#ffffff',0.4));
+  }
+  px(g,cx-w/2,top,w,1,rgba('#ffffff',0.15));
+});
+defProp('ring',2.2,1.6,(g,cx,gy,s,P,rnd,t)=>{
+  const cy=gy-1.3*s,r=0.7*s;
+  px(g,cx-0.2*s,gy-0.5*s,0.4*s,0.5*s,P.wood2);
+  px(g,cx-0.3*s,gy-0.54*s,0.6*s,0.06*s,P.metal);
+  const n=28;
+  for(let i=0;i<n;i++){
+    const a=i/n*Math.PI*2+t*0.3;
+    const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.9;
+    px(g,x-2,y-2,4,4,i%4===0?P.acc2:P.acc);
+  }
+  for(let i=0;i<n;i+=4){
+    const a=i/n*Math.PI*2+t*0.3;
+    px(g,cx+Math.cos(a)*r-1,cy+Math.sin(a)*r*0.9-1,2,2,mixc(P.acc2,'#ffffff',0.5));
+  }
+  drawText(g,'⊕',cx-3,cy-4,rgba(P.glow,0.8),1);
+});
+defProp('chain',2.2,1.0,(g,cx,gy,s,P,rnd,t)=>{
+  px(g,cx-0.2*s,gy-0.4*s,0.4*s,0.4*s,P.wood2);
+  for(let i=0;i<5;i++){
+    const y=gy-0.6*s-i*0.34*s,w=(0.5-i*0.07)*s;
+    const glow=0.5+0.5*Math.sin(t*2-i*0.7);
+    px(g,cx-w/2,y,w,0.16*s,mixc(P.acc,P.acc2,i/5));
+    px(g,cx-w/2,y,w,2,rgba('#ffffff',0.2+0.3*glow));
+    if(i<4)px(g,cx-1,y-0.18*s,2,0.18*s,rgba(P.glow,0.6));
+  }
+  drawText(g,'I1<I2<…',cx-21,gy-2.35*s,rgba(P.ink,0.85),1);
+});
+defProp('lattice',2.3,1.4,(g,cx,gy,s,P,rnd,t)=>{
+  px(g,cx-0.25*s,gy-0.4*s,0.5*s,0.4*s,P.wood2);
+  const w=1.2*s,h=1.6*s,top=gy-0.5*s-h;
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+    const x=cx-w/2+c*w/4,y=top+r*h/4;
+    const pulse=0.5+0.5*Math.sin(t*1.5+r+c);
+    if(c<4)px(g,x,y,w/4,1,rgba(P.acc2,0.4));
+    if(r<4)px(g,x,y,1,h/4,rgba(P.acc,0.4));
+    px(g,x-2,y-2,4,4,mixc(P.acc,P.acc2,pulse));
+  }
+});
+defProp('gauge',2.2,1.4,(g,cx,gy,s,P,rnd,t)=>{
+  px(g,cx-0.2*s,gy-0.4*s,0.4*s,0.4*s,P.wood2);
+  const cy=gy-1.3*s,r=0.6*s;
+  for(let i=0;i<16;i++){
+    const a=i/16*Math.PI*2;
+    const rr=r*(0.7+0.3*Math.sin(t*2+i*0.8));
+    px(g,cx+Math.cos(a)*rr-1,cy+Math.sin(a)*rr-1,3,3,rgba(P.acc2,0.7));
+    px(g,cx+Math.cos(a)*r*0.4-1,cy+Math.sin(a)*r*0.4-1,2,2,rgba(P.acc,0.7));
+  }
+  const gl=0.5+0.5*Math.sin(t*3);
+  px(g,cx-4,cy-4,8,8,mixc(P.glow,'#ffffff',gl*0.4));
+});
+defProp('mobius',2.0,1.4,(g,cx,gy,s,P,rnd,t)=>{
+  px(g,cx-0.2*s,gy-0.4*s,0.4*s,0.4*s,P.wood2);
+  const cy=gy-1.2*s;
+  for(let i=0;i<40;i++){
+    const a=i/40*Math.PI*2+t*0.4;
+    const twist=Math.sin(a*1.5+t)*0.2*s;
+    const x=cx+Math.cos(a)*0.6*s,y=cy+Math.sin(a)*0.3*s+twist;
+    px(g,x-2,y-2,4,4,i%2?P.acc:P.acc2);
+  }
+});
+defProp('tree',2.4,1.6,(g,cx,gy,s,P)=>{
+  px(g,cx-0.2*s,gy-0.4*s,0.4*s,0.4*s,P.wood2);
+  const top=gy-2.2*s;
+  px(g,cx-2,top+0.5*s,4,1.3*s,P.wood);
+  const nodes=[[-0.5,0.9],[-0.25,0.5],[0,0.2],[0.25,0.5],[0.5,0.9],[-0.6,1.4],[0.6,1.4]];
+  for(const nd of nodes){
+    const x=cx+nd[0]*s,y=top+nd[1]*s;
+    px(g,cx,top+0.5*s,x-cx,1,rgba(P.acc2,0.5));
+    px(g,x-4,y-4,8,8,P.acc);px(g,x-2,y-2,4,4,mixc(P.acc,'#ffffff',0.35));
+  }
+  px(g,cx-5,top+0.2*s-5,10,10,P.acc2);
+});
+defProp('poster',2.0,1.0,(g,cx,gy,s,P,rnd)=>{
+  const w=0.8*s,h=1.1*s,top=gy-1.9*s;
+  px(g,cx-2,top+h,4,gy-(top+h),P.wood2);
+  px(g,cx-w/2-2,top-2,w+4,h+4,P.wood);
+  px(g,cx-w/2,top,w,h,P.paper);
+  px(g,cx-w/2,top,w,0.16*s,P.acc);
+  px(g,cx-w/2+3,top+0.2*s,w-6,3,rgba(P.ink,0.75));
+  for(let i=0;i<6;i++)px(g,cx-w/2+3,top+0.32*s+i*6,w*(0.45+rnd()*0.4),1,rgba(P.ink,0.5));
+  px(g,cx-w/2+3,top+h-0.14*s,w*0.35,2,P.acc2);
+});
+function curD(){return R?R.d:(titleD||null);}
+PROPS.window.fn=function(g,cx,gy,s,P,rnd,t){
+  const w=1.1*s,h=1.5*s,top=gy-2.2*s;
+  px(g,cx-w/2-4,top-4,w+8,h+8,P.wood);
+  px(g,cx-w/2,top,w,h,P.sky[1]);
+  px(g,cx-w/2,top,w,h*0.4,P.sky[0]);
+  px(g,cx-w/2,top+h*0.62,w,h*0.38,mixc(P.far,P.sky[2],0.3));
+  for(let i=0;i<4;i++){const bx=cx-w/2+i*w/4,bh=h*(0.14+((i*37)%10)/40);px(g,bx,top+h*0.62-bh,w/4-1,bh,mixc(P.far,P.sky[1],0.2));}
+  const d=curD();
+  if(d&&(d.weather===2||d.weather===4)){for(let i=0;i<8;i++){const rx=cx-w/2+((i*53+t*160)%w),ry=top+((i*97+t*260)%h);px(g,rx,ry,1,4,rgba('#bcd9ff',0.5));}}
+  else if(d&&d.weather===3){for(let i=0;i<7;i++){const rx=cx-w/2+((i*61+t*22)%w),ry=top+((i*83+t*36)%h);px(g,rx,ry,1,1,rgba('#ffffff',0.8));}}
+  px(g,cx-1,top,2,h,P.wood);px(g,cx-w/2,top+h*0.5,w,2,P.wood);
+  px(g,cx-w/2-6,top+h+4,w+12,3,P.wood2);
+  px(g,cx-w/2-4,top-4,w+8,1,mixc(P.wood,'#ffffff',0.25));
+  px(g,cx-w/2,top,w,2,rgba('#ffffff',0.15));
+};
+
+/* ============================================================
+   CHARACTER — Emmy at five ages, profile pixel sprite
+   ============================================================ */
+const AGES={
+ child:{h:46,cw:20,headTop:4,headH:15,hair:'pigtails',dress:'#b04a3a',blouse:'#efe0bd',skirtTop:24,hem:36,legTop:36,shoe:42,skin:'#eec2a0',hairC:'#5a3a26',bodice:'blouse',shawl:false,stoop:0},
+ teen:{h:58,cw:20,headTop:5,headH:14,hair:'lowbun',dress:'#3a4a6a',blouse:'#e8e0d0',skirtTop:28,hem:52,legTop:52,shoe:56,skin:'#e8b892',hairC:'#4a3226',bodice:'blouse',shawl:false,stoop:0},
+ young:{h:64,cw:22,headTop:6,headH:15,hair:'upswept',dress:'#5a4632',blouse:'#efe6d4',skirtTop:32,hem:58,legTop:58,shoe:62,skin:'#e8b892',hairC:'#4a3226',bodice:'blouse',shawl:false,stoop:0},
+ mature:{h:64,cw:23,headTop:6,headH:15,hair:'bun',dress:'#3d3a45',blouse:'#e8e2d4',skirtTop:32,hem:58,legTop:58,shoe:62,skin:'#e2b088',hairC:'#4a3226',bodice:'dress',shawl:false,stoop:0},
+ elder:{h:62,cw:23,headTop:6,headH:15,hair:'greybun',dress:'#4a4440',blouse:'#d8d0c0',skirtTop:31,hem:56,legTop:56,shoe:60,skin:'#dca880',hairC:'#6e6258',bodice:'dress',shawl:true,stoop:1}
+};
+function drawEmmy(g,sx,gy,age,st){
+ const A=AGES[age],u=S/40,cw=A.cw,h=A.h;
+ const bob=st.moving?Math.abs(Math.sin(st.phase))*1.2:Math.sin(st.t*1.4)*0.4;
+ const top=gy-h*u-bob*u;
+ const dir=st.dir||1;
+ const Y=v=>Math.round(top+v*u);
+ const rect=(gx,gy2,w,hh,col)=>{
+   let x0,x1;
+   if(dir>0){x0=gx;x1=gx+w;}else{x0=cw-gx-w;x1=cw-gx;}
+   const X0=Math.round(sx+(x0-cw/2)*u),X1=Math.round(sx+(x1-cw/2)*u);
+   const Y0=Y(gy2),Y1=Y(gy2+hh);
+   g.fillStyle=col;g.fillRect(X0,Y0,Math.max(1,X1-X0),Math.max(1,Y1-Y0));
+ };
+ const swing=st.moving?Math.sin(st.phase):0;
+ const legSw=swing*3,armSw=swing*2.4,hemSw=swing*1.1;
+ const dress=A.dress,dressD=shade(dress,0.72),dressL=mixc(dress,'#ffffff',0.14);
+ const blouse=A.blouse,blouseD=shade(blouse,0.82);
+ const skin=A.skin,skinD=shade(skin,0.82);
+ const hair=A.hairC,hairL=mixc(hair,'#ffffff',0.16);
+ const ht=A.headTop+(A.stoop?1:0),hb=ht+A.headH;
+ const collar=A.skirtTop-7;
+ g.fillStyle='rgba(0,0,0,0.28)';
+ g.fillRect(Math.round(sx-7*u),Math.round(gy-1),Math.round(14*u),Math.max(2,Math.round(2*u)));
+ const blx=9-legSw*0.6;
+ rect(blx,A.legTop,3,A.shoe-A.legTop,shade(dressD,0.8));
+ rect(blx-0.5,A.shoe,4.5,h-A.shoe,'#241c16');
+ for(let r=A.skirtTop;r<A.hem;r++){
+   const t=(r-A.skirtTop)/(A.hem-A.skirtTop);
+   const half=lerp(5.2,8.2,t),cx0=11+hemSw*t;
+   rect(cx0-half,r,half*2,1,t<0.12?dressL:dress);
+   if(r%3===0)rect(cx0-half,r,1.4,1,dressD);
+   if(r%4===1)rect(cx0+half-1.6,r,1.4,1,dressD);
+ }
+ rect(11+hemSw-8.2,A.hem-1,16.4,1,dressD);
+ const flx=12+legSw*0.6;
+ rect(flx,A.legTop,3,A.shoe-A.legTop,skinD);
+ if(age==='child'){rect(flx,A.legTop+2,3,A.shoe-A.legTop-2,'#efe6d4');rect(blx,A.legTop+2,3,A.shoe-A.legTop-2,'#e8dcc8');}
+ rect(flx-0.5,A.shoe,4.5,h-A.shoe,'#2e241c');
+ rect(flx-0.5,A.shoe,4.5,1,mixc('#2e241c','#ffffff',0.25));
+ const bc=A.bodice==='blouse'?blouse:dress,bcd=A.bodice==='blouse'?blouseD:dressD;
+ rect(7.5,collar,8,A.skirtTop-collar+1,bc);
+ rect(7.5,collar,1.6,A.skirtTop-collar+1,mixc(bc,'#ffffff',0.12));
+ rect(14,collar,1.5,A.skirtTop-collar+1,bcd);
+ if(A.bodice==='dress'){for(let i=0;i<3;i++)rect(11.2,collar+2+i*2.2,1,1,A.blouse);}
+ rect(9,collar-1,5.5,2,A.blouse);
+ rect(9,collar-1,5.5,0.8,mixc(A.blouse,'#ffffff',0.3));
+ if(age==='child'){rect(8.5,collar,1.6,A.skirtTop-collar,dress);rect(13,collar,1.6,A.skirtTop-collar,dress);}
+ if(A.shawl){
+   for(let r=0;r<6;r++){const w2=4+r*1.1;rect(11-w2/2,collar-1+r,w2,1,r%2?shade('#7a4a3a',0.85):'#7a4a3a');}
+ }
+ rect(8.5-armSw*0.4,collar+1,2.4,9,bcd);
+ rect(10.5,hb-1,3,3,skinD);
+ const hx0=6.5+(A.stoop?0.8:0);
+ rect(hx0,ht,11,A.headH,skin);
+ rect(hx0,ht,11,1.2,mixc(skin,'#ffffff',0.12));
+ rect(hx0+9.4,ht+2,1.6,A.headH-3,skinD);
+ rect(hx0+10.6,ht+7.5,1.6,2.4,skin);
+ rect(hx0+9.6,ht+11.5,1.8,1,shade(skin,0.7));
+ rect(hx0+8.6,ht+9.5,1.4,1.2,rgba('#d98a6a',0.5));
+ rect(hx0-0.6,ht-1.4,11.6,3.4,hair);
+ rect(hx0-0.6,ht-1.4,11.6,1,hairL);
+ rect(hx0-1.2,ht+1,2.6,A.headH-4,hair);
+ if(A.hair==='pigtails'){
+   rect(hx0-3.4,ht+5,3,8,hair);rect(hx0-3.4,ht+5,3,1.2,hairL);
+   rect(hx0-3.8,ht+4.4,3.8,1.6,'#d9a441');
+   rect(hx0+2,ht-2.4,7,2,hair);
+ }else if(A.hair==='lowbun'){
+   rect(hx0-3.2,ht+8,3.6,4.6,hair);rect(hx0-3.2,ht+8,3.6,1,hairL);
+ }else if(A.hair==='upswept'){
+   rect(hx0+1,ht-3.6,9,3,hair);rect(hx0+1,ht-3.6,9,1,hairL);
+   rect(hx0-2.6,ht+4,3,5,hair);
+ }else{
+   rect(hx0-3.6,ht+3.4,4,5.4,hair);rect(hx0-3.6,ht+3.4,4,1.2,hairL);
+   if(A.hair==='greybun'){rect(hx0-3.6,ht+5,4,1.2,mixc(hair,'#c8c0b4',0.6));rect(hx0+2,ht-1.4,5,1,mixc(hair,'#c8c0b4',0.5));}
+ }
+ const ex=hx0+6.2,ey=ht+6;
+ rect(ex-0.4,ey-0.4,4.8,4.8,'#2e2820');
+ rect(ex,ey,4,4,rgba('#bcd9ff',0.45));
+ rect(ex,ey,1.2,1.2,rgba('#ffffff',0.85));
+ rect(ex-3.4,ey+1.4,3.2,0.8,'#2e2820');
+ if(st.blink>0)rect(ex+1,ey+1.6,2.2,0.9,'#241c16');
+ else{rect(ex+1,ey+1.2,2.2,2,'#241c16');rect(ex+1.4,ey+1.4,0.8,0.8,'#5a4a3a');}
+ rect(ex+0.6,ey-1.6,3,0.9,hair);
+ const an=st.anim,at=st.animT||0;
+ if(an==='reach'){
+   const ext=Math.min(1,at*3);
+   rect(12,collar+2,3+ext*5,2.6,bc);
+   rect(14.6+ext*5,collar+2,2.4,2.6,skin);
+ }else if(an==='note'){
+   rect(12,collar+2,3,6,bc);
+   rect(14,collar+7,2.4,2.2,skin);
+   rect(15.5,collar+5.5,4.5,5.5,'#efe6d4');
+   rect(15.5,collar+5.5,4.5,0.8,'#c8bca4');
+   const wr=Math.sin(at*10)*1;
+   rect(16.5+wr,collar+7,2.4,0.7,'#3a2c1e');
+   rect(16.5,collar+8.6,2.8,0.7,'#3a2c1e');
+ }else if(an==='glasses'){
+   rect(12,collar+1,2.6,4,bc);
+   rect(13.4,ht+8.5,2.2,5,bc);
+   rect(13.8,ht+7.5,2.4,2.2,skin);
+ }else if(an==='bow'){
+   rect(11,collar+2,3,6,bc);
+   rect(12.5,collar+7.5,3,2.4,skin);
+ }else{
+   const ax=11.5+armSw;
+   rect(ax,collar+1,2.8,9.5,bc);
+   rect(ax,collar+1,1,9.5,mixc(bc,'#ffffff',0.1));
+   rect(ax+0.2,collar+10,2.4,2.4,skin);
+ }
+}
+
+/* ============================================================
+   WORLD BUILD — parallax caches, decor, particles
+   ============================================================ */
+let worldC=null,worldG=null;
+let skyC=null,farC=null,midC=null,roomC=null;
+let roomWpx=0;
+const PARTS={precip:[],dust:[],spark:[]};
+let lightT=0,flashA=0,shake=0,glitchBurst=0,glitchT=0;
+function drawSkyline(g,w,gy,type,P,rnd,d){
+  let x=0;
+  const lit=P.night||P.dusk;
+  while(x<w){
+    const bw=20+rnd()*46,bh=30+rnd()*70;
+    const by=gy-bh;
+    const col=mixc(P.far,P.sky[1],rnd()*0.2);
+    if(type==='abstract'){
+      const r=14+rnd()*30;
+      g.strokeStyle=rgba(P.acc,0.35);g.lineWidth=2;
+      g.beginPath();g.arc(x+bw/2,by+bh*0.4,r,0,Math.PI*2);g.stroke();
+      g.strokeStyle=rgba(P.acc2,0.25);
+      g.beginPath();g.arc(x+bw/2,by+bh*0.4,r*0.6,0,Math.PI*2);g.stroke();
+      for(let i=0;i<5;i++)px(g,x+rnd()*bw,by+rnd()*bh,2,2,rgba(P.glow,0.5));
+      x+=bw+6;continue;
+    }
+    px(g,x,by,bw,bh,col);
+    px(g,x,by,bw,2,mixc(col,'#ffffff',0.12));
+    if(type==='erlangen'||type==='goettingen'){
+      const roofH=8+rnd()*10;
+      for(let r=0;r<roofH;r++)px(g,x+r*0.6,by-r-1,bw-r*1.2,1,shade(col,0.85));
+      if(rnd()<0.3){px(g,x+bw*0.4,by-14,4,14,shade(col,0.9));px(g,x+bw*0.4-1,by-18,6,4,shade(col,0.8));}
+      if(type==='goettingen'&&rnd()<0.18){px(g,x+bw*0.3,by-16,bw*0.4,16,col);px(g,x+bw*0.3+bw*0.1,by-22,bw*0.2,6,col);}
+    }else if(type==='moscow'){
+      if(rnd()<0.5){
+        const tx=x+bw*0.5,tw=bw*0.24;
+        px(g,tx-tw/2,by-18,tw,18,shade(col,0.95));
+        for(let r=0;r<8;r++)px(g,tx-tw/2-r*0.4,by-18-r,tw+r*0.8,1,mixc(P.acc2,col,0.4));
+        px(g,tx-1,by-30,2,5,P.acc2);
+      }
+      px(g,x,by,bw,2,rgba('#ffffff',0.5));
+    }else if(type==='brynmawr'){
+      for(let r=0;r<6;r++)px(g,x+r,by-r-1,bw-r*2,1,shade(col,0.9));
+      if(rnd()<0.4){px(g,x+bw*0.45,by-20,bw*0.14,20,col);px(g,x+bw*0.45-1,by-24,bw*0.14+2,4,shade(col,0.85));}
+      for(let i=0;i<3;i++)px(g,x+4+i*(bw-8)/3,by+bh*0.4,3,8,rgba('#0a0a12',0.5));
+    }else if(type==='modern'){
+      px(g,x,by,bw,bh,mixc(col,P.sky[1],0.3));
+      for(let r=0;r<bh/6;r++)for(let c=0;c<bw/6;c++)if(rnd()<0.5)px(g,x+2+c*6,by+2+r*6,3,3,lit?rgba('#ffd98a',0.5):rgba('#9ab4c4',0.3));
+      if(rnd()<0.3)px(g,x+bw/2,by-10,1,10,shade(col,0.8));
+    }else if(type==='night'){
+      for(let r=0;r<bh;r++)px(g,x-r*0.3,gy-r-1,bw+r*0.6,1,col);
+      if(rnd()<0.25){px(g,x+bw*0.3,by-10,bw*0.4,10,col);for(let r=0;r<6;r++)px(g,x+bw*0.3+r,by-10-r,bw*0.4-r*2,1,shade(col,1.1));}
+    }
+    if(type!=='modern'&&type!=='night'){
+      const cols=Math.floor(bw/8);
+      for(let r=0;r<Math.floor(bh/10);r++)for(let c=0;c<cols;c++){
+        if(rnd()<0.6)px(g,x+3+c*8,by+5+r*10,3,4,lit&&rnd()<0.5?rgba('#ffd98a',0.75):rgba('#0a0a12',0.45));
+      }
+    }
+    x+=bw+2+rnd()*8;
+  }
+}
+function drawMidLayer(g,w,gy,sc,P,rnd){
+  if(sc.base==='abs'){
+    for(let x=0;x<w;x+=30+rnd()*40){
+      const h2=40+rnd()*90;
+      px(g,x,gy-h2,6,h2,rgba(P.mid,0.8));
+      px(g,x,gy-h2,6,3,rgba(P.acc2,0.5));
+      for(let i=0;i<4;i++)px(g,x-3,gy-h2+10+i*18,12,1,rgba(P.acc,0.35));
+    }
+    return;
+  }
+  let x=0;
+  while(x<w){
+    const kind=rnd();
+    if(kind<0.45){
+      const tw=14+rnd()*16,th=34+rnd()*40;
+      px(g,x+tw/2-2,gy-th*0.4,4,th*0.4,mixc(P.wood2,P.mid,0.4));
+      for(let r=0;r<th*0.6;r++){
+        const ww=tw*(1-r/(th*0.7));
+        px(g,x+tw/2-ww/2,gy-th*0.4-r,ww,1,mixc(P.leaf,P.mid,0.35+rnd()*0.2));
+      }
+      x+=tw+8+rnd()*20;
+    }else if(kind<0.75){
+      const bw=26+rnd()*36,bh=24+rnd()*30;
+      px(g,x,gy-bh,bw,bh,mixc(P.mid,P.far,0.3));
+      for(let r=0;r<7;r++)px(g,x+r*0.7,gy-bh-r-1,bw-r*1.4,1,shade(P.mid,0.8));
+      px(g,x+4,gy-bh*0.5,4,6,rgba('#0a0a12',0.4));
+      x+=bw+6+rnd()*14;
+    }else{
+      const fw=20+rnd()*20;
+      for(let i=0;i<fw;i+=4)px(g,x+i,gy-8,2,8,mixc(P.wood2,P.mid,0.3));
+      px(g,x,gy-7,fw,1,mixc(P.wood2,P.mid,0.3));
+      x+=fw+6+rnd()*12;
+    }
+  }
+}
+function drawFloor(g,rw,kind,P,rnd){
+  const fh=SH-GY;
+  if(kind==='wood'){
+    px(g,0,GY,rw,fh,P.floor);
+    px(g,0,GY,rw,2,mixc(P.floor,'#ffffff',0.22));
+    for(let xx=0;xx<rw;xx+=Math.round(0.62*S)){px(g,xx,GY+2,1,fh,shade(P.floor,0.72));px(g,xx+1,GY+2,1,fh,mixc(P.floor,'#ffffff',0.08));}
+    for(let i=0;i<rw/40;i++)px(g,rnd()*rw,GY+4+rnd()*(fh-6),6+rnd()*10,1,rgba(P.floor2,0.5));
+  }else if(kind==='stone'){
+    px(g,0,GY,rw,fh,P.floor2);
+    px(g,0,GY,rw,2,mixc(P.floor,'#ffffff',0.15));
+    for(let yy=GY+4;yy<SH;yy+=8)for(let xx=((yy/8)%2)*10;xx<rw;xx+=20){px(g,xx,yy,18,6,mixc(P.floor,P.floor2,rnd()*0.4));px(g,xx,yy,18,1,rgba('#ffffff',0.06));}
+  }else if(kind==='cobble'){
+    px(g,0,GY,rw,fh,mixc(P.floor2,P.mid,0.3));
+    px(g,0,GY,rw,2,mixc(P.floor,'#ffffff',0.12));
+    for(let yy=GY+3;yy<SH;yy+=6)for(let xx=((yy/6)%2)*5;xx<rw;xx+=10){px(g,xx,yy,8,4,mixc(P.floor,P.mid,0.2+rnd()*0.3));px(g,xx,yy,8,1,rgba('#ffffff',0.07));}
+  }else if(kind==='grass'){
+    px(g,0,GY,rw,fh,mixc(P.leaf,P.floor2,0.45));
+    px(g,0,GY,rw,2,mixc(P.leaf,'#ffffff',0.15));
+    for(let i=0;i<rw/3;i++){const xx=rnd()*rw;px(g,xx,GY-1-rnd()*3,1,2+rnd()*3,mixc(P.leaf,'#ffffff',rnd()*0.2));}
+    for(let i=0;i<rw/60;i++)px(g,rnd()*rw,GY+4+rnd()*(fh-6),3,2,rgba(P.acc2,0.4));
+  }else{
+    px(g,0,GY,rw,fh,P.floor);
+    px(g,0,GY,rw,2,P.acc2);
+    for(let xx=0;xx<rw;xx+=Math.round(0.6*S))px(g,xx,GY+2,1,fh,rgba(P.acc,0.35));
+    for(let yy=GY+6;yy<SH;yy+=7)px(g,0,yy,rw,1,rgba(P.acc2,0.22));
+  }
+}
+function buildRoomCaches(Rr){
+  const d=Rr.d,P=Rr.P,sc=Rr.sc;
+  const rw=Rr.roomW*S;roomWpx=rw;
+  const rnd=mulberry32((save.seed^hashStr(Rr.room.id)^0xA5A5)>>>0);
+  skyC=mkC(SW+rw*0.06+4,SH);
+  const sg=skyC.getContext('2d');
+  const grad=sg.createLinearGradient(0,0,0,GY);
+  grad.addColorStop(0,P.sky[0]);grad.addColorStop(0.62,P.sky[1]);grad.addColorStop(1,P.sky[2]);
+  sg.fillStyle=grad;sg.fillRect(0,0,skyC.width,SH);
+  if(sc.base==='abs'){
+    for(let i=0;i<3;i++){
+      const cx2=skyC.width*(0.2+i*0.3),cy2=SH*(0.22+i*0.1),r=30+i*22;
+      sg.strokeStyle=rgba(i%2?P.acc:P.acc2,0.22);sg.lineWidth=2;
+      sg.beginPath();sg.arc(cx2,cy2,r,0,Math.PI*2);sg.stroke();
+      sg.beginPath();sg.arc(cx2,cy2,r*0.62,0,Math.PI*2);sg.stroke();
+    }
+  }
+  if(P.night||sc.sky==='night'){
+    const ns=Math.floor(30+d.detail*70);
+    for(let i=0;i<ns;i++){const sx2=rnd()*skyC.width,sy2=rnd()*GY*0.8;px(sg,sx2,sy2,rnd()<0.2?2:1,rnd()<0.2?2:1,rgba('#ffffff',0.3+rnd()*0.6));}
+    px(sg,skyC.width*0.72,GY*0.2,14,14,'#e8e4d0');px(sg,skyC.width*0.72+3,GY*0.2-2,10,10,'#f4f0e0');
+    px(sg,skyC.width*0.72+5,GY*0.2+3,3,3,'#c8c4b0');
+  }else{
+    const sunX=skyC.width*(0.2+rnd()*0.5),sunY=GY*(P.dawn||P.dusk?0.55:0.22);
+    const sunC=P.dawn?'#ffb27a':P.dusk?'#ff8a5c':'#fff4d0';
+    px(sg,sunX-7,sunY-7,14,14,sunC);px(sg,sunX-5,sunY-9,10,18,sunC);px(sg,sunX-9,sunY-5,18,10,sunC);
+    px(sg,sunX-4,sunY-4,8,8,mixc(sunC,'#ffffff',0.5));
+  }
+  const ncl=d.weather===0?2:Math.floor(3+d.detail*5);
+  for(let i=0;i<ncl;i++){
+    const cx2=rnd()*skyC.width,cy2=GY*(0.12+rnd()*0.35),cw2=24+rnd()*40;
+    const cc=d.weather>=2?mixc(P.sky[1],'#3a3a4a',0.4):mixc(P.sky[2],'#ffffff',0.3);
+    for(let b=0;b<5;b++)px(sg,cx2+b*cw2*0.18,cy2+(b%2)*3,cw2*0.3,6+rnd()*4,rgba(cc,0.7));
+  }
+  farC=mkC(SW+rw*0.16+4,SH);
+  drawSkyline(farC.getContext('2d'),farC.width,GY,sc.sky==='night'?'night':sc.sky,P,rnd,d);
+  midC=mkC(SW+rw*0.38+4,SH);
+  drawMidLayer(midC.getContext('2d'),midC.width,GY,sc,P,rnd);
+  roomC=mkC(rw,SH);
+  const rg=roomC.getContext('2d');
+  if(sc.base==='in'){
+    px(rg,0,0,rw,GY,P.wall);
+    const pat=rnd();
+    if(sc.decor==='home'||sc.decor==='study'){
+      for(let yy=8;yy<GY-20;yy+=14)for(let xx=((yy/14)%2)*7;xx<rw;xx+=14){
+        px(rg,xx,yy,2,2,rgba(P.wall2,0.5));
+        if(pat<0.5)px(rg,xx+4,yy+5,1,1,rgba(P.wall2,0.4));
+      }
+    }else if(sc.decor==='hall'){
+      for(let xx=0;xx<rw;xx+=Math.round(2.4*S)){
+        px(rg,xx,0,Math.round(0.18*S),GY,P.wall2);
+        px(rg,xx,0,2,GY,mixc(P.wall2,'#ffffff',0.15));
+        px(rg,xx-2,GY-Math.round(1.9*S),Math.round(0.18*S)+4,4,P.wall2);
+      }
+    }else{
+      for(let yy=10;yy<GY-24;yy+=18)px(rg,0,yy,rw,1,rgba(P.wall2,0.35));
+    }
+    const wy=GY-Math.round(0.62*S);
+    px(rg,0,wy,rw,GY-wy,P.wains);
+    px(rg,0,wy,rw,2,mixc(P.wains,'#ffffff',0.18));
+    for(let xx=0;xx<rw;xx+=Math.round(0.8*S))px(rg,xx,wy+3,1,GY-wy-3,shade(P.wains,0.8));
+    px(rg,0,GY-3,rw,3,shade(P.wains,0.6));
+    Rr.windows=[];
+    const nw=sc.win||1;
+    for(let i=0;i<nw;i++){
+      const wx=Rr.roomW*(i+1)/(nw+1)*S;
+      const ww=1.1*S,wh=1.5*S,wtop=GY-2.25*S;
+      Rr.windows.push({x:wx-ww/2,y:wtop,w:ww,h:wh,open:rnd()<0.6});
+      rg.clearRect(Math.round(wx-ww/2),Math.round(wtop),Math.round(ww),Math.round(wh));
+    }
+    for(const wn of Rr.windows){
+      px(rg,wn.x-4,wn.y-4,wn.w+8,4,P.wood);
+      px(rg,wn.x-4,wn.y+wn.h,wn.w+8,4,P.wood);
+      px(rg,wn.x-4,wn.y,4,wn.h,P.wood);
+      px(rg,wn.x+wn.w,wn.y,4,wn.h,P.wood);
+      px(rg,wn.x-6,wn.y+wn.h+4,wn.w+12,3,P.wood2);
+      px(rg,wn.x+wn.w/2-1,wn.y,2,wn.h,P.wood);
+      if(!wn.open)px(rg,wn.x,wn.y+wn.h*0.48,wn.w,2,P.wood);
+      else{px(rg,wn.x,wn.y,wn.w,wn.h*0.22,rgba(P.paper,0.18));px(rg,wn.x,wn.y+wn.h*0.22,wn.w,2,P.wood);}
+      px(rg,wn.x-4,wn.y-4,wn.w+8,1,mixc(P.wood,'#ffffff',0.25));
+      px(rg,wn.x-8,wn.y-2,4,wn.h*0.7,rgba(P.acc,0.55));
+      px(rg,wn.x+wn.w+4,wn.y-2,4,wn.h*0.7,rgba(P.acc,0.55));
+    }
+    const nd=Math.floor(2+d.detail*6);
+    for(let i=0;i<nd;i++){
+      const fx=rnd()*rw,fy=GY*(0.18+rnd()*0.3);
+      if(Rr.windows.some(wn=>fx>wn.x-30&&fx<wn.x+wn.w+30&&fy>wn.y-20&&fy<wn.y+wn.h))continue;
+      if(rnd()<0.55){
+        const f=FORMULAS[Math.floor(rnd()*FORMULAS.length)];
+        const fw=textW(f,1)+8;
+        px(rg,fx,fy,fw,14,P.wood2);px(rg,fx+1,fy+1,fw-2,12,mixc(P.paper,P.wall,0.25));
+        drawText(rg,f,fx+4,fy+3,rgba(P.ink,0.75),1);
+      }else{
+        const fw=12+rnd()*10,fh=14+rnd()*10;
+        px(rg,fx,fy,fw,fh,P.wood);px(rg,fx+1,fy+1,fw-2,fh-2,mixc(P.paper,P.wall,0.3));
+        px(rg,fx+3,fy+3,fw-6,fh*0.4,rgba(P.acc,0.5));
+        px(rg,fx+3,fy+fh*0.55,fw-6,1,rgba(P.ink,0.4));
+      }
+    }
+    drawFloor(rg,rw,sc.floor,P,rnd);
+  }else if(sc.base==='out'){
+    drawFloor(rg,rw,sc.ground,P,rnd);
+    if(sc.sky==='moscow')for(let xx=0;xx<rw;xx+=6)px(rg,xx,GY-1-rnd()*2,5,2,rgba('#ffffff',0.65));
+  }else{
+    drawFloor(rg,rw,'grid',P,rnd);
+  }
+}
+function initParticles(Rr){
+  const d=Rr.d,sc=Rr.sc;
+  PARTS.precip=[];PARTS.dust=[];PARTS.spark=[];
+  const rnd=mulberry32((save.seed^hashStr(Rr.room.id)^0x7777)>>>0);
+  if(d.weather===2||d.weather===4){
+    const n=Math.floor(50+d.detail*60);
+    for(let i=0;i<n;i++)PARTS.precip.push({x:rnd()*SW,y:rnd()*SH,v:260+rnd()*160,l:5+rnd()*6,kind:'rain'});
+  }else if(d.weather===3){
+    const n=Math.floor(40+d.detail*50);
+    for(let i=0;i<n;i++)PARTS.precip.push({x:rnd()*SW,y:rnd()*SH,v:26+rnd()*30,sw:rnd()*6.28,kind:'snow',r:rnd()<0.3?2:1});
+  }
+  if(sc.base==='in'){
+    const n=Math.floor(8+d.dust*30);
+    for(let i=0;i<n;i++)PARTS.dust.push({x:rnd()*SW,y:rnd()*GY,vx:(rnd()-0.5)*6,vy:-2-rnd()*5,ph:rnd()*6.28,r:rnd()<0.25?2:1});
+  }else if(sc.base==='abs'){
+    const n=Math.floor(14+d.dust*36);
+    for(let i=0;i<n;i++)PARTS.spark.push({x:rnd()*SW,y:rnd()*SH,v:8+rnd()*20,ph:rnd()*6.28,ch:FORMULAS[Math.floor(rnd()*FORMULAS.length)],glyph:rnd()<0.4});
+  }else{
+    const n=Math.floor(6+d.dust*20);
+    for(let i=0;i<n;i++)PARTS.dust.push({x:rnd()*SW,y:GY*0.4+rnd()*GY*0.6,vx:(rnd()-0.5)*10,vy:-1-rnd()*3,ph:rnd()*6.28,r:1,fly:P.night||P.dusk});
+  }
+  lightT=2+rnd()*5;flashA=0;glitchT=1+rnd()*3;
+}
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+let cv=null,ctx=null,lang='ru';
+let W=200,H=400,SX=0,SY=0,SW=200,SH=300,DY=300,DH=100,GY=240,S=80,U=2;
+let state='title',mode='chrono',modeIdx=0,order=[],roomIdx=0,R=null;
+let player={x:2,dir:1,phase:0,moving:false,blink:0,blinkT:2,anim:null,animT:0,idleT:3,lastStep:0};
+let cam=0,time=0,lastTs=0,titleT=0;
+let trans={t:0,dir:1,next:0,swapped:false};
+let panel=null,finish=null,finishDelay=0,stampT=0;
+let toasts=[],edgeHold={dir:0,t:0},pressFlash={};
+let pendingComplete=false,pendingFinish=false;
+let titleSky=null,titleFar=null,titleP=null,titleD=null;
+const MODES=[
+ {id:'chrono',name:{ru:'Хронологический',en:'Chronological'},desc:{ru:'пройдите всё по порядку',en:'walk through everything in order'},lock:null},
+ {id:'bonus',name:{ru:'Бонусный',en:'Bonus'},desc:{ru:'пройдите бонусные уровни',en:'complete the bonus rooms'},lock:{ru:'пройдите хронологический режим',en:'finish the chronological mode'}},
+ {id:'free',name:{ru:'Свободный',en:'Free'},desc:{ru:'свободно изучайте всё доступное пространство',en:'freely explore all available space'},lock:{ru:'пройдите хронологический и бонусный',en:'finish chronological and bonus modes'}}
+];
+const L=(ru,en)=>lang==='ru'?ru:en;
+function modeUnlocked(i){return i===0||(i===1&&save.unlocks.bonus)||(i===2&&save.unlocks.free);}
+function modeRooms(m){return m==='chrono'?ROOMS_C:ROOMS_B;}
+function modeProgress(m){const ids=modeRooms(m).map(r=>r.id);return ids.filter(id=>save.modes[m].done.indexOf(id)>=0).length;}
+function readsFor(rid){const m=save.modes[mode];return (m&&m.reads[rid])||[];}
+function isRead(rid,oi){return mode!=='free'&&readsFor(rid).indexOf(oi)>=0;}
+function isDone(rid){return mode!=='free'&&save.modes[mode]&&save.modes[mode].done.indexOf(rid)>=0;}
+function toast(txt){toasts.push({txt,t:0,life:2.4});if(toasts.length>3)toasts.shift();}
+function layout(){
+  const vw=(typeof window!=='undefined'&&window.innerWidth)||390;
+  const vh=(typeof window!=='undefined'&&window.innerHeight)||720;
+  U=Math.max(2,Math.floor(Math.min(vw,vh)/230));
+  W=Math.ceil(vw/U);H=Math.ceil(vh/U);
+  const pad=Math.max(4,Math.round(Math.min(W,H)*0.02));
+  DH=clamp(Math.round(H*0.24),78,118);
+  SX=pad;SY=pad;SW=W-pad*2;SH=H-DH-pad*2;
+  DY=H-DH;GY=Math.round(SH*0.8);S=SH/3.3;
+  if(cv){cv.width=W;cv.height=H;}
+}
+function buildTitleBg(){
+  const rnd=mulberry32((save.seed^0x71717)>>>0);
+  const ax=[];for(let i=0;i<8;i++)ax.push(rnd());
+  const d=derive(ax);const P=buildPalette(d);
+  titleD=d;titleP=P;
+  titleSky=mkC(SW,SH);
+  const g=titleSky.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,SH);
+  gr.addColorStop(0,P.sky[0]);gr.addColorStop(0.6,P.sky[1]);gr.addColorStop(1,P.sky[2]);
+  g.fillStyle=gr;g.fillRect(0,0,SW,SH);
+  for(let i=0;i<40;i++)px(g,rnd()*SW,rnd()*SH*0.7,1,1,rgba('#ffffff',0.2+rnd()*0.5));
+  for(let i=0;i<3;i++){
+    const cx2=SW*(0.25+i*0.25),cy2=SH*0.3,r=20+i*14;
+    g.strokeStyle=rgba(i%2?P.acc:P.acc2,0.3);g.lineWidth=2;
+    g.beginPath();g.arc(cx2,cy2,r,0,Math.PI*2);g.stroke();
+    g.beginPath();g.arc(cx2,cy2,r*0.6,0,Math.PI*2);g.stroke();
+  }
+  titleFar=mkC(SW+120,SH);
+  drawSkyline(titleFar.getContext('2d'),titleFar.width,Math.round(SH*0.9),'abstract',P,rnd,d);
+}
+function buildRoom(idx,side){
+  roomIdx=idx;
+  const id=order[idx],room=ROOM_BY_ID[id];
+  const ax=roomAxes(room,save.seed),d=derive(ax),P=buildPalette(d);
+  const sc=SCENES[room.scene];
+  const n=room.objs.length;
+  const roomW=Math.max(SW/S+2.6,n*1.95+3.6);
+  const objs=room.objs.map((o,i)=>({o,x:1.6+(i+0.5)*(roomW-3.2)/n,idx:i}));
+  R={room,ax,d,P,sc,roomW,objs,idx,age:ageFor(room.year),decor:[],lamps:[],windows:[]};
+  const rnd=mulberry32((save.seed^hashStr(room.id)^0xBEEF)>>>0);
+  const pool=sc.base==='in'?['bookshelf','plant','sconce','chair','rug','clock']:sc.base==='out'?['lamppost','treeOut','bench','fence']:['pylon','orb','rune'];
+  const count=Math.floor(3+d.detail*6);
+  for(let i=0;i<count;i++){
+    const x=0.9+rnd()*(roomW-1.8);
+    if(objs.some(ob=>Math.abs(ob.x-x)<1.0))continue;
+    if(R.decor.some(dd=>Math.abs(dd.x-x)<0.9))continue;
+    const kind=pool[Math.floor(rnd()*pool.length)];
+    R.decor.push({kind,x});
+  }
+  if(sc.base==='in'){R.lamps.push({x:roomW*0.25,y:GY-1.95*S},{x:roomW*0.75,y:GY-1.95*S});}
+  if(sc.base==='out'){for(let x=1.5;x<roomW;x+=3.2)R.lamps.push({x,y:GY-2.1*S});}
+  if(sc.base==='abs'){R.lamps.push({x:roomW*0.5,y:GY-1.4*S});}
+  buildRoomCaches(R);
+  initParticles(R);
+  player.x=side==='left'?0.85:roomW-0.85;
+  player.dir=side==='left'?1:-1;
+  player.anim=null;player.moving=false;player.phase=0;
+  cam=clamp(player.x*S-SW/2,0,roomW*S-SW);
+  edgeHold={dir:0,t:0};
+  const root=[98,110,123,131][d.pal]*(d.time===3?0.75:1);
+  Snd.room(d,sc.base,root);
+}
+function startGame(){
+  if(!modeUnlocked(modeIdx)){Snd.error();shake=2;toast(L('Режим заблокирован','Mode locked'));return;}
+  mode=MODES[modeIdx].id;
+  order=orderFor(mode,save.seed);
+  Snd.init();Snd.resume();Snd.duck(1);
+  let start=0;
+  if(mode!=='free'){for(let i=0;i<order.length;i++){if(!isDone(order[i])){start=i;break;}}}
+  buildRoom(start,'left');
+  state='play';panel=null;finish=null;
+  Snd.click();
+  toast(L('Подойдите к предмету и нажмите ✦','Approach an object and press ✦'));
+}
+function startTrans(dir){
+  const next=(roomIdx+dir+order.length)%order.length;
+  trans={t:0,dir,next,swapped:false};
+  state='trans';Snd.whoosh();
+}
+function nearestObj(){
+  if(!R)return null;
+  let best=null,bd=1.05;
+  for(const ob of R.objs){const dd=Math.abs(ob.x-player.x);if(dd<bd){bd=dd;best=ob;}}
+  return best;
+}
+function layoutPanel(){
+  if(!panel)return;
+  const pw=SW-12,innerW=pw-16;
+  const lines=wrapText(panel.ob.o.d[lang],innerW,1);
+  const headH=24,footH=20,lineH=9;
+  const maxH=SH-34;
+  const perPage=Math.max(3,Math.floor((maxH-headH-footH-10)/lineH));
+  const pages=[];for(let i=0;i<lines.length;i+=perPage)pages.push(lines.slice(i,i+perPage));
+  panel.pages=pages;panel.page=clamp(panel.page,0,pages.length-1);
+  panel.pw=pw;panel.headH=headH;panel.footH=footH;panel.lineH=lineH;
+}
+function openPanel(ob){
+  player.dir=ob.x>=player.x?1:-1;
+  player.anim=['reach','note','glasses','bow'][Math.floor(Math.random()*4)];
+  player.animT=0;player.moving=false;
+  panel={ob,page:0,t:0,pages:[],pw:0,headH:24,footH:20,lineH:9};
+  layoutPanel();
+  state='read';Snd.open();
+  if(mode!=='free'){
+    const m=save.modes[mode],rid=R.room.id;
+    if(!m.reads[rid])m.reads[rid]=[];
+    if(m.reads[rid].indexOf(ob.idx)<0){m.reads[rid].push(ob.idx);persist();}
+    if(m.reads[rid].length>=R.room.objs.length&&m.done.indexOf(rid)<0){
+      m.done.push(rid);persist();pendingComplete=true;
+      if(order.every(id=>m.done.indexOf(id)>=0))pendingFinish=true;
+    }
+  }
+}
+function panelNext(){if(!panel)return;if(panel.page<panel.pages.length-1){panel.page++;Snd.page();}else closePanel();}
+function panelPrev(){if(!panel)return;if(panel.page>0){panel.page--;Snd.page();}}
+function closePanel(){
+  panel=null;state='play';player.anim=null;Snd.close();
+  if(pendingComplete){pendingComplete=false;toast(L('Комната изучена ✓','Room studied ✓'));Snd.complete();stampT=1.1;}
+  if(pendingFinish){pendingFinish=false;finishDelay=1.2;}
+}
+function triggerFinish(){
+  const newly=[];
+  const cDone=save.modes.chrono.done.length>=ROOMS_C.length;
+  const bDone=save.modes.bonus.done.length>=ROOMS_B.length;
+  if(mode==='chrono'&&cDone&&!save.unlocks.bonus){save.unlocks.bonus=true;newly.push(1);}
+  if(cDone&&bDone&&!save.unlocks.free){save.unlocks.free=true;newly.push(2);}
+  persist();
+  finish={t:0,newly};state='finish';Snd.unlock();
+}
+function pauseGame(){if(state!=='play'&&state!=='read')return;if(state==='read')panel=null;state='pause';Snd.duck(0);}
+function resumeGame(){state='play';Snd.duck(1);Snd.click();}
+function toTitle(){state='title';panel=null;finish=null;player.anim=null;Snd.duck(1);buildTitleBg();}
+function pressStart(){
+  if(state==='title')startGame();
+  else if(state==='play'||state==='read')pauseGame();
+  else if(state==='pause')resumeGame();
+  else if(state==='finish')toTitle();
+}
+function doInteract(){
+  if(state==='title'){regenSeed();return;}
+  if(state==='read'){panelNext();return;}
+  if(state==='finish'){toTitle();return;}
+  if(state==='pause'){resumeGame();return;}
+  if(state!=='play')return;
+  const ob=nearestObj();
+  if(!ob){Snd.page();return;}
+  openPanel(ob);
+}
+function regenSeed(){save.seed=(Math.random()*0xFFFFFFFF)>>>0;persist();buildTitleBg();toast(L('Новый сид','New seed'));Snd.click();}
+function setLang(l){save.lang=l;lang=l;persist();tcache.clear();if(panel)layoutPanel();Snd.click();}
+function toggleSound(){save.sound=!save.sound;persist();Snd.init();Snd.setOn(save.sound);if(save.sound)Snd.click();}
+function cycleMode(d){modeIdx=(modeIdx+d+3)%3;Snd.click();}
+function openWiki(){if(!panel)return;try{window.open(wikiUrl(panel.ob.o.w),'_blank');}catch(e){}toast(L('Открыто в новой вкладке ↗','Opened in a new tab ↗'));Snd.click();}
+function pressButton(id){
+  pressFlash[id]=0.15;
+  switch(id){
+    case 'left':if(state==='title')cycleMode(-1);else if(state==='read')panelPrev();break;
+    case 'right':if(state==='title')cycleMode(1);else if(state==='read')panelNext();break;
+    case 'start':pressStart();break;
+    case 'act':doInteract();break;
+    case 'snd':case 'sndMini':toggleSound();break;
+    case 'lang_ru':setLang('ru');break;
+    case 'lang_en':setLang('en');break;
+    case 'seed':regenSeed();break;
+    case 'mode_l':cycleMode(-1);break;
+    case 'mode_r':cycleMode(1);break;
+    case 'wiki':openWiki();break;
+    case 'next':panelNext();break;
+    case 'resume':resumeGame();break;
+    case 'exit':toTitle();break;
+  }
+}
+function spawnFootPuff(){
+  if(!R)return;
+  PARTS.dust.push({x:player.x*S-cam,y:GY-2,vx:-player.dir*14,vy:-8,ph:0,r:1,puff:0.4});
+}
+function update(dt){
+  time+=dt;titleT+=dt;
+  Snd.tick();
+  for(const k in pressFlash)pressFlash[k]=Math.max(0,pressFlash[k]-dt);
+  toasts=toasts.filter(t=>(t.t+=dt)<t.life);
+  if(stampT>0)stampT-=dt;
+  shake=Math.max(0,shake-dt*6);
+  flashA=Math.max(0,flashA-dt*2.6);
+  if(glitchBurst>0)glitchBurst-=dt;
+  if(state==='title')return;
+  if(state==='pause')return;
+  if(state==='finish'){finish.t+=dt;return;}
+  if(state==='trans'){
+    trans.t+=dt/1.8;
+    if(trans.t>=0.5&&!trans.swapped){buildRoom(trans.next,trans.dir>0?'left':'right');trans.swapped=true;}
+    if(trans.t>=1)state='play';
+    updateParticles(dt);
+    return;
+  }
+  updateParticles(dt);
+  const d=R.d;
+  if(d.weather===4){lightT-=dt;if(lightT<=0){flashA=1;shake=2.2;Snd.thunder();lightT=3.5+Math.random()*6;}}
+  if(d.glitch>0.22){glitchT-=dt;if(glitchT<=0){glitchBurst=0.1+d.glitch*0.16;glitchT=1.6+Math.random()*4/(d.glitch+0.25);}}
+  player.blinkT-=dt;
+  if(player.blinkT<=0){player.blink=0.13;player.blinkT=2.4+Math.random()*3;}
+  if(player.blink>0)player.blink-=dt;
+  if(player.anim)player.animT+=dt;
+  if(state==='read')return;
+  if(finishDelay>0){finishDelay-=dt;if(finishDelay<=0){triggerFinish();return;}}
+  player.idleT-=dt;
+  if(player.idleT<=0&&!player.moving){player.anim=Math.random()<0.5?'glasses':null;player.animT=0;player.idleT=4+Math.random()*4;}
+  const dir=(Input.right?1:0)-(Input.left?1:0);
+  if(dir!==0){
+    player.dir=dir;player.moving=true;player.anim=null;
+    player.x+=dir*1.6*dt;
+    player.phase+=dt*7.4;
+    const si=Math.floor(player.phase/Math.PI);
+    if(si!==player.lastStep){player.lastStep=si;Snd.step(si%2===0);spawnFootPuff();}
+  }else player.moving=false;
+  const minX=0.3,maxX=R.roomW-0.3;
+  const atL=player.x<=minX+0.001,atR=player.x>=maxX-0.001;
+  player.x=clamp(player.x,minX,maxX);
+  if((atL&&dir<0)||(atR&&dir>0)){
+    if(edgeHold.dir===dir)edgeHold.t+=dt;else edgeHold={dir,t:0};
+    if(edgeHold.t>0.22){startTrans(dir);return;}
+  }else edgeHold.t=Math.max(0,edgeHold.t-dt*2);
+  const target=player.x*S-SW/2+player.dir*SW*0.07;
+  cam+=(target-cam)*(1-Math.exp(-dt*5));
+  cam=clamp(cam,0,R.roomW*S-SW);
+}
+function updateParticles(dt){
+  for(const p of PARTS.precip){
+    if(p.kind==='rain'){p.y+=p.v*dt;p.x-=p.v*0.18*dt;if(p.y>SH){p.y=-8;p.x=Math.random()*SW;}if(p.x<0)p.x+=SW;}
+    else{p.sw+=dt*2;p.y+=p.v*dt;p.x+=Math.sin(p.sw)*12*dt;if(p.y>SH){p.y=-4;p.x=Math.random()*SW;}if(p.x<0)p.x+=SW;if(p.x>SW)p.x-=SW;}
+  }
+  for(let i=PARTS.dust.length-1;i>=0;i--){
+    const p=PARTS.dust[i];
+    if(p.puff!==undefined){p.puff-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=20*dt;if(p.puff<=0)PARTS.dust.splice(i,1);continue;}
+    p.ph+=dt;p.x+=p.vx*dt+Math.sin(p.ph)*3*dt;p.y+=p.vy*dt;
+    if(p.y<0){p.y=GY*0.9;p.x=Math.random()*SW;}
+    if(p.x<0)p.x+=SW;if(p.x>SW)p.x-=SW;
+  }
+  for(const p of PARTS.spark){p.y-=p.v*dt;p.ph+=dt;if(p.y<-10){p.y=SH+6;p.x=Math.random()*SW;}}
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function btnW(id,x,y,w,h,hold){btn(id,x+SX,y+SY,w,h,hold);}
+function renderDecor(g,kind,x,P,t){
+  const s=S;
+  if(kind==='bookshelf'){
+    const w=0.8*s,h=1.9*s,top=GY-h;
+    px(g,x-w/2,top,w,h,P.wood2);px(g,x-w/2+2,top+2,w-4,h-4,P.wood);
+    for(let r=0;r<4;r++){const sy=top+4+r*(h-8)/4;px(g,x-w/2+2,sy+(h-8)/4-2,w-4,2,P.wood2);
+      for(let b=0;b<6;b++){const bc=[P.acc,P.acc2,P.leaf,P.metal][b%4];px(g,x-w/2+4+b*(w-8)/6,sy+2,(w-8)/6-1,(h-8)/4-5,shade(bc,0.7+((b*13)%5)/10));}}
+  }else if(kind==='plant'){
+    const w=0.3*s;px(g,x-w/2,GY-0.3*s,w,0.3*s,P.acc);
+    for(let i=0;i<5;i++){const a=-1.2+i*0.6,lx=x+Math.sin(a)*0.22*s,ly=GY-0.3*s-Math.cos(a)*0.4*s;
+      px(g,x-1,GY-0.3*s,lx-x,1,P.leaf);px(g,lx-3,ly-6,6,8,mixc(P.leaf,'#ffffff',i*0.06));}
+  }else if(kind==='sconce'){
+    const y=GY-1.95*s;px(g,x-2,y,4,0.16*s,P.metal);px(g,x-0.09*s,y-0.1*s,0.18*s,0.1*s,P.acc2);
+    const fl=0.5+0.5*Math.sin(t*7+x);px(g,x-2,y-0.16*s-fl*2,4,5,rgba('#ffd98a',0.7+0.3*fl));
+  }else if(kind==='chair'){PROPS.chair.fn(g,x,GY,s,P,mulberry32(1),t);}
+  else if(kind==='rug'){
+    const w=1.4*s;px(g,x-w/2,GY+2,w,6,rgba(P.acc,0.55));px(g,x-w/2+3,GY+3,w-6,4,rgba(P.acc2,0.4));
+    for(let i=0;i<6;i++)px(g,x-w/2+i*w/6,GY+2,1,6,rgba(P.paper,0.25));
+  }else if(kind==='clock'){
+    const y=GY-2.0*s,r=0.16*s;px(g,x-r,y-r,r*2,r*2,P.wood);px(g,x-r+2,y-r+2,r*2-4,r*2-4,P.paper);
+    px(g,x-1,y-r*0.6,2,r*0.6,P.ink);const a=t*0.5;px(g,x,y-1,Math.cos(a)*r*0.6,2,P.ink);
+  }else if(kind==='lamppost'){
+    const h=2.1*s;px(g,x-2,GY-h,4,h,mixc(P.metal,'#000000',0.3));
+    px(g,x-0.12*s,GY-h-0.14*s,0.24*s,0.14*s,P.metal);
+    const fl=0.6+0.4*Math.sin(t*5+x);px(g,x-0.08*s,GY-h-0.1*s,0.16*s,0.08*s,rgba('#ffd98a',P.lamp*fl));
+    px(g,x-0.16*s,GY-2,0.32*s,2,mixc(P.metal,'#000000',0.3));
+  }else if(kind==='treeOut'){
+    const h=2.4*s;px(g,x-3,GY-h*0.45,6,h*0.45,P.wood2);
+    for(let r=0;r<h*0.6;r++){const ww=0.7*s*(1-r/(h*0.75));px(g,x-ww/2,GY-h*0.45-r,ww,1,mixc(P.leaf,P.mid,0.2+((r*7)%10)/30));}
+  }else if(kind==='bench'){
+    const w=0.9*s;px(g,x-w/2,GY-0.4*s,w,0.07*s,P.wood);px(g,x-w/2,GY-0.75*s,w,0.06*s,P.wood);
+    px(g,x-w/2+2,GY-0.4*s,3,0.4*s,P.wood2);px(g,x+w/2-5,GY-0.4*s,3,0.4*s,P.wood2);
+  }else if(kind==='fence'){
+    const w=1.2*s;for(let i=0;i<6;i++)px(g,x-w/2+i*w/6,GY-0.6*s,2,0.6*s,P.wood2);
+    px(g,x-w/2,GY-0.5*s,w,2,P.wood);
+  }else if(kind==='pylon'){
+    const h=2.2*s;px(g,x-3,GY-h,6,h,rgba(P.acc,0.5));px(g,x-3,GY-h,6,3,P.acc2);
+    for(let i=0;i<4;i++)px(g,x-5,GY-h+0.3*s+i*0.45*s,10,1,rgba(P.acc2,0.5));
+  }else if(kind==='orb'){
+    const y=GY-1.2*s,fl=0.5+0.5*Math.sin(t*2+x);
+    px(g,x-0.15*s,GY-0.4*s,0.3*s,0.4*s,P.wood2);
+    px(g,x-6,y-6+Math.sin(t+x)*3,12,12,mixc(P.acc,P.acc2,fl));
+    px(g,x-3,y-3+Math.sin(t+x)*3,6,6,mixc(P.glow,'#ffffff',0.4));
+  }else if(kind==='rune'){
+    const f=FORMULAS[Math.floor(Math.abs(x*7)%FORMULAS.length)];
+    const y=GY-1.6*s+Math.sin(t*0.8+x)*4;
+    drawText(g,f,x-textW(f,1)/2,y,rgba(P.acc2,0.6),1);
+  }
+}
+function drawEdgeSigns(g,camX){
+  const P=R.P;
+  const prevId=order[(roomIdx-1+order.length)%order.length];
+  const nextId=order[(roomIdx+1)%order.length];
+  const mk=(wx,id,dir)=>{
+    const x=wx*S-camX;if(x<-80||x>SW+80)return;
+    const rm=ROOM_BY_ID[id];
+    px(g,x-2,GY-1.3*S,4,1.3*S,P.wood2);
+    const bw=0.95*S,bh=0.4*S,by=GY-1.5*S;
+    px(g,x-bw/2,by,bw,bh,P.wood);outline(g,x-bw/2,by,bw,bh,P.wood2);
+    const label=(rm.year?rm.year+' ':'')+rm.title[lang];
+    drawText(g,(dir<0?'← ':'')+fitText(label,11,1),x-bw/2+3,by+3,P.paper,1);
+    if(dir>0)drawText(g,'→',x+bw/2-9,by+bh-11,P.acc2,1);
+    if(mode!=='free')drawText(g,isDone(id)?'✓':'·',x+bw/2-9,by+3,isDone(id)?'#7ac97a':rgba(P.paper,0.5),1);
+    if(edgeHold.t>0&&((dir<0&&player.x<0.5)||(dir>0&&player.x>R.roomW-0.5))){
+      const pr=Math.min(1,edgeHold.t/0.22);
+      px(g,x-bw/2,by+bh+2,bw*pr,2,P.acc2);
+    }
+  };
+  mk(0.45,prevId,-1);mk(R.roomW-0.45,nextId,1);
+}
+function drawObjects(g,camX){
+  for(const ob of R.objs){
+    const x=ob.x*S-camX;if(x<-120||x>SW+120)continue;
+    const pr=PROPS[ob.o.k]||PROPS.plaque;
+    const ornd=mulberry32((save.seed^hashStr(R.room.id+':'+ob.idx))>>>0);
+    pr.fn(g,x,GY,S,R.P,ornd,time,ob);
+    const my=GY-pr.h*S-8;
+    const read=isRead(R.room.id,ob.idx);
+    if(mode==='free'){
+      const pl=0.5+0.5*Math.sin(time*2.4+ob.idx);
+      drawText(g,'✦',x-3,my-4,rgba(R.P.acc2,0.4+0.4*pl),1);
+    }else if(read){
+      drawText(g,'✓',x-3,my-4,'#7ac97a',1);
+    }else{
+      const pl=0.5+0.5*Math.sin(time*2.8+ob.idx);
+      drawText(g,'✦',x-3,my-6-pl*3,mixc(R.P.acc2,'#ffffff',pl*0.4),1);
+    }
+  }
+}
+function drawLight(g){
+  const P=R.P,d=R.d;
+  g.globalCompositeOperation='multiply';
+  g.globalAlpha=P.ambA;g.fillStyle=P.amb;g.fillRect(0,0,SW,SH);
+  g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  g.globalCompositeOperation='screen';
+  for(const lp of R.lamps){
+    const x=lp.x*S-cam;if(x<-60||x>SW+60)continue;
+    const r=1.4*S*P.lamp;
+    const gr=g.createRadialGradient(x,lp.y,2,x,lp.y,r);
+    gr.addColorStop(0,rgba('#ffd98a',0.32*P.lamp));gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gr;g.fillRect(x-r,lp.y-r,r*2,r*2);
+  }
+  if(R.sc.base==='in'&&(d.time===0||d.time===1)){
+    for(const wn of R.windows){
+      const x=wn.x-cam;if(x<-100||x>SW+100)continue;
+      g.fillStyle=rgba(P.glow,0.05+0.04*P.lamp);
+      g.beginPath();g.moveTo(x,wn.y);g.lineTo(x+wn.w,wn.y);g.lineTo(x+wn.w-0.7*S,GY);g.lineTo(x-0.7*S,GY);g.closePath();g.fill();
+    }
+  }
+  if(R.sc.base==='abs'){
+    const gr=g.createRadialGradient(SW/2,GY*0.5,10,SW/2,GY*0.5,SW*0.7);
+    gr.addColorStop(0,rgba(P.glow,0.1));gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gr;g.fillRect(0,0,SW,SH);
+  }
+  g.globalCompositeOperation='source-over';
+  if(flashA>0){g.fillStyle=rgba('#ffffff',flashA*0.65);g.fillRect(0,0,SW,SH);}
+}
+function drawEffects(g){
+  const d=R.d;
+  g.fillStyle='rgba(0,0,0,'+(0.05+d.glitch*0.07)+')';
+  for(let y=0;y<SH;y+=2)g.fillRect(0,y,SW,1);
+  if(glitchBurst>0){
+    const n=2+Math.floor(d.glitch*4);
+    for(let i=0;i<n;i++){
+      const sy=Math.floor(Math.random()*SH),sh2=3+Math.floor(Math.random()*10),dx=Math.round((Math.random()-0.5)*8*d.glitch);
+      g.drawImage(worldC,0,sy,SW,sh2,dx,sy,SW,sh2);
+    }
+    g.globalAlpha=0.16;g.globalCompositeOperation='screen';
+    g.drawImage(worldC,Math.round(2*d.glitch),0);
+    g.globalAlpha=1;g.globalCompositeOperation='source-over';
+    for(let i=0;i<6;i++)px(g,Math.random()*SW,Math.random()*SH,2+Math.random()*8,1,rgba(R.P.acc2,0.3));
+  }
+  if(d.age>0.05){
+    const n=Math.floor(d.age*50);
+    for(let i=0;i<n;i++)px(g,Math.random()*SW,Math.random()*SH,1,1,rgba(Math.random()<0.5?'#ffffff':'#000000',0.05+d.age*0.06));
+    if(Math.random()<d.age*0.12){const sx2=Math.random()*SW;px(g,sx2,0,1,SH,rgba('#ffffff',0.05+d.age*0.05));}
+  }
+  const vg=g.createRadialGradient(SW/2,SH/2,Math.min(SW,SH)*0.35,SW/2,SH/2,Math.max(SW,SH)*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,'+(0.3+d.age*0.22)+')');
+  g.fillStyle=vg;g.fillRect(0,0,SW,SH);
+}
+function drawPrecip(g,front){
+  const d=R.d;
+  if(d.weather!==2&&d.weather!==3&&d.weather!==4)return;
+  const isOut=R.sc.base!=='in';
+  if(front&&!isOut)return;
+  for(const p of PARTS.precip){
+    if(p.kind==='rain')px(g,p.x,p.y,1,p.l,rgba('#bcd9ff',0.4));
+    else px(g,p.x,p.y,p.r,p.r,rgba('#ffffff',0.75));
+  }
+}
+function drawDust(g){
+  const P=R.P;
+  g.globalCompositeOperation='screen';
+  for(const p of PARTS.dust){
+    const tw=0.4+0.6*Math.abs(Math.sin(p.ph*1.5));
+    const col=p.fly?'#d9ff8a':P.glow;
+    px(g,p.x,p.y,p.r,p.r,rgba(col,(p.puff!==undefined?0.3:0.25+0.4*tw)*R.d.dust));
+  }
+  for(const p of PARTS.spark){
+    if(p.glyph)drawText(g,p.ch,p.x,p.y,rgba(P.acc2,0.35),1);
+    else px(g,p.x,p.y,2,2,rgba(P.acc2,0.4+0.3*Math.sin(p.ph*2)));
+  }
+  g.globalCompositeOperation='source-over';
+}
+function drawHUD(g){
+  g.fillStyle='rgba(8,6,14,0.6)';g.fillRect(0,0,SW,15);
+  px(g,0,15,SW,1,rgba(R.P.acc2,0.35));
+  const rm=R.room;
+  const title=(rm.year?rm.year+' · ':'')+rm.title[lang];
+  const ft=fitText(title,SW-64,1);
+  drawText(g,ft,4,4,'#e8e2d4',1);
+  if(mode!=='free'&&isDone(rm.id))drawText(g,'✓',4+textW(ft)+3,4,'#7ac97a',1);
+  const prog=mode==='free'?'∞':(modeProgress(mode)+'/'+modeRooms(mode).length);
+  drawText(g,prog,SW-20,4,'#b8b2c8',1,2);
+  btnW('sndMini',SW-15,2,13,12);
+  drawSpeaker(g,SW-13,4,9,save.sound);
+  const n=R.room.objs.length;
+  for(let i=0;i<n;i++){
+    const read=isRead(rm.id,i);
+    px(g,4+i*7,19,5,3,mode==='free'?rgba(R.P.acc2,0.4):(read?'#7ac97a':rgba('#ffffff',0.25)));
+  }
+}
+function drawPrompt(g){
+  if(state!=='play')return;
+  const ob=nearestObj();if(!ob)return;
+  const x=ob.x*S-cam,pr=PROPS[ob.o.k]||PROPS.plaque;
+  const y=GY-pr.h*S-22+Math.sin(time*3)*2;
+  const txt='✦ '+L('Изучить','Study');
+  const w=textW(txt,1)+10;
+  px(g,x-w/2,y,w,13,'rgba(8,6,14,0.8)');
+  outline(g,x-w/2,y,w,13,R.P.acc2);
+  drawText(g,txt,x-w/2+5,y+3,'#ffe9b0',1);
+}
+function drawToasts(g){
+  let y=SH-26;
+  for(const t of toasts){
+    const a=t.t<0.2?t.t/0.2:t.t>t.life-0.4?(t.life-t.t)/0.4:1;
+    const w=textW(t.txt,1)+12;
+    g.globalAlpha=clamp(a,0,1);
+    px(g,SW/2-w/2,y,w,14,'rgba(8,6,14,0.85)');
+    outline(g,SW/2-w/2,y,w,14,'#7ac97a');
+    drawText(g,t.txt,SW/2-w/2+6,y+3,'#d9ffd9',1);
+    g.globalAlpha=1;y-=17;
+  }
+  if(stampT>0){
+    const sc2=stampT>0.9?3:2;
+    g.globalAlpha=Math.min(1,stampT*2);
+    drawText(g,'✓',SW/2-2.5*sc2,SH*0.35,'#7ac97a',sc2);
+    g.globalAlpha=1;
+  }
+}
+function drawPanel(g){
+  if(!panel)return;
+  panel.t=Math.min(1,panel.t+0.09);
+  const off=(1-panel.t)*16;
+  g.fillStyle='rgba(4,3,10,'+(0.5*panel.t)+')';g.fillRect(0,0,SW,SH);
+  const P=R.P,ob=panel.ob.o;
+  const lines=panel.pages[panel.page]||[];
+  const ph=panel.headH+lines.length*panel.lineH+panel.footH+10;
+  const x=6,y=SH-ph-6+off,w=panel.pw;
+  px(g,x-2,y-2,w+4,ph+4,P.acc2);
+  px(g,x,y,w,ph,P.paper);
+  px(g,x,y,w,panel.headH,P.acc);
+  px(g,x,y,w,2,mixc(P.acc,'#ffffff',0.25));
+  drawText(g,fitText(ob.t[lang],w-26,1),x+5,y+4,P.paper,1);
+  if(mode!=='free'&&isRead(R.room.id,panel.ob.idx))drawText(g,'✓',x+w-12,y+4,'#d9ffd9',1);
+  if(R.room.year)drawText(g,String(R.room.year),x+5,y+13,rgba(P.paper,0.75),1);
+  let ty=y+panel.headH+5;
+  for(const ln of lines){drawText(g,ln,x+8,ty,P.ink,1);ty+=panel.lineH;}
+  const fy=y+ph-panel.footH-3;
+  px(g,x+4,fy-3,w-8,1,rgba(P.ink,0.25));
+  const wl='↗ '+L('Вики','Wiki'),nw=panel.page<panel.pages.length-1?L('Далее →','Next →'):L('Закрыть ✕','Close ✕');
+  const ww=textW(wl,1)+10,nww=textW(nw,1)+10;
+  px(g,x+6,fy,ww,14,mixc(P.paper,P.acc,0.18));outline(g,x+6,fy,ww,14,P.acc);
+  drawText(g,wl,x+11,fy+3,P.ink,1);btnW('wiki',x+6,fy,ww,14);
+  px(g,x+w-6-nww,fy,nww,14,P.acc);outline(g,x+w-6-nww,fy,nww,14,shade(P.acc,0.6));
+  drawText(g,nw,x+w-1-nww,fy+3,P.paper,1);btnW('next',x+w-6-nww,fy,nww,14);
+  if(panel.pages.length>1){
+    const dots=panel.pages.length;
+    for(let i=0;i<dots;i++)px(g,x+w/2-dots*3+i*6,fy+5,4,4,i===panel.page?P.acc:rgba(P.ink,0.3));
+  }
+}
+function drawTrans(g){
+  const t=trans.t;
+  let a;
+  if(t<0.28)a=t/0.28;else if(t<0.72)a=1;else a=1-(t-0.72)/0.28;
+  g.fillStyle='rgba(5,4,12,'+clamp(a,0,1)+')';g.fillRect(0,0,SW,SH);
+  const ca=t>0.3&&t<0.7?Math.min(1,(t-0.3)/0.08,(0.7-t)/0.08):0;
+  if(ca<=0)return;
+  g.globalAlpha=clamp(ca,0,1);
+  const rm=ROOM_BY_ID[order[trans.next]];
+  const P=R.P;
+  const yearY=Math.round(SH*0.28);
+  px(g,SW*0.15,yearY-8,SW*0.7,1,rgba(P.acc2,0.6));
+  if(rm.year)drawText(g,String(rm.year),SW/2,yearY,P.acc2,2,1);
+  const tl=wrapText(rm.title[lang],SW*0.85,2);
+  let ty=yearY+(rm.year?24:8);
+  for(const ln of tl){drawText(g,ln,SW/2,ty,'#f0ead8',2,1);ty+=18;}
+  const checkY=Math.max(Math.round(SH*0.56),ty+4);
+  if(mode!=='free'){
+    const done=isDone(rm.id);
+    drawText(g,done?'✓ '+L('изучена','studied'):L('не изучена','not studied'),SW/2,checkY,done?'#7ac97a':'#8a84a0',1,1);
+    drawText(g,L('комната ','room ')+(trans.next+1)+' / '+order.length,SW/2,checkY+12,'#6a6480',1,1);
+  }else{
+    drawText(g,L('свободный режим','free mode'),SW/2,checkY,'#8a84a0',1,1);
+  }
+  px(g,SW*0.15,checkY+(mode!=='free'?26:14),SW*0.7,1,rgba(P.acc2,0.6));
+  g.globalAlpha=1;
+}
+function drawPause(g){
+  g.fillStyle='rgba(4,3,10,0.72)';g.fillRect(0,0,SW,SH);
+  drawText(g,L('ПАУЗА','PAUSED'),SW/2,SH*0.28,'#f0ead8',2,1);
+  drawText(g,L('звук выключен · мир замер','sound off · world frozen'),SW/2,SH*0.28+22,'#8a84a0',1,1);
+  const b1=L('Продолжить','Resume'),b2=L('На титул','Title');
+  const w1=textW(b1,1)+16,w2=textW(b2,1)+16;
+  const y=Math.round(SH*0.5);
+  px(g,SW/2-w1/2,y,w1,16,'#2e5f4e');outline(g,SW/2-w1/2,y,w1,16,'#7ac97a');
+  drawText(g,b1,SW/2-w1/2+8,y+4,'#d9ffd9',1);btnW('resume',SW/2-w1/2,y,w1,16);
+  px(g,SW/2-w2/2,y+24,w2,16,'#3a2438');outline(g,SW/2-w2/2,y+24,w2,16,'#b04a32');
+  drawText(g,b2,SW/2-w2/2+8,y+28,'#ffd9c8',1);btnW('exit',SW/2-w2/2,y+24,w2,16);
+  drawText(g,L('СТАРТ — продолжить','START — resume'),SW/2,SH-16,'#6a6480',1,1);
+}
+function drawFinish(g){
+  g.fillStyle='rgba(4,3,10,0.8)';g.fillRect(0,0,SW,SH);
+  const P=R?R.P:titleP;
+  const a=Math.min(1,finish.t*2);
+  g.globalAlpha=a;
+  drawText(g,'✦',SW/2-6,Math.round(SH*0.1),P.acc2,2,1);
+  drawText(g,L('История завершена','The story is complete'),SW/2,Math.round(SH*0.22),'#f0ead8',1,1);
+  const l1=mode==='chrono'?L('На этом история заканчивается.','Here the story ends.'):L('Бонусные комнаты изучены.','The bonus rooms are complete.');
+  const l2=L('Её идеи продолжают работать','Her ideas keep working');
+  const l3=L('в каждой симметрии мира.','in every symmetry of the world.');
+  drawText(g,l1,SW/2,Math.round(SH*0.32),P.acc2,1,1);
+  drawText(g,l2,SW/2,Math.round(SH*0.38),'#b8b2c8',1,1);
+  drawText(g,l3,SW/2,Math.round(SH*0.38)+11,'#b8b2c8',1,1);
+  const facts=modeRooms(mode).reduce((s2,r)=>s2+r.objs.length,0);
+  drawText(g,L('комнат: ','rooms: ')+modeRooms(mode).length+' · '+L('фактов: ','facts: ')+facts,SW/2,Math.round(SH*0.5),'#8a84a0',1,1);
+  let uy=Math.round(SH*0.56);
+  for(const ni of finish.newly){
+    const txt='✦ '+L('Вы разблокировали: ','You unlocked: ')+MODES[ni].name[lang];
+    const w=textW(txt,1)+12;
+    px(g,SW/2-w/2,uy,w,15,'rgba(46,95,78,0.9)');outline(g,SW/2-w/2,uy,w,15,'#7ac97a');
+    drawText(g,txt,SW/2-w/2+6,uy+3,'#d9ffd9',1);uy+=19;
+  }
+  drawText(g,L('СТАРТ — на титул','START — title screen'),SW/2,SH-14,'#6a6480',1,1);
+  g.globalAlpha=1;
+}
+function renderWorld(g){
+  const shX=(Math.random()-0.5)*shake*2,shY=(Math.random()-0.5)*shake;
+  const camX=Math.round(cam+shX);
+  g.fillStyle=R.P.sky[0];g.fillRect(0,0,SW,SH);
+  g.drawImage(skyC,-Math.round(cam*0.06+shX*0.3),Math.round(shY*0.3));
+  g.drawImage(farC,-Math.round(cam*0.16+shX*0.5),Math.round(shY*0.5));
+  g.drawImage(midC,-Math.round(cam*0.38+shX*0.7),Math.round(shY*0.7));
+  drawPrecip(g,false);
+  g.drawImage(roomC,-camX,Math.round(shY));
+  for(const dd of R.decor){const x=dd.x*S-camX;if(x>-80&&x<SW+80)renderDecor(g,dd.kind,x,R.P,time);}
+  drawEdgeSigns(g,camX);
+  drawObjects(g,camX);
+  drawEmmy(g,player.x*S-camX,GY+Math.round(shY),R.age,{dir:player.dir,phase:player.phase,moving:player.moving,blink:player.blink,anim:player.anim,animT:player.animT,t:time});
+  drawPrecip(g,true);
+  drawDust(g);
+  drawLight(g);
+  drawEffects(g);
+  drawHUD(g);
+  drawPrompt(g);
+  drawToasts(g);
+  if(state==='read')drawPanel(g);
+  if(state==='trans')drawTrans(g);
+  if(state==='pause')drawPause(g);
+  if(state==='finish')drawFinish(g);
+}
+function renderTitle(g){
+  const P=titleP;
+  const drift=Math.round(titleT*6)%120;
+  g.drawImage(titleSky,0,0);
+  g.drawImage(titleFar,-drift,0);
+  for(let i=0;i<3;i++){
+    const a=titleT*0.4+i*2.1;
+    const x=SW*(0.25+i*0.25)+Math.cos(a)*18,y=SH*0.3+Math.sin(a)*12;
+    px(g,x-2,y-2,4,4,i%2?P.acc:P.acc2);
+  }
+  g.fillStyle='rgba(6,4,14,0.35)';g.fillRect(0,0,SW,SH);
+  const chips=[['ru','RU'],['en','EN']];
+  let cx2=6;
+  for(const c of chips){
+    const w=20,on=lang===c[0];
+    px(g,cx2,4,w,11,on?P.acc:'rgba(20,16,32,0.8)');
+    outline(g,cx2,4,w,11,on?mixc(P.acc,'#ffffff',0.3):'#4a4460');
+    drawText(g,c[1],cx2+w/2,6,on?'#fff4e0':'#8a84a0',1,1);
+    btnW('lang_'+c[0],cx2,4,w,11);cx2+=w+4;
+  }
+  if(SW>=260)drawText(g,'offline · canvas · web audio',SW-6,6,'#5a5470',1,2);
+  const compact=SH<230;
+  const lsc=compact?2:(SW>300?4:3);
+  const ly=Math.max(20,Math.round(SH*0.09));
+  const shimmer=0.5+0.5*Math.sin(titleT*1.6);
+  drawText(g,'NOETHER',SW/2+1,ly+1,rgba(P.acc,0.5),lsc,1);
+  drawText(g,'NOETHER',SW/2,ly,mixc('#f0ead8',P.acc2,shimmer*0.35),lsc,1);
+  px(g,SW/2-textW('NOETHER',lsc)/2,ly+9*lsc+3,textW('NOETHER',lsc),1,rgba(P.acc2,0.6));
+  const subTxt=L('Прогулка по жизни Эмми Нётер','A walk through the life of Emmy Noether');
+  const sub=compact?[fitText(subTxt,SW*0.9,1)]:wrapText(subTxt,SW*0.85,1);
+  let sy=ly+9*lsc+8;
+  for(const ln of sub){drawText(g,ln,SW/2,sy,'#b8b2c8',1,1);sy+=10;}
+  const my=sy+(compact?6:14);
+  const M=MODES[modeIdx],unlocked=modeUnlocked(modeIdx);
+  const aw=18;
+  px(g,SW*0.08,my,aw,18,'rgba(20,16,32,0.85)');outline(g,SW*0.08,my,aw,18,'#4a4460');
+  drawText(g,'←',SW*0.08+aw/2,my+5,'#e8e2d4',1,1);btnW('mode_l',SW*0.08,my,aw,18);
+  px(g,SW*0.92-aw,my,aw,18,'rgba(20,16,32,0.85)');outline(g,SW*0.92-aw,my,aw,18,'#4a4460');
+  drawText(g,'→',SW*0.92-aw/2,my+5,'#e8e2d4',1,1);btnW('mode_r',SW*0.92-aw,my,aw,18);
+  drawText(g,fitText(M.name[lang],SW*0.6,2),SW/2,my+1,unlocked?'#f0ead8':'#6a6480',2,1);
+  const descTxt=unlocked?M.desc[lang]:('× '+M.lock[lang]);
+  const desc=compact?[fitText(descTxt,SW*0.85,1)]:wrapText(descTxt,SW*0.8,1);
+  let dy=my+22;
+  for(const ln of desc){drawText(g,ln,SW/2,dy,unlocked?'#b8b2c8':'#b08a6a',1,1);dy+=10;}
+  if(modeIdx<2){
+    const pr=modeProgress(M.id),tot=modeRooms(M.id).length;
+    drawText(g,L('изучено: ','studied: ')+pr+' / '+tot+(pr>=tot?' ✓':''),SW/2,dy+2,pr>=tot?'#7ac97a':'#8a84a0',1,1);
+  }else{
+    drawText(g,fitText(L('порядок комнат зависит от сида','room order depends on the seed'),SW*0.9,1),SW/2,dy+2,'#8a84a0',1,1);
+  }
+  const dotsY=dy+14;
+  for(let i=0;i<3;i++){
+    const dx=SW/2-12+i*12;
+    px(g,dx,dotsY,8,4,i===modeIdx?P.acc2:(modeUnlocked(i)?'#4a4460':'#2a2438'));
+    if(!modeUnlocked(i))px(g,dx+3,dotsY+1,2,2,'#b04a32');
+  }
+  const seedTxt='SEED '+save.seed.toString(16).toUpperCase().padStart(8,'0')+' · ✦ '+L('новый','new');
+  const sw2=textW(seedTxt,1)+12,sx2=SW/2-sw2/2,sy2=Math.max(dotsY+12,Math.round(SH*(compact?0.72:0.68)));
+  px(g,sx2,sy2,sw2,15,'rgba(20,16,32,0.85)');outline(g,sx2,sy2,sw2,15,P.acc);
+  drawText(g,seedTxt,sx2+6,sy2+3,'#ffe9b0',1);btnW('seed',sx2,sy2,sw2,15);
+  drawText(g,L('СТАРТ — начать прогулку','START — begin the walk'),SW/2,sy2+22,'#6a6480',1,1);
+  if(!compact){
+    const ex=SW*0.5+Math.sin(titleT*0.22)*SW*0.32;
+    const edir=Math.cos(titleT*0.22)>=0?1:-1;
+    const egy=Math.round(SH*0.94);
+    px(g,0,egy,SW,SH-egy,rgba(P.floor,0.9));
+    px(g,0,egy,SW,2,rgba(P.acc2,0.5));
+    const saveS=S;S=SH/9;
+    drawEmmy(g,ex,egy,'mature',{dir:edir,phase:titleT*5,moving:true,blink:0,anim:null,animT:0,t:titleT});
+    S=saveS;
+  }
+}
+/* ---------- console ---------- */
+function drawSpeaker(g,x,y,s,on){
+  const c=on?'#7ac97a':'#b04a32';
+  px(g,x,y+s*0.32,s*0.26,s*0.36,c);
+  px(g,x+s*0.26,y+s*0.2,s*0.14,s*0.6,c);
+  px(g,x+s*0.4,y+s*0.08,s*0.12,s*0.84,c);
+  if(on){
+    px(g,x+s*0.62,y+s*0.3,s*0.12,s*0.12,c);
+    px(g,x+s*0.74,y+s*0.18,s*0.12,s*0.12,c);
+    px(g,x+s*0.74,y+s*0.66,s*0.12,s*0.12,c);
+    px(g,x+s*0.86,y+s*0.42,s*0.12,s*0.12,c);
+  }else{
+    px(g,x+s*0.6,y+s*0.2,s*0.34,s*0.12,c);
+    px(g,x+s*0.6,y+s*0.66,s*0.34,s*0.12,c);
+    px(g,x+s*0.72,y+s*0.32,s*0.12,s*0.36,c);
+  }
+}
+function drawConsole(){
+  const g=ctx;
+  px(g,0,DY,W,DH,'#1c1826');
+  px(g,0,DY,W,2,'#2e2840');
+  px(g,0,DY+2,W,1,'#0a0812');
+  drawText(g,'NOETHER · N-1882',W/2,DY+4,'#5a5470',1,1);
+  for(const cxx of [4,W-6])for(const cyy of [DY+5,DY+DH-7])px(g,cxx,cyy,2,2,'#3a3450');
+  const bs=clamp(Math.round(DH*0.46),24,40);
+  const by=DY+Math.round(DH*0.26);
+  const lx=Math.round(W*0.055);
+  const mkArrow=(x,id,glyph)=>{
+    const held=Input[id]||pressFlash[id]>0;
+    const oy=held?1:0;
+    px(g,x,by+oy,bs,bs-oy,held?'#221c30':'#2a2438');
+    px(g,x,by+oy,bs,2,held?'#3a3450':'#4a4460');
+    outline(g,x,by+oy,bs,bs-oy,'#0a0812');
+    drawText(g,glyph,x+bs/2,by+oy+bs/2-7,held?'#ffe9b0':'#c8c2d8',2,1);
+    btn(id,x,by,bs,bs,true);
+  };
+  mkArrow(lx,'left','←');mkArrow(lx+bs+6,'right','→');
+  const ibs=bs+4,ix=W-Math.round(W*0.055)-ibs;
+  const near=state==='play'&&nearestObj();
+  const heldA=pressFlash.act>0;
+  const ac=heldA?'#b8862e':'#d9a441';
+  g.fillStyle=ac;g.beginPath();g.arc(ix+ibs/2,by+ibs/2+(heldA?1:0),ibs/2,0,Math.PI*2);g.fill();
+  g.strokeStyle='#0a0812';g.lineWidth=2;g.beginPath();g.arc(ix+ibs/2,by+ibs/2+(heldA?1:0),ibs/2-1,0,Math.PI*2);g.stroke();
+  if(near){const pl=0.5+0.5*Math.sin(time*4);g.strokeStyle=rgba('#ffe9b0',0.4+0.5*pl);g.beginPath();g.arc(ix+ibs/2,by+ibs/2,ibs/2+2,0,Math.PI*2);g.stroke();}
+  drawText(g,'✦',ix+ibs/2,by+ibs/2-7+(heldA?1:0),'#241c10',2,1);
+  btn('act',ix,by,ibs,ibs);
+  drawText(g,L('ИЗУЧИТЬ','STUDY'),ix+ibs/2,by+ibs+3,'#8a84a0',1,1);
+  const leftEnd=lx+bs*2+6;
+  const zoneC=(leftEnd+ix)/2;
+  const sw3=Math.min(52,Math.round(W*0.2),Math.max(30,ix-leftEnd-6)),sh3=13;
+  const sx3=Math.round(zoneC-sw3/2),sy3=DY+Math.round(DH*0.3);
+  const heldS=pressFlash.start>0;
+  px(g,sx3,sy3+(heldS?1:0),sw3,sh3,heldS?'#8a3a26':'#b04a32');
+  outline(g,sx3,sy3+(heldS?1:0),sw3,sh3,'#0a0812');
+  px(g,sx3,sy3+(heldS?1:0),sw3,1,'#d97a5c');
+  drawText(g,L('СТАРТ','START'),sx3+sw3/2,sy3+3+(heldS?1:0),'#fff4e0',1,1);
+  btn('start',sx3,sy3,sw3,sh3);
+  const ss=15,sndx=Math.round(zoneC-ss/2),sndy=DY+Math.round(DH*0.62);
+  px(g,sndx,sndy,ss,ss,'#2a2438');outline(g,sndx,sndy,ss,ss,'#0a0812');
+  drawSpeaker(g,sndx+3,sndy+3,9,save.sound);
+  px(g,sndx+ss-4,sndy+2,2,2,save.sound?'#7ac97a':'#b04a32');
+  btn('snd',sndx,sndy,ss,ss);
+  drawText(g,L('ЗВУК','SOUND'),zoneC,sndy+ss+3,'#8a84a0',1,1);
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)px(g,sndx-14+c*3,sndy+3+r*3,1,1,'#3a3450');
+}
+function render(){
+  uiButtons=[];
+  ctx.fillStyle='#14101f';ctx.fillRect(0,0,W,H);
+  px(ctx,0,0,W,2,'#241e34');
+  const g=worldG;
+  if(state==='title')renderTitle(g);else if(R)renderWorld(g);
+  ctx.drawImage(worldC,SX,SY);
+  outline(ctx,SX-2,SY-2,SW+4,SH+4,'#0a0812');
+  outline(ctx,SX-1,SY-1,SW+2,SH+2,'#2e2840');
+  px(ctx,SX,SY,SW,1,'rgba(255,255,255,0.05)');
+  drawConsole();
+}
+/* ---------- input attach ---------- */
+function canvasPos(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};}
+function attachInput(){
+  cv.addEventListener('pointerdown',e=>{
+    e.preventDefault();Snd.init();Snd.resume();
+    const p=canvasPos(e),b=hitBtn(p.x,p.y);
+    if(!b)return;
+    pressFlash[b.id]=0.15;
+    if(b.hold){Input.ptr.set(e.pointerId,b.id);if(state==='play')Input[b.id]=true;else pressButton(b.id);}
+    else pressButton(b.id);
+  });
+  const up=e=>{const id=Input.ptr.get(e.pointerId);if(id){Input[id]=false;Input.ptr.delete(e.pointerId);}};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.addEventListener('pointerleave',up);
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('keydown',e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].indexOf(e.code)>=0)e.preventDefault();
+    if(e.repeat)return;
+    Snd.init();Snd.resume();
+    switch(e.code){
+      case 'ArrowLeft':case 'KeyA':if(state==='title')cycleMode(-1);else if(state==='read')panelPrev();else Input.left=true;break;
+      case 'ArrowRight':case 'KeyD':if(state==='title')cycleMode(1);else if(state==='read')panelNext();else Input.right=true;break;
+      case 'KeyE':case 'Space':pressButton('act');break;
+      case 'Enter':case 'KeyP':pressButton('start');break;
+      case 'Escape':if(state==='read')closePanel();else if(state==='play')pauseGame();else if(state==='pause')resumeGame();break;
+      case 'KeyM':pressButton('snd');break;
+      case 'KeyL':setLang(lang==='ru'?'en':'ru');break;
+      case 'KeyR':if(state==='title')regenSeed();break;
+    }
+  });
+  window.addEventListener('keyup',e=>{
+    if(e.code==='ArrowLeft'||e.code==='KeyA')Input.left=false;
+    if(e.code==='ArrowRight'||e.code==='KeyD')Input.right=false;
+  });
+  window.addEventListener('resize',onResize);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){if(state==='play'||state==='read')pauseGame();if(Snd.ctx)Snd.ctx.suspend().catch(()=>{});}
+    else if(Snd.ctx&&save.sound)Snd.ctx.resume().catch(()=>{});
+  });
+}
+function onResize(){
+  layout();
+  worldC=mkC(SW,SH);worldG=worldC.getContext('2d');
+  if(R){buildRoomCaches(R);initParticles(R);cam=clamp(cam,0,R.roomW*S-SW);if(panel)layoutPanel();}
+  buildTitleBg();
+}
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!lastTs)lastTs=ts;
+  let dt=(ts-lastTs)/1000;lastTs=ts;
+  dt=Math.min(dt,0.05);
+  update(dt);render();
+}
+function boot(){
+  cv=document.getElementById('game');ctx=cv.getContext('2d');
+  loadSave();lang=save.lang;
+  layout();
+  worldC=mkC(SW,SH);worldG=worldC.getContext('2d');
+  buildTitleBg();
+  attachInput();
+  requestAnimationFrame(frame);
+}
+if(typeof window!=='undefined'&&typeof document!=='undefined'&&typeof document.getElementById==='function'&&document.getElementById('game'))boot();
+</script>
+</body>
+</html>

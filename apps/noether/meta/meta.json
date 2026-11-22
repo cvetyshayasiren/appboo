@@ -1,0 +1,21 @@
+{
+  "title": "Noether",
+  "description": "Пиксельная прогулка по жизни Эмми Нётер: 23 комнаты-эпохи от Эрлангена 1882 года до Брин-Мора 1934-го, 8 бонусных комнат о её математике, хронологический, бонусный и свободный режимы.",
+  "info": "Один файл, офлайн, без трекеров. Язык RU/EN переключается клавишей L. Прогресс сохраняется в localStorage, звук — Web Audio.",
+  "icon": "icon.svg",
+  "color": "#b04a32",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Game",
+    "Education"
+  ],
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}
