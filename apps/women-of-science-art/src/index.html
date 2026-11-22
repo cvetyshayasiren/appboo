@@ -177,8 +177,10 @@ img{display:block}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .ctl-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--on-surface-var);margin-bottom:9px}
 .badge{font-size:9.5px;letter-spacing:.08em;padding:3px 8px;border-radius:999px;background:var(--pri-soft);color:var(--primary);border:1px solid color-mix(in srgb,var(--primary) 35%,transparent)}
-.seg{display:flex;background:var(--sc);border:1px solid var(--outline-var);border-radius:999px;padding:3px;gap:2px}
-.seg-btn{position:relative;overflow:hidden;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+.seg{display:flex;background:var(--sc);border:1px solid var(--outline-var);border-radius:999px;padding:3px;gap:2px;
+  overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg-btn{position:relative;overflow:hidden;flex:1;min-width:max-content;display:flex;align-items:center;justify-content:center;gap:6px;
   padding:7px 10px;border-radius:999px;font-weight:700;font-size:12.5px;color:var(--on-surface-var);transition:.25s;white-space:nowrap}
 .seg-btn .ic{width:15px;height:15px}
 .seg-btn:hover{color:var(--on-surface)}
@@ -535,6 +537,11 @@ img{display:block}
   .tb.on{color:var(--primary)}
   .tb.on::before{content:"";position:absolute;top:4px;width:44px;height:26px;border-radius:999px;background:var(--pri-soft);z-index:-1}
   #panel-discover{flex-direction:column}
+  /* column-flex: без min-height:0 .results не сожмётся ниже контента (min-height:auto
+     при overflow:visible) — discScroll растягивается на весь список и скролл умирает */
+  .results{min-height:0}
+  /* чипы в горизонтальных лентах не сжимаются (seg-фикс глобальный) */
+  .chips .chip{flex:none}
   .controls{width:100%;border-right:none;border-bottom:1px solid var(--outline-var);padding:12px 14px;gap:11px;overflow:visible;flex:none}
   .ctl-block{animation:none}
   .ctl-foot{display:none}
@@ -571,8 +578,9 @@ img{display:block}
   .col-toolbar{padding:12px 14px 10px;gap:9px}
   .col-field{min-width:100%;max-width:none;order:2}
   .col-row1{gap:9px}
-  .col-row2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-  .col-row2::-webkit-scrollbar{display:none}
+  .col-row2{flex-wrap:wrap;overflow:visible;padding-bottom:2px}
+  .col-row2 .seg{flex:none}
+  .col-row2 .chips{flex:1 1 100%;min-width:0}
   .col-scroll{padding:14px 14px 26px}
   .lgrid,.links-grid,.mgrid{grid-template-columns:1fr}
   .sheet{width:100vw;height:100dvh;max-height:none;border-radius:0;border:none;margin:0}
