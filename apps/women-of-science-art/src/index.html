@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Women of Science &amp; Art</title>
+<meta name="description" content="Энциклопедия женщин в науке и искусстве: случайные открытия, поиск по Википедии, 100 курируемых подборок и внешние рейтинги.">
+<meta name="theme-color" id="metaTheme" content="#161215">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ru.wikipedia.org" crossorigin>
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+<!-- Шрифты: fontsource CDN (кириллица включена) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/manrope@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/manrope@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/manrope@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/manrope@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/manrope@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/unbounded@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/unbounded@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/unbounded@latest/800.css">
+<script>
+/* Ранняя установка темы — до первой отрисовки, чтобы не было «вспышки» */
+(function(){try{var p=JSON.parse(localStorage.getItem('wsa.prefs')||'{}');var t=p.theme||'dark';
+if(t==='auto'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='dark';}})();
+</script>
+<style>
+/* ============================================================
+   Women of Science & Art — дизайн-система (Material 3-подобная)
+   Все цветовые токены генерируются JS из акцентного семени
+   в перцептивном пространстве OKLab; здесь — резервные значения.
+   ============================================================ */
+:root{
+  --primary:#ffa3e6; --on-primary:#57004a; --primary-container:#7b0067; --on-primary-container:#ffd3f2;
+  --secondary:#e9b8d9; --on-secondary:#47253f; --secondary-container:#5f3a56; --on-secondary-container:#ffd7f1;
+  --tertiary:#ffb099; --on-tertiary:#5c1900; --tertiary-container:#822800; --on-tertiary-container:#ffdbcf;
+  --error:#ffb4ab; --on-error:#690005; --error-container:#93000a; --on-error-container:#ffdad6;
+  --success:#7edb8a; --success-container:#0f5223; --on-success-container:#b8f5bf;
+  --warning:#f5bd6f; --warning-container:#6b4300; --on-warning-container:#ffddb0;
+  --info:#adc6ff; --info-container:#00429b; --on-info-container:#d9e2ff;
+  --surface:#161215; --surface-dim:#161215; --sc-lowest:#100d10; --sc-low:#1e1a1d; --sc:#231e21; --sc-high:#2e282c; --sc-highest:#393337;
+  --on-surface:#e7e0e5; --on-surface-var:#d1c2cc; --outline:#9a8c96; --outline-var:#4f434b;
+  --inverse-surface:#e7e0e5; --inverse-on-surface:#322f33; --inverse-primary:#a10088;
+  --scrim:#000000; --shadow:#000000;
+  --blob-a:#d24aae30; --blob-b:#c96a3f26; --blob-c:#9a6f9022; --glow:#e560b840; --pri-soft:#ffa3e61f;
+  --av-a1:#b0128f; --av-a2:#c05326; --av-b1:#8d3fb0; --av-b2:#b0486b; --av-c1:#c03a55; --av-c2:#a3651f;
+  --grad-brand:linear-gradient(120deg,var(--primary),var(--tertiary));
+  --thumb:#4f434b; --thumb-hover:#ffa3e6;
+  --ff-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --ff-disp:'Unbounded','Manrope',system-ui,sans-serif;
+  --r-lg:22px; --r-md:16px; --r-sm:11px;
+  --hdr-h:64px; --tabbar-h:0px;
+  --z-sug:45; --z-ovl:50; --z-set:70; --z-toast:80;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --primary:#a10088; --on-primary:#ffffff; --primary-container:#ffd3f2; --on-primary-container:#390030;
+  --secondary:#7b526f; --on-secondary:#ffffff; --secondary-container:#ffd7f1; --on-secondary-container:#301129;
+  --tertiary:#a52f00; --on-tertiary:#ffffff; --tertiary-container:#ffdbcf; --on-tertiary-container:#380c00;
+  --error:#ba1a1a; --on-error:#ffffff; --error-container:#ffdad6; --on-error-container:#410002;
+  --success:#1c6e33; --success-container:#b8f5bf; --on-success-container:#00210a;
+  --warning:#8a5a00; --warning-container:#ffddb0; --on-warning-container:#2b1700;
+  --info:#2b5bb7; --info-container:#d9e2ff; --on-info-container:#001945;
+  --surface:#fef7fb; --surface-dim:#dfd7dc; --sc-lowest:#ffffff; --sc-low:#f8f0f5; --sc:#f2ecf0; --sc-high:#ece6ea; --sc-highest:#e6e0e4;
+  --on-surface:#1e1a1d; --on-surface-var:#4f434b; --outline:#81737d; --outline-var:#d1c2cc;
+  --inverse-surface:#322f33; --inverse-on-surface:#f5eef3; --inverse-primary:#ffa3e6;
+  --scrim:#000000; --shadow:#000000;
+  --blob-a:#e061c024; --blob-b:#e08a5a20; --blob-c:#b58ab51c; --glow:#c93aa533; --pri-soft:#a1008814;
+  --thumb:#d1c2cc; --thumb-hover:#a10088;
+  color-scheme:light;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:var(--ff-body); font-size:15px; line-height:1.5;
+  background:var(--surface); color:var(--on-surface);
+  overscroll-behavior:none; -webkit-font-smoothing:antialiased;
+}
+html.theming body, html.theming .hdr, html.theming .card, html.theming .btn, html.theming .chip,
+html.theming .pcard, html.theming .lcard, html.theming .controls, html.theming .field, html.theming .sheet,
+html.theming .drawer, html.theming .set-panel, html.theming .tab, html.theming .tb, html.theming .seg{
+  transition:background-color .4s ease,color .4s ease,border-color .4s ease;
+}
+::selection{background:var(--primary);color:var(--on-primary)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font:inherit;color:inherit}
+a{color:var(--primary);text-decoration:none}
+img{display:block}
+.ic{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ic.fill{fill:currentColor;stroke:none}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+
+/* ---- Скроллбары в палитре приложения ---- */
+.scroll, .set-panel, .sug-list, .wiki-body{scrollbar-width:thin;scrollbar-color:var(--thumb) transparent}
+.scroll::-webkit-scrollbar,.set-panel::-webkit-scrollbar,.sug-list::-webkit-scrollbar,.wiki-body::-webkit-scrollbar,.tbl-wrap::-webkit-scrollbar{width:10px;height:10px}
+.scroll::-webkit-scrollbar-track,.set-panel::-webkit-scrollbar-track,.sug-list::-webkit-scrollbar-track,.wiki-body::-webkit-scrollbar-track,.tbl-wrap::-webkit-scrollbar-track{background:transparent}
+.scroll::-webkit-scrollbar-thumb,.set-panel::-webkit-scrollbar-thumb,.sug-list::-webkit-scrollbar-thumb,.wiki-body::-webkit-scrollbar-thumb,.tbl-wrap::-webkit-scrollbar-thumb{
+  background:var(--thumb);border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+.scroll::-webkit-scrollbar-thumb:hover,.set-panel::-webkit-scrollbar-thumb:hover,.sug-list::-webkit-scrollbar-thumb:hover,.wiki-body::-webkit-scrollbar-thumb:hover{
+  background:var(--thumb-hover);border:3px solid transparent;background-clip:padding-box}
+.scroll{overflow-y:auto;overscroll-behavior:contain}
+
+/* ---- Живой фон: дрейфующие пятна + зерно ---- */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bg .blob{position:absolute;border-radius:50%;will-change:transform}
+#bg .b1{width:62vmax;height:62vmax;left:-18vmax;top:-24vmax;background:radial-gradient(circle,var(--blob-a) 0%,transparent 62%);animation:drift1 70s ease-in-out infinite alternate}
+#bg .b2{width:56vmax;height:56vmax;right:-20vmax;top:8vmax;background:radial-gradient(circle,var(--blob-b) 0%,transparent 60%);animation:drift2 90s ease-in-out infinite alternate}
+#bg .b3{width:48vmax;height:48vmax;left:22vmax;bottom:-26vmax;background:radial-gradient(circle,var(--blob-c) 0%,transparent 60%);animation:drift3 80s ease-in-out infinite alternate}
+#bg .grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+@keyframes drift1{to{transform:translate(9vmax,7vmax) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-8vmax,-6vmax) scale(1.08) rotate(8deg)}}
+@keyframes drift3{to{transform:translate(-6vmax,-9vmax) scale(1.15)}}
+
+/* ---- Каркас приложения ---- */
+#app{position:relative;z-index:1;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.hdr{
+  height:var(--hdr-h);flex:none;display:flex;align-items:center;gap:18px;padding:0 20px;
+  border-bottom:1px solid var(--outline-var);
+  background:color-mix(in srgb,var(--surface) 78%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  animation:drop .55s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.logo{display:flex;align-items:center;gap:11px;min-width:0}
+.logo-mark{width:38px;height:38px;flex:none;filter:drop-shadow(0 4px 14px var(--glow))}
+.logo-text{display:flex;flex-direction:column;line-height:1.12;min-width:0}
+.logo-text .l1{font-size:9.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--on-surface-var)}
+.logo-text .l2{font-family:var(--ff-disp);font-weight:700;font-size:14.5px;white-space:nowrap;
+  background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs{display:flex;gap:4px;background:var(--sc);border:1px solid var(--outline-var);border-radius:999px;padding:4px;margin-left:8px}
+.tab{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
+  font-weight:700;font-size:13.5px;color:var(--on-surface-var);transition:background .25s,color .25s;white-space:nowrap}
+.tab .ic{width:17px;height:17px}
+.tab:hover{color:var(--on-surface)}
+.tab.on{background:var(--primary-container);color:var(--on-primary-container);box-shadow:0 2px 12px var(--glow)}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.main{flex:1;min-height:0;display:flex;position:relative}
+.panel{display:none;flex:1;min-width:0;min-height:0}
+.panel.active{display:flex;animation:panelIn .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---- Кнопки ---- */
+.btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:999px;font-weight:800;font-size:13.5px;padding:10px 18px;border:1px solid transparent;
+  transition:transform .15s,box-shadow .25s,background .25s,color .25s,border-color .25s;user-select:none;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn .ic{width:17px;height:17px}
+.b-primary{background:var(--primary);color:var(--on-primary);box-shadow:0 4px 18px var(--glow)}
+.b-primary:hover{box-shadow:0 6px 26px var(--glow);transform:translateY(-1px)}
+.b-tonal{background:var(--secondary-container);color:var(--on-secondary-container)}
+.b-tonal:hover{filter:brightness(1.06)}
+.b-outline{border-color:var(--outline);color:var(--primary);background:transparent}
+.b-outline:hover{background:var(--pri-soft)}
+.b-ghost{color:var(--on-surface-var);background:transparent}
+.b-ghost:hover{background:var(--sc-high);color:var(--on-surface)}
+.b-icon{width:40px;height:40px;padding:0;border-radius:50%;color:var(--on-surface-var)}
+.b-icon:hover{background:var(--sc-high);color:var(--on-surface)}
+.b-sm{padding:7px 13px;font-size:12.5px}
+.b-big{width:100%;padding:14px 18px;font-size:14.5px;border-radius:var(--r-md)}
+.b-big .ic{width:20px;height:20px}
+.btn[disabled]{opacity:.55;pointer-events:none}
+.ripple{position:absolute;border-radius:50%;background:currentColor;opacity:.22;transform:scale(0);animation:rip .55s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(2.6);opacity:0}}
+.spin{width:16px;height:16px;flex:none;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ---- Панель управления (вкладка 1) ---- */
+.controls{
+  width:332px;flex:none;display:flex;flex-direction:column;gap:18px;padding:20px 18px 14px 20px;
+  border-right:1px solid var(--outline-var);overflow-y:auto;overscroll-behavior:contain;
+  background:color-mix(in srgb,var(--sc-low) 62%,transparent);
+}
+.ctl-block{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.ctl-block:nth-child(2){animation-delay:.05s}.ctl-block:nth-child(3){animation-delay:.1s}
+.ctl-block:nth-child(4){animation-delay:.15s}.ctl-block:nth-child(5){animation-delay:.2s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ctl-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--on-surface-var);margin-bottom:9px}
+.badge{font-size:9.5px;letter-spacing:.08em;padding:3px 8px;border-radius:999px;background:var(--pri-soft);color:var(--primary);border:1px solid color-mix(in srgb,var(--primary) 35%,transparent)}
+.seg{display:flex;background:var(--sc);border:1px solid var(--outline-var);border-radius:999px;padding:3px;gap:2px}
+.seg-btn{position:relative;overflow:hidden;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:7px 10px;border-radius:999px;font-weight:700;font-size:12.5px;color:var(--on-surface-var);transition:.25s;white-space:nowrap}
+.seg-btn .ic{width:15px;height:15px}
+.seg-btn:hover{color:var(--on-surface)}
+.seg-btn.on{background:var(--primary);color:var(--on-primary);box-shadow:0 2px 10px var(--glow)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:6px;padding:6.5px 12px;border-radius:999px;
+  border:1px solid var(--outline-var);background:var(--sc-low);color:var(--on-surface-var);
+  font-weight:700;font-size:12px;transition:.22s;white-space:nowrap}
+.chip .ic{width:14px;height:14px}
+.chip:hover{border-color:var(--outline);color:var(--on-surface);transform:translateY(-1px)}
+.chip.on{background:var(--primary-container);border-color:transparent;color:var(--on-primary-container);box-shadow:0 2px 10px var(--glow)}
+.field{display:flex;align-items:center;gap:8px;background:var(--sc-lowest);border:1.5px solid var(--outline-var);
+  border-radius:var(--r-md);padding:5px 5px 5px 13px;transition:border-color .25s,box-shadow .25s}
+.field:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--pri-soft)}
+.field>.ic{color:var(--on-surface-var);width:18px;height:18px}
+.field input{flex:1;min-width:0;background:none;border:none;outline:none;padding:7px 0;font-size:14px;color:var(--on-surface)}
+.field input::placeholder{color:var(--on-surface-var);opacity:.75}
+.field .clr{width:30px;height:30px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--on-surface-var)}
+.field .clr:hover{background:var(--sc-high);color:var(--on-surface)}
+.field .clr .ic{width:15px;height:15px}
+.b-find{padding:9px 15px;flex:none}
+.ctl-note{font-size:12px;color:var(--on-surface-var);margin-top:9px;line-height:1.45}
+.ctl-foot{margin-top:auto;padding-top:14px;border-top:1px dashed var(--outline-var);display:flex;flex-direction:column;gap:8px}
+.stats{font-size:12px;font-weight:700;color:var(--on-surface-var)}
+.stats b{color:var(--primary)}
+.foot-link{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--on-surface-var)}
+.foot-link:hover{color:var(--primary)}
+.foot-link .ic{width:13px;height:13px}
+
+/* ---- Результаты (вкладка 1) ---- */
+.results{flex:1;min-width:0;display:flex;flex-direction:column}
+.disc-scroll{flex:1;padding:20px 22px 30px}
+.disc-date{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--on-surface-var);margin-bottom:14px}
+.disc-date .ic{width:15px;height:15px;color:var(--tertiary)}
+.disc-date .dot{opacity:.5}
+.card{background:var(--sc-low);border:1px solid var(--outline-var);border-radius:var(--r-lg)}
+.spotlight{display:grid;grid-template-columns:minmax(230px,310px) 1fr;overflow:hidden;min-height:290px;
+  animation:pop .5s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 14px 44px -18px var(--shadow)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.sp-photo{position:relative;min-height:250px;background:var(--sc-high)}
+.sp-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.sp-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 62%,var(--sc-low) 100%)}
+.sp-body{padding:24px 26px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sp-kicker{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;
+  background:var(--pri-soft);color:var(--primary)}
+.tag .ic{width:13px;height:13px}
+.tag.t-tert{background:color-mix(in srgb,var(--tertiary) 14%,transparent);color:var(--tertiary)}
+.tag.t-warn{background:var(--warning-container);color:var(--on-warning-container)}
+.sp-name{font-family:var(--ff-disp);font-weight:700;font-size:clamp(20px,2.4vw,31px);line-height:1.16;letter-spacing:-.01em;overflow-wrap:anywhere}
+.sp-meta{font-size:13px;font-weight:700;color:var(--on-surface-var)}
+.sp-meta b{color:var(--tertiary)}
+.sp-desc{font-size:14.5px;line-height:1.62;color:var(--on-surface);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.sp-actions{margin-top:auto;display:flex;flex-wrap:wrap;gap:9px;padding-top:8px;align-items:center}
+.grid-head{display:flex;align-items:center;gap:12px;margin:24px 2px 13px;flex-wrap:wrap}
+.grid-title{font-family:var(--ff-disp);font-weight:700;font-size:15.5px;letter-spacing:.01em}
+.count-pill{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--sc-high);color:var(--on-surface-var)}
+.grid-tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));grid-auto-flow:dense;gap:14px}
+.pcard{position:relative;display:flex;flex-direction:column;background:var(--sc-low);border:1px solid var(--outline-var);
+  border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:transform .22s,border-color .25s,box-shadow .25s;
+  animation:rise .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(min(var(--i),14)*38ms)}
+.pcard:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--primary) 45%,var(--outline-var));box-shadow:0 16px 36px -16px var(--shadow),0 4px 18px -6px var(--glow)}
+.pc-photo{position:relative;aspect-ratio:4/4.4;background:var(--sc-high);overflow:hidden}
+.pc-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .5s ease}
+.pcard:hover .pc-photo img{transform:scale(1.05)}
+.pc-photo::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(transparent,color-mix(in srgb,var(--sc-lowest) 72%,transparent))}
+.pc-tag{position:absolute;left:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:5px;
+  font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:999px;
+  background:color-mix(in srgb,var(--sc-lowest) 78%,transparent);color:var(--on-surface);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pc-tag .ic{width:12px;height:12px;color:var(--primary)}
+.fav-btn{position:absolute;top:9px;right:9px;z-index:3;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  background:color-mix(in srgb,var(--sc-lowest) 55%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  opacity:0;transform:scale(.8);transition:.22s}
+.fav-btn .ic{width:17px;height:17px}
+.pcard:hover .fav-btn,.mcard:hover .fav-btn,.fav-btn.on,.sp-photo .fav-btn,.dr-banner .fav-btn{opacity:1;transform:none}
+.fav-btn:hover{background:var(--primary);color:var(--on-primary)}
+.fav-btn.on{color:#ff5f9e}
+.fav-btn.on .ic{fill:currentColor}
+.fav-btn.pop-anim{animation:heartPop .4s cubic-bezier(.2,.8,.3,1.4)}
+@keyframes heartPop{40%{transform:scale(1.35)}}
+.pc-body{padding:12px 14px 13px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pc-name{font-size:14.5px;font-weight:800;line-height:1.3;overflow-wrap:anywhere}
+.pc-years{font-size:11.5px;font-weight:700;color:var(--tertiary)}
+.pc-desc{font-size:12px;color:var(--on-surface-var);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc-wiki{position:absolute;right:10px;bottom:10px;z-index:3;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--on-surface-var);background:var(--sc-high);transition:.2s}
+.pc-wiki:hover{background:var(--primary);color:var(--on-primary)}
+.pc-wiki .ic{width:14px;height:14px}
+/* Плотная сетка: каждая 6-я карточка — широкая, дыры заполняются dense-потоком */
+@media (min-width:900px){
+  .pgrid .pcard:nth-child(6n+1){grid-column:span 2;flex-direction:row}
+  .pgrid .pcard:nth-child(6n+1) .pc-photo{width:46%;aspect-ratio:auto;min-height:100%}
+  .pgrid .pcard:nth-child(6n+1) .pc-body{flex:1;justify-content:center;padding:16px 18px}
+  .pgrid .pcard:nth-child(6n+1) .pc-name{font-size:16.5px}
+  .pgrid .pcard:nth-child(6n+1) .pc-desc{-webkit-line-clamp:3}
+  .pgrid .pcard:nth-child(6n+1) .pc-photo::after{background:linear-gradient(90deg,transparent 60%,var(--sc-low) 100%);inset:0;height:auto}
+}
+.avatar{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-disp);font-weight:800;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.avatar.av-0{background:linear-gradient(135deg,var(--av-a1),var(--av-a2))}
+.avatar.av-1{background:linear-gradient(135deg,var(--av-b1),var(--av-b2))}
+.avatar.av-2{background:linear-gradient(135deg,var(--av-c1),var(--av-c2))}
+.pc-photo .avatar{font-size:44px}.sp-photo .avatar{font-size:64px}
+.avatar.mini{position:relative;inset:auto;width:100%;height:100%;font-size:20px;border-radius:inherit}
+
+/* ---- Скелетоны и состояния ---- */
+.skel{position:relative;overflow:hidden;background:var(--sc-high);border-radius:var(--r-sm)}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--on-surface) 7%,transparent) 50%,transparent 70%);
+  animation:shim 1.4s infinite}
+@keyframes shim{to{transform:translateX(100%)}}
+.sk-spot{display:grid;grid-template-columns:minmax(230px,310px) 1fr;min-height:290px;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--outline-var)}
+.sk-spot .sk-photo{border-radius:0}
+.sk-spot .sk-lines{padding:26px;display:flex;flex-direction:column;gap:13px;background:var(--sc-low)}
+.sk-card{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--outline-var);background:var(--sc-low)}
+.sk-card .sk-photo{aspect-ratio:4/4.4;border-radius:0}
+.sk-card .sk-lines{padding:13px 14px;display:flex;flex-direction:column;gap:8px}
+.state-box{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:46px 24px;
+  border:1.5px dashed var(--outline-var);border-radius:var(--r-lg);animation:rise .4s both;margin-top:4px}
+.state-box .st-ic{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--pri-soft);color:var(--primary)}
+.state-box .st-ic .ic{width:27px;height:27px}
+.state-box.err .st-ic{background:var(--error-container);color:var(--on-error-container)}
+.state-box h3{font-family:var(--ff-disp);font-size:16px;font-weight:700}
+.state-box p{font-size:13.5px;color:var(--on-surface-var);max-width:460px;line-height:1.55}
+.hint-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px}
+
+/* ---- Подсказки поиска ---- */
+#sugBox{position:fixed;z-index:var(--z-sug);display:none;background:var(--sc-lowest);border:1px solid var(--outline-var);
+  border-radius:var(--r-md);box-shadow:0 18px 50px -12px var(--shadow),0 4px 20px -8px var(--glow);overflow:hidden}
+#sugBox.open{display:block;animation:sugIn .18s ease-out both}
+@keyframes sugIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.sug-list{max-height:min(330px,52vh);overflow-y:auto;padding:6px}
+.sug-group{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--on-surface-var);padding:8px 11px 4px;display:flex;align-items:center;gap:7px}
+.sug-group .spin{width:11px;height:11px;border-width:1.5px}
+.sug-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border-radius:10px;font-size:13.5px;font-weight:600;transition:background .15s}
+.sug-item .ic{width:16px;height:16px;color:var(--primary);flex:none}
+.sug-item small{margin-left:auto;font-size:11px;color:var(--on-surface-var);font-weight:700;white-space:nowrap;padding-left:10px}
+.sug-item:hover,.sug-item.act{background:var(--pri-soft)}
+.sug-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- Вкладка 2: подборки ---- */
+#panel-collections{flex-direction:column}
+.col-toolbar{flex:none;padding:16px 22px 12px;border-bottom:1px solid var(--outline-var);display:flex;flex-direction:column;gap:11px;
+  background:color-mix(in srgb,var(--sc-low) 62%,transparent)}
+.col-row1{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.col-field{flex:1;min-width:240px;max-width:560px}
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.sw-track{width:44px;height:25px;flex:none;border-radius:999px;background:var(--sc-highest);border:1.5px solid var(--outline);position:relative;transition:.25s}
+.sw-dot{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:15px;height:15px;border-radius:50%;background:var(--outline);transition:.25s cubic-bezier(.2,.8,.2,1)}
+.switch input:checked+.sw-track{background:var(--primary);border-color:var(--primary);box-shadow:0 2px 10px var(--glow)}
+.switch input:checked+.sw-track .sw-dot{left:23px;background:var(--on-primary);width:17px;height:17px}
+.switch input:focus-visible+.sw-track{outline:2px solid var(--primary);outline-offset:2px}
+.sw-label{font-size:13px;font-weight:700;color:var(--on-surface-var)}
+.switch input:checked~.sw-label{color:var(--on-surface)}
+.col-row2{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col-row2 .seg{flex:none}
+.col-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--on-surface-var)}
+.online-hint{display:inline-flex;align-items:center;gap:6px;color:var(--tertiary)}
+.online-hint .ic{width:13px;height:13px}
+.col-scroll{flex:1;padding:18px 22px 34px}
+.sec-head{display:flex;align-items:center;gap:10px;margin:20px 2px 13px}
+.sec-head:first-child{margin-top:2px}
+.sec-head h3{font-family:var(--ff-disp);font-weight:700;font-size:15.5px}
+.sec-head .ic{width:18px;height:18px;color:var(--primary)}
+.sec-head .count-pill{margin-left:2px}
+.sec-head .head-note{margin-left:auto;font-size:11.5px;color:var(--on-surface-var);font-weight:600}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));grid-auto-flow:dense;gap:14px}
+.lcard{position:relative;display:flex;flex-direction:column;gap:8px;padding:16px 17px 14px;background:var(--sc-low);
+  border:1px solid var(--outline-var);border-radius:var(--r-lg);cursor:pointer;overflow:hidden;
+  transition:transform .22s,border-color .25s,box-shadow .25s;animation:rise .45s both;animation-delay:calc(min(var(--i),12)*32ms)}
+.lcard::before{content:"";position:absolute;inset:0 auto 0 0;width:3.5px;background:var(--grad-brand);opacity:0;transition:.25s}
+.lcard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--primary) 45%,var(--outline-var));box-shadow:0 14px 34px -16px var(--shadow)}
+.lcard:hover::before{opacity:1}
+.lc-top{display:flex;align-items:center;gap:8px}
+.lc-cat{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:3.5px 9px;border-radius:999px;text-transform:uppercase}
+.lc-cat .ic{width:12px;height:12px}
+.c-sci{background:var(--info-container);color:var(--on-info-container)}
+.c-art{background:var(--pri-soft);color:var(--primary)}
+.c-mix{background:var(--tertiary-container);color:var(--on-tertiary-container)}
+.c-fav{background:var(--error-container);color:var(--on-error-container)}
+.lc-count{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--on-surface-var)}
+.lc-title{font-size:15px;font-weight:800;line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lc-desc{font-size:12.5px;color:var(--on-surface-var);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lc-hit{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--tertiary)}
+.lc-hit .ic{width:13px;height:13px}
+.lc-foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:6px}
+.lc-names{flex:1;min-width:0;font-size:11px;color:var(--on-surface-var);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-open{flex:none;pointer-events:none}
+.lcard.online .lc-desc{-webkit-line-clamp:3}
+.person-strip{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
+.person-strip::-webkit-scrollbar{display:none}
+.pchip{position:relative;overflow:hidden;flex:none;display:inline-flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;border-radius:999px;
+  background:var(--sc-low);border:1px solid var(--outline-var);font-weight:700;font-size:12.5px;transition:.2s}
+.pchip:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:0 4px 14px -6px var(--glow)}
+.pchip .pava{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;position:relative;background:var(--sc-high)}
+.pchip .pava img{width:100%;height:100%;object-fit:cover}
+.pchip small{color:var(--on-surface-var);font-weight:600}
+.links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:11px}
+.link-row{display:flex;align-items:center;gap:13px;padding:13px 15px;background:var(--sc-low);border:1px solid var(--outline-var);
+  border-radius:var(--r-md);color:var(--on-surface);transition:.22s;animation:rise .4s both;animation-delay:calc(min(var(--i),10)*30ms)}
+.link-row:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 10px 26px -14px var(--shadow)}
+.lr-icon{width:40px;height:40px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.lr-icon .ic{width:19px;height:19px}
+.lr-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lr-body b{font-size:13.5px;font-weight:800}
+.lr-body small{font-size:11.5px;color:var(--on-surface-var);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lr-domain{font-size:10.5px;font-weight:800;color:var(--on-surface-var);background:var(--sc-high);padding:3px 8px;border-radius:999px;white-space:nowrap}
+.link-row>.ic{width:15px;height:15px;color:var(--on-surface-var);flex:none}
+.link-row:hover>.ic{color:var(--primary)}
+
+/* ---- Оверлеи: листы и抽屉 ---- */
+#overlays{position:relative;z-index:var(--z-ovl)}
+.ovl{position:fixed;inset:0;display:flex}
+.ovl-scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--scrim) 52%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade .25s both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.ovl.closing .ovl-scrim{animation:fadeOut .18s both}
+@keyframes fadeOut{to{opacity:0}}
+.sheet{position:relative;margin:auto;width:min(960px,calc(100vw - 44px));max-height:min(84vh,860px);display:flex;flex-direction:column;
+  background:var(--sc-low);border:1px solid var(--outline-var);border-radius:26px;overflow:hidden;
+  box-shadow:0 30px 90px -20px var(--shadow);animation:sheetIn .32s cubic-bezier(.2,.8,.2,1) both}
+@keyframes sheetIn{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
+.ovl.closing .sheet{animation:sheetOut .18s both}
+@keyframes sheetOut{to{opacity:0;transform:translateY(14px) scale(.98)}}
+.sheet-head{flex:none;display:flex;gap:14px;align-items:flex-start;padding:20px 20px 15px 24px;border-bottom:1px solid var(--outline-var);
+  background:linear-gradient(120deg,var(--pri-soft),transparent 55%)}
+.sh-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.sh-info h3{font-family:var(--ff-disp);font-weight:700;font-size:clamp(16px,2vw,21px);line-height:1.25;overflow-wrap:anywhere}
+.sh-info p{font-size:13px;color:var(--on-surface-var);line-height:1.5}
+.sh-actions{display:flex;gap:8px;align-items:center;flex:none}
+.sheet-body{flex:1;min-height:0;padding:18px 22px 22px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px}
+.mcard{position:relative;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;background:var(--sc);border:1px solid var(--outline-var);
+  border-radius:var(--r-md);transition:.2s;animation:rise .4s both;animation-delay:calc(min(var(--i),12)*30ms);width:100%}
+.mcard:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 8px 22px -12px var(--shadow)}
+.mc-photo{width:56px;height:56px;flex:none;border-radius:14px;overflow:hidden;position:relative;background:var(--sc-high)}
+.mc-photo img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.mc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mc-body b{font-size:13.5px;font-weight:800;line-height:1.3}
+.mc-body small{font-size:11px;font-weight:700;color:var(--tertiary)}
+.mc-body .m-sub{font-size:10.5px;color:var(--on-surface-var);font-weight:700;display:flex;align-items:center;gap:4px}
+.mc-body .m-sub .ic{width:11px;height:11px;color:var(--primary)}
+.mcard>.ic{width:15px;height:15px;color:var(--on-surface-var);flex:none}
+.sheet-foot{margin-top:18px;padding-top:13px;border-top:1px dashed var(--outline-var);display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  font-size:11.5px;color:var(--on-surface-var);font-weight:600}
+.sk-mcard{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--outline-var);border-radius:var(--r-md);background:var(--sc)}
+.sk-mcard .skel{width:56px;height:56px;border-radius:14px;flex:none}
+.sk-mcard .sk-lines{flex:1;display:flex;flex-direction:column;gap:7px}
+
+/* ---- Drawer персоны ---- */
+.drawer{position:relative;margin-left:auto;height:100%;width:min(442px,100vw);display:flex;flex-direction:column;
+  background:var(--sc-low);border-left:1px solid var(--outline-var);box-shadow:-24px 0 70px -22px var(--shadow);
+  animation:drawerIn .34s cubic-bezier(.2,.8,.2,1) both}
+@keyframes drawerIn{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+.ovl.closing .drawer{animation:drawerOut .18s both}
+@keyframes drawerOut{to{transform:translateX(50px);opacity:0}}
+.dr-banner{position:relative;height:252px;flex:none;background:var(--sc-high);overflow:hidden}
+.dr-banner img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.dr-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 46%,var(--sc-low) 98%)}
+.dr-top{position:absolute;top:12px;right:12px;z-index:3;display:flex;gap:8px}
+.dr-top .b-icon,.dr-top .fav-btn{position:static;opacity:1;transform:none;background:color-mix(in srgb,var(--sc-lowest) 62%,transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--on-surface);width:38px;height:38px}
+.dr-top .fav-btn.on{color:#ff5f9e}
+.dr-top .b-icon:hover,.dr-top .fav-btn:hover{background:var(--primary);color:var(--on-primary)}
+.dr-sub{position:absolute;left:18px;bottom:12px;z-index:3}
+.dr-body{flex:1;min-height:0;padding:14px 22px 24px;display:flex;flex-direction:column;gap:11px}
+.dr-name{font-family:var(--ff-disp);font-weight:700;font-size:21px;line-height:1.22;overflow-wrap:anywhere}
+.dr-meta{font-size:12.5px;font-weight:700;color:var(--on-surface-var)}
+.dr-meta b{color:var(--tertiary)}
+.dr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dr-extract{font-size:14px;line-height:1.68;color:var(--on-surface)}
+.dr-extract.muted{color:var(--on-surface-var)}
+.list-chips{display:flex;flex-wrap:wrap;gap:7px}
+
+/* ---- Статья Википедии внутри приложения ---- */
+.wiki-body{font-size:14px;line-height:1.65}
+.wiki-body p{margin:9px 0}
+.wiki-body h2,.wiki-body h3,.wiki-body h4{font-family:var(--ff-disp);font-weight:700;margin:20px 0 9px;line-height:1.3}
+.wiki-body h2{font-size:17px}.wiki-body h3{font-size:15px}.wiki-body h4{font-size:14px}
+.wiki-body ul,.wiki-body ol{padding-left:24px;margin:9px 0}
+.wiki-body li{margin:3px 0}
+.wiki-body a{color:var(--primary);font-weight:600}
+.wiki-body a:hover{text-decoration:underline}
+.wiki-body .tbl-wrap{overflow-x:auto;margin:13px 0;border-radius:12px;border:1px solid var(--outline-var)}
+.wiki-body table{border-collapse:collapse;font-size:12.5px;width:100%}
+.wiki-body th,.wiki-body td{border:1px solid var(--outline-var);padding:7px 10px;text-align:left;vertical-align:top}
+.wiki-body th{background:var(--sc-high);font-weight:800}
+.wiki-body tr:nth-child(even) td{background:color-mix(in srgb,var(--sc) 55%,transparent)}
+.wiki-body img{max-width:100%;height:auto;border-radius:10px;margin:5px 0}
+.wiki-body figure{margin:11px 0}
+.wiki-body figcaption{font-size:11.5px;color:var(--on-surface-var)}
+.wiki-body sup{font-size:9.5px}
+.wiki-body blockquote{border-left:3px solid var(--primary);padding:4px 14px;margin:11px 0;color:var(--on-surface-var);background:var(--pri-soft);border-radius:0 10px 10px 0}
+.wiki-body .mw-empty-elt{display:none}
+.wiki-body hr{border:none;border-top:1px solid var(--outline-var);margin:15px 0}
+
+/* ---- Настройки ---- */
+#setWrap{position:fixed;inset:0;z-index:var(--z-set)}
+#setWrap[hidden]{display:none}
+.set-scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--scrim) 34%,transparent);animation:fade .2s both}
+.set-panel{position:absolute;top:calc(var(--hdr-h) + 8px);right:14px;width:min(360px,calc(100vw - 24px));max-height:min(76vh,640px);
+  overflow-y:auto;background:var(--sc-low);border:1px solid var(--outline-var);border-radius:22px;padding:18px;
+  box-shadow:0 26px 70px -18px var(--shadow),0 6px 26px -10px var(--glow);animation:sheetIn .26s cubic-bezier(.2,.8,.2,1) both;
+  display:flex;flex-direction:column;gap:18px}
+.set-head{display:flex;align-items:center;gap:10px}
+.set-head>.ic{color:var(--primary)}
+.set-head b{font-family:var(--ff-disp);font-size:15px;font-weight:700;flex:1}
+.set-sec .ctl-label{margin-bottom:8px}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.swatch{position:relative;aspect-ratio:1;border-radius:50%;border:2.5px solid transparent;transition:.2s;overflow:hidden}
+.swatch::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--sw-c)}
+.swatch:hover{transform:scale(1.12)}
+.swatch.on{border-color:var(--on-surface);box-shadow:0 0 0 3px var(--pri-soft),0 4px 14px var(--glow)}
+.swatch.on::before{content:"";position:absolute;inset:0;z-index:2;background:no-repeat center/13px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E")}
+.custom-swatch{position:relative;aspect-ratio:1;border-radius:50%;cursor:pointer;background:conic-gradient(#e11d48,#d97706,#84cc16,#16a34a,#0ea5e9,#2563eb,#7c3aed,#c026a3,#e11d48);transition:.2s}
+.custom-swatch:hover{transform:scale(1.12)}
+.custom-swatch::after{content:"+";position:absolute;inset:5px;border-radius:50%;background:var(--sc-lowest);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--on-surface)}
+.custom-swatch input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.accent-name{margin-top:9px;font-size:12px;font-weight:700;color:var(--on-surface-var);display:flex;align-items:center;gap:7px}
+.accent-name i{width:11px;height:11px;border-radius:50%;background:var(--primary);display:inline-block}
+
+/* ---- Тосты ---- */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:var(--z-toast);display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:14px;background:var(--inverse-surface);color:var(--inverse-on-surface);
+  font-size:13px;font-weight:700;box-shadow:0 14px 40px -10px var(--shadow);animation:toastIn .3s cubic-bezier(.2,.8,.2,1) both;max-width:min(360px,calc(100vw - 32px))}
+.toast .ic{width:17px;height:17px;flex:none}
+.toast.t-ok .ic{color:#7edb8a}.toast.t-err .ic{color:#ffb4ab}.toast.t-info .ic{color:var(--inverse-primary)}
+.toast.out{animation:toastOut .25s both}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.96)}}
+
+/* ---- Нижняя навигация (мобайл) ---- */
+.tabbar{display:none}
+@media (max-width:1080px){
+  .controls{width:290px}
+  .pgrid{grid-template-columns:repeat(auto-fill,minmax(185px,1fr))}
+}
+@media (max-width:760px){
+  :root{--hdr-h:56px;--tabbar-h:calc(62px + env(safe-area-inset-bottom))}
+  .hdr{padding:0 14px;gap:10px}
+  .tabs{display:none}
+  .logo-mark{width:33px;height:33px}
+  .logo-text .l2{font-size:13px}
+  .tabbar{position:relative;z-index:5;display:flex;flex:none;height:var(--tabbar-h);padding:6px 10px env(safe-area-inset-bottom);
+    background:color-mix(in srgb,var(--sc-low) 88%,transparent);border-top:1px solid var(--outline-var);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .tb{position:relative;overflow:hidden;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    border-radius:16px;color:var(--on-surface-var);font-size:10.5px;font-weight:800;transition:.25s}
+  .tb .ic{width:21px;height:21px}
+  .tb.on{color:var(--primary)}
+  .tb.on::before{content:"";position:absolute;top:4px;width:44px;height:26px;border-radius:999px;background:var(--pri-soft);z-index:-1}
+  #panel-discover{flex-direction:column}
+  .controls{width:100%;border-right:none;border-bottom:1px solid var(--outline-var);padding:12px 14px;gap:11px;overflow:visible;flex:none}
+  .ctl-block{animation:none}
+  .ctl-foot{display:none}
+  .ctl-label{margin-bottom:6px}
+  .m-row{display:flex;gap:9px;align-items:stretch}
+  .m-row .b-big{width:auto;flex:none;padding:10px 14px;font-size:0;gap:0}
+  .m-row .b-big .ic{width:20px;height:20px}
+  .m-row .field{flex:1}
+  .b-find span{display:none}
+  .b-find{padding:9px 11px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .ctl-note{display:none}
+  .disc-scroll{padding:14px 14px 24px}
+  .spotlight{grid-template-columns:1fr;min-height:0}
+  .sp-photo{min-height:0;aspect-ratio:16/9.5;max-height:250px}
+  .sp-photo::after{background:linear-gradient(transparent 55%,var(--sc-low) 100%)}
+  .sp-body{padding:16px 17px 17px}
+  .sp-desc{-webkit-line-clamp:4}
+  .pgrid{grid-template-columns:1fr;gap:10px}
+  .pgrid .pcard{flex-direction:row;min-height:108px}
+  .pgrid .pcard .pc-photo{width:106px;aspect-ratio:auto;flex:none}
+  .pgrid .pcard .pc-body{flex:1;justify-content:center;padding:11px 40px 11px 13px}
+  .pgrid .pcard .pc-photo::after{background:linear-gradient(90deg,transparent 55%,var(--sc-low) 100%);inset:0;height:auto}
+  .pc-tag{display:none}
+  .fav-btn{opacity:1;transform:none;top:7px;right:7px;width:31px;height:31px}
+  .pgrid .pcard .fav-btn{top:auto;bottom:38px;right:7px}
+  .pc-wiki{bottom:7px;right:7px}
+  .sk-spot{grid-template-columns:1fr}
+  .sk-spot .sk-photo{aspect-ratio:16/9}
+  .sk-card{display:flex}
+  .sk-card .sk-photo{width:106px;aspect-ratio:auto;flex:none}
+  .sk-card .sk-lines{flex:1}
+  .col-toolbar{padding:12px 14px 10px;gap:9px}
+  .col-field{min-width:100%;max-width:none;order:2}
+  .col-row1{gap:9px}
+  .col-row2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .col-row2::-webkit-scrollbar{display:none}
+  .col-scroll{padding:14px 14px 26px}
+  .lgrid,.links-grid,.mgrid{grid-template-columns:1fr}
+  .sheet{width:100vw;height:100dvh;max-height:none;border-radius:0;border:none;margin:0}
+  .sheet-head{padding:15px 14px 12px 17px}
+  .sheet-body{padding:14px 15px 20px}
+  .drawer{width:100vw;height:93dvh;margin-top:auto;border-left:none;border-top:1px solid var(--outline-var);border-radius:24px 24px 0 0;
+    animation:sheetUp .32s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes sheetUp{from{transform:translateY(70px);opacity:0}to{transform:none;opacity:1}}
+  .ovl.closing .drawer{animation:sheetDown .18s both}
+  @keyframes sheetDown{to{transform:translateY(60px);opacity:0}}
+  .dr-banner{height:216px;border-radius:24px 24px 0 0}
+  .set-panel{top:auto;bottom:calc(var(--tabbar-h) + 10px);right:12px;left:12px;width:auto;max-height:70dvh}
+  #toasts{right:12px;left:12px;bottom:calc(var(--tabbar-h) + 12px);align-items:center}
+  .grid-tools .btn span{display:none}
+  .sec-head .head-note{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  #bg .blob{animation:none}
+}
+</style>
+</head>
+<body>
+<noscript><div style="padding:40px;font-family:sans-serif">Для работы приложения включите JavaScript / Please enable JavaScript.</div></noscript>
+
+<!-- SVG-спрайт иконок -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2.5l2 5.4 5.5 2.1-5.5 2.1-2 5.4-2-5.4L4.5 10l5.5-2.1zM19 14.5l1 2.6 2.5 1-2.5 1-1 2.6-1-2.6-2.5-1 2.5-1z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="8.3" cy="8.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.7" cy="8.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="8.3" cy="15.7" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.7" cy="15.7" r="1.15" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16 16"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9.2C1.3 7.7 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.7 3.2 4.3 6.8-1.8 4.5-9.3 9.2-9.3 9.2z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="17" cy="5.5" r="2.5"/><circle cx="17" cy="18.5" r="2.5"/><path d="M8.3 10.8l6.4-4M8.3 13.2l6.4 4"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5.5L4.8 18a2 2 0 0 0 1.8 3h10.8a2 2 0 0 0 1.8-3L14 8.5V3"/><path d="M7.3 14h9.4"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.6a2 2 0 0 0 0-4h-1.4a1.6 1.6 0 0 1 0-3.2H17a4.2 4.2 0 0 0 4.2-4.2C21.2 5.8 17 3 12 3z"/><circle cx="7.6" cy="10.2" r="1"/><circle cx="10.4" cy="6.6" r="1"/><circle cx="15.2" cy="6.9" r="1"/></symbol>
+    <symbol id="i-atom" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="3.7"/><ellipse cx="12" cy="12" rx="9" ry="3.7" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.7" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M17.5 7.5V6H7.5l5.5 6-5.5 6h10v-1.5"/></symbol>
+    <symbol id="i-dna" viewBox="0 0 24 24"><path d="M8 3c0 5 8 5 8 10s-8 5-8 8M16 3c0 5-8 5-8 10s8 5 8 8"/><path d="M9 7h6M9 17h6M10 12h4"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></symbol>
+    <symbol id="i-planet" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M4.5 9.5C2.6 10.4 1.5 11.5 1.8 12.4c.5 1.6 4.9 1.7 10.3.2s9.4-4 8.9-5.6c-.3-.9-1.8-1.2-3.9-1"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><rect x="10" y="10" width="4" height="4"/><path d="M9 3v3.5M15 3v3.5M9 17.5V21M15 17.5V21M3 9h3.5M3 15h3.5M17.5 9H21M17.5 15H21"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="M15 4l5 5-9.5 9.5H5.5V13.5z"/><path d="M4 20c1.2 0 2-.6 2-2"/></symbol>
+    <symbol id="i-shapes" viewBox="0 0 24 24"><circle cx="7.5" cy="8" r="4"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.5"/><path d="M16 3.5l4 7h-8z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></symbol>
+    <symbol id="i-masks" viewBox="0 0 24 24"><path d="M3.5 4h9v6.5a4.5 4.5 0 0 1-9 0Z"/><path d="M11.5 10.5h9V17a4.5 4.5 0 0 1-9 0Z"/><path d="M6 7h.8M9.2 7h.8M6.2 9.4c.7.7 2.5.7 3.2 0"/><path d="M14 13.5h.8M17.2 13.5h.8M14.2 17.2c.7-.7 2.5-.7 3.2 0"/></symbol>
+    <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2"/><path d="M13 7v5l-3.5 8M13 12l4.5 6M6.5 10.5L13 8.5l5 3.5"/></symbol>
+    <symbol id="i-draft" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.5L5.5 21M12 6.5L18.5 21M8 15.5h8"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7l1.5-3h4l1.5 3"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.7 2.6 4 5.6 4 9s-1.3 6.4-4 9c-2.7-2.6-4-5.6-4-9s1.3-6.4 4-9z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3.5c5.5 0 8 12 13.5 12M3 18h3.5c2.4 0 4.1-2.3 5.6-4.9M20 6c-2.6 0-4.4 1.9-5.8 4.2"/><path d="M17 3l3 3-3 3M17 15l3 3-3 3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3L1.8 20.2h20.4z"/><path d="M12 9.5v4.5M12 17.4v.1"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.5 1.5"/><path d="M14 10a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.5-1.5"/></symbol>
+  </defs>
+</svg>
+
+<div id="bg" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grain"></div></div>
+
+<div id="app">
+  <!-- Шапка -->
+  <header class="hdr">
+    <div class="logo">
+      <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <defs><linearGradient id="lgGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style="stop-color:var(--primary)"/><stop offset="1" style="stop-color:var(--tertiary)"/>
+        </linearGradient></defs>
+        <rect x="2" y="2" width="44" height="44" rx="13" fill="url(#lgGrad)"/>
+        <ellipse cx="24" cy="24" rx="15.5" ry="6.4" transform="rotate(-28 24 24)" fill="none" stroke="#fff" stroke-width="2" opacity=".92"/>
+        <path d="M24 10.5C29.6 16.4 29.6 26.6 24 33.5C18.4 26.6 18.4 16.4 24 10.5Z" fill="#fff" opacity=".94"/>
+        <circle cx="34.5" cy="14.5" r="2.5" fill="#fff"/>
+        <circle cx="13.5" cy="32" r="1.6" fill="#fff" opacity=".85"/>
+      </svg>
+      <div class="logo-text"><span class="l1">Women of</span><span class="l2">Science &amp; Art</span></div>
+    </div>
+    <nav class="tabs" role="tablist" data-i18n-aria="navAria">
+      <button class="tab on" role="tab" id="tab-discover" aria-selected="true" aria-controls="panel-discover" data-action="tab" data-v="discover">
+        <svg class="ic fill"><use href="#i-spark"/></svg><span data-i18n="tab1"></span>
+      </button>
+      <button class="tab" role="tab" id="tab-collections" aria-selected="false" aria-controls="panel-collections" data-action="tab" data-v="collections">
+        <svg class="ic"><use href="#i-grid"/></svg><span data-i18n="tab2"></span>
+      </button>
+    </nav>
+    <div class="hdr-actions">
+      <button class="btn b-icon" id="themeBtn" data-action="theme-cycle" data-i18n-aria="toggleTheme"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <button class="btn b-icon" data-action="settings-open" data-i18n-aria="settings"><svg class="ic"><use href="#i-gear"/></svg></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Вкладка 1: Случайно / Поиск -->
+    <section class="panel active" id="panel-discover" role="tabpanel" aria-labelledby="tab-discover">
+      <aside class="controls scroll" id="controls">
+        <div class="ctl-block m-row">
+          <button class="btn b-primary b-big" data-action="random" id="randomBtn">
+            <svg class="ic"><use href="#i-dice"/></svg><span data-i18n="random"></span>
+          </button>
+          <div class="field" id="discField" style="display:none">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="discInputM" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="sugBox" data-i18n-ph="searchPh">
+            <button class="clr" data-action="clear-disc" hidden data-i18n-aria="clear"><svg class="ic"><use href="#i-x"/></svg></button>
+            <button class="btn b-primary b-find" data-action="find"><svg class="ic"><use href="#i-search"/></svg><span data-i18n="find"></span></button>
+          </div>
+        </div>
+        <div class="ctl-block">
+          <div class="ctl-label"><span data-i18n="sectionLabel"></span></div>
+          <div class="seg" id="secSeg"></div>
+        </div>
+        <div class="ctl-block">
+          <div class="ctl-label"><span data-i18n="subLabel"></span></div>
+          <div class="chips" id="subChips"></div>
+        </div>
+        <div class="ctl-block" id="searchBlock">
+          <div class="ctl-label"><span data-i18n="searchLabel"></span><span class="badge" data-i18n="womenOnly"></span></div>
+          <div class="field" id="discFieldD">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="discInput" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="sugBox" data-i18n-ph="searchPh">
+            <button class="clr" data-action="clear-disc" hidden data-i18n-aria="clear"><svg class="ic"><use href="#i-x"/></svg></button>
+            <button class="btn b-primary b-find" data-action="find"><svg class="ic"><use href="#i-search"/></svg><span data-i18n="find"></span></button>
+          </div>
+          <p class="ctl-note" data-i18n="constraintNote"></p>
+        </div>
+        <div class="ctl-foot ctl-block">
+          <div class="stats" id="statsLine"></div>
+          <a class="foot-link" href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">
+            <svg class="ic"><use href="#i-globe"/></svg><span data-i18n="dataNote"></span>
+          </a>
+        </div>
+      </aside>
+      <div class="results">
+        <div class="scroll disc-scroll" id="discScroll">
+          <div class="disc-date"><svg class="ic fill"><use href="#i-spark"/></svg><span data-i18n="discoverKicker"></span><span class="dot">·</span><span id="discDate"></span></div>
+          <div id="spotWrap"></div>
+          <div class="grid-head" id="gridHead">
+            <h3 class="grid-title" id="gridTitle"></h3>
+            <span class="count-pill" id="gridCount" hidden></span>
+            <div class="grid-tools"><span class="badge" id="womenChip" hidden data-i18n="womenOnly"></span>
+              <button class="btn b-ghost b-sm" data-action="shuffle" id="shuffleBtn"><svg class="ic"><use href="#i-shuffle"/></svg><span data-i18n="shuffle"></span></button>
+            </div>
+          </div>
+          <div class="pgrid" id="pgrid"></div>
+          <div id="discState"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Вкладка 2: Подборки -->
+    <section class="panel" id="panel-collections" role="tabpanel" aria-labelledby="tab-collections">
+      <div class="col-toolbar">
+        <div class="col-row1">
+          <div class="field col-field">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="colInput" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="colSearchPh">
+            <button class="clr" data-action="clear-col" hidden data-i18n-aria="clear"><svg class="ic"><use href="#i-x"/></svg></button>
+          </div>
+          <label class="switch"><input type="checkbox" id="onlineChk"><span class="sw-track"><span class="sw-dot"></span></span><span class="sw-label" data-i18n="searchOnline"></span></label>
+        </div>
+        <div class="col-row2">
+          <div class="seg" id="modeSeg"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <div class="col-meta"><span id="colCount"></span><span class="online-hint" id="onlineHint" hidden><svg class="ic"><use href="#i-info"/></svg><span data-i18n="onlineHint"></span></span></div>
+      </div>
+      <div class="scroll col-scroll" id="colScroll"></div>
+    </section>
+  </main>
+
+  <!-- Нижняя навигация на мобильных -->
+  <nav class="tabbar" role="tablist" data-i18n-aria="navAria">
+    <button class="tb on" role="tab" aria-selected="true" data-action="tab" data-v="discover"><svg class="ic fill"><use href="#i-spark"/></svg><span data-i18n="tab1short"></span></button>
+    <button class="tb" role="tab" aria-selected="false" data-action="tab" data-v="collections"><svg class="ic"><use href="#i-grid"/></svg><span data-i18n="tab2"></span></button>
+  </nav>
+</div>
+
+<!-- Выпадающие подсказки -->
+<div id="sugBox"><div class="sug-list scroll" id="sugList" role="listbox"></div></div>
+
+<!-- Настройки -->
+<div id="setWrap" hidden>
+  <div class="set-scrim" data-action="settings-close"></div>
+  <div class="set-panel scroll" role="dialog" aria-modal="true" data-i18n-aria="settings">
+    <div class="set-head"><svg class="ic"><use href="#i-gear"/></svg><b data-i18n="settings"></b>
+      <button class="btn b-icon" data-action="settings-close" data-i18n-aria="close"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="set-sec"><div class="ctl-label" data-i18n="theme"></div><div class="seg" id="themeSeg"></div></div>
+    <div class="set-sec"><div class="ctl-label" data-i18n="language"></div><div class="seg" id="langSeg"></div></div>
+    <div class="set-sec"><div class="ctl-label" data-i18n="accent"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="accent-name" id="accentName"><i></i><span></span></div>
+    </div>
+  </div>
+</div>
+
+<div id="overlays"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+(function(){
+/* ================================================================
+   0. УТИЛИТЫ
+   ================================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=(n,cls='')=>`<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"></use></svg>`;
+const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
+const shuffleArr=a=>{const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;};
+const hashStr=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
+const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
+const wikiUrl=(lang,title)=>`https://${lang}.wikipedia.org/wiki/`+encodeURIComponent(String(title).replace(/ /g,'_'));
+const wikiSearchUrl=(lang,q)=>`https://${lang}.wikipedia.org/w/index.php?search=`+encodeURIComponent(q);
+const initials=name=>String(name).split(/\s+/).filter(w=>w.length>1||/^[A-ZА-ЯЁ]/.test(w)).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isMobile=()=>matchMedia('(max-width: 760px)').matches;
+function pluralRu(n,f){const a=n%10,b=n%100;if(a===1&&b!==11)return f[0];if(a>=2&&a<=4&&(b<12||b>14))return f[1];return f[2];}
+
+/* ================================================================
+   1. ЦВЕТОВОЙ ДВИЖОК — динамическая схема Material 3 из семени.
+   Тоны L* переводятся в OKLab; хрома гамут-клампится бинарным поиском.
+   ================================================================ */
+const s2l=c=>{c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
+const l2s=c=>{const v=c<=0.0031308?12.92*c:1.055*Math.pow(c,1/2.4)-0.055;return Math.round(clampN(v,0,1)*255);};
+function hexToLab(hex){
+  let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  const n=parseInt(h,16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const lr=s2l(r),lg=s2l(g),lb=s2l(b);
+  const l=Math.cbrt(0.4122214708*lr+0.5363325363*lg+0.0514459929*lb);
+  const m=Math.cbrt(0.2119034982*lr+0.6806995451*lg+0.1073969566*lb);
+  const s=Math.cbrt(0.0883024619*lr+0.2817188376*lg+0.6299787005*lb);
+  return[0.2104542553*l+0.7936177850*m-0.0040720468*s,
+         1.9779984951*l-2.4285922050*m+0.4505937099*s,
+         0.0259040371*l+0.7827717662*m-0.8086757660*s];
+}
+function labToLin(L,a,b){
+  const l=Math.pow(L+0.3963377774*a+0.2158037573*b,3);
+  const m=Math.pow(L-0.1055613458*a-0.0638541728*b,3);
+  const s=Math.pow(L-0.0894841775*a-1.2914855480*b,3);
+  return[4.0767416621*l-3.3077115913*m+0.2309699292*s,
+        -1.2684380046*l+2.6097574011*m-0.3413193965*s,
+        -0.0041960863*l-0.7034186147*m+1.7076147010*s];
+}
+const inGamut=(L,a,b)=>labToLin(L,a,b).every(v=>v>=-0.0005&&v<=1.0005);
+const hex2=v=>v.toString(16).padStart(2,'0');
+function tone(t,c,hDeg){
+  const y=t<=8?t/903.2962962:Math.pow((t+16)/116,3);
+  const L=Math.cbrt(y),hr=hDeg*Math.PI/180;
+  const at=cc=>[L,cc*Math.cos(hr),cc*Math.sin(hr)];
+  let best;
+  if(inGamut(...at(c)))best=at(c);
+  else{let lo=0,hi=c;for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(inGamut(...at(mid)))lo=mid;else hi=mid;}best=at(lo);}
+  const[r,g,b]=labToLin(...best).map(l2s);
+  return'#'+hex2(r)+hex2(g)+hex2(b);
+}
+function applyScheme(seedHex,dark){
+  const[L0,a0,b0]=hexToLab(seedHex);
+  const C0=Math.hypot(a0,b0),h0=(Math.atan2(b0,a0)*180/Math.PI+360)%360;
+  const pc=Math.max(C0,0.125),tc=Math.max(C0*0.85,0.10),th=(h0+60)%360;
+  const P=t=>tone(t,pc,h0),S=t=>tone(t,0.045,h0),T=t=>tone(t,tc,th),
+        N=t=>tone(t,0.009,h0),NV=t=>tone(t,0.024,h0),
+        E=t=>tone(t,0.16,27),SU=t=>tone(t,0.13,150),W=t=>tone(t,0.13,85),I=t=>tone(t,0.12,250);
+  const v=dark?{
+    primary:P(80),onPrimary:P(20),primaryContainer:P(30),onPrimaryContainer:P(90),
+    secondary:S(80),onSecondary:S(20),secondaryContainer:S(30),onSecondaryContainer:S(90),
+    tertiary:T(80),onTertiary:T(20),tertiaryContainer:T(30),onTertiaryContainer:T(90),
+    error:E(80),onError:E(20),errorContainer:E(30),onErrorContainer:E(90),
+    success:SU(80),successContainer:SU(30),onSuccessContainer:SU(90),
+    warning:W(80),warningContainer:W(30),onWarningContainer:W(90),
+    info:I(80),infoContainer:I(30),onInfoContainer:I(90),
+    surface:N(6),surfaceDim:N(6),scLowest:N(4),scLow:N(10),sc:N(12),scHigh:N(17),scHighest:N(22),
+    onSurface:N(90),onSurfaceVar:NV(80),outline:NV(60),outlineVar:NV(30),
+    inverseSurface:N(90),inverseOnSurface:N(20),inversePrimary:P(40),scrim:N(0),shadow:N(0),
+    blobA:P(50)+'30',blobB:T(50)+'26',blobC:S(50)+'22',glow:P(60)+'40',priSoft:P(80)+'1f',
+    thumb:NV(30),thumbHover:P(80)
+  }:{
+    primary:P(40),onPrimary:P(100),primaryContainer:P(90),onPrimaryContainer:P(10),
+    secondary:S(40),onSecondary:S(100),secondaryContainer:S(90),onSecondaryContainer:S(10),
+    tertiary:T(40),onTertiary:T(100),tertiaryContainer:T(90),onTertiaryContainer:T(10),
+    error:E(40),onError:E(100),errorContainer:E(90),onErrorContainer:E(10),
+    success:SU(40),successContainer:SU(90),onSuccessContainer:SU(10),
+    warning:W(40),warningContainer:W(90),onWarningContainer:W(10),
+    info:I(40),infoContainer:I(90),onInfoContainer:I(10),
+    surface:N(98),surfaceDim:N(87),scLowest:N(100),scLow:N(96),sc:N(94),scHigh:N(92),scHighest:N(90),
+    onSurface:N(10),onSurfaceVar:NV(30),outline:NV(50),outlineVar:NV(80),
+    inverseSurface:N(20),inverseOnSurface:N(95),inversePrimary:P(80),scrim:N(0),shadow:N(20),
+    blobA:P(60)+'24',blobB:T(60)+'20',blobC:S(50)+'1c',glow:P(50)+'33',priSoft:P(40)+'14',
+    thumb:NV(80),thumbHover:P(40)
+  };
+  const map={'--primary':v.primary,'--on-primary':v.onPrimary,'--primary-container':v.primaryContainer,'--on-primary-container':v.onPrimaryContainer,
+    '--secondary':v.secondary,'--on-secondary':v.onSecondary,'--secondary-container':v.secondaryContainer,'--on-secondary-container':v.onSecondaryContainer,
+    '--tertiary':v.tertiary,'--on-tertiary':v.onTertiary,'--tertiary-container':v.tertiaryContainer,'--on-tertiary-container':v.onTertiaryContainer,
+    '--error':v.error,'--on-error':v.onError,'--error-container':v.errorContainer,'--on-error-container':v.onErrorContainer,
+    '--success':v.success,'--success-container':v.successContainer,'--on-success-container':v.onSuccessContainer,
+    '--warning':v.warning,'--warning-container':v.warningContainer,'--on-warning-container':v.onWarningContainer,
+    '--info':v.info,'--info-container':v.infoContainer,'--on-info-container':v.onInfoContainer,
+    '--surface':v.surface,'--surface-dim':v.surfaceDim,'--sc-lowest':v.scLowest,'--sc-low':v.scLow,'--sc':v.sc,'--sc-high':v.scHigh,'--sc-highest':v.scHighest,
+    '--on-surface':v.onSurface,'--on-surface-var':v.onSurfaceVar,'--outline':v.outline,'--outline-var':v.outlineVar,
+    '--inverse-surface':v.inverseSurface,'--inverse-on-surface':v.inverseOnSurface,'--inverse-primary':v.inversePrimary,
+    '--scrim':v.scrim,'--shadow':v.shadow,'--blob-a':v.blobA,'--blob-b':v.blobB,'--blob-c':v.blobC,'--glow':v.glow,'--pri-soft':v.priSoft,
+    '--thumb':v.thumb,'--thumb-hover':v.thumbHover,
+    '--av-a1':tone(42,pc,h0),'--av-a2':tone(50,tc,th),
+    '--av-b1':tone(42,0.12,(h0+120)%360),'--av-b2':tone(52,0.12,(h0+180)%360),
+    '--av-c1':tone(42,0.12,(h0+300)%360),'--av-c2':tone(54,0.12,(h0+30)%360)};
+  const root=document.documentElement;
+  root.classList.add('theming');
+  for(const k in map)root.style.setProperty(k,map[k]);
+  root.style.setProperty('--grad-brand',`linear-gradient(120deg,${v.primary},${v.tertiary})`);
+  root.dataset.theme=dark?'dark':'light';
+  root.style.colorScheme=dark?'dark':'light';
+  $('#metaTheme').setAttribute('content',v.sc);
+  clearTimeout(applyScheme._t);applyScheme._t=setTimeout(()=>root.classList.remove('theming'),450);
+}
+
+/* ================================================================
+   2. ЛОКАЛИЗАЦИЯ
+   ================================================================ */
+const I18N={
+ru:{
+  navAria:'Разделы приложения',tab1:'Случайно / Поиск',tab1short:'Поиск',tab2:'Подборки',
+  discoverKicker:'Открытие дня',random:'Случайный выбор',sectionLabel:'Раздел',all:'Все',science:'Наука',art:'Искусство',
+  subLabel:'Подраздел',allSubs:'Все подразделы',searchLabel:'Свободный запрос',
+  searchPh:'Имя или тема — «Кюри», «инженерия»…',find:'Найти',womenOnly:'Только женщины',
+  constraintNote:'Ищем только женщин — в науке, искусстве и за их пределами. Подсказки — Википедия (opensearch).',
+  sugPeople:'Персоны',sugWiki:'Википедия',featuredGrid:'Знаковые имена',relatedGrid:'Ещё в подразделе',resultsGrid:'Результаты поиска',
+  shuffle:'Перемешать',openWiki:'Википедия',details:'Подробнее',share:'Поделиться',copied:'Ссылка скопирована',shareFail:'Не удалось поделиться',
+  fav:'В избранное',faved:'В избранном',favAdded:'Добавлено в избранное',favRemoved:'Удалено из избранного',
+  inLists:'В подборках',born:'род. ',circa:'ок. ',loading:'Загружаем…',
+  errNet:'Не удалось связаться с Википедией. Проверьте соединение.',errRate:'Википедия ограничила запросы. Подождите пару секунд и повторите.',
+  errTimeout:'Википедия не отвечает. Попробуйте ещё раз.',errApi:'Википедия вернула ошибку. Попробуйте ещё раз.',
+  retry:'Повторить',emptyTitle:'Ничего не нашли',emptyWomen:'Среди женщин по запросу «{q}» совпадений нет.',
+  emptyHint:'Попробуйте имя — или откройте близкий подраздел:',topicBtn:'Открыть подраздел «{sub}»',tryNames:'Например:',
+  dataNote:'Данные — Википедия (CC BY-SA)',statsPeople:'персон',statsLists:'подборок',statsLinks:'ресурсов',
+  colSearchPh:'Поиск по подборкам, темам и именам…',searchOnline:'Искать в сети',
+  onlineHint:'Добавляет статьи Википедии — релевантность может быть ниже.',
+  modeAll:'Показывать всё',modeLists:'Только списки',modeLinks:'Только ссылки',
+  catAll:'Все',catSci:'Наука',catArt:'Искусство',catMix:'Сквозные',
+  listsHead:'Курируемые списки',linksHead:'Внешние рейтинги и ресурсы',onlineHead:'Найдено в Википедии',
+  open:'Открыть',foundN:'Найдено: {n}',personHits:'Персоны по запросу',containsHit:'В списке: {name}',
+  favList:'Избранное',favDesc:'Персоны, сохранённые сердечком.',favEmpty:'Пока пусто — нажимайте ♡ на карточках.',
+  colEmpty:'Подборки не найдены. Измените запрос или включите «Искать в сети».',
+  linksNote:'Открываются в новой вкладке браузера',listSource:'Статья-источник',openOriginal:'Открыть оригинал',
+  articleFail:'Не удалось отрендерить статью внутри приложения — откройте оригинал.',
+  settings:'Настройки',theme:'Тема',themeLight:'Светлая',themeDark:'Тёмная',themeAuto:'Авто',
+  accent:'Акцентный цвет',custom:'Свой цвет',language:'Язык',close:'Закрыть',clear:'Очистить',toggleTheme:'Переключить тему',
+  onlineEmpty:'В Википедии ничего релевантного не нашлось.',wikiFallback:'Описание недоступно — откройте статью на Википедии.',
+  offline:'Нет соединения — показываем сохранённые данные.',backOnline:'Соединение восстановлено',
+  fbNote_en:'Описание на английском',fbNote_ru:'Описание на русском',sourceWiki:'Источник: Википедия',
+  sub_math:'Математика',sub_physics:'Физика',sub_chemistry:'Химия',sub_biology:'Биология и медицина',sub_cs:'Информатика',
+  sub_space:'Космос и астрономия',sub_tech:'Инженерия и технологии',sub_painting:'Живопись и скульптура',
+  sub_avantgarde:'Авангард и современное искусство',sub_literature:'Литература и поэзия',sub_music:'Музыка',
+  sub_theater:'Театр и кино',sub_dance:'Танец и балет',sub_architecture:'Архитектура и дизайн',sub_photo:'Фотография',
+  short_math:'Математика',short_physics:'Физика',short_chemistry:'Химия',short_biology:'Биология',short_cs:'Информатика',
+  short_space:'Космос',short_tech:'Инженерия',short_painting:'Живопись',short_avantgarde:'Авангард',short_literature:'Литература',
+  short_music:'Музыка',short_theater:'Театр и кино',short_dance:'Балет',short_architecture:'Архитектура',short_photo:'Фото',
+  accTeal:'Бирюза',accIris:'Ирис',accCobalt:'Кобальт',accAzure:'Лазурь',accMalachite:'Малахит',accChrome:'Хромовая зелень',accAmber:'Янтарь',accRuby:'Рубин'
+},
+en:{
+  navAria:'App sections',tab1:'Random / Search',tab1short:'Search',tab2:'Collections',
+  discoverKicker:'Discovery of the day',random:'Random pick',sectionLabel:'Section',all:'All',science:'Science',art:'Art',
+  subLabel:'Subsection',allSubs:'All subsections',searchLabel:'Free search',
+  searchPh:'Name or topic — “Curie”, “engineering”…',find:'Find',womenOnly:'Women only',
+  constraintNote:'We search only for women — in science, art and beyond. Suggestions come from Wikipedia (opensearch).',
+  sugPeople:'People',sugWiki:'Wikipedia',featuredGrid:'Iconic names',relatedGrid:'More in this subsection',resultsGrid:'Search results',
+  shuffle:'Shuffle',openWiki:'Wikipedia',details:'Details',share:'Share',copied:'Link copied',shareFail:'Could not share',
+  fav:'Save',faved:'Saved',favAdded:'Added to favorites',favRemoved:'Removed from favorites',
+  inLists:'In collections',born:'b. ',circa:'c. ',loading:'Loading…',
+  errNet:'Could not reach Wikipedia. Check your connection.',errRate:'Wikipedia is rate-limiting requests. Wait a moment and retry.',
+  errTimeout:'Wikipedia is not responding. Please try again.',errApi:'Wikipedia returned an error. Please try again.',
+  retry:'Retry',emptyTitle:'Nothing found',emptyWomen:'No matches among women for “{q}”.',
+  emptyHint:'Try a name — or open a related subsection:',topicBtn:'Open subsection “{sub}”',tryNames:'Try:',
+  dataNote:'Data from Wikipedia (CC BY-SA)',statsPeople:'people',statsLists:'collections',statsLinks:'resources',
+  colSearchPh:'Search collections, topics and names…',searchOnline:'Search online',
+  onlineHint:'Adds Wikipedia articles — relevance may be lower.',
+  modeAll:'Show all',modeLists:'Lists only',modeLinks:'Links only',
+  catAll:'All',catSci:'Science',catArt:'Art',catMix:'Cross-cutting',
+  listsHead:'Curated collections',linksHead:'External ratings & resources',onlineHead:'Found on Wikipedia',
+  open:'Open',foundN:'Found: {n}',personHits:'People matching your search',containsHit:'Contains: {name}',
+  favList:'Favorites',favDesc:'People you saved with a heart.',favEmpty:'Empty for now — tap ♡ on cards.',
+  colEmpty:'No collections found. Adjust the query or enable “Search online”.',
+  linksNote:'Open in a new browser tab',listSource:'Source article',openOriginal:'Open original',
+  articleFail:'Could not render the article in-app — open the original.',
+  settings:'Settings',theme:'Theme',themeLight:'Light',themeDark:'Dark',themeAuto:'Auto',
+  accent:'Accent color',custom:'Custom color',language:'Language',close:'Close',clear:'Clear',toggleTheme:'Toggle theme',
+  onlineEmpty:'Nothing relevant found on Wikipedia.',wikiFallback:'Description unavailable — open the Wikipedia article.',
+  offline:'You are offline — showing cached data.',backOnline:'Back online',
+  fbNote_en:'Description in English',fbNote_ru:'Description in Russian',sourceWiki:'Source: Wikipedia',
+  sub_math:'Mathematics',sub_physics:'Physics',sub_chemistry:'Chemistry',sub_biology:'Biology & Medicine',sub_cs:'Computer Science',
+  sub_space:'Space & Astronomy',sub_tech:'Engineering & Technology',sub_painting:'Painting & Sculpture',
+  sub_avantgarde:'Avant-garde & Contemporary',sub_literature:'Literature & Poetry',sub_music:'Music',
+  sub_theater:'Theatre & Film',sub_dance:'Dance & Ballet',sub_architecture:'Architecture & Design',sub_photo:'Photography',
+  short_math:'Math',short_physics:'Physics',short_chemistry:'Chemistry',short_biology:'Biology',short_cs:'Computing',
+  short_space:'Space',short_tech:'Engineering',short_painting:'Painting',short_avantgarde:'Avant-garde',short_literature:'Literature',
+  short_music:'Music',short_theater:'Theatre & film',short_dance:'Ballet',short_architecture:'Architecture',short_photo:'Photo',
+  accTeal:'Teal',accIris:'Iris',accCobalt:'Cobalt',accAzure:'Azure',accMalachite:'Malachite',accChrome:'Chrome green',accAmber:'Amber',accRuby:'Ruby'
+}};
+let LANG='ru';
+const tr=(key,vars)=>{let s=(I18N[LANG]&&I18N[LANG][key])??I18N.en[key]??key;if(vars)for(const k in vars)s=s.split('{'+k+'}').join(vars[k]);return s;};
+const membersLabel=n=>LANG==='ru'?`${n} ${pluralRu(n,['персона','персоны','персон'])}`:`${n} ${n===1?'person':'people'}`;
+
+/* ================================================================
+   3. ДАННЫЕ: 223 персоны, 100 курируемых списков, 14 ресурсов.
+   Формат персоны: [id, подраздел, имя RU, имя EN, статья RU, статья EN,
+   год рождения, год смерти (0 = жива), флаг «ок.»]. Пустая статья RU →
+   приложение берёт английскую (кросс-языковой fallback).
+   ================================================================ */
+const SUBS=[
+  {id:'math',sec:'sci',ic:'sigma'},{id:'physics',sec:'sci',ic:'atom'},{id:'chemistry',sec:'sci',ic:'flask'},
+  {id:'biology',sec:'sci',ic:'dna'},{id:'cs',sec:'sci',ic:'code'},{id:'space',sec:'sci',ic:'planet'},{id:'tech',sec:'sci',ic:'chip'},
+  {id:'painting',sec:'art',ic:'brush'},{id:'avantgarde',sec:'art',ic:'shapes'},{id:'literature',sec:'art',ic:'book'},
+  {id:'music',sec:'art',ic:'note'},{id:'theater',sec:'art',ic:'masks'},{id:'dance',sec:'art',ic:'dance'},
+  {id:'architecture',sec:'art',ic:'draft'},{id:'photo',sec:'art',ic:'camera'}
+];
+const SUB_MAP=Object.fromEntries(SUBS.map(s=>[s.id,s]));
+const PEOPLE_RAW=[
+["hypatia","math","Гипатия","Hypatia","Гипатия","Hypatia",360,415,1],
+["chatelet","math","Эмили дю Шатле","Émilie du Châtelet","Эмили дю Шатле","Émilie du Châtelet",1706,1749],
+["noether","math","Эмми Нётер","Emmy Noether","Нётер, Эмми","Emmy Noether",1882,1935],
+["kovalevskaya","math","Софья Ковалевская","Sofia Kovalevskaya","Ковалевская, Софья Васильевна","Sofia Kovalevskaya",1850,1891],
+["robinson","math","Джулия Робинсон","Julia Robinson","Робинсон, Джулия","Julia Robinson",1919,1985],
+["cartwright","math","Мэри Картрайт","Mary Cartwright","Картрайт, Мэри","Mary Cartwright",1900,1998],
+["ladyzhenskaya","math","Ольга Ладыженская","Olga Ladyzhenskaya","Ладыженская, Ольга Александровна","Olga Ladyzhenskaya",1922,2004],
+["johnson","math","Кэтрин Джонсон","Katherine Johnson","Джонсон, Кэтрин","Katherine Johnson",1918,2020],
+["daubechies","math","Ингрид Добеши","Ingrid Daubechies","Добеши, Ингрид","Ingrid Daubechies",1954,0],
+["uhlenbeck","math","Карен Уленбек","Karen Uhlenbeck","Уленбек, Карен","Karen Uhlenbeck",1942,0],
+["mcduff","math","Дуса Макдафф","Dusa McDuff","Макдафф, Дуза","Dusa McDuff",1945,0],
+["mirzakhani","math","Марьям Мирзахани","Maryam Mirzakhani","Мирзахани, Мариам","Maryam Mirzakhani",1977,2017],
+["viazovska","math","Марина Вязовская","Maryna Viazovska","Вязовская, Марина Сергеевна","Maryna Viazovska",1984,0],
+["curie","physics","Мария Склодовская-Кюри","Marie Curie","Склодовская-Кюри, Мария","Marie Curie",1867,1934],
+["joliot","physics","Ирен Жолио-Кюри","Irène Joliot-Curie","Жолио-Кюри, Ирен","Irène Joliot-Curie",1897,1956],
+["meitner","physics","Лиза Мейтнер","Lise Meitner","Мейтнер, Лиза","Lise Meitner",1878,1968],
+["wu","physics","Ву Цзяньсюн","Chien-Shiung Wu","Ву Цзяньсюн","Chien-Shiung Wu",1912,1997],
+["goeppert","physics","Мария Гёпперт-Майер","Maria Goeppert Mayer","Гёпперт-Майер, Мария","Maria Goeppert Mayer",1906,1972],
+["dresselhaus","physics","Милдред Дрессельхаус","Mildred Dresselhaus","","Mildred Dresselhaus",1930,2017],
+["quinn","physics","Хелен Куинн","Helen Quinn","Квинн, Хелен","Helen Quinn",1943,0],
+["gianotti","physics","Фабиола Джанотти","Fabiola Gianotti","Джанотти, Фабиола","Fabiola Gianotti",1960,0],
+["rubin","physics","Вера Рубин","Vera Rubin","Рубин, Вера","Vera Rubin",1928,2016],
+["bell","physics","Джоселин Белл Бёрнелл","Jocelyn Bell Burnell","Белл Бернелл, Джоселин","Jocelyn Bell Burnell",1943,0],
+["strickland","physics","Донна Стрикленд","Donna Strickland","Стрикленд, Донна","Donna Strickland",1959,0],
+["ghez","physics","Андреа Гез","Andrea Ghez","Гез, Андреа","Andrea Ghez",1965,0],
+["hodgkin","chemistry","Дороти Ходжкин","Dorothy Hodgkin","Ходжкин, Дороти","Dorothy Hodgkin",1910,1994],
+["franklin","chemistry","Розалинд Франклин","Rosalind Franklin","Франклин, Розалинд","Rosalind Franklin",1920,1958],
+["yonath","chemistry","Ада Йонат","Ada Yonath","Йонат, Ада","Ada Yonath",1939,0],
+["arnold","chemistry","Фрэнсис Арнольд","Frances Arnold","Арнольд, Фрэнсис","Frances Arnold",1956,0],
+["bertozzi","chemistry","Каролин Бертоцци","Carolyn Bertozzi","Бертоцци, Каролин","Carolyn Bertozzi",1966,0],
+["kwolek","chemistry","Стефани Кволек","Stephanie Kwolek","Кволек, Стефани","Stephanie Kwolek",1923,2014],
+["ball","chemistry","Элис Болл","Alice Ball","Болл, Элис","Alice Ball",1892,1916],
+["daly","chemistry","Мэри Мейнард Дейли","Marie Maynard Daly","","Marie Maynard Daly",1921,2003],
+["mcclintock","biology","Барбара Мак-Клинток","Barbara McClintock","Мак-Клинток, Барбара","Barbara McClintock",1902,1992],
+["stevens","biology","Нетти Стивенс","Nettie Stevens","Стивенс, Нетти","Nettie Stevens",1861,1912],
+["margulis","biology","Линн Маргулис","Lynn Margulis","Маргулис, Линн","Lynn Margulis",1938,2011],
+["goodall","biology","Джейн Гудолл","Jane Goodall","Гудолл, Джейн","Jane Goodall",1934,2025],
+["fossey","biology","Дайан Фосси","Dian Fossey","Фосси, Дайан","Dian Fossey",1932,1985],
+["carson","biology","Рэйчел Карсон","Rachel Carson","Карсон, Рейчел","Rachel Carson",1907,1964],
+["levi","biology","Рита Леви-Монтальчини","Rita Levi-Montalcini","Леви-Монтальчини, Рита","Rita Levi-Montalcini",1909,2012],
+["moser","biology","Май-Бритт Мозер","May-Britt Moser","Мозер, Мей-Бритт","May-Britt Moser",1963,0],
+["elion","biology","Гертруда Элайон","Gertrude B. Elion","Элайон, Гертруда","Gertrude B. Elion",1918,1999],
+["barre","biology","Франсуаза Барре-Синусси","Françoise Barré-Sinoussi","Барре-Синусси, Франсуаза","Françoise Barré-Sinoussi",1947,0],
+["blackburn","biology","Элизабет Блэкберн","Elizabeth Blackburn","Блэкберн, Элизабет","Elizabeth Blackburn",1948,0],
+["greider","biology","Кэрол Грейдер","Carol Greider","Грейдер, Кэрол","Carol Greider",1961,0],
+["tu","biology","Ту Юю","Tu Youyou","Ту Юю","Tu Youyou",1930,0],
+["doudna","biology","Дженнифер Даудна","Jennifer Doudna","Даудна, Дженнифер","Jennifer Doudna",1964,0],
+["charpentier","biology","Эмманюэль Шарпантье","Emmanuelle Charpentier","Шарпантье, Эмманюэль","Emmanuelle Charpentier",1968,0],
+["ermolyeva","biology","Зинаида Ермольева","Zinaida Yermolyeva","Ермольева, Зинаида Виссарионовна","Zinaida Yermolyeva",1898,1974],
+["mead","biology","Маргарет Мид","Margaret Mead","Мид, Маргарет","Margaret Mead",1901,1978],
+["lovelace","cs","Ада Лавлейс","Ada Lovelace","Лавлейс, Ада","Ada Lovelace",1815,1852],
+["hopper","cs","Грейс Хоппер","Grace Hopper","Хоппер, Грейс","Grace Hopper",1906,1992],
+["hamilton","cs","Маргарет Гамильтон","Margaret Hamilton","Хэмилтон, Маргарет","Margaret Hamilton (software engineer)",1936,0],
+["perlman","cs","Радия Перлман","Radia Perlman","Перлман, Радья","Radia Perlman",1951,0],
+["liskov","cs","Барбара Лисков","Barbara Liskov","Лисков, Барбара","Barbara Liskov",1939,0],
+["allen","cs","Фрэнсис Аллен","Frances Allen","Аллен, Фрэнсис","Frances Allen",1932,2020],
+["sparck","cs","Карен Спарк Джонс","Karen Spärck Jones","Джонс, Карен Спарк","Karen Spärck Jones",1935,2007],
+["goldberg","cs","Адель Голдберг","Adele Goldberg","Голдберг, Адель","Adele Goldberg (computer scientist)",1948,0],
+["goldwasser","cs","Шафи Гольдвассер","Shafi Goldwasser","Гольдвассер, Шафи","Shafi Goldwasser",1958,0],
+["li","cs","Фэй-Фэй Ли","Fei-Fei Li","","Fei-Fei Li",1976,0],
+["gebru","cs","Тимнит Гебру","Timnit Gebru","Гебру, Тимнит","Timnit Gebru",1983,0],
+["conway","cs","Линн Конвей","Lynn Conway","Конвей, Линн","Lynn Conway",1938,2024],
+["herschel","space","Каролина Гершель","Caroline Herschel","Гершель, Каролина","Caroline Herschel",1750,1848],
+["leavitt","space","Генриетта Ливитт","Henrietta Swan Leavitt","Ливитт, Генриетта Суон","Henrietta Swan Leavitt",1868,1921],
+["payne","space","Сесилия Пейн-Гапошкина","Cecilia Payne-Gaposchkin","Пейн-Гапошкина, Сесилия Хелена","Cecilia Payne-Gaposchkin",1900,1979],
+["roman","space","Нэнси Грейс Роман","Nancy Grace Roman","Роман, Нэнси","Nancy Grace Roman",1925,2018],
+["cannon","space","Энни Джамп Кэннон","Annie Jump Cannon","Кэннон, Энни Джамп","Annie Jump Cannon",1863,1941],
+["tereshkova","space","Валентина Терешкова","Valentina Tereshkova","Терешкова, Валентина Владимировна","Valentina Tereshkova",1937,0],
+["savitskaya","space","Светлана Савицкая","Svetlana Savitskaya","Савицкая, Светлана Евгеньевна","Svetlana Savitskaya",1948,0],
+["ride","space","Салли Райд","Sally Ride","Райд, Салли","Sally Ride",1951,2012],
+["jemison","space","Мэй Джемисон","Mae Jemison","Джемисон, Мэй","Mae Jemison",1956,0],
+["chawla","space","Калпана Чавла","Kalpana Chawla","Чавла, Калпана","Kalpana Chawla",1962,2003],
+["whitson","space","Пегги Уитсон","Peggy Whitson","Уитсон, Пегги","Peggy Whitson",1960,0],
+["koch","space","Кристина Кох","Christina Koch","Кук, Кристина (астронавт)","Christina Koch",1979,0],
+["clarke","tech","Эдит Кларк","Edith Clarke","Кларк, Эдит","Edith Clarke",1883,1959],
+["roebling","tech","Эмили Роублинг","Emily Roebling","","Emily Roebling",1843,1903],
+["shilling","tech","Беатрис Шиллинг","Beatrice Shilling","","Beatrice Shilling",1909,1990],
+["gilbreth","tech","Лилиан Гилбрет","Lillian Gilbreth","Гилбрет, Лилиан","Lillian Gilbreth",1878,1972],
+["knight","tech","Маргарет Найт","Margaret Knight","Найт, Маргарет","Margaret Knight (inventor)",1838,1914],
+["cochrane","tech","Джозефина Кокран","Josephine Cochrane","Кокрейн, Джозефина","Josephine Cochrane",1839,1913],
+["anderson","tech","Мэри Андерсон","Mary Anderson","Андерсон, Мэри","Mary Anderson (inventor)",1866,1953],
+["lamarr","tech","Хеди Ламарр","Hedy Lamarr","Хеди Ламарр","Hedy Lamarr",1914,2000],
+["vaughan","tech","Дороти Вон","Dorothy Vaughan","Воган, Дороти","Dorothy Vaughan",1910,2008],
+["jackson","tech","Мэри Джексон","Mary Jackson","Джексон, Мэри","Mary Jackson (engineer)",1921,2005],
+["montague","tech","Рей Монтегю","Raye Montague","","Raye Montague",1935,2018],
+["anguissola","painting","Софонисба Ангвиссола","Sofonisba Anguissola","Ангишола, Софонисба","Sofonisba Anguissola",1532,1625],
+["fontana","painting","Лавиния Фонтана","Lavinia Fontana","Фонтана, Лавиния","Lavinia Fontana",1552,1614],
+["gentileschi","painting","Артемизия Джентилески","Artemisia Gentileschi","Джентилески, Артемизия","Artemisia Gentileschi",1593,1656],
+["leyster","painting","Юдит Лейстер","Judith Leyster","Лейстер, Юдит","Judith Leyster",1609,1660],
+["ruysch","painting","Рахель Рюйш","Rachel Ruysch","Рюйш, Рашель","Rachel Ruysch",1664,1750],
+["kauffman","painting","Ангелика Кауфман","Angelica Kauffman","Кауфман, Ангелика","Angelica Kauffman",1741,1807],
+["vigee","painting","Элизабет Виже-Лебрен","Élisabeth Vigée Le Brun","Виже-Лебрен, Элизабет","Élisabeth Vigée Le Brun",1755,1842],
+["bonheur","painting","Роза Бонёр","Rosa Bonheur","Бонёр, Роза","Rosa Bonheur",1822,1899],
+["morisot","painting","Берта Моризо","Berthe Morisot","Моризо, Берта","Berthe Morisot",1841,1895],
+["cassatt","painting","Мэри Кассат","Mary Cassatt","Кэссетт, Мэри","Mary Cassatt",1844,1926],
+["bracquemond","painting","Мари Бракмон","Marie Bracquemond","Бракмон, Мари","Marie Bracquemond",1840,1916],
+["kollwitz","painting","Кете Кольвиц","Käthe Kollwitz","Кольвиц, Кете","Käthe Kollwitz",1867,1945],
+["modersohn","painting","Паула Модерзон-Беккер","Paula Modersohn-Becker","Модерзон-Беккер, Паула","Paula Modersohn-Becker",1876,1907],
+["okeeffe","painting","Джорджия О’Кифф","Georgia O'Keeffe","О’Кифф, Джорджия","Georgia O'Keeffe",1887,1986],
+["kahlo","painting","Фрида Кало","Frida Kahlo","Кало, Фрида","Frida Kahlo",1907,1954],
+["varo","painting","Ремедиос Варо","Remedios Varo","Варо, Ремедиос","Remedios Varo",1908,1963],
+["carrington","painting","Леонора Каррингтон","Leonora Carrington","Каррингтон, Леонора","Leonora Carrington",1917,2011],
+["oppenheim","painting","Мере Оппенгейм","Meret Oppenheim","Оппенгейм, Мерет","Meret Oppenheim",1913,1985],
+["lempicka","painting","Тамара де Лемпицка","Tamara de Lempicka","Лемпицка, Тамара","Tamara de Lempicka",1898,1980],
+["serebriakova","painting","Зинаида Серебрякова","Zinaida Serebriakova","Серебрякова, Зинаида Евгеньевна","Zinaida Serebriakova",1884,1967],
+["claudel","painting","Камиль Клодель","Camille Claudel","Клодель, Камилла","Camille Claudel",1864,1943],
+["afklint","avantgarde","Хильма аф Клинт","Hilma af Klint","Клинт, Хильма аф","Hilma af Klint",1862,1944],
+["delaunay","avantgarde","Соня Делоне","Sonia Delaunay","Делоне, Соня","Sonia Delaunay",1885,1979],
+["goncharova","avantgarde","Наталья Гончарова","Natalia Goncharova","Гончарова, Наталия Сергеевна","Natalia Goncharova",1881,1962],
+["popova","avantgarde","Любовь Попова","Lyubov Popova","Попова, Любовь Сергеевна","Lyubov Popova",1889,1924],
+["stepanova","avantgarde","Варвара Степанова","Varvara Stepanova","Степанова, Варвара Фёдоровна","Varvara Stepanova",1894,1958],
+["rozanova","avantgarde","Ольга Розанова","Olga Rozanova","Розанова, Ольга Владимировна","Olga Rozanova",1886,1918],
+["hepworth","avantgarde","Барбара Хепуорт","Barbara Hepworth","Хепуорт, Барбара","Barbara Hepworth",1903,1975],
+["bourgeois","avantgarde","Луиза Буржуа","Louise Bourgeois","Буржуа, Луиза","Louise Bourgeois",1911,2010],
+["kusama","avantgarde","Яёи Кусама","Yayoi Kusama","Кусама, Яёи","Yayoi Kusama",1929,0],
+["abramovic","avantgarde","Марина Абрамович","Marina Abramović","Абрамович, Марина","Marina Abramović",1946,0],
+["chicago","avantgarde","Джуди Чикаго","Judy Chicago","Джуди Чикаго","Judy Chicago",1939,0],
+["sappho","literature","Сапфо","Sappho","Сапфо","Sappho",0,0],
+["murasaki","literature","Мурасаки Сикибу","Murasaki Shikibu","Мурасаки Сикибу","Murasaki Shikibu",973,1014,1],
+["juana","literature","Хуана Инес де ла Крус","Juana Inés de la Cruz","Хуана Инес де ла Крус","Juana Inés de la Cruz",1648,1695],
+["radcliffe","literature","Анна Радклиф","Ann Radcliffe","Радклиф, Анна","Ann Radcliffe",1764,1823],
+["austen","literature","Джейн Остин","Jane Austen","Остин, Джейн","Jane Austen",1775,1817],
+["shelley","literature","Мэри Шелли","Mary Shelley","Шелли, Мэри","Mary Shelley",1797,1851],
+["brontec","literature","Шарлотта Бронте","Charlotte Brontë","Бронте, Шарлотта","Charlotte Brontë",1816,1855],
+["brontee","literature","Эмили Бронте","Emily Brontë","Бронте, Эмили","Emily Brontë",1818,1848],
+["eliot","literature","Джордж Элиот","George Eliot","Джордж Элиот","George Eliot",1819,1880],
+["wharton","literature","Эдит Уортон","Edith Wharton","Уортон, Эдит","Edith Wharton",1862,1937],
+["lagerlof","literature","Сельма Лагерлёф","Selma Lagerlöf","Лагерлёф, Сельма","Selma Lagerlöf",1858,1940],
+["stein","literature","Гертруда Стайн","Gertrude Stein","Стайн, Гертруда","Gertrude Stein",1874,1946],
+["woolf","literature","Вирджиния Вулф","Virginia Woolf","Вулф, Вирджиния","Virginia Woolf",1882,1941],
+["akhmatova","literature","Анна Ахматова","Anna Akhmatova","Ахматова, Анна Андреевна","Anna Akhmatova",1889,1966],
+["tsvetaeva","literature","Марина Цветаева","Marina Tsvetaeva","Цветаева, Марина Ивановна","Marina Tsvetaeva",1892,1941],
+["gippius","literature","Зинаида Гиппиус","Zinaida Gippius","Гиппиус, Зинаида Николаевна","Zinaida Gippius",1869,1945],
+["dickinson","literature","Эмили Дикинсон","Emily Dickinson","Дикинсон, Эмили","Emily Dickinson",1830,1886],
+["plath","literature","Сильвия Плат","Sylvia Plath","Плат, Сильвия","Sylvia Plath",1932,1963],
+["christie","literature","Агата Кристи","Agatha Christie","Кристи, Агата","Agatha Christie",1890,1976],
+["sayers","literature","Дороти Сэйерс","Dorothy L. Sayers","Сэйерс, Дороти Ли","Dorothy L. Sayers",1893,1957],
+["lee","literature","Харпер Ли","Harper Lee","Ли, Харпер","Harper Lee",1926,2016],
+["morrison","literature","Тони Моррисон","Toni Morrison","Моррисон, Тони","Toni Morrison",1931,2019],
+["butler","literature","Октавия Батлер","Octavia E. Butler","Батлер, Октавия","Octavia E. Butler",1947,2006],
+["leguin","literature","Урсула Ле Гуин","Ursula K. Le Guin","Ле Гуин, Урсула","Ursula K. Le Guin",1929,2018],
+["atwood","literature","Маргарет Этвуд","Margaret Atwood","Этвуд, Маргарет","Margaret Atwood",1939,0],
+["adichie","literature","Чимаманда Нгози Адичи","Chimamanda Ngozi Adichie","Адичи, Чимаманда Нгози","Chimamanda Ngozi Adichie",1977,0],
+["tokarczuk","literature","Ольга Токарчук","Olga Tokarczuk","Токарчук, Ольга","Olga Tokarczuk",1962,0],
+["alexievich","literature","Светлана Алексиевич","Svetlana Alexievich","Алексиевич, Светлана Александровна","Svetlana Alexievich",1948,0],
+["gluk","literature","Луиза Глюк","Louise Glück","Глюк, Луиза","Louise Glück",1943,2020],
+["lindgren","literature","Астрид Линдгрен","Astrid Lindgren","Линдгрен, Астрид","Astrid Lindgren",1907,2002],
+["jansson","literature","Туве Янссон","Tove Jansson","Янссон, Туве","Tove Jansson",1914,2001],
+["hildegard","music","Хильдегарда Бингенская","Hildegard of Bingen","Хильдегарда Бингенская","Hildegard of Bingen",1098,1179],
+["strozzi","music","Барбара Строцци","Barbara Strozzi","Строцци, Барбара","Barbara Strozzi",1619,1677],
+["schumann","music","Клара Шуман","Clara Schumann","Шуман, Клара","Clara Schumann",1819,1896],
+["mendelssohn","music","Фанни Мендельсон","Fanny Mendelssohn","Мендельсон, Фанни","Fanny Mendelssohn",1805,1847],
+["smyth","music","Этель Смит","Ethel Smyth","Смит, Этель","Ethel Smyth",1858,1944],
+["lili","music","Лили Буланже","Lili Boulanger","Буланже, Лили","Lili Boulanger",1893,1918],
+["nadia","music","Надя Буланже","Nadia Boulanger","Буланже, Надя","Nadia Boulanger",1887,1979],
+["price","music","Флоренс Прайс","Florence Price","","Florence Price",1887,1953],
+["ustvolskaya","music","Галина Уствольская","Galina Ustvolskaya","Уствольская, Галина Ивановна","Galina Ustvolskaya",1919,2006],
+["gubaidulina","music","София Губайдулина","Sofia Gubaidulina","Губайдулина, София Асгатовна","Sofia Gubaidulina",1931,2025],
+["saariaho","music","Кайя Саариахо","Kaija Saariaho","Саариахо, Кайя","Kaija Saariaho",1952,2023],
+["alsop","music","Марин Олсоп","Marin Alsop","Олсоп, Марин","Marin Alsop",1956,0],
+["callas","music","Мария Каллас","Maria Callas","Каллас, Мария","Maria Callas",1923,1977],
+["tebaldi","music","Рената Тебальди","Renata Tebaldi","Тебальди, Рената","Renata Tebaldi",1922,2004],
+["caballe","music","Монсеррат Кабалье","Montserrat Caballé","Кабалье, Монсеррат","Montserrat Caballé",1933,2018],
+["netrebko","music","Анна Нетребко","Anna Netrebko","Нетребко, Анна Юрьевна","Anna Netrebko",1971,0],
+["fitzgerald","music","Элла Фицджеральд","Ella Fitzgerald","Фицджеральд, Элла","Ella Fitzgerald",1917,1996],
+["holiday","music","Билли Холидей","Billie Holiday","Билли Холидей","Billie Holiday",1915,1959],
+["simone","music","Нина Симон","Nina Simone","Нина Симон","Nina Simone",1933,2003],
+["aretha","music","Арета Франклин","Aretha Franklin","Франклин, Арета","Aretha Franklin",1942,2018],
+["houston","music","Уитни Хьюстон","Whitney Houston","Хьюстон, Уитни","Whitney Houston",1963,2012],
+["piaf","music","Эдит Пиаф","Édith Piaf","Пиаф, Эдит","Édith Piaf",1915,1963],
+["pugacheva","music","Алла Пугачёва","Alla Pugacheva","Пугачёва, Алла Борисовна","Alla Pugacheva",1949,0],
+["bernhardt","theater","Сара Бернар","Sarah Bernhardt","Бернар, Сара","Sarah Bernhardt",1844,1923],
+["duse","theater","Элеонора Дузе","Eleonora Duse","Дузе, Элеонора","Eleonora Duse",1858,1924],
+["sats","theater","Наталья Сац","Natalya Sats","Сац, Наталия Ильинична","Natalya Sats",1903,1993],
+["kholodnaya","theater","Вера Холодная","Vera Kholodnaya","Холодная, Вера Васильевна","Vera Kholodnaya",1893,1919],
+["pickford","theater","Мэри Пикфорд","Mary Pickford","Мэри Пикфорд","Mary Pickford",1892,1979],
+["gish","theater","Лиллиан Гиш","Lillian Gish","Гиш, Лиллиан","Lillian Gish",1893,1993],
+["orlova","theater","Любовь Орлова","Lyubov Orlova","Орлова, Любовь Петровна","Lyubov Orlova",1902,1975],
+["ranevskaya","theater","Фаина Раневская","Faina Ranevskaya","Раневская, Фаина Георгиевна","Faina Ranevskaya",1896,1984],
+["davis","theater","Бетт Дейвис","Bette Davis","Дейвис, Бетт","Bette Davis",1908,1989],
+["katharine","theater","Кэтрин Хепбёрн","Katharine Hepburn","Хепбёрн, Кэтрин","Katharine Hepburn",1907,2003],
+["bergman","theater","Ингрид Бергман","Ingrid Bergman","Бергман, Ингрид","Ingrid Bergman",1915,1982],
+["audrey","theater","Одри Хепбёрн","Audrey Hepburn","Хепбёрн, Одри","Audrey Hepburn",1929,1993],
+["magnani","theater","Анна Маньяни","Anna Magnani","Маньяни, Анна","Anna Magnani",1908,1973],
+["moreau","theater","Жанна Моро","Jeanne Moreau","Моро, Жанна","Jeanne Moreau",1928,2017],
+["samoilova","theater","Татьяна Самойлова","Tatyana Samoylova","Самойлова, Татьяна Евгеньевна","Tatyana Samoylova",1934,2014],
+["streep","theater","Мерил Стрип","Meryl Streep","Стрип, Мерил","Meryl Streep",1949,0],
+["mcdormand","theater","Фрэнсис Макдорманд","Frances McDormand","Макдорманд, Фрэнсис","Frances McDormand",1957,0],
+["varda","theater","Аньес Варда","Agnès Varda","Варда, Аньес","Agnès Varda",1928,2019],
+["akerman","theater","Шанталь Акерман","Chantal Akerman","Акерман, Шанталь","Chantal Akerman",1950,2015],
+["bigelow","theater","Кэтрин Бигелоу","Kathryn Bigelow","Бигелоу, Кэтрин","Kathryn Bigelow",1951,0],
+["kschessinska","dance","Матильда Кшесинская","Mathilde Kschessinska","Кшесинская, Матильда Феликсовна","Mathilde Kschessinska",1872,1971],
+["pavlova","dance","Анна Павлова","Anna Pavlova","Павлова, Анна Павловна","Anna Pavlova",1881,1931],
+["vaganova","dance","Агриппина Ваганова","Agrippina Vaganova","Ваганова, Агриппина Яковлевна","Agrippina Vaganova",1879,1951],
+["ulanova","dance","Галина Уланова","Galina Ulanova","Уланова, Галина Сергеевна","Galina Ulanova",1910,1998],
+["plisetskaya","dance","Майя Плисецкая","Maya Plisetskaya","Плисецкая, Майя Михайловна","Maya Plisetskaya",1925,2015],
+["duncan","dance","Айседора Дункан","Isadora Duncan","Дункан, Айседора","Isadora Duncan",1877,1927],
+["graham","dance","Марта Грэм","Martha Graham","Грэм, Марта","Martha Graham",1894,1991],
+["bausch","dance","Пина Бауш","Pina Bausch","Бауш, Пина","Pina Bausch",1940,2009],
+["copeland","dance","Мисти Коупленд","Misty Copeland","Коупленд, Мисти","Misty Copeland",1982,0],
+["osipova","dance","Наталья Осипова","Natalia Osipova","Осипова, Наталья Петровна","Natalia Osipova",1986,0],
+["morgan","architecture","Джулия Морган","Julia Morgan","Морган, Джулия","Julia Morgan",1872,1957],
+["gray","architecture","Эйлин Грей","Eileen Gray","Грей, Эйлин","Eileen Gray",1878,1976],
+["perriand","architecture","Шарлотта Перриан","Charlotte Perriand","Перриан, Шарлотта","Charlotte Perriand",1903,1999],
+["eames","architecture","Рэй Имз","Ray Eames","Имз, Рэй","Ray Eames",1912,1988],
+["bobardi","architecture","Лина Бо Барди","Lina Bo Bardi","Барди, Лина Бо","Lina Bo Bardi",1914,1992],
+["sklarek","architecture","Норма Меррик Склярек","Norma Merrick Sklarek","","Norma Merrick Sklarek",1926,2012],
+["scottbrown","architecture","Дениз Скотт Браун","Denise Scott Brown","Скотт-Браун, Дениз","Denise Scott Brown",1931,0],
+["hadid","architecture","Заха Хадид","Zaha Hadid","Хадид, Заха","Zaha Hadid",1950,2016],
+["sejima","architecture","Кадзуё Сэдзима","Kazuyo Sejima","Сэдзима, Кадзуё","Kazuyo Sejima",1956,0],
+["urquiola","architecture","Патриция Уркиола","Patricia Urquiola","","Patricia Urquiola",1961,0],
+["stolzl","architecture","Гунта Штёльцль","Gunta Stölzl","","Gunta Stölzl",1897,1983],
+["brandt","architecture","Марианна Брандт","Marianne Brandt","Брандт, Марианна (художница)","Marianne Brandt",1893,1983],
+["lange","photo","Доротея Ланж","Dorothea Lange","Ланж, Доротея","Dorothea Lange",1895,1965],
+["bourke","photo","Маргарет Бурк-Уайт","Margaret Bourke-White","Бурк-Уайт, Маргарет","Margaret Bourke-White",1904,1971],
+["taro","photo","Герда Таро","Gerda Taro","Таро, Герда","Gerda Taro",1910,1937],
+["miller","photo","Ли Миллер","Lee Miller","Миллер, Ли","Lee Miller",1907,1977],
+["cunningham","photo","Имоген Каннингем","Imogen Cunningham","Каннингем, Имоджен","Imogen Cunningham",1883,1976],
+["abbott","photo","Беренис Эбботт","Berenice Abbott","Эббот, Беренис","Berenice Abbott",1898,1991],
+["levitt","photo","Хелен Левитт","Helen Levitt","Левитт, Элен","Helen Levitt",1913,2009],
+["maier","photo","Вивиан Майер","Vivian Maier","Майер, Вивиан","Vivian Maier",1926,2009],
+["leibovitz","photo","Энни Лейбовиц","Annie Leibovitz","Лейбовиц, Энни","Annie Leibovitz",1949,0],
+["sherman","photo","Синди Шерман","Cindy Sherman","Шерман, Синди","Cindy Sherman",1954,0]
+];
+const YRS_OVERRIDE={sappho:{ru:'ок. 630 – ок. 570 до н. э.',en:'c. 630 – c. 570 BC'}};
+const PEOPLE=PEOPLE_RAW.map(r=>({id:r[0],sub:r[1],sec:SUB_MAP[r[1]].sec,ru:r[2],en:r[3],ruT:r[4],enT:r[5],b:r[6],d:r[7],approx:!!r[8]}));
+const P=Object.fromEntries(PEOPLE.map(p=>[p.id,p]));
+const pname=p=>LANG==='ru'?p.ru:p.en;
+const ptitle=(p,lang)=>lang==='ru'?p.ruT:p.enT;
+function pyears(p){
+  if(YRS_OVERRIDE[p.id])return YRS_OVERRIDE[p.id][LANG];
+  if(!p.b)return'';
+  if(p.d)return(p.approx?tr('circa'):'')+p.b+'–'+p.d;
+  return tr('born')+p.b;
+}
+/* Канонические别名 для распознавания «своих» статей в поиске */
+const ROSTER_TITLES=new Set();
+PEOPLE.forEach(p=>{[p.ru,p.en,p.ruT,p.enT].forEach(t=>{if(t)ROSTER_TITLES.add(t.toLowerCase());});});
+['имзы, чарлз и рэй','флоренс прайс','margaret e. knight','lillian moller gilbreth','emily warren roebling','fanny hensel','sofya kovalevskaya','carol w. greider','andrea m. ghez','tatiana samoilova','méret oppenheim'].forEach(t=>ROSTER_TITLES.add(t));
+
+const LISTS_RAW=[
+["nobel-phy","sci","Лауреатки Нобелевской премии по физике","Women Nobel laureates in Physics","От Марии Кюри до Андреа Гез — четыре имени в истории премии.","From Marie Curie to Andrea Ghez — four names in the prize's history.","curie goeppert strickland ghez","List of female Nobel laureates"],
+["nobel-chem","sci","Лауреатки Нобелевской премии по химии","Women Nobel laureates in Chemistry","Восемь женщин, изменивших химию: от радия до CRISPR.","Eight women who changed chemistry: from radium to CRISPR.","curie joliot hodgkin yonath arnold bertozzi doudna charpentier","List of female Nobel laureates"],
+["nobel-med","sci","Лауреатки по физиологии и медицине","Women laureates in Physiology or Medicine","Открытия, спасшие миллионы: от факторов роста до артемизинина.","Discoveries that saved millions: from growth factors to artemisinin.","mcclintock levi elion barre blackburn greider moser tu","List of female Nobel laureates"],
+["turing","sci","Лауреатки премии Тьюринга","Women Turing Award laureates","«Нобелевская премия информатики» — её женские имена.","The “Nobel Prize of computing” — its female names.","allen liskov goldwasser","Turing Award"],
+["math-prizes","sci","Высшие награды математики","Top prizes in mathematics","Филдсовская и Абелевская премии: исторические прорывы.","Fields Medal and Abel Prize: historic breakthroughs.","mirzakhani viazovska uhlenbeck","Fields Medal"],
+["math-pioneers","sci","Пионеры математики","Pioneers of mathematics","От Александрии до XX века: теоремы вопреки запретам.","From Alexandria to the 20th century: theorems against the odds.","hypatia chatelet noether kovalevskaya cartwright",""],
+["math-modern","sci","Современная математика","Modern mathematics","Живые классики: уравнения, сферы, вейвлеты и симметрии.","Living classics: equations, spheres, wavelets and symmetries.","ladyzhenskaya robinson daubechies uhlenbeck mcduff mirzakhani viazovska",""],
+["hidden-figures","sci","«Скрытые фигуры» NASA","NASA's Hidden Figures","Расчётчицы, без которых Америка не полетела бы в космос.","The human computers who put America into space.","johnson vaughan jackson","Hidden Figures"],
+["nuclear","sci","Женщины атомного века","Women of the atomic age","Радий, деление ядра и магические числа — их открытия.","Radium, nuclear fission and magic numbers — their discoveries.","curie joliot meitner wu",""],
+["quantum","sci","Квантовая физика","Quantum physics","Слабое взаимодействие, оболочечная модель и кварки.","Weak interaction, the shell model and quarks.","meitner wu goeppert quinn",""],
+["particle","sci","Физика высоких энергий","High-energy physics","От пузырьковых камер до Большого адронного коллайдера.","From bubble chambers to the Large Hadron Collider.","gianotti quinn wu",""],
+["astro-pioneers","sci","Пионеры астрономии","Pioneers of astronomy","Кометы, цефеиды и спектральная классификация звёзд.","Comets, Cepheids and the spectral classification of stars.","herschel leavitt payne roman cannon",""],
+["astro-modern","sci","Современная астрофизика","Modern astrophysics","Тёмная материя, пульсары и чёрная дыра в центре Галактики.","Dark matter, pulsars and the black hole at the Galaxy's heart.","rubin bell ghez gianotti",""],
+["materials","sci","Материалы и оптика","Materials & optics","Нанотрубки, кевлар и чирпированное усиление лазеров.","Nanotubes, Kevlar and chirped-pulse laser amplification.","dresselhaus kwolek strickland",""],
+["chem-world","sci","Химия, изменившая мир","Chemistry that changed the world","Молекулы лекарств, полимеры и первые женщины-химики.","Drug molecules, polymers and the first women chemists.","curie hodgkin ball daly kwolek",""],
+["structural","sci","Структурная биология","Structural biology","Рентгеновские снимки, открывшие форму жизни: ДНК и рибосома.","X-ray images that revealed life's shapes: DNA and the ribosome.","hodgkin franklin yonath",""],
+["crispr","sci","CRISPR: редактирование генома","CRISPR genome editing","Нобелевский дуэт, подаривший миру «генетические ножницы».","The Nobel duo that gave the world “genetic scissors”.","doudna charpentier","CRISPR gene editing"],
+["green-chem","sci","Зелёная химия","Green chemistry","Направленная эволюция ферментов и биоортогональная химия.","Directed enzyme evolution and bioorthogonal chemistry.","arnold bertozzi",""],
+["genetics","sci","Пионеры генетики","Pioneers of genetics","Прыгающие гены, хромосомы пола, фото 51 и симбиогенез.","Jumping genes, sex chromosomes, Photo 51 and symbiogenesis.","mcclintock stevens franklin margulis",""],
+["field-bio","sci","Полевая биология и этология","Field biology & ethology","Шимпанзе Гомбе, гориллы Вирунги и антропология Самоа.","Gombe's chimpanzees, Virunga's gorillas and Samoan anthropology.","goodall fossey mead",""],
+["ecology","sci","Экология и защита природы","Ecology & conservation","«Безмолвная весна» и заповедные тропики: наука как защита.","Silent Spring and protected rainforests: science as advocacy.","carson goodall fossey",""],
+["penicillin","sci","Пенициллин: спасённые жизни","Penicillin: lives saved","Советский пенициллин Ермольевой и его структура по Ходжкин.","Yermolyeva's Soviet penicillin and its structure by Hodgkin.","ermolyeva hodgkin",""],
+["neuro","sci","Нейронаука","Neuroscience","Фактор роста нервов и «внутренний GPS» мозга.","Nerve growth factor and the brain's “inner GPS”.","levi moser",""],
+["medicine","sci","Лекарства и терапия","Drugs & therapy","Рациональный дизайн лекарств и Nobel-2015 за артемизинин.","Rational drug design and the 2015 Nobel for artemisinin.","elion tu ermolyeva",""],
+["telomeres","sci","Теломеры и старение","Telomeres & aging","Как концевые участки хромосом управляют возрастом клетки.","How chromosome ends control the cell's age.","blackburn greider","Telomerase"],
+["cs-firsts","sci","Первые в информатике","Firsts in computing","Первая программа, первый компилятор, код «Аполлона».","The first program, the first compiler, Apollo's code.","lovelace hopper hamilton allen",""],
+["pl-langs","sci","Создательницы языков программирования","Women behind programming languages","COBOL, CLU, Smalltalk и оптимизация компиляторов.","COBOL, CLU, Smalltalk and compiler optimization.","hopper liskov goldberg allen",""],
+["internet","sci","Женщины, построившие интернет","Women who built the internet","Протокол STP, поиск по словам и революция микросхем.","The STP protocol, word-based search and the chip revolution.","perlman sparck conway",""],
+["ai","sci","Искусственный интеллект","Artificial intelligence","ImageNet, этика ИИ и статистика языка.","ImageNet, AI ethics and language statistics.","li gebru sparck",""],
+["crypto","sci","Криптография и связь","Cryptography & communication","Вероятностное шифрование и «прыгающие частоты».","Probabilistic encryption and frequency hopping.","goldwasser lamarr",""],
+["space-code","sci","Код и расчёты для космоса","Code & math for spaceflight","Траектории к Луне и бортовое ПО «Аполлона».","Trajectories to the Moon and Apollo's onboard software.","hamilton johnson vaughan",""],
+["space-firsts","sci","Первые женщины в космосе","First women in space","1963–1992: Терешкова, Савицкая, Райд, Джемисон.","1963–1992: Tereshkova, Savitskaya, Ride, Jemison.","tereshkova savitskaya ride jemison","Women in space"],
+["space-records","sci","Рекорды на орбите","Records in orbit","Год в космосе, первые женщины-командиры МКС.","A year in space, the first female ISS commanders.","whitson koch chawla",""],
+["eng-firsts","sci","Первые в инженерии","Firsts in engineering","Мосты, электросети, авиамоторы и военный корабль.","Bridges, power grids, aero engines and a warship.","clarke roebling montague shilling",""],
+["inventors","sci","Изобретательницы в быту","Inventors of everyday life","Посудомойка, дворники, бумажный пакет и эргономика кухни.","Dishwasher, wipers, the paper bag and kitchen ergonomics.","knight cochrane anderson gilbreth",""],
+["harvard","sci","«Компьютеры» Гарварда","The Harvard Computers","Женщины, вручную переписавшие каталог звёздного неба.","The women who hand-computed the catalogue of the sky.","leavitt payne cannon","Harvard Computers"],
+["russia","sci","Великие учёные России","Great women scientists of Russia","Ковалевская, Ладыженская, Ермольева и звёзды космоса.","Kovalevskaya, Ladyzhenskaya, Yermolyeva and space stars.","kovalevskaya ladyzhenskaya ermolyeva tereshkova savitskaya",""],
+["usa","sci","Наука США","Science in the USA","От первых PhD до орбиты и Нобелевских премий.","From early PhDs to orbit and Nobel Prizes.","hopper mcclintock rubin ride elion daly",""],
+["uk","sci","Наука Великобритании","Science in the UK","Ада Лавлейс, ДНК, шимпанзе и пульсары.","Ada Lovelace, DNA, chimpanzees and pulsars.","lovelace hodgkin franklin goodall bell cartwright",""],
+["france","sci","Наука Франции","Science in France","Династия Кюри и нобелевские открытия XXI века.","The Curie dynasty and 21st-century Nobel discoveries.","curie joliot barre charpentier",""],
+["germany","sci","Наука Германии","Science in Germany","Нётер, Мейтнер и «королева углерода» Дрессельхаус.","Noether, Meitner and the “queen of carbon” Dresselhaus.","noether meitner dresselhaus",""],
+["asia","sci","Учёные Азии","Women scientists of Asia","От Шанхая до Тегерана: физика, медицина, математика.","From Shanghai to Tehran: physics, medicine, mathematics.","wu tu mirzakhani yonath li",""],
+["ancient","sci","От античности до Просвещения","From antiquity to Enlightenment","Гипатия, Хильдегарда и переводчица Ньютона.","Hypatia, Hildegard and Newton's translator.","hypatia chatelet herschel hildegard",""],
+["electricity","sci","Электротехника и электроника","Electrical engineering & electronics","Первая женщина-инженер GE, Wi-Fi-предыстория и VLSI.","GE's first woman engineer, Wi-Fi's prehistory and VLSI.","clarke lamarr conway",""],
+["renaissance","art","Художницы Возрождения","Women of the Renaissance","Первые профессиональные художницы Европы.","Europe's first professional women painters.","anguissola fontana",""],
+["baroque","art","Барокко: Артемизия и её эпоха","Baroque: Artemisia and her era","Драматический свет и натюрморты золотого века Нидерландов.","Dramatic light and still lifes of the Dutch Golden Age.","gentileschi leyster ruysch",""],
+["court","art","Салон и академия","Salon & academy","От придворных портретов до триумфа Розы Бонёр в Салоне.","From court portraits to Rosa Bonheur's Salon triumph.","vigee kauffman anguissola bonheur",""],
+["impressionism","art","Женщины импрессионизма","Women of Impressionism","Свет, сады и салоны Парижа — вне официальных академий.","Light, gardens and Paris salons — outside the academies.","morisot cassatt bracquemond","Impressionism"],
+["mexico","art","Мексика: Фрида и её круг","Mexico: Frida and her circle","Автопортреты боли и магические миры эмиграции.","Self-portraits of pain and the magic worlds of exile.","kahlo varo carrington",""],
+["surrealism","art","Женщины сюрреализма","Women of Surrealism","Сновидческие механизмы, алхимия и меховая чашка.","Dream machines, alchemy and the fur-covered cup.","varo carrington oppenheim miller","Surrealism"],
+["abstraction","art","Пионеры абстракции","Pioneers of abstraction","Духовные диаграммы и simultan-цвет раньше Кандинского.","Spiritual diagrams and simultan colour before Kandinsky.","afklint delaunay popova",""],
+["rus-avant","art","Русский авангард","Russian avant-garde","Будущее за женщинами: супрематизм, конструктивизм, ткани.","The future belonged to women: Suprematism, Constructivism, textiles.","goncharova popova stepanova rozanova","Russian avant-garde"],
+["deco","art","Ар-деко","Art Deco","Глянец Тамары де Лемпицки и модернистская мебель Грей.","Tamara de Lempicka's gloss and Gray's modernist furniture.","lempicka gray",""],
+["early20","art","Живопись первой половины XX века","Painting of the early 20th century","Кольвиц, Модерзон-Беккер, О’Кифф и Серебрякова.","Kollwitz, Modersohn-Becker, O'Keeffe and Serebriakova.","kollwitz modersohn okeeffe serebriakova",""],
+["sculpture","art","Женщины в скульптуре","Women in sculpture","Бронза Клодель, отверстия Хепуорт и пауки-матери Буржуа.","Claudel's bronze, Hepworth's holes and Bourgeois' maternal spiders.","claudel hepworth bourgeois",""],
+["contemporary","art","Современное искусство","Contemporary art","Бесконечные точки, перформанс и монументальные пауки.","Infinity dots, performance and monumental spiders.","kusama abramovic bourgeois chicago",""],
+["feminist","art","Феминистское искусство","Feminist art","«Званый ужин», критика взгляда и искусство присутствия.","The Dinner Party, gaze critique and the art of presence.","chicago sherman abramovic",""],
+["photo-doc","art","Документальная фотография","Documentary photography","Великая депрессия, индустриальная Америка и улицы Нью-Йорка.","The Great Depression, industrial America and New York streets.","lange bourke abbott taro",""],
+["photo-portrait","art","Портрет и мода","Portrait & fashion photography","Обложки Vanity Fair, ботаника и сюрреалистический портрет.","Vanity Fair covers, botany and surrealist portraiture.","leibovitz cunningham miller",""],
+["photo-street","art","Уличная фотография","Street photography","Няня-визионер и поэты бетонных тротуаров.","The visionary nanny and poets of concrete sidewalks.","maier levitt abbott",""],
+["photo-war","art","Фотография на войне","War photography","Испания, Лондонский блиц и Нормандия — с камерой на линии огня.","Spain, the Blitz and Normandy — cameras on the front line.","taro bourke miller",""],
+["novelists","art","Великие романистки XIX века","Great 19th-century novelists","Остин, сёстры Бронте и «Франкенштейн» в 18 лет.","Austen, the Brontë sisters and Frankenstein at 18.","austen brontec brontee eliot shelley",""],
+["gothic","art","Готический роман","The Gothic novel","Замки Удольфо и монстры Женевы: истоки жанра.","Udolpho's castles and Geneva's monster: the genre's origins.","shelley radcliffe",""],
+["poetry","art","Поэтические голоса","Poetic voices","Шесть голосов от Лесбоса до Пулитцера.","Six voices from Lesbos to the Pulitzer.","sappho dickinson akhmatova tsvetaeva plath gluk",""],
+["ancient-lit","art","Классики до Нового времени","Classics before the modern era","Первая поэтесса, первый роман и «Десятая муза».","The first poetess, the first novel and the “Tenth Muse”.","sappho murasaki juana",""],
+["detective","art","Королевы детектива","Queens of crime","Пуаро, мисс Марпл и лорд Питер Уимзи.","Poirot, Miss Marple and Lord Peter Wimsey.","christie sayers",""],
+["scifi","art","Фантастика и фэнтези","Science fiction & fantasy","От «Франкенштейна» до Земноморья и «Рассказа служанки».","From Frankenstein to Earthsea and The Handmaid's Tale.","shelley butler leguin atwood",""],
+["children","art","Детская литература","Children's literature","Пеппи и муми-тролли: свобода как педагогика.","Pippi and the Moomins: freedom as pedagogy.","lindgren jansson",""],
+["nobel-lit","art","Нобелевская премия по литературе","Women Nobel laureates in Literature","От Сельмы Лагерлёф до Луизы Глюк.","From Selma Lagerlöf to Louise Glück.","lagerlof morrison alexievich tokarczuk gluk","List of Nobel laureates in Literature"],
+["pulitzer","art","Пулитцеровские лауреатки","Women Pulitzer winners","«Возраст невинности», «Возлюбленная», «Убить пересмешника».","The Age of Innocence, Beloved, To Kill a Mockingbird.","wharton morrison lee plath","Pulitzer Prize for Fiction"],
+["american-lit","art","Американская литература","American literature","От Дикинсон до Октавии Батлер — свобода формы.","From Dickinson to Octavia Butler — freedom of form.","dickinson wharton stein lee morrison plath butler",""],
+["silver-age","art","Серебряный век русской поэзии","Silver Age of Russian poetry","Ахматова, Цветаева, Гиппиус — три судьбы эпохи.","Akhmatova, Tsvetaeva, Gippius — three fates of an era.","akhmatova tsvetaeva gippius","Silver Age of Russian Poetry"],
+["british-lit","art","Британская проза","British prose","Два века романа: от «Гордости и предубеждения» до Вулф.","Two centuries of the novel: from Pride and Prejudice to Woolf.","austen shelley brontec brontee eliot woolf christie sayers",""],
+["modern-lit","art","Современные голоса","Contemporary voices","Живые классики мировой прозы и документальной книги.","Living classics of world prose and documentary writing.","atwood adichie tokarczuk alexievich gluk",""],
+["romantic-music","art","Композиторы: романтизм","Composers of Romanticism","Виртуозы и суфражистки за роялем и пультом.","Virtuosos and suffragists at the piano and the podium.","schumann mendelssohn smyth",""],
+["music-20","art","Композиторы XX–XXI веков","Composers of the 20th–21st centuries","От первой симфонии чернокожей женщины до спектральной музыки.","From the first symphony by a Black woman to spectral music.","price lili ustvolskaya gubaidulina saariaho",""],
+["early-music","art","Ранняя музыка","Early music","Аббатиса-визионер и венецианская «кантата да камера».","A visionary abbess and the Venetian cantata da camera.","hildegard strozzi",""],
+["conductors","art","Дирижёры и педагоги","Conductors & teachers","Учительница целого века музыки и первая женщина в Балтиморе.","The teacher of a musical century and Baltimore's first woman chief.","nadia alsop",""],
+["boulanger","art","Сёстры Буланже","The Boulanger sisters","Лили — Римская премия в 19; Надя — легенда педагогики.","Lili — Prix de Rome at 19; Nadia — a legend of teaching.","nadia lili",""],
+["opera","art","Легенды оперы","Legends of opera","La Divina и великие сопрано XX–XXI веков.","La Divina and the great sopranos of two centuries.","callas tebaldi caballe netrebko",""],
+["jazz-soul","art","Джаз и соул","Jazz & soul voices","Первая леди песни, Леди Дэй и королева соула.","The First Lady of Song, Lady Day and the Queen of Soul.","fitzgerald holiday simone aretha houston",""],
+["chanson","art","Шансон и эстрада","Chanson & pop stage","«Non, je ne regrette rien» и «Миллион алых роз».","Non, je ne regrette rien and A Million Scarlet Roses.","piaf pugacheva",""],
+["theater","art","Легенды театра","Legends of the theatre","«Божественная Сара», Дузе и легенды сцены трёх стран.","The Divine Sarah, Duse and stage legends of three countries.","bernhardt duse ranevskaya sats moreau",""],
+["silent","art","Звёзды немого кино","Stars of silent cinema","Королева русского экрана и основательница United Artists.","The queen of the Russian screen and United Artists' co-founder.","kholodnaya pickford gish",""],
+["hollywood","art","Золотой век Голливуда","Hollywood's Golden Age","Четыре «Оскара» Кэтрин и иконы студийной эпохи.","Katharine's four Oscars and icons of the studio era.","katharine davis bergman audrey",""],
+["oscar-act","art","«Оскар»: великие актрисы","Oscar-winning actresses","Рекордные номинации и исторические награды.","Record nominations and historic wins.","streep katharine bergman magnani mcdormand","Academy Award for Best Actress"],
+["directors","art","Женщины-режиссёры","Women film directors","Новая волна, структурное кино и первый режиссёрский «Оскар».","The New Wave, structural film and the first directing Oscar.","varda akerman bigelow","List of female film and television directors"],
+["soviet-film","art","Советское кино","Soviet cinema","От королевы немого экрана до «Летят журавли».","From the silent-screen queen to The Cranes Are Flying.","kholodnaya orlova ranevskaya samoilova",""],
+["rus-ballet","art","Русский балет","Russian ballet","«Умирающий лебедь», «Жизель» и метод Вагановой.","The Dying Swan, Giselle and the Vaganova method.","kschessinska pavlova vaganova ulanova plisetskaya",""],
+["modern-dance","art","Танец модерн","Modern dance","Босиком против канона: Дункан, Грэм, Бауш.","Barefoot against the canon: Duncan, Graham, Bausch.","duncan graham bausch",""],
+["ballet-now","art","Балет сегодня","Ballet today","Первая темнокожая прима ABT и звезда Королевского балета.","ABT's first Black principal and a Royal Ballet star.","copeland osipova",""],
+["arch-pioneers","art","Пионеры архитектуры","Pioneers of architecture","Херст-Касл и первые лицензии женщин-архитекторов.","Hearst Castle and the first licences for women architects.","morgan sklarek gray",""],
+["pritzker","art","Притцкеровская премия","The Pritzker Prize","Архитектурный «Нобель»: Хадид и Сэдзима.","Architecture's “Nobel”: Hadid and Sejima.","hadid sejima","Pritzker Architecture Prize"],
+["modern-arch","art","Современная архитектура","Modern architecture","Параметрика, SANAA и модернистская Бразилия.","Parametricism, SANAA and modernist Brazil.","hadid sejima scottbrown bobardi",""],
+["design","art","Иконы дизайна","Icons of design","E-1027, LC4 и мебель, ставшая языком XX века.","E-1027, the LC4 and furniture that became a language.","gray perriand eames urquiola",""],
+["bauhaus","art","Женщины Баухауса","Women of the Bauhaus","Ткацкая мастерская и металлика — сердце школы.","The weaving workshop and metal shop — the school's heart.","stolzl brandt","Bauhaus"],
+["polymaths","mix","Полиматы: наука + искусство","Polymaths: science meets art","Голливуд и Wi-Fi, монастырь и космология, салон и Ньютон.","Hollywood and Wi-Fi, a convent and cosmology, salons and Newton.","lamarr hildegard chatelet gilbreth",""],
+["firsts","mix","Мировые «первые»","World firsts","Первая Нобелевская, первая в космосе, первая программа.","The first Nobel, the first in space, the first program.","curie tereshkova lovelace mirzakhani bigelow lagerlof",""],
+["icons","mix","Иконы XX века","Icons of the 20th century","Восемь имён, сформировавших столетие науки и искусства.","Eight names that shaped a century of science and art.","curie kahlo callas tereshkova woolf lamarr hadid morrison",""],
+["sisters","mix","Сёстры и династии","Sisters & dynasties","Бронте, Буланже и семья Кюри: талант по наследству.","The Brontës, Boulangers and Curies: talent runs in families.","brontec brontee curie joliot lili nadia",""]
+];
+const LISTS=LISTS_RAW.map(r=>({id:r[0],cat:r[1],ru:r[2],en:r[3],dru:r[4],den:r[5],m:r[6].split(' '),wiki:r[7]||null}));
+const L_MAP=Object.fromEntries(LISTS.map(l=>[l.id,l]));
+const ltitle=l=>LANG==='ru'?l.ru:l.en;
+const ldesc=l=>LANG==='ru'?l.dru:l.den;
+const ICON_IDS=['curie','noether','lovelace','tereshkova','lamarr','goodall','kahlo','austen','callas','pavlova','hadid','morrison'];
+const LINKS=[
+{id:'nobel',cat:'sci',ru:'Нобелевская премия: лауреатки',en:'Nobel Prize: women laureates',dru:'Официальный каталог всех лауреатов с 1901 года.',den:'Official catalogue of all laureates since 1901.',url:'https://www.nobelprize.org/prizes/lists/all-nobel-prizes/'},
+{id:'turing',cat:'sci',ru:'Премия Тьюринга (ACM)',en:'ACM A.M. Turing Award',dru:'Высшая награда информатики: все лауреаты.',den:'Computing\u2019s highest honour: all laureates.',url:'https://amturing.acm.org/'},
+{id:'fields',cat:'sci',ru:'Филдсовская премия (IMU)',en:'Fields Medal (IMU)',dru:'Математический «Нобель» Международного союза.',den:'The mathematical “Nobel” of the IMU.',url:'https://www.mathunion.org/imu-awards/fields-medal'},
+{id:'unesco',cat:'sci',ru:'ЮНЕСКО: женщины в науке',en:'UNESCO: Women in Science',dru:'Программы гендерного равенства в науке.',den:'Gender equality programmes in science.',url:'https://www.unesco.org/en/gender-equality'},
+{id:'fwis',cat:'sci',ru:'L\u2019Oréal–UNESCO For Women in Science',en:'L\u2019Oréal–UNESCO For Women in Science',dru:'Ежегодные стипендии молодым учёным-женщинам.',den:'Annual fellowships for young women scientists.',url:'https://www.forwomeninscience.com/'},
+{id:'nasa',cat:'sci',ru:'NASA: женщины в космосе',en:'NASA: Women in space',dru:'Истории астронавток, инженеров и учёных NASA.',den:'Stories of NASA astronauts, engineers and scientists.',url:'https://www.nasa.gov/'},
+{id:'nwhm',cat:'mix',ru:'National Women\u2019s History Museum',en:'National Women\u2019s History Museum',dru:'Онлайн-энциклопедия женской истории США.',den:'Online encyclopedia of women\u2019s history.',url:'https://www.womenshistory.org/'},
+{id:'brit',cat:'mix',ru:'Британника: биографии',en:'Britannica: biographies',dru:'Тысячи проверенных биографий, в т.ч. женские.',den:'Thousands of fact-checked biographies.',url:'https://www.britannica.com/browse/biographies'},
+{id:'nmwa',cat:'art',ru:'Национальный музей женщин в искусстве',en:'National Museum of Women in the Arts',dru:'Крупнейший музей, посвящённый художницам.',den:'The major museum dedicated to women artists.',url:'https://nmwa.org/'},
+{id:'tate',cat:'art',ru:'Тейт: художницы',en:'Tate: women artists',dru:'Коллекция и эссе о женщинах в искусстве.',den:'Collection and essays on women in art.',url:'https://www.tate.org.uk/art'},
+{id:'oscars',cat:'art',ru:'«Оскар»: база награждённых',en:'Oscars: awards database',dru:'Все церемонии и лауреаты киноакадемии.',den:'Every ceremony and Academy Award winner.',url:'https://www.oscars.org/'},
+{id:'grammy',cat:'art',ru:'Грэмми: лауреатки',en:'GRAMMY winners',dru:'Главная музыкальная премия: архив побед.',den:'Music\u2019s biggest award: the winners archive.',url:'https://www.grammy.com/'},
+{id:'pritz',cat:'art',ru:'Притцкеровская премия',en:'Pritzker Architecture Prize',dru:'Архитектурный «Нобель»: лауреаты и жюри.',den:'Architecture\u2019s “Nobel”: laureates and jury.',url:'https://www.pritzkerprize.com/'},
+{id:'poetry',cat:'art',ru:'Poetry Foundation',en:'Poetry Foundation',dru:'Крупнейшая база поэтов и стихотворений.',den:'The largest archive of poets and poems.',url:'https://www.poetryfoundation.org/'}
+];
+/* Соответствие свободных тем подразделам — для умных подсказок */
+const TOPIC_MAP=[
+[/инженер|engineer|технолог|technolog/i,'tech'],[/космос|space|астронавт|astronaut|космонавт|cosmonaut|ракет|rocket/i,'space'],
+[/астроном|astronom|телескоп|telescope|звезд|звёзд|star/i,'space'],[/математ|math|алгебр|algebr|геометр|geometr/i,'math'],
+[/физик|physic|квант|quantum|ядерн|nuclear/i,'physics'],[/хим|chem|молекул|molecul/i,'chemistry'],
+[/биолог|biolog|медицин|medic|генет|genet|ботан|botan|зоолог|zoolog|эколог|ecolog/i,'biology'],
+[/программ|program|компьютер|computer|информат|computing|\bкод\b|\bcode\b|\bИИ\b|\bAI\b|алгоритм|algorithm/i,'cs'],
+[/живопис|paint|худож|artist|скульпт|sculpt|портрет|portrait/i,'painting'],
+[/авангард|avant|сюрреал|surreal|абстракц|abstract|перформанс|performance|современн.*искусств|contemporary art/i,'avantgarde'],
+[/литератур|literat|писат|writer|поэт|poet|роман|novel|проза|prose|поэзи|poetry/i,'literature'],
+[/музык|music|композит|compos|опера|opera|джаз|jazz|соул|soul|симфон|symphon/i,'music'],
+[/театр|theat|кино|film|cinema|актрис|actress|актёр|actor|режисс|direct|голливуд|hollywood/i,'theater'],
+[/балет|ballet|танец|танц|dance|хореограф|choreograph/i,'dance'],
+[/архитектур|architect|дизайн|design|мебел|furniture|баухаус|bauhaus/i,'architecture'],
+[/фото|photo|камер|camera|снимок|snapshot/i,'photo']
+];
+const ACCENTS=[
+{hex:'#0D9488',key:'accTeal'},{hex:'#7C3AED',key:'accIris'},{hex:'#2563EB',key:'accCobalt'},{hex:'#0EA5E9',key:'accAzure'},
+{hex:'#16A34A',key:'accMalachite'},{hex:'#84CC16',key:'accChrome'},{hex:'#D97706',key:'accAmber'},{hex:'#E11D48',key:'accRuby'}
+];
+
+/* ================================================================
+   4. НАСТРОЙКИ (localStorage)
+   ================================================================ */
+const store={
+  prefs:{theme:'dark',accent:'#0D9488',lang:'ru',fav:[]},
+  tab:'discover',section:'all',sub:'all',
+  disc:{status:'loading',mode:'featured',spot:null,items:[],title:'',q:'',err:null,topic:null},
+  discReq:0,discRetry:null,
+  col:{q:'',mode:'all',cat:'all',online:false,onl:{status:'idle',q:'',items:[],err:null}},
+  onlReq:0,sugSeq:0,sugItems:[],sugActive:-1,sugOpen:false,sugAbort:null,
+  ovl:[],scrollTop:{discover:0,collections:0}
+};
+function loadPrefs(){
+  try{const p=JSON.parse(localStorage.getItem('wsa.prefs')||'{}');
+    if(p.theme)store.prefs.theme=p.theme;if(p.accent)store.prefs.accent=p.accent;
+    if(p.lang==='ru'||p.lang==='en')store.prefs.lang=p.lang;
+    if(Array.isArray(p.fav))store.prefs.fav=p.fav.filter(id=>P[id]);
+  }catch(e){}
+  LANG=store.prefs.lang;
+}
+function savePrefs(){try{localStorage.setItem('wsa.prefs',JSON.stringify(store.prefs));}catch(e){}}
+const sysLight=matchMedia('(prefers-color-scheme: light)');
+const isDark=()=>store.prefs.theme==='dark'||(store.prefs.theme==='auto'&&!sysLight.matches);
+function refreshTheme(){applyScheme(store.prefs.accent,isDark());updateThemeBtn();renderSettingsState();}
+
+/* ================================================================
+   5. API ВИКИПЕДИИ (MediaWiki, CORS origin=*, таймауты, кэш)
+   ================================================================ */
+const api={
+  cache:new Map(),lastErr:null,
+  async mw(lang,params,opt={}){
+    const qs=new URLSearchParams(Object.assign({format:'json',origin:'*'},opt.fv2===false?{}:{formatversion:'2'},params));
+    const url=`https://${lang}.wikipedia.org/w/api.php?${qs}`;
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort('timeout'),opt.timeout||13000);
+    const onAb=()=>ctrl.abort('cancelled');
+    if(opt.signal){if(opt.signal.aborted)onAb();else opt.signal.addEventListener('abort',onAb,{once:true});}
+    try{
+      if(!navigator.onLine)throw{kind:'offline'};
+      let res;
+      try{res=await fetch(url,{signal:ctrl.signal});}
+      catch(e){
+        if(opt.signal&&opt.signal.aborted)throw{kind:'abort'};
+        if(ctrl.signal.aborted&&ctrl.signal.reason==='cancelled')throw{kind:'abort'};
+        if(ctrl.signal.aborted)throw{kind:'timeout'};
+        throw{kind:'net'};
+      }
+      if(res.status===429)throw{kind:'rate'};
+      if(!res.ok)throw{kind:'http',status:res.status};
+      const d=await res.json();
+      if(d.error)throw{kind:'api',info:d.error.info};
+      return d;
+    }finally{clearTimeout(timer);if(opt.signal)opt.signal.removeEventListener('abort',onAb);}
+  },
+  normPage(p){
+    if(!p||p.missing)return null;
+    return{title:p.title,url:p.fullurl||wikiUrl(LANG,p.title),thumb:(p.thumbnail&&p.thumbnail.source)||null,
+      extract:p.extract||'',desc:(p.pageprops&&p.pageprops['wikibase-shortdesc'])||'',
+      other:(p.langlinks&&p.langlinks[0])||null,dis:!!(p.pageprops&&'disambiguation'in p.pageprops)};
+  },
+  pageProps:{prop:'pageimages|extracts|pageprops|info|langlinks',piprop:'thumbnail',pithumbsize:'640',
+    exintro:'1',explaintext:'1',exlimit:'max',inprop:'url',ppprop:'wikibase-shortdesc',llprop:'url',lllimit:'1'},
+  /* Пакетное получение страниц (до 20 за запрос) с кэшем и редиректами */
+  async pages(lang,titles,opt={}){
+    const out=new Map(),need=[];
+    const key=t=>lang+'|'+t;
+    [...new Set(titles)].forEach(t=>{if(!t)return;if(this.cache.has(key(t)))out.set(t,this.cache.get(key(t)));else need.push(t);});
+    for(let i=0;i<need.length;i+=20){
+      const chunk=need.slice(i,i+20);
+      try{
+        const d=await this.mw(lang,Object.assign({action:'query',redirects:'1',titles:chunk.join('|')},this.pageProps,
+          {lllang:lang==='ru'?'en':'ru'}),opt);
+        const alias={};
+        ((d.query&&d.query.normalized)||[]).forEach(n=>alias[n.from]=n.to);
+        ((d.query&&d.query.redirects)||[]).forEach(n=>alias[n.from]=n.to);
+        const byTitle={};((d.query&&d.query.pages)||[]).forEach(p=>byTitle[p.title]=p);
+        chunk.forEach(t=>{
+          let tt=alias[t]||t;tt=alias[tt]||tt;
+          const page=this.normPage(byTitle[tt]);
+          this.cache.set(key(t),page);if(page)this.cache.set(key(page.title),page);
+          out.set(t,page);
+        });
+      }catch(e){
+        if(e.kind==='abort')throw e;
+        this.lastErr=e;chunk.forEach(t=>{this.cache.set(key(t),null);out.set(t,null);});
+      }
+    }
+    titles.forEach(t=>{if(t&&!out.has(t))out.set(t,null);});
+    return out;
+  },
+  /* Персоны: родной язык → при отсутствии статьи английский (и наоборот) */
+  async peoplePages(people,lang,opt={}){
+    const other=lang==='ru'?'en':'ru',res=new Map();
+    const withT=people.filter(p=>ptitle(p,lang));
+    const noT=people.filter(p=>!ptitle(p,lang));
+    const m1=withT.length?await this.pages(lang,withT.map(p=>ptitle(p,lang)),opt):new Map();
+    const misses=[];
+    withT.forEach(p=>{const pg=m1.get(ptitle(p,lang));if(pg)res.set(p.id,{page:pg,langUsed:lang});else misses.push(p);});
+    const fall=[...misses,...noT].filter(p=>ptitle(p,other));
+    if(fall.length){
+      const m2=await this.pages(other,fall.map(p=>ptitle(p,other)),opt);
+      fall.forEach(p=>{const pg=m2.get(ptitle(p,other));res.set(p.id,pg?{page:pg,langUsed:other}:{page:null,langUsed:lang});});
+    }
+    people.forEach(p=>{if(!res.has(p.id))res.set(p.id,{page:null,langUsed:lang});});
+    return res;
+  },
+  async search(lang,q,opt={}){
+    const d=await this.mw(lang,Object.assign({action:'query',generator:'search',gsrsearch:q,gsrlimit:'20',gsrnamespace:'0'},
+      this.pageProps,{lllang:lang==='ru'?'en':'ru'}),opt);
+    const pages=((d.query&&d.query.pages)||[]).map(p=>this.normPage(p)).filter(Boolean);
+    pages.sort((a,b)=>0);
+    const raw=((d.query&&d.query.pages)||[]).slice().sort((a,b)=>(a.index||0)-(b.index||0));
+    return raw.map(p=>this.normPage(p)).filter(Boolean).map(pg=>{this.cache.set(lang+'|'+pg.title,pg);return pg;});
+  },
+  async opensearch(lang,q,signal){
+    const d=await this.mw(lang,{action:'opensearch',search:q,limit:'8',namespace:'0'},{fv2:false,signal,timeout:8000});
+    return Array.isArray(d)&&Array.isArray(d[1])?d[1]:[];
+  },
+  async article(lang,title,opt={}){
+    const d=await this.mw(lang,{action:'parse',page:title,prop:'text',disableeditsection:'1',disabletoc:'1',redirects:'1'},opt);
+    const t=d.parse&&d.parse.text;
+    return typeof t==='string'?t:(t&&t['*'])||'';
+  },
+  async searchLists(lang,q,opt={}){
+    const query=lang==='ru'?`список женщин ${q}`:`list of women ${q}`;
+    const d=await this.mw(lang,{action:'query',list:'search',srsearch:query,srlimit:'8',srnamespace:'0'},opt);
+    return((d.query&&d.query.search)||[]).map(r=>({title:r.title,snippet:(r.snippet||'').replace(/<[^>]*>/g,'')}));
+  }
+};
+const errText=e=>tr(e&&e.kind==='rate'?'errRate':e&&e.kind==='timeout'?'errTimeout':e&&e.kind==='api'?'errApi':'errNet');
+
+/* ---- Эвристика «только женщины» для результатов поиска ---- */
+const FEM_EN=/\b(she|her|hers|herself|woman|women|female|actress|heroine|empress|queen|princess|countess|duchess|abbess|nun|businesswoman|noblewoman|mistress|madam)\b/gi;
+const MALE_EN=/\b(he|his|him|himself|man|men|male|actor|king|prince|emperor|count|duke|abbot|monk|businessman|nobleman|sir)\b/gi;
+const FEM_RU=/(она|её|ей|неё|родилась|стала|была|первая|женщин\w*|учёная|писательница|художница|актриса|певица|поэтесса|танцовщица|императрица|королева|княгиня|графиня|героиня|монахиня|лауреатка|сестра|дочь|жена|вдова|мать)/gi;
+const MALE_RU=/(родился|стал\s|был\s|первый|мужчин\w*|писатель\s|художник\s|актёр\s|певец\s|поэт\s|император|король|князь|граф\s|герой\s|монах\s|брат\s|сын\s|отец\s|вдовец)/gi;
+const cnt=(s,re)=>{const m=s.match(re);return m?Math.min(m.length,9):0;};
+function isWomanPage(pg){
+  if(!pg||pg.dis)return false;
+  const tl=pg.title.toLowerCase();
+  if(ROSTER_TITLES.has(tl))return true;
+  if(/^(list |list of |список|women |женщины |index of)/i.test(pg.title))return false;
+  const text=(pg.title+' '+pg.desc+' '+pg.extract).toLowerCase();
+  const fem=cnt(text,FEM_EN)*3+cnt(text,FEM_RU)*3;
+  const male=cnt(text,MALE_EN)*3+cnt(text,MALE_RU)*3;
+  return fem>=3&&fem>male;
+}
+function matchPeople(q){
+  const s=q.toLowerCase().trim();if(s.length<2)return[];
+  const scored=[];
+  PEOPLE.forEach(p=>{
+    const names=[p.ru,p.en,p.ruT,p.enT].filter(Boolean).map(x=>x.toLowerCase());
+    let sc=0;
+    names.forEach(n=>{if(n.startsWith(s))sc=Math.max(sc,8);else if(n.includes(s))sc=Math.max(sc,5);
+      const parts=n.split(/[\s,]+/);if(parts.some(w=>w.startsWith(s)))sc=Math.max(sc,6);});
+    if(sc)scored.push({p,sc});
+  });
+  scored.sort((a,b)=>b.sc-a.sc);
+  return scored.slice(0,6).map(x=>x.p);
+}
+
+/* ================================================================
+   6. ОБЩИЕ РЕНДЕР-ХЕЛПЕРЫ
+   ================================================================ */
+function avatarHTML(name,cls=''){
+  const v=hashStr(name)%3;
+  return`<div class="avatar av-${v} ${cls}" aria-hidden="true">${esc(initials(name))}</div>`;
+}
+function photoHTML(page,name,extra=''){
+  if(page&&page.thumb)return`<img src="${esc(page.thumb)}" alt="${esc(name)}" loading="lazy" decoding="async" data-fb="${esc(name)}" ${extra}>`;
+  return avatarHTML(name);
+}
+/* Замена сломанных изображений монограммой (перехват error на capture) */
+document.addEventListener('error',e=>{
+  const t=e.target;
+  if(t&&t.tagName==='IMG'&&t.dataset.fb){
+    const wrap=document.createElement('div');wrap.innerHTML=avatarHTML(t.dataset.fb,t.parentElement.classList.contains('pava')?'mini':'');
+    t.replaceWith(wrap.firstChild);
+  }
+},true);
+const subTag=(sub,full=false)=>{const s=SUB_MAP[sub];return`<span class="tag">${icon(s.ic)}${esc(tr((full?'sub_':'short_')+sub))}</span>`;};
+const catMeta={sci:{ic:'flask',label:()=>tr('catSci')},art:{ic:'palette',label:()=>tr('catArt')},mix:{ic:'spark',label:()=>tr('catMix')},fav:{ic:'heart',label:()=>tr('favList')}};
+function favBtnHTML(id,extraCls=''){
+  const on=store.prefs.fav.includes(id);
+  return`<button class="fav-btn ${on?'on':''} ${extraCls}" data-action="fav" data-id="${id}" data-fav-id="${id}" aria-pressed="${on}" aria-label="${esc(tr(on?'faved':'fav'))}" title="${esc(tr(on?'faved':'fav'))}">${icon('heart')}</button>`;
+}
+function skelSpot(){return`<div class="sk-spot"><div class="skel sk-photo"></div><div class="sk-lines">
+  <div class="skel" style="width:34%;height:16px"></div><div class="skel" style="width:72%;height:30px"></div>
+  <div class="skel" style="width:46%;height:14px"></div><div class="skel" style="width:96%;height:13px"></div>
+  <div class="skel" style="width:90%;height:13px"></div><div class="skel" style="width:60%;height:13px"></div>
+  <div style="display:flex;gap:9px;margin-top:auto"><div class="skel" style="width:120px;height:38px;border-radius:999px"></div><div class="skel" style="width:110px;height:38px;border-radius:999px"></div></div>
+</div></div>`;}
+function skelCards(n){let h='';for(let i=0;i<n;i++)h+=`<div class="sk-card"><div class="skel sk-photo"></div><div class="sk-lines">
+  <div class="skel" style="width:78%;height:14px"></div><div class="skel" style="width:44%;height:11px"></div><div class="skel" style="width:92%;height:11px"></div></div></div>`;return h;}
+function itemMeta(it){
+  if(it.person)return{name:pname(it.person),years:pyears(it.person),sub:it.person.sub,id:it.person.id};
+  return{name:(it.page&&it.page.title)||it.title||'',years:'',sub:null,id:null};
+}
+function itemUrl(it){
+  if(it.page&&it.page.url)return it.page.url;
+  if(it.person){const t=ptitle(it.person,LANG)||ptitle(it.person,LANG==='ru'?'en':'ru');return wikiUrl(t?LANG:(LANG==='ru'?'en':'ru'),t);}
+  return wikiSearchUrl(LANG,it.title||'');
+}
+
+/* ================================================================
+   7. ВКЛАДКА 1 — открытие / поиск
+   ================================================================ */
+function discInputEl(){return isMobile()?$('#discInputM'):$('#discInput');}
+function syncDiscInputs(v){$('#discInput').value=v;$('#discInputM').value=v;
+  $$('#discField .clr, #discFieldD .clr').forEach(b=>b.hidden=!v);}
+function currentPool(){
+  if(store.section==='all'&&store.sub==='all')return ICON_IDS.map(id=>P[id]);
+  let pool=PEOPLE.filter(p=>(store.section==='all'||p.sec===store.section)&&(store.sub==='all'||p.sub===store.sub));
+  return pool;
+}
+function setDiscLoading(){store.disc.status='loading';renderDiscover();}
+async function showPersonFlow(person,gridTitle){
+  const req=++store.discReq;setDiscLoading();
+  const related=shuffleArr(PEOPLE.filter(p=>p.sub===person.sub&&p.id!==person.id)).slice(0,12);
+  store.discRetry=()=>showPersonFlow(person,gridTitle);
+  try{
+    const res=await api.peoplePages([person,...related],LANG);
+    if(req!==store.discReq)return;
+    const r=res.get(person.id);
+    store.disc={status:'ok',mode:'featured',spot:{person,page:r.page,langUsed:r.langUsed},
+      items:related.map(p=>{const x=res.get(p.id);return{person:p,page:x.page,langUsed:x.langUsed};}),
+      title:gridTitle||(tr('relatedGrid')+' · '+tr('sub_'+person.sub)),q:'',err:null,topic:null};
+    renderDiscover();
+  }catch(e){if(e.kind==='abort'||req!==store.discReq)return;store.disc={...store.disc,status:'error',err:e};renderDiscover();}
+}
+async function browseFlow(){
+  const req=++store.discReq;setDiscLoading();
+  store.discRetry=browseFlow;
+  let pool=currentPool(),title;
+  if(store.section==='all'&&store.sub==='all'){
+    title=tr('featuredGrid');
+    const spot=P[ICON_IDS[Math.floor(Math.random()*ICON_IDS.length)]];
+    const rest=ICON_IDS.filter(id=>id!==spot.id).map(id=>P[id]);
+    const extra=shuffleArr(PEOPLE.filter(p=>!ICON_IDS.includes(p.id))).slice(0,1);
+    pool=[spot,...rest,...extra];
+    try{
+      const res=await api.peoplePages(pool,LANG);
+      if(req!==store.discReq)return;
+      const mk=p=>{const x=res.get(p.id);return{person:p,page:x.page,langUsed:x.langUsed};};
+      store.disc={status:'ok',mode:'browse',spot:mk(pool[0]),items:pool.slice(1).map(mk),title,q:'',err:null,topic:null};
+      renderDiscover();return;
+    }catch(e){if(e.kind==='abort'||req!==store.discReq)return;store.disc={...store.disc,status:'error',err:e};renderDiscover();return;}
+  }
+  title=store.sub!=='all'?tr('sub_'+store.sub):tr(store.section==='sci'?'science':'art');
+  pool=shuffleArr(pool);
+  const spot=pool[0],items=pool.slice(1,24);
+  try{
+    const res=await api.peoplePages([spot,...items],LANG);
+    if(req!==store.discReq)return;
+    const mk=p=>{const x=res.get(p.id);return{person:p,page:x.page,langUsed:x.langUsed};};
+    store.disc={status:'ok',mode:'browse',spot:mk(spot),items:items.map(mk),title,q:'',err:null,topic:null};
+    renderDiscover();
+  }catch(e){if(e.kind==='abort'||req!==store.discReq)return;store.disc={...store.disc,status:'error',err:e};renderDiscover();}
+}
+async function runSearch(q){
+  q=q.trim();if(q.length<2){discInputEl().focus();return;}
+  closeSug();syncDiscInputs(q);
+  const req=++store.discReq;setDiscLoading();
+  store.discRetry=()=>runSearch(q);
+  const local=matchPeople(q).slice(0,5);
+  let remote=[],err=null;
+  try{remote=await api.search(LANG,q);}catch(e){if(e.kind==='abort')return;err=e;}
+  if(req!==store.discReq)return;
+  const localTitles=new Set();
+  local.forEach(p=>{[p.ruT,p.enT,p.ru,p.en].forEach(t=>{if(t)localTitles.add(t.toLowerCase());});});
+  const women=remote.filter(pg=>isWomanPage(pg)&&!localTitles.has(pg.title.toLowerCase()));
+  let localItems=[];
+  if(local.length){
+    try{const res=await api.peoplePages(local,LANG);
+      localItems=local.map(p=>{const x=res.get(p.id);return{person:p,page:x.page,langUsed:x.langUsed};});
+    }catch(e){if(e.kind==='abort')return;}
+  }
+  if(req!==store.discReq)return;
+  const seen=new Set();
+  localItems.forEach(it=>{if(it.page)seen.add(it.page.title.toLowerCase());});
+  const remoteItems=[];
+  women.forEach(pg=>{const tl=pg.title.toLowerCase();if(!seen.has(tl)){seen.add(tl);remoteItems.push({person:null,page:pg,langUsed:LANG});}});
+  const all=[...localItems,...remoteItems].slice(0,19);
+  if(!all.length){
+    if(err){store.disc={...store.disc,status:'error',err,q};}
+    else{
+      let topic=null;for(const[re,sub]of TOPIC_MAP){if(re.test(q)){topic=sub;break;}}
+      store.disc={status:'empty',mode:'search',spot:null,items:[],title:'',q,err:null,topic};
+    }
+    renderDiscover();return;
+  }
+  store.disc={status:'ok',mode:'search',spot:all[0],items:all.slice(1),title:tr('resultsGrid')+' · «'+q+'»',q,err:null,topic:null};
+  renderDiscover();
+}
+async function wikiPick(title){
+  const req=++store.discReq;setDiscLoading();
+  store.discRetry=()=>wikiPick(title);
+  try{
+    const m=await api.pages(LANG,[title]);
+    if(req!==store.discReq)return;
+    const pg=m.get(title);
+    if(pg&&isWomanPage(pg)){
+      const person=PEOPLE.find(p=>[p.ruT,p.enT].some(t=>t&&t.toLowerCase()===pg.title.toLowerCase()));
+      store.disc={status:'ok',mode:'search',spot:{person:person||null,page:pg,langUsed:LANG},items:[],title:tr('resultsGrid')+' · «'+title+'»',q:title,err:null,topic:null};
+      renderDiscover();
+      runSearchGridOnly(title,req);
+    }else runSearch(title);
+  }catch(e){if(e.kind==='abort'||req!==store.discReq)return;runSearch(title);}
+}
+async function runSearchGridOnly(q,req){
+  try{
+    const remote=await api.search(LANG,q);
+    if(req!==store.discReq||store.disc.mode!=='search')return;
+    const spotTitle=store.disc.spot&&store.disc.spot.page?store.disc.spot.page.title.toLowerCase():'';
+    store.disc.items=remote.filter(pg=>isWomanPage(pg)&&pg.title.toLowerCase()!==spotTitle).slice(0,18)
+      .map(pg=>({person:null,page:pg,langUsed:LANG}));
+    renderDiscover();
+  }catch(e){}
+}
+function spotlightHTML(it){
+  const m=itemMeta(it),pg=it.page,url=itemUrl(it);
+  const desc=pg&&pg.desc?pg.desc:'';
+  const extract=pg&&pg.extract?pg.extract:'';
+  const fb=it.langUsed&&it.langUsed!==LANG?`<span class="tag t-warn">${icon('info')}${esc(tr('fbNote_'+it.langUsed))}</span>`:'';
+  const noPg=!pg?`<span class="tag t-warn">${icon('alert')}${esc(tr('wikiFallback'))}</span>`:'';
+  return`<article class="spotlight card">
+    <div class="sp-photo">${photoHTML(pg,m.name)}${m.id?favBtnHTML(m.id):''}</div>
+    <div class="sp-body">
+      <div class="sp-kicker">${m.sub?subTag(m.sub,true):`<span class="tag">${icon('user')}${esc(tr('sugWiki'))}</span>`}${fb}${noPg}</div>
+      <h2 class="sp-name">${esc(m.name)}</h2>
+      <div class="sp-meta">${m.years?`<b>${esc(m.years)}</b>`:''}${m.years&&desc?' · ':''}${esc(desc)}</div>
+      ${extract?`<p class="sp-desc">${esc(extract)}</p>`:''}
+      <div class="sp-actions">
+        <a class="btn b-primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openWiki'))}</span></a>
+        <button class="btn b-tonal" data-action="open-person" data-src="spot">${icon('user')}<span>${esc(tr('details'))}</span></button>
+        <button class="btn b-outline" data-action="share-person" data-src="spot">${icon('share')}<span>${esc(tr('share'))}</span></button>
+      </div>
+    </div>
+  </article>`;
+}
+function pcardHTML(it,i){
+  const m=itemMeta(it),pg=it.page,url=itemUrl(it);
+  const sub=m.sub?`<span class="pc-tag">${icon(SUB_MAP[m.sub].ic)}${esc(tr('short_'+m.sub))}</span>`:'';
+  const desc=(pg&&(pg.desc||pg.extract))||'';
+  return`<article class="pcard" style="--i:${i}" data-action="open-person" data-idx="${i}" tabindex="0" role="button" aria-label="${esc(m.name)}">
+    <div class="pc-photo">${photoHTML(pg,m.name)}${sub}${m.id?favBtnHTML(m.id):''}</div>
+    <div class="pc-body">
+      <h4 class="pc-name">${esc(m.name)}</h4>
+      ${m.years?`<div class="pc-years">${esc(m.years)}</div>`:''}
+      <p class="pc-desc">${esc(desc)}</p>
+    </div>
+    <a class="pc-wiki" href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-action="noop" aria-label="${esc(tr('openWiki'))}" title="${esc(tr('openWiki'))}">${icon('ext')}</a>
+  </article>`;
+}
+function renderDiscover(){
+  const d=store.disc;
+  const spotWrap=$('#spotWrap'),grid=$('#pgrid'),state=$('#discState'),
+        gTitle=$('#gridTitle'),gCount=$('#gridCount'),shBtn=$('#shuffleBtn'),wChip=$('#womenChip');
+  $('#gridHead').style.display='';
+  if(d.status==='loading'){
+    spotWrap.innerHTML=skelSpot();grid.innerHTML=skelCards(8);state.innerHTML='';
+    gTitle.textContent=tr('loading');gCount.hidden=true;shBtn.style.display='none';wChip.hidden=true;return;
+  }
+  if(d.status==='error'){
+    spotWrap.innerHTML='';grid.innerHTML='';$('#gridHead').style.display='none';
+    state.innerHTML=`<div class="state-box err"><div class="st-ic">${icon('alert')}</div><h3>${esc(tr('emptyTitle'))}</h3>
+      <p>${esc(errText(d.err))}</p><button class="btn b-primary" data-action="disc-retry">${icon('refresh')}<span>${esc(tr('retry'))}</span></button></div>`;
+    return;
+  }
+  if(d.status==='empty'){
+    spotWrap.innerHTML='';grid.innerHTML='';$('#gridHead').style.display='none';
+    const topic=d.topic;
+    const sugg=(topic?shuffleArr(PEOPLE.filter(p=>p.sub===topic)):shuffleArr(ICON_IDS.map(id=>P[id]))).slice(0,4);
+    state.innerHTML=`<div class="state-box"><div class="st-ic">${icon('search')}</div><h3>${esc(tr('emptyTitle'))}</h3>
+      <p>${esc(tr('emptyWomen',{q:d.q}))}</p><p>${esc(tr('emptyHint'))}</p>
+      ${topic?`<button class="btn b-tonal" data-action="topic-jump" data-sub="${topic}">${icon(SUB_MAP[topic].ic)}<span>${esc(tr('topicBtn',{sub:tr('sub_'+topic)}))}</span></button>`:''}
+      <div class="hint-chips">${sugg.map(p=>`<button class="chip" data-action="try-person" data-pid="${p.id}">${icon('user')}${esc(pname(p))}</button>`).join('')}</div>
+    </div>`;
+    return;
+  }
+  spotWrap.innerHTML=d.spot?spotlightHTML(d.spot):'';
+  grid.innerHTML=d.items.map((it,i)=>pcardHTML(it,i)).join('');
+  state.innerHTML='';
+  gTitle.textContent=d.title||tr('featuredGrid');
+  gCount.hidden=!d.items.length;gCount.textContent=d.items.length;
+  shBtn.style.display=(d.mode!=='search'&&d.items.length>1)?'':'none';
+  wChip.hidden=d.mode!=='search';
+}
+
+/* ---- Живые подсказки (opensearch + локальные персоны) ---- */
+const sugBox=$('#sugBox'),sugList=$('#sugList');
+function positionSug(){
+  const inp=discInputEl(),r=inp.closest('.field').getBoundingClientRect();
+  const below=innerHeight-r.bottom-10;
+  sugBox.style.left=r.left+'px';sugBox.style.width=r.width+'px';
+  if(below<170&&r.top>below){sugBox.style.top='auto';sugBox.style.bottom=(innerHeight-r.top+6)+'px';sugList.style.maxHeight=Math.min(300,r.top-16)+'px';}
+  else{sugBox.style.bottom='auto';sugBox.style.top=(r.bottom+6)+'px';sugList.style.maxHeight=Math.min(330,below)+'px';}
+}
+function renderSug(){
+  const q=discInputEl().value.trim();
+  const local=matchPeople(q).slice(0,5);
+  const wiki=(store.sugItems||[]).filter(t=>!local.some(p=>[p.ru,p.en,p.ruT,p.enT].some(x=>x&&x.toLowerCase()===t.toLowerCase()))).slice(0,6);
+  let h='',idx=0;const flat=[];
+  if(local.length){
+    h+=`<div class="sug-group">${icon('user')}${esc(tr('sugPeople'))}</div>`;
+    local.forEach(p=>{flat.push({type:'person',p});
+      h+=`<button class="sug-item ${idx===store.sugActive?'act':''}" role="option" aria-selected="${idx===store.sugActive}" data-action="sug-pick" data-i="${idx}">
+        ${icon(SUB_MAP[p.sub].ic)}<span>${esc(pname(p))}</span><small>${esc(tr('short_'+p.sub))}</small></button>`;idx++;});
+  }
+  if(wiki.length||store.sugLoading){
+    h+=`<div class="sug-group">${icon('globe')}${esc(tr('sugWiki'))}${store.sugLoading?'<span class="spin"></span>':''}</div>`;
+    wiki.forEach(t=>{flat.push({type:'wiki',title:t});
+      h+=`<button class="sug-item ${idx===store.sugActive?'act':''}" role="option" aria-selected="${idx===store.sugActive}" data-action="sug-pick" data-i="${idx}">
+        ${icon('search')}<span>${esc(t)}</span></button>`;idx++;});
+  }
+  store.sugFlat=flat;
+  if(!flat.length&&!store.sugLoading){closeSug();return;}
+  sugList.innerHTML=h;
+  if(!store.sugOpen){store.sugOpen=true;sugBox.classList.add('open');discInputEl().setAttribute('aria-expanded','true');}
+  positionSug();
+}
+function closeSug(){
+  store.sugOpen=false;store.sugActive=-1;store.sugItems=[];store.sugLoading=false;
+  sugBox.classList.remove('open');
+  $('#discInput').setAttribute('aria-expanded','false');$('#discInputM').setAttribute('aria-expanded','false');
+  if(store.sugAbort){store.sugAbort.abort();store.sugAbort=null;}
+}
+const fetchSug=debounce(async q=>{
+  const seq=++store.sugSeq;
+  if(store.sugAbort)store.sugAbort.abort();
+  const ctrl=new AbortController();store.sugAbort=ctrl;
+  store.sugLoading=true;if(q.length>=2&&discInputEl().value.trim()===q)renderSug();
+  try{
+    const titles=await api.opensearch(LANG,q,ctrl.signal);
+    if(seq!==store.sugSeq)return;
+    store.sugItems=titles;store.sugLoading=false;
+    if(discInputEl().value.trim()===q)renderSug();
+  }catch(e){if(seq!==store.sugSeq)return;store.sugLoading=false;if(discInputEl().value.trim()===q)renderSug();}
+},300);
+function onDiscInput(v){
+  syncDiscInputs(v);
+  store.sugActive=-1;
+  if(v.trim().length<2){closeSug();return;}
+  renderSug();fetchSug(v.trim());
+}
+function sugPick(i){
+  const it=store.sugFlat&&store.sugFlat[i];if(!it)return;
+  closeSug();
+  if(it.type==='person'){syncDiscInputs(pname(it.p));setTab('discover');showPersonFlow(it.p);}
+  else{syncDiscInputs(it.title);setTab('discover');wikiPick(it.title);}
+}
+function onDiscKey(e){
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    if(!store.sugOpen||!store.sugFlat||!store.sugFlat.length)return;
+    e.preventDefault();
+    const n=store.sugFlat.length;
+    store.sugActive=e.key==='ArrowDown'?(store.sugActive+1)%n:(store.sugActive-1+n)%n;
+    renderSug();
+    const act=$('.sug-item.act',sugList);if(act)act.scrollIntoView({block:'nearest'});
+  }else if(e.key==='Enter'){
+    e.preventDefault();
+    if(store.sugOpen&&store.sugActive>=0)sugPick(store.sugActive);
+    else{closeSug();runSearch(discInputEl().value);}
+  }else if(e.key==='Escape'){if(store.sugOpen){e.stopPropagation();closeSug();}}
+}
+
+/* ================================================================
+   8. ВКЛАДКА 2 — подборки
+   ================================================================ */
+function favListObj(){return{id:'fav',cat:'fav',ru:tr('favList'),en:tr('favList'),dru:tr('favDesc'),den:tr('favDesc'),m:store.prefs.fav.slice(),wiki:null,fav:true};}
+function listMatches(){
+  const q=store.col.q.toLowerCase().trim();
+  let base=LISTS.slice();
+  if(store.prefs.fav.length||!q)base=[favListObj(),...base];
+  if(store.col.cat!=='all')base=base.filter(l=>l.cat===store.col.cat||l.fav);
+  if(!q)return base.map(l=>({l,score:0,hit:null}));
+  const out=[];
+  base.forEach(l=>{
+    let sc=0,hit=null;
+    const t=(l.ru+' '+l.en).toLowerCase(),dd=(l.dru+' '+l.den).toLowerCase();
+    if(t.includes(q))sc+=t.startsWith(q)?9:6;
+    if(dd.includes(q))sc+=2;
+    for(const id of l.m){const p=P[id];if(!p)continue;
+      if((p.ru+' '+p.en).toLowerCase().includes(q)){sc+=4;if(!hit)hit=p;}}
+    if(l.fav&&(tr('favList').toLowerCase().includes(q)))sc+=6;
+    if(sc>0)out.push({l,score:sc,hit});
+  });
+  out.sort((a,b)=>b.score-a.score||(b.l.fav?1:0)-(a.l.fav?1:0));
+  return out;
+}
+function personMatches(){
+  const q=store.col.q.trim();if(q.length<2)return[];
+  return matchPeople(q).slice(0,6);
+}
+function linkMatches(){
+  const q=store.col.q.toLowerCase().trim();
+  let base=LINKS.slice();
+  if(store.col.cat!=='all')base=base.filter(l=>l.cat===store.col.cat||l.cat==='mix');
+  if(!q)return base;
+  return base.filter(l=>(l.ru+' '+l.en+' '+l.dru+' '+l.den+' '+l.url).toLowerCase().includes(q));
+}
+function lcardHTML(entry,i){
+  const{l,hit}=entry,cm=catMeta[l.cat];
+  const names=l.m.slice(0,3).map(id=>P[id]?pname(P[id]).split(' ').slice(-1)[0]:'').filter(Boolean).join(', ');
+  const more=l.m.length>3?` +${l.m.length-3}`:'';
+  return`<article class="lcard" style="--i:${i}" data-action="open-list" data-id="${l.id}" tabindex="0" role="button" aria-label="${esc(ltitle(l))}">
+    <div class="lc-top"><span class="lc-cat c-${l.cat}">${icon(cm.ic)}${esc(cm.label())}</span><span class="lc-count">${esc(membersLabel(l.m.length))}</span></div>
+    <h4 class="lc-title">${esc(ltitle(l))}</h4>
+    <p class="lc-desc">${esc(ldesc(l))}</p>
+    ${hit?`<div class="lc-hit">${icon('user')}${esc(tr('containsHit',{name:pname(hit)}))}</div>`:''}
+    <div class="lc-foot"><span class="lc-names">${esc(names+more)}</span>
+      <span class="btn b-tonal b-sm lc-open">${esc(tr('open'))}${icon('arrow')}</span></div>
+  </article>`;
+}
+function onlineCardHTML(it,i){
+  return`<article class="lcard online" style="--i:${i}" data-action="open-article" data-title="${esc(it.title)}" tabindex="0" role="button">
+    <div class="lc-top"><span class="lc-cat c-sci">${icon('globe')}${esc(tr('sugWiki'))}</span></div>
+    <h4 class="lc-title">${esc(it.title)}</h4>
+    <p class="lc-desc">${esc(it.snippet)}</p>
+    <div class="lc-foot"><span class="lc-names">${LANG}.wikipedia.org</span><span class="btn b-tonal b-sm lc-open">${esc(tr('open'))}${icon('arrow')}</span></div>
+  </article>`;
+}
+function linkRowHTML(l,i){
+  const dom=l.url.replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+  const ic=l.cat==='sci'?'flask':l.cat==='art'?'palette':'globe';
+  return`<a class="link-row" style="--i:${i}" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+    <span class="lr-icon c-${l.cat}">${icon(ic)}</span>
+    <span class="lr-body"><b>${esc(LANG==='ru'?l.ru:l.en)}</b><small>${esc(LANG==='ru'?l.dru:l.den)}</small></span>
+    <span class="lr-domain">${esc(dom)}</span>${icon('ext')}</a>`;
+}
+function renderCol(){
+  const c=store.col,scroll=$('#colScroll');
+  const lists=listMatches(),links=linkMatches(),persons=personMatches();
+  const showLists=c.mode!=='links',showLinks=c.mode!=='lists';
+  const showOnline=c.online&&c.q.trim().length>=3&&c.mode!=='links';
+  let h='';
+  if(persons.length&&c.q.trim().length>=2&&c.mode!=='links'){
+    h+=`<div class="sec-head">${icon('user')}<h3>${esc(tr('personHits'))}</h3></div><div class="person-strip">`;
+    persons.forEach(p=>{
+      const cached=api.cache.get(LANG+'|'+ptitle(p,LANG))||api.cache.get((LANG==='ru'?'en':'ru')+'|'+ptitle(p,LANG==='ru'?'en':'ru'));
+      const ava=cached&&cached.thumb?`<img src="${esc(cached.thumb)}" alt="" loading="lazy" data-fb="${esc(pname(p))}">`:avatarHTML(pname(p),'mini');
+      h+=`<button class="pchip" data-action="open-person" data-pid="${p.id}"><span class="pava">${ava}</span><span>${esc(pname(p))}</span><small>${esc(tr('short_'+p.sub))}</small></button>`;
+    });
+    h+='</div>';
+  }
+  if(showLists){
+    h+=`<div class="sec-head">${icon('grid')}<h3>${esc(tr('listsHead'))}</h3><span class="count-pill">${lists.length}</span></div>`;
+    if(lists.length)h+=`<div class="lgrid">${lists.map((e,i)=>lcardHTML(e,i)).join('')}</div>`;
+    else if(!showOnline)h+=`<div class="state-box"><div class="st-ic">${icon('search')}</div><p>${esc(tr('colEmpty'))}</p></div>`;
+  }
+  if(showOnline){
+    h+=`<div class="sec-head">${icon('globe')}<h3>${esc(tr('onlineHead'))}</h3><span class="head-note">${esc(tr('onlineHint'))}</span></div>`;
+    const o=c.onl;
+    if(o.status==='loading')h+=`<div class="lgrid">${[0,1,2].map(()=>`<div class="sk-card" style="border-radius:22px"><div class="sk-lines" style="padding:17px"><div class="skel" style="width:40%;height:13px"></div><div class="skel" style="width:85%;height:16px"></div><div class="skel" style="width:95%;height:12px"></div><div class="skel" style="width:70%;height:12px"></div></div></div>`).join('')}</div>`;
+    else if(o.status==='error')h+=`<div class="state-box err" style="padding:26px"><div class="st-ic">${icon('alert')}</div><p>${esc(errText(o.err))}</p><button class="btn b-tonal b-sm" data-action="online-retry">${icon('refresh')}<span>${esc(tr('retry'))}</span></button></div>`;
+    else if(o.status==='done'&&o.items.length)h+=`<div class="lgrid">${o.items.map((it,i)=>onlineCardHTML(it,i)).join('')}</div>`;
+    else if(o.status==='done')h+=`<div class="state-box" style="padding:26px"><div class="st-ic">${icon('info')}</div><p>${esc(tr('onlineEmpty'))}</p></div>`;
+  }
+  if(showLinks){
+    h+=`<div class="sec-head">${icon('link')}<h3>${esc(tr('linksHead'))}</h3><span class="count-pill">${links.length}</span><span class="head-note">${esc(tr('linksNote'))}</span></div>`;
+    if(links.length)h+=`<div class="links-grid">${links.map((l,i)=>linkRowHTML(l,i)).join('')}</div>`;
+    else h+=`<div class="state-box" style="padding:26px"><div class="st-ic">${icon('search')}</div><p>${esc(tr('colEmpty'))}</p></div>`;
+  }
+  scroll.innerHTML=h;
+  const total=(showLists?lists.length:0)+(showLinks?links.length:0);
+  $('#colCount').textContent=tr('foundN',{n:total});
+  $('#onlineHint').hidden=!(c.online&&c.mode!=='links');
+  $('#colInput').closest('.field').querySelector('.clr').hidden=!c.q;
+}
+const triggerOnline=debounce(()=>{
+  const c=store.col;
+  if(!c.online||c.q.trim().length<3||c.mode==='links'){c.onl={status:'idle',q:'',items:[],err:null};renderCol();return;}
+  fetchOnline(c.q.trim());
+},450);
+async function fetchOnline(q){
+  const req=++store.onlReq;
+  store.col.onl={status:'loading',q,items:[],err:null};renderCol();
+  try{
+    const items=await api.searchLists(LANG,q);
+    if(req!==store.onlReq)return;
+    const rel=items.filter(it=>/(список|женщин|list|women)/i.test(it.title));
+    store.col.onl={status:'done',q,items:rel.length?rel:items.slice(0,4),err:null};renderCol();
+  }catch(e){
+    if(e.kind==='abort'||req!==store.onlReq)return;
+    store.col.onl={status:'error',q,items:[],err:e};renderCol();
+  }
+}
+
+/* ================================================================
+   9. ОВЕРЛЕИ: список, статья, персона
+   ================================================================ */
+const ovlRoot=$('#overlays');
+function pushOvl(html,kind){
+  // один экземпляр каждого kind; список/статья заменяют весь стек
+  if(kind==='list'||kind==='article'){while(store.ovl.length)removeOvl(store.ovl[store.ovl.length-1],true);}
+  else{const top=store.ovl[store.ovl.length-1];if(top&&top.kind===kind)removeOvl(top,true);}
+  const wrap=document.createElement('div');wrap.innerHTML=html;
+  const node=wrap.firstElementChild;
+  node.style.zIndex=50+store.ovl.length;
+  ovlRoot.appendChild(node);
+  const entry={node,kind,prevFocus:document.activeElement};
+  store.ovl.push(entry);
+  const closeBtn=$('[data-action="close-top"]',node)||$('button',node);
+  if(closeBtn)closeBtn.focus({preventScroll:true});
+  return node;
+}
+function removeOvl(entry,instant){
+  const i=store.ovl.indexOf(entry);if(i<0)return;
+  store.ovl.splice(i,1);
+  if(instant){entry.node.remove();}
+  else{entry.node.classList.add('closing');setTimeout(()=>entry.node.remove(),190);
+    if(entry.prevFocus&&entry.prevFocus.focus)try{entry.prevFocus.focus({preventScroll:true});}catch(e){}}
+}
+function closeTop(){const top=store.ovl[store.ovl.length-1];if(top)removeOvl(top,false);}
+function sheetShell(kind,label,head,body){
+  return`<div class="ovl" data-ovl="${kind}"><div class="ovl-scrim" data-action="close-top"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}">
+      <div class="sheet-head">${head}</div><div class="sheet-body scroll">${body}</div></div></div>`;
+}
+async function openList(id){
+  const l=id==='fav'?favListObj():L_MAP[id];if(!l)return;
+  const cm=catMeta[l.cat];
+  const srcBtn=l.wiki?`<a class="btn b-outline b-sm" href="${esc(wikiUrl('en',l.wiki))}" target="_blank" rel="noopener noreferrer" data-action="noop" title="${esc(tr('listSource'))}">${icon('ext')}<span>${esc(tr('listSource'))}</span></a>`:'';
+  const head=`<div class="sh-info"><span class="lc-cat c-${l.cat}" style="align-self:flex-start">${icon(cm.ic)}${esc(cm.label())}</span>
+    <h3>${esc(ltitle(l))}</h3><p>${esc(ldesc(l))}</p></div>
+    <div class="sh-actions">${srcBtn}<button class="btn b-icon" data-action="close-top" aria-label="${esc(tr('close'))}">${icon('x')}</button></div>`;
+  const members=l.m.map(mid=>P[mid]).filter(Boolean);
+  const skBody=members.length?`<div class="mgrid">${members.map(()=>`<div class="sk-mcard"><div class="skel"></div><div class="sk-lines"><div class="skel" style="width:75%;height:13px"></div><div class="skel" style="width:45%;height:11px"></div></div></div>`).join('')}</div>`
+    :`<div class="state-box"><div class="st-ic">${icon('heart')}</div><p>${esc(tr('favEmpty'))}</p></div>`;
+  const node=pushOvl(sheetShell('list',ltitle(l),head,skBody),'list');
+  if(!members.length)return;
+  const token=node;
+  try{
+    const res=await api.peoplePages(members,LANG);
+    if(!node.isConnected||token!==node)return;
+    const body=$('.sheet-body',node);
+    body.innerHTML=`<div class="mgrid">${members.map((p,i)=>{
+      const r=res.get(p.id),pg=r&&r.page;
+      return`<button class="mcard" style="--i:${i}" data-action="open-person" data-pid="${p.id}">
+        <span class="mc-photo">${photoHTML(pg,pname(p))}</span>
+        <span class="mc-body"><b>${esc(pname(p))}</b><small>${esc(pyears(p))}</small>
+        <span class="m-sub">${icon(SUB_MAP[p.sub].ic)}${esc(tr('short_'+p.sub))}</span></span>${icon('arrow')}</button>`;
+    }).join('')}</div>
+    <div class="sheet-foot">${icon('info')}<span>${esc(membersLabel(members.length))}</span>
+      <a href="${esc(l.wiki?wikiUrl('en',l.wiki):'https://www.wikipedia.org')}" target="_blank" rel="noopener noreferrer">${esc(tr('sourceWiki'))}</a></div>`;
+    // кэшируем страницы для мгновенного открытия抽屉
+    members.forEach(p=>{const r=res.get(p.id);if(r&&r.page)p._cached={page:r.page,langUsed:r.langUsed,lang:LANG};});
+  }catch(e){
+    if(!node.isConnected)return;
+    $('.sheet-body',node).innerHTML=`<div class="state-box err"><div class="st-ic">${icon('alert')}</div><p>${esc(errText(e))}</p></div>`;
+  }
+}
+function sanitizeWiki(html,lang){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const base=`https://${lang}.wikipedia.org/wiki/`;
+  doc.querySelectorAll('script,style,link,meta,base,iframe,object,embed,form,input,button,select,textarea,audio,video,svg,.mw-editsection,.navbox,.vertical-navbox,.metadata,.ambox,.hatnote,.toc,#toc,.catlinks,.printfooter,.mw-jump-link,.sidebar').forEach(n=>n.remove());
+  doc.body.querySelectorAll('*').forEach(el=>{
+    const keep=el.tagName==='A'?['href']:el.tagName==='IMG'?['src','srcset','alt']:['colspan','rowspan'];
+    Array.from(el.attributes).forEach(a=>{if(!keep.includes(a.name))el.removeAttribute(a.name);});
+  });
+  doc.body.querySelectorAll('a').forEach(a=>{
+    const href=a.getAttribute('href')||'';
+    try{const u=new URL(href,base);
+      if(!/^https?:$|^mailto:$/.test(u.protocol)){a.removeAttribute('href');return;}
+      a.setAttribute('href',u.href);a.setAttribute('target','_blank');a.setAttribute('rel','noopener noreferrer');
+    }catch(e){a.removeAttribute('href');}
+  });
+  doc.body.querySelectorAll('img').forEach(img=>{img.setAttribute('loading','lazy');img.setAttribute('decoding','async');});
+  doc.body.querySelectorAll('table').forEach(t=>{
+    const w=doc.createElement('div');w.className='tbl-wrap';t.replaceWith(w);w.appendChild(t);
+  });
+  return doc.body.innerHTML;
+}
+async function openArticle(title){
+  const head=`<div class="sh-info"><span class="lc-cat c-sci" style="align-self:flex-start">${icon('globe')}${esc(tr('sugWiki'))}</span>
+    <h3>${esc(title)}</h3></div>
+    <div class="sh-actions"><a class="btn b-outline b-sm" href="${esc(wikiUrl(LANG,title))}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openOriginal'))}</span></a>
+    <button class="btn b-icon" data-action="close-top" aria-label="${esc(tr('close'))}">${icon('x')}</button></div>`;
+  const sk=`<div style="display:flex;flex-direction:column;gap:11px">${[92,100,88,96,70,100,84,60].map(w=>`<div class="skel" style="width:${w}%;height:14px"></div>`).join('')}</div>`;
+  const node=pushOvl(sheetShell('article',title,head,sk),'article');
+  try{
+    const html=await api.article(LANG,title);
+    if(!node.isConnected)return;
+    if(!html)throw{kind:'api'};
+    $('.sheet-body',node).innerHTML=`<div class="wiki-body">${sanitizeWiki(html,LANG)}</div>
+      <div class="sheet-foot">${icon('info')}<a href="${esc(wikiUrl(LANG,title))}" target="_blank" rel="noopener noreferrer">${esc(tr('sourceWiki'))} ↗</a></div>`;
+  }catch(e){
+    if(!node.isConnected)return;
+    $('.sheet-body',node).innerHTML=`<div class="state-box err"><div class="st-ic">${icon('alert')}</div>
+      <p>${esc(tr('articleFail'))}</p><a class="btn b-primary" href="${esc(wikiUrl(LANG,title))}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openOriginal'))}</span></a></div>`;
+  }
+}
+let drawerReq=0;
+async function openPerson(item){
+  const req=++drawerReq;
+  const m=itemMeta(item);
+  const name=m.name||'';
+  let pg=item.page,langUsed=item.langUsed||LANG;
+  if(item.person&&item.person._cached&&item.person._cached.lang===LANG){pg=item.person._cached.page;langUsed=item.person._cached.langUsed;}
+  const node=pushOvl(drawerHTML({item,name,pg,langUsed,loading:!pg}),'person');
+  if(pg)return;
+  try{
+    let res;
+    if(item.person){const r=await api.peoplePages([item.person],LANG);const x=r.get(item.person.id);res={page:x.page,langUsed:x.langUsed};}
+    else{const mp=await api.pages(LANG,[item.title||m.name]);res={page:mp.get(item.title||m.name),langUsed:LANG};}
+    if(req!==drawerReq||!node.isConnected)return;
+    const fresh=drawerHTML({item,name,pg:res.page,langUsed:res.langUsed,loading:false});
+    const wrap=document.createElement('div');wrap.innerHTML=fresh;
+    node.replaceWith(wrap.firstElementChild);
+    store.ovl[store.ovl.length-1].node=wrap.firstElementChild;
+    ovlRoot.lastElementChild.style.zIndex=50+store.ovl.length-1;
+    const cb=$('[data-action="close-top"]',ovlRoot.lastElementChild);if(cb)cb.focus({preventScroll:true});
+  }catch(e){/* остаётся skeleton→fallback */
+    if(req!==drawerReq||!node.isConnected)return;
+    const b=$('.dr-body',node);if(b)b.innerHTML=`<h3 class="dr-name">${esc(name)}</h3><p class="dr-extract muted">${esc(tr('wikiFallback'))}</p>
+      <div class="dr-actions"><a class="btn b-primary b-sm" href="${esc(itemUrl(item))}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openWiki'))}</span></a></div>`;
+  }
+}
+function drawerHTML({item,name,pg,langUsed,loading}){
+  const person=item.person,m=itemMeta(item);
+  const url=pg&&pg.url?pg.url:itemUrl(item);
+  const otherLang=LANG==='ru'?'en':'ru';
+  let otherUrl=pg&&pg.other&&pg.other.url?pg.other.url:null;
+  if(!otherUrl&&person&&ptitle(person,otherLang))otherUrl=wikiUrl(otherLang,ptitle(person,otherLang));
+  const lists=person?LISTS.filter(l=>l.m.includes(person.id)):[];
+  const fb=langUsed!==LANG&&pg?`<span class="tag t-warn">${icon('info')}${esc(tr('fbNote_'+langUsed))}</span>`:'';
+  const bodyTop=`<h3 class="dr-name">${esc(name)}</h3>
+    <div class="dr-meta">${m.years?`<b>${esc(m.years)}</b>`:''}${m.years&&pg&&pg.desc?' · ':''}${esc(pg&&pg.desc||'')}</div>
+    <div class="dr-actions">
+      <a class="btn b-primary b-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openWiki'))} ${LANG.toUpperCase()}</span></a>
+      ${otherUrl?`<a class="btn b-outline b-sm" href="${esc(otherUrl)}" target="_blank" rel="noopener noreferrer" data-action="noop">${icon('ext')}<span>${esc(tr('openWiki'))} ${otherLang.toUpperCase()}</span></a>`:''}
+      <button class="btn b-tonal b-sm" data-action="share-person" data-src="drawer">${icon('share')}<span>${esc(tr('share'))}</span></button>
+    </div>`;
+  const bodyMain=loading
+    ?`<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">${[100,96,90,97,60].map(w=>`<div class="skel" style="width:${w}%;height:13px"></div>`).join('')}</div>`
+    :`${pg&&pg.extract?`<p class="dr-extract">${esc(pg.extract)}</p>`:`<p class="dr-extract muted">${esc(tr('wikiFallback'))}</p>`}
+      ${lists.length?`<div class="ctl-label" style="margin-top:8px">${esc(tr('inLists'))}</div>
+        <div class="list-chips">${lists.slice(0,8).map(l=>`<button class="chip" data-action="open-list" data-id="${l.id}">${icon(catMeta[l.cat].ic)}${esc(ltitle(l))}</button>`).join('')}
+        ${lists.length>8?`<button class="chip" data-action="person-lists" data-pid="${person.id}">${icon('arrow')}${esc(tr('moreN',{n:lists.length-8}))}</button>`:''}</div>`:''}
+      <div class="sheet-foot">${icon('info')}<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(tr('sourceWiki'))} ↗</a></div>`;
+  return`<div class="ovl" data-ovl="person"><div class="ovl-scrim" data-action="close-top"></div>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="${esc(name)}" data-drawer="1">
+      <div class="dr-banner">${photoHTML(pg,name)}
+        <div class="dr-top">${person?favBtnHTML(person.id):''}<button class="btn b-icon" data-action="close-top" aria-label="${esc(tr('close'))}">${icon('x')}</button></div>
+        ${m.sub?`<div class="dr-sub">${subTag(m.sub,true)}</div>`:''}
+      </div>
+      <div class="dr-body scroll">${fb?`<div>${fb}</div>`:''}${bodyTop}${bodyMain}</div>
+    </div></div>`;
+}
+/* Поделиться / скопировать ссылку */
+async function shareItem(item){
+  const m=itemMeta(item),url=itemUrl(item);
+  try{
+    if(navigator.share){await navigator.share({title:m.name,url});return;}
+    throw{fallback:true};
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    try{await navigator.clipboard.writeText(url);toast(tr('copied'),'ok');}
+    catch(e2){toast(tr('shareFail'),'err');}
+  }
+}
+
+/* ================================================================
+   10. ИЗБРАННОЕ
+   ================================================================ */
+function toggleFav(id){
+  if(!P[id])return;
+  const i=store.prefs.fav.indexOf(id);
+  const added=i<0;
+  if(added)store.prefs.fav.unshift(id);else store.prefs.fav.splice(i,1);
+  savePrefs();
+  $$(`[data-fav-id="${id}"]`).forEach(b=>{
+    b.classList.toggle('on',added);b.setAttribute('aria-pressed',String(added));
+    b.setAttribute('aria-label',tr(added?'faved':'fav'));b.title=tr(added?'faved':'fav');
+    b.classList.remove('pop-anim');void b.offsetWidth;b.classList.add('pop-anim');
+  });
+  toast(tr(added?'favAdded':'favRemoved'),added?'ok':'info');
+  renderCol();
+  const top=store.ovl[store.ovl.length-1];
+  if(top&&top.kind==='list'&&$('.lc-cat.c-fav',top.node))openList('fav');
+}
+
+/* ================================================================
+   11. ТОСТЫ / RIPPLE
+   ================================================================ */
+function toast(msg,kind='info'){
+  const box=$('#toasts');
+  while(box.children.length>=3)box.firstChild.remove();
+  const el=document.createElement('div');
+  el.className=`toast t-${kind}`;
+  el.innerHTML=icon(kind==='ok'?'check':kind==='err'?'alert':'info')+`<span>${esc(msg)}</span>`;
+  box.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),260);},3400);
+}
+document.addEventListener('pointerdown',e=>{
+  if(reducedMotion)return;
+  const b=e.target.closest('.btn,.chip,.tab,.tb,.seg-btn,.swatch');
+  if(!b)return;
+  const r=b.getBoundingClientRect();
+  const s=document.createElement('span');s.className='ripple';
+  const d=Math.max(r.width,r.height);
+  s.style.width=s.style.height=d+'px';
+  s.style.left=(e.clientX-r.left-d/2)+'px';s.style.top=(e.clientY-r.top-d/2)+'px';
+  b.appendChild(s);s.addEventListener('animationend',()=>s.remove());
+});
+
+/* ================================================================
+   12. СТАТИЧЕСКИЕ ЗОНЫ: контролы, настройки, i18n
+   ================================================================ */
+function renderControls(){
+  $('#secSeg').innerHTML=['all','sci','art'].map(v=>
+    `<button class="seg-btn ${store.section===v?'on':''}" data-action="section" data-v="${v}">${v==='sci'?icon('flask'):v==='art'?icon('palette'):icon('spark')}<span>${esc(tr(v==='all'?'all':v==='sci'?'science':'art'))}</span></button>`).join('');
+  const subs=SUBS.filter(s=>store.section==='all'||s.sec===store.section);
+  $('#subChips').innerHTML=`<button class="chip ${store.sub==='all'?'on':''}" data-action="sub" data-v="all">${esc(tr('allSubs'))}</button>`+
+    subs.map(s=>`<button class="chip ${store.sub===s.id?'on':''}" data-action="sub" data-v="${s.id}">${icon(s.ic)}${esc(tr('short_'+s.id))}</button>`).join('');
+  $('#statsLine').innerHTML=`<b>${PEOPLE.length}</b> ${esc(tr('statsPeople'))} · <b>${LISTS.length}</b> ${esc(tr('statsLists'))} · <b>${LINKS.length}</b> ${esc(tr('statsLinks'))}`;
+  $('#modeSeg').innerHTML=[['all','modeAll'],['lists','modeLists'],['links','modeLinks']].map(([v,k])=>
+    `<button class="seg-btn ${store.col.mode===v?'on':''}" data-action="mode" data-v="${v}">${esc(tr(k))}</button>`).join('');
+  $('#catChips').innerHTML=[['all','catAll','spark'],['sci','catSci','flask'],['art','catArt','palette'],['mix','catMix','globe']].map(([v,k,ic])=>
+    `<button class="chip ${store.col.cat===v?'on':''}" data-action="cat" data-v="${v}">${icon(ic)}${esc(tr(k))}</button>`).join('');
+  // мобильная компоновка: поле поиска переносится в верхний ряд
+  const mRow=$('.m-row'),fieldD=$('#discFieldD'),searchBlock=$('#searchBlock');
+  if(isMobile()){mRow.appendChild(fieldD);fieldD.style.display='';searchBlock.style.display='none';}
+  else{searchBlock.style.display='';searchBlock.insertBefore(fieldD,searchBlock.querySelector('.ctl-note'));fieldD.style.display='';}
+  $('#discDate').textContent=new Intl.DateTimeFormat(LANG==='ru'?'ru-RU':'en-US',{day:'numeric',month:'long'}).format(new Date());
+}
+function renderSettingsState(){
+  $('#themeSeg').innerHTML=[['light','themeLight','sun'],['auto','themeAuto','auto'],['dark','themeDark','moon']].map(([v,k,ic])=>
+    `<button class="seg-btn ${store.prefs.theme===v?'on':''}" data-action="set-theme" data-v="${v}">${icon(ic)}<span>${esc(tr(k))}</span></button>`).join('');
+  $('#langSeg').innerHTML=[['ru','Русский'],['en','English']].map(([v,label])=>
+    `<button class="seg-btn ${LANG===v?'on':''}" data-action="set-lang" data-v="${v}"><span>${label}</span></button>`).join('');
+  $('#swatches').innerHTML=ACCENTS.map(a=>
+    `<button class="swatch ${store.prefs.accent.toLowerCase()===a.hex.toLowerCase()?'on':''}" style="--sw-c:${a.hex}" data-action="set-accent" data-v="${a.hex}" aria-label="${esc(tr(a.key))}" title="${esc(tr(a.key))}"></button>`).join('')+
+    `<label class="custom-swatch" title="${esc(tr('custom'))}"><input type="color" id="customColor" value="${esc(store.prefs.accent)}" aria-label="${esc(tr('custom'))}"></label>`;
+  const preset=ACCENTS.find(a=>a.hex.toLowerCase()===store.prefs.accent.toLowerCase());
+  $('#accentName').innerHTML=`<i></i><span>${esc(preset?tr(preset.key):tr('custom')+' · '+store.prefs.accent.toUpperCase())}</span>`;
+}
+function updateThemeBtn(){
+  $('#themeBtn').innerHTML=icon(isDark()?'moon':'sun');
+}
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  $$('[data-i18n]').forEach(el=>el.textContent=tr(el.dataset.i18n));
+  $$('[data-i18n-ph]').forEach(el=>el.placeholder=tr(el.dataset.i18nPh));
+  $$('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAria)));
+}
+function setLang(v){
+  if(LANG===v)return;
+  LANG=v;store.prefs.lang=v;savePrefs();
+  while(store.ovl.length)removeOvl(store.ovl[store.ovl.length-1],true);
+  closeSug();
+  applyStatic();renderControls();renderSettingsState();updateThemeBtn();
+  renderDiscover();renderCol();
+  // перезагружаем данные на новом языке
+  const d=store.disc;
+  if(d.status==='ok'){
+    if(d.mode==='search'&&d.q)runSearch(d.q);
+    else if(d.spot&&d.spot.person){
+      const persons=[d.spot.person,...d.items.filter(it=>it.person).map(it=>it.person)];
+      const req=++store.discReq;
+      api.peoplePages(persons,LANG).then(res=>{
+        if(req!==store.discReq)return;
+        const mk=p=>{const x=res.get(p.id);return{person:p,page:x.page,langUsed:x.langUsed};};
+        store.disc.spot=mk(d.spot.person);
+        store.disc.items=d.items.map(it=>it.person?mk(it.person):it);
+        if(d.mode==='browse')store.disc.title=store.sub!=='all'?tr('sub_'+store.sub):store.section!=='all'?tr(store.section==='sci'?'science':'art'):tr('featuredGrid');
+        else store.disc.title=tr('relatedGrid')+' · '+tr('sub_'+d.spot.person.sub);
+        renderDiscover();
+      }).catch(()=>{});
+    }
+  }else if(d.status==='empty'){store.disc={...d};renderDiscover();}
+  if(store.col.online&&store.col.q.trim().length>=3)fetchOnline(store.col.q.trim());
+}
+function setTab(v){
+  if(store.tab===v)return;
+  store.scrollTop[store.tab]=(store.tab==='discover'?$('#discScroll'):$('#colScroll')).scrollTop;
+  store.tab=v;closeSug();
+  $$('.tab,.tb').forEach(b=>{const on=b.dataset.v===v;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));});
+  $('#panel-discover').classList.toggle('active',v==='discover');
+  $('#panel-collections').classList.toggle('active',v==='collections');
+  (v==='discover'?$('#discScroll'):$('#colScroll')).scrollTop=store.scrollTop[v]||0;
+}
+function openSettings(){$('#setWrap').hidden=false;renderSettingsState();const f=$('.set-panel [data-action="settings-close"]');if(f)f.focus();}
+function closeSettings(){$('#setWrap').hidden=true;}
+
+/* ================================================================
+   13. СОБЫТИЯ (делегирование — один слушатель на действие)
+   ================================================================ */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-action]');
+  if(!el)return;
+  const a=el.dataset.action;
+  switch(a){
+    case 'noop':break;
+    case 'tab':setTab(el.dataset.v);break;
+    case 'random':{
+      const pool=currentPool().filter(p=>!store.disc.spot||!store.disc.spot.person||p.id!==store.disc.spot.person.id);
+      const pick=(pool.length?pool:currentPool())[Math.floor(Math.random()*(pool.length||currentPool().length))];
+      if(pick){setTab('discover');showPersonFlow(pick);}
+      break;}
+    case 'section':{
+      store.section=el.dataset.v;store.sub='all';renderControls();browseFlow();break;}
+    case 'sub':{
+      const v=el.dataset.v;store.sub=v;
+      if(v!=='all'&&store.section!=='all'&&SUB_MAP[v].sec!==store.section)store.section=SUB_MAP[v].sec;
+      if(v!=='all'&&store.section==='all')store.section=SUB_MAP[v].sec;
+      renderControls();browseFlow();break;}
+    case 'find':closeSug();runSearch(discInputEl().value);break;
+    case 'clear-disc':syncDiscInputs('');closeSug();discInputEl().focus();break;
+    case 'sug-pick':sugPick(+el.dataset.i);break;
+    case 'shuffle':store.disc.items=shuffleArr(store.disc.items);renderDiscover();break;
+    case 'open-person':{
+      if(el.dataset.src==='spot'){if(store.disc.spot)openPerson(store.disc.spot);}
+      else if(el.dataset.idx!==undefined){const it=store.disc.items[+el.dataset.idx];if(it)openPerson(it);}
+      else if(el.dataset.pid){const p=P[el.dataset.pid];if(p)openPerson({person:p,page:p._cached&&p._cached.lang===LANG?p._cached.page:null,langUsed:p._cached?p._cached.langUsed:LANG});}
+      break;}
+    case 'try-person':{const p=P[el.dataset.pid];if(p){syncDiscInputs(pname(p));showPersonFlow(p);}break;}
+    case 'topic-jump':{
+      const sub=el.dataset.sub;store.section=SUB_MAP[sub].sec;store.sub=sub;
+      syncDiscInputs('');renderControls();browseFlow();break;}
+    case 'disc-retry':if(store.discRetry)store.discRetry();break;
+    case 'fav':toggleFav(el.dataset.id);break;
+    case 'share-person':{
+      let it=null;
+      if(el.dataset.src==='spot')it=store.disc.spot;
+      else{const top=store.ovl[store.ovl.length-1];if(top&&top.kind==='person'){
+        const dr=$('.drawer',top.node);const nm=dr?$('.dr-name',dr).textContent:'';
+        const pidEl=$('[data-fav-id]',top.node);
+        const person=pidEl?P[pidEl.dataset.favId]:null;
+        it=person?{person,page:person._cached&&person._cached.page}:{page:{title:nm,url:wikiUrl(LANG,nm)}};
+      }}
+      if(it)shareItem(it);break;}
+    case 'open-list':openList(el.dataset.id);break;
+    case 'open-article':openArticle(el.dataset.title);break;
+    case 'close-top':closeTop();break;
+    case 'mode':store.col.mode=el.dataset.v;renderControls();renderCol();triggerOnline();break;
+    case 'cat':store.col.cat=el.dataset.v;renderControls();renderCol();break;
+    case 'clear-col':store.col.q='';$('#colInput').value='';store.col.onl={status:'idle',q:'',items:[],err:null};renderCol();$('#colInput').focus();break;
+    case 'online-retry':fetchOnline(store.col.q.trim());break;
+    case 'person-lists':{
+      const p=P[el.dataset.pid];if(!p)break;
+      while(store.ovl.length)removeOvl(store.ovl[store.ovl.length-1],true);
+      setTab('collections');store.col.q=pname(p);$('#colInput').value=pname(p);renderCol();break;}
+    case 'settings-open':openSettings();break;
+    case 'settings-close':closeSettings();break;
+    case 'set-theme':store.prefs.theme=el.dataset.v;savePrefs();refreshTheme();break;
+    case 'theme-cycle':store.prefs.theme=isDark()?'light':'dark';savePrefs();refreshTheme();break;
+    case 'set-lang':setLang(el.dataset.v);break;
+    case 'set-accent':store.prefs.accent=el.dataset.v;savePrefs();refreshTheme();break;
+  }
+});
+/* Клавиатура: Enter/Space на карточках, Esc, «/», Tab-ловушка */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(!$('#setWrap').hidden){closeSettings();return;}
+    if(store.ovl.length){closeTop();return;}
+    if(store.sugOpen){closeSug();return;}
+    return;
+  }
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role="button"][data-action]')){
+    e.preventDefault();e.target.click();return;
+  }
+  if(e.key==='/'&&!e.target.closest('input,textarea,[contenteditable]')){
+    e.preventDefault();setTab('discover');discInputEl().focus();return;
+  }
+  if(e.key==='Tab'&&store.ovl.length){
+    const top=store.ovl[store.ovl.length-1].node;
+    const foc=$$('a[href],button:not([disabled]),input,[tabindex="0"]',top).filter(x=>x.offsetParent!==null);
+    if(!foc.length)return;
+    const first=foc[0],last=foc[foc.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    else if(!top.contains(document.activeElement)){e.preventDefault();first.focus();}
+  }
+});
+/* Поля ввода */
+['discInput','discInputM'].forEach(id=>{
+  const inp=document.getElementById(id);
+  inp.addEventListener('input',()=>onDiscInput(inp.value));
+  inp.addEventListener('keydown',onDiscKey);
+  inp.addEventListener('focus',()=>{if(inp.value.trim().length>=2)onDiscInput(inp.value);});
+});
+$('#colInput').addEventListener('input',e=>{store.col.q=e.target.value;renderCol();triggerOnline();});
+$('#onlineChk').addEventListener('change',e=>{store.col.online=e.target.checked;renderCol();triggerOnline();});
+document.addEventListener('input',e=>{
+  if(e.target.id==='customColor'){store.prefs.accent=e.target.value;savePrefs();applyScheme(store.prefs.accent,isDark());
+    const preset=ACCENTS.find(x=>x.hex.toLowerCase()===e.target.value.toLowerCase());
+    $('#accentName').innerHTML=`<i></i><span>${esc(preset?tr(preset.key):tr('custom')+' · '+e.target.value.toUpperCase())}</span>`;
+    $$('.swatch').forEach(s=>s.classList.toggle('on',s.dataset.v&&s.dataset.v.toLowerCase()===e.target.value.toLowerCase()));}
+});
+/* Клик вне подсказок / настроек */
+document.addEventListener('pointerdown',e=>{
+  if(store.sugOpen&&!sugBox.contains(e.target)&&!e.target.closest('#discField,#discFieldD'))closeSug();
+  if(!$('#setWrap').hidden&&!e.target.closest('.set-panel')&&!e.target.closest('[data-action="settings-open"]'))closeSettings();
+});
+/* Перепозиционирование подсказок при прокрутке/resize */
+addEventListener('scroll',()=>{if(store.sugOpen)positionSug();},true);
+addEventListener('resize',()=>{if(store.sugOpen)positionSug();renderControls();});
+/* Онлайн/оффлайн */
+addEventListener('offline',()=>toast(tr('offline'),'err'));
+addEventListener('online',()=>{toast(tr('backOnline'),'ok');if(store.disc.status==='error'&&store.discRetry)store.discRetry();});
+sysLight.addEventListener('change',()=>{if(store.prefs.theme==='auto')refreshTheme();});
+
+/* ================================================================
+   14. СТАРТ
+   ================================================================ */
+loadPrefs();
+applyScheme(store.prefs.accent,isDark());
+applyStatic();
+renderControls();
+renderSettingsState();
+updateThemeBtn();
+renderCol();
+browseFlow(); // первый экран уже населён: случайная икона + плотная сетка
+})();
+</script>
+</body>
+</html>

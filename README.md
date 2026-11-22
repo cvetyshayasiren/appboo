@@ -49,6 +49,7 @@
 | <img src="https://cvetyshayasiren.github.io/appboo/apps/weather%20warden/meta/icon.svg" width="32"> | [Погодный страж](https://cvetyshayasiren.github.io/appboo/apps/weather%20warden/src/index.html) | Хранитель погоды над маленьким островом |
 | <img src="https://cvetyshayasiren.github.io/appboo/apps/WeatherGotchi/meta/icon.svg" width="32"> | [WeatherGotchi](https://cvetyshayasiren.github.io/appboo/apps/WeatherGotchi/src/index.html) | Карманный погодный питомец: тамагочи с живой погодой и пиксельной графикой. |
 | <img src="https://cvetyshayasiren.github.io/appboo/apps/WikiRand/meta/icon.svg" width="32"> | [WikiRand](https://cvetyshayasiren.github.io/appboo/apps/WikiRand/src/index.html) | Случайные статьи из Википедии по разделам: наука, искусство или своя тема. |
+| <img src="https://cvetyshayasiren.github.io/appboo/apps/women-of-science-art/meta/icon.svg" width="32"> | [Women of Science & Art](https://cvetyshayasiren.github.io/appboo/apps/women-of-science-art/src/index.html) | Интерактивный справочник о женщинах в науке и искусстве: коллекции, карточки, избранное, темы оформления. |
 <!-- catalog:end -->
 
 ## Как устроен проект

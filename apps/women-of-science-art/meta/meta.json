@@ -1,0 +1,21 @@
+{
+  "title": "Women of Science & Art",
+  "description": "Интерактивный справочник о женщинах в науке и искусстве: коллекции, карточки, избранное, темы оформления.",
+  "info": "",
+  "icon": "icon.svg",
+  "color": "#0D9488",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Education",
+    "Culture"
+  ],
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}
