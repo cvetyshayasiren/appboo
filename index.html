@@ -794,21 +794,22 @@ main {
   color: #fff;
   box-shadow: 0 2px 8px var(--accent-soft);
 }
-/* Кнопка сброса */
+/* Кнопка сброса: заметная акцентная, на всю ширину над «Платформа» */
 .btn-reset {
-  margin-left: auto;
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-muted);
-  padding: 8px 14px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 600;
-  transition: all 0.18s;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background 0.18s;
   font-family: inherit;
 }
-.btn-reset:hover { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+.btn-reset:hover { background: var(--accent-hover); }
+.btn-reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* --- Пилюли тегов (фильтр и карточки используют один стиль) --- */
 .tag-filters {
@@ -1211,7 +1212,7 @@ main {
   pointer-events: none;
   transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
-.cover-viewer-dim.show { opacity: 1; visibility: visible; transition: opacity 0.2s ease; }
+.cover-viewer-dim.show { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.2s ease; }
 .card-icon.cover-expanded {
   position: fixed;
   inset: 0;
@@ -1255,6 +1256,34 @@ main {
   .card-icon.cover-expanded .cover-arrow.prev { left: 8px; }
   .card-icon.cover-expanded .cover-arrow.next { right: 8px; }
   .card-icon.cover-expanded .cover-dots { bottom: 10px; }
+}
+/* Крестик выхода в правом верхнем углу окна просмотра: добавляется
+   на время просмотра, стилизован как крестик окна приложения */
+.viewer-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(15, 20, 17, 0.62);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.viewer-close:hover { background: rgba(15, 20, 17, 0.82); border-color: rgba(255, 255, 255, 0.5); }
+.viewer-close:active { transform: scale(0.94); }
+.viewer-close:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; }
+.viewer-close svg { display: block; width: 18px; height: 18px; }
+@media (max-width: 600px) {
+  .viewer-close { top: 10px; right: 10px; width: 34px; height: 34px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-icon.cover-expanded { animation: none; }
@@ -1324,6 +1353,11 @@ main {
   gap: 6px;
   margin-top: 2px;
 }
+/* Низ крупной карточки: бейджи и теги одной строкой, прижаты к кнопкам */
+.card-meta-bottom { margin-top: auto; padding-top: 10px; }
+.card-meta-bottom + .card-actions { margin-top: 0; }
+/* Divider в слоте отсутствующего «info»: отделяет текст от нижнего блока */
+.card-divider { border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent); }
 .card-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1555,10 +1589,11 @@ body.app-view .app-footer { display: none; }
 @media (max-width: 600px) {
   .app-page-inner { padding: 12px 14px 28px; gap: 14px; }
 }
-/* Кнопка возврата в каталог */
-.app-back {
-  align-self: flex-start;
-  display: inline-flex;
+/* Кнопка «В каталог» в шапке: стоит перед поиском, видна только
+   на странице приложения */
+.header-catalog-btn {
+  display: none;
+  flex: 0 0 auto;
   align-items: center;
   gap: 8px;
   padding: 8px 14px 8px 11px;
@@ -1570,12 +1605,17 @@ body.app-view .app-footer { display: none; }
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
-  text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.app-back:hover { background: var(--card-hover); color: var(--text); border-color: var(--border-strong); }
-.app-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.app-back svg { display: block; width: 15px; height: 15px; }
+body.app-view .header-catalog-btn { display: inline-flex; }
+.header-catalog-btn:hover { background: var(--card-hover); color: var(--text); border-color: var(--border-strong); }
+.header-catalog-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.header-catalog-btn svg { display: block; width: 15px; height: 15px; }
+/* На телефоне кнопка без подписи: шапка тесная, поиск важнее */
+@media (max-width: 600px) {
+  .header-catalog-btn { padding: 8px 10px; }
+  .header-catalog-btn .app-back-text { display: none; }
+}
 /* Карусель скриншотов страницы: тот же блок иконки, но самостоятельная сущность */
 .app-shots {
   border-radius: var(--radius);
@@ -1589,7 +1629,10 @@ body.app-view .app-footer { display: none; }
 .app-actions { display: flex; gap: 8px; align-items: stretch; }
 .app-actions .btn { padding: 12px 16px; font-size: 0.95rem; }
 .app-actions .btn-copy { flex: 0 0 48px; width: 48px; min-width: 48px; }
-/* Полная информация: как крупная карточка, но без обрезки текста */
+/* Иконка и название над скриншотами страницы приложения */
+.app-title-row .card-icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 12px; }
+.app-title-row .card-title { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 1.22rem; line-height: 1.3; }
+/* Полная информация: подписанные секции, без обрезки текста */
 .app-info {
   background: var(--card);
   border: 1px solid var(--border);
@@ -1598,13 +1641,20 @@ body.app-view .app-footer { display: none; }
   padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
-.app-info .card-title-row .card-icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 12px; }
-.app-info .card-title { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 1.22rem; line-height: 1.3; }
+.app-info-section { display: flex; flex-direction: column; gap: 6px; }
+.app-info-label {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .app-info .card-desc,
 .app-info .card-info { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 0.95rem; }
-.app-info .card-meta { margin-top: 2px; }
+.app-info .card-meta { margin-top: 0; }
 
 /* --- Кнопки прокрутки каталога: в начало и в конец списка --- */
 .scroll-nav { position:fixed; right:16px; bottom:16px; z-index:90; display:flex; flex-direction:column; gap:8px; }
@@ -1672,7 +1722,6 @@ body.app-view .app-footer { display: none; }
   .filter-accordion-toggle { padding:11px 12px; }
   .filter-accordion-inner { padding-left:12px; padding-right:12px; }
   .filter-accordion.open .filter-accordion-inner { padding:10px 12px 12px; }
-  .btn-reset { margin-left: 0; width: 100%; text-align: center; }
 }
 </style>
 </head>
@@ -1688,6 +1737,10 @@ body.app-view .app-footer { display: none; }
       <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><path d="M28 34c14-5 26-3 36 4v59c-10-7-22-9-36-4V34Zm72 0c-14-5-26-3-36 4v59c10-7 22-9 36-4V34Z" fill="#FFFFFF" stroke="#E8EFE5" stroke-width="5" stroke-linejoin="round"/><path d="M64 39v58" style="stroke: var(--logo-ink)" stroke-width="4" stroke-linecap="round"/><path d="M37 48c8-2 15-1 21 3M37 60c8-2 15-1 21 3M91 48c-8-2-15-1-21 3M91 60c-8-2-15-1-21 3" fill="none" style="stroke: var(--logo-ink)" stroke-width="3" stroke-linecap="round"/></svg></span>
       <span class="logo-text">app<span class="logo-accent">boo</span></span>
     </a>
+    <button class="header-catalog-btn" id="app-back" type="button" aria-label="Вернуться в каталог" title="Вернуться в каталог">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      <span class="app-back-text">В каталог</span>
+    </button>
     <div class="header-search-zone">
       <div class="catalog-search-wrap">
         <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
@@ -1702,6 +1755,7 @@ body.app-view .app-footer { display: none; }
         </button>
         <div class="toolbar-body" id="toolbar-body" aria-hidden="true">
           <div class="toolbar-body-inner">
+            <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
             <section class="filter-group filter-accordion" data-accordion="platform">
               <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="platform-panel">
                 <span class="filter-label">Платформа</span><span class="filter-summary" id="platform-summary">Все</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
@@ -1727,7 +1781,6 @@ body.app-view .app-footer { display: none; }
                 </div>
               </div></div>
             </section>
-            <button class="btn-reset" id="reset-btn" style="display:none">Сбросить фильтры</button>
             <section class="filter-group filter-accordion" data-accordion="tags">
               <button class="filter-accordion-toggle" type="button" aria-expanded="false" aria-controls="tag-panel">
                 <span class="filter-label">Теги</span><span class="filter-summary" id="tag-summary">Показать фильтры</span><span class="accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6"/></svg></span>
@@ -2394,12 +2447,15 @@ function renderCardLarge(app) {
 
   const descHtml = app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : "";
   const infoHtml = app.info ? `<p class="card-info">${escapeHtml(app.info)}</p>` : "";
+  // Нет info — аккуратный divider в его слоте: низ карточек остаётся единообразным
+  const dividerHtml = app.info ? "" : `<div class="card-divider" aria-hidden="true"></div>`;
   const langHtml = renderLangBadges(app.languages);
   const aiHtml = renderAiBadge(app.ai);
   const platformHtml = renderPlatformBadge(app.platform);
-  const metaHtml = (langHtml || aiHtml || platformHtml)
-    ? `<div class="card-meta">${langHtml}${aiHtml}${platformHtml}</div>` : "";
-  const tagsWrap = tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : "";
+  // Бейджи (язык, нейросеть, платформа) и баблы тегов — одной строкой,
+  // блок прижат к кнопкам действий: на всех карточках один уровень
+  const metaHtml = (langHtml || aiHtml || platformHtml || tagsHtml)
+    ? `<div class="card-meta card-meta-bottom">${langHtml}${aiHtml}${platformHtml}${tagsHtml}</div>` : "";
 
   return `<article class="card" data-id="${escapeAttr(app.id)}" data-open="${escapeAttr(appUrl(app.id))}">
     ${renderCover(app)}
@@ -2410,8 +2466,8 @@ function renderCardLarge(app) {
       </div>
       ${descHtml}
       ${infoHtml}
+      ${dividerHtml}
       ${metaHtml}
-      ${tagsWrap}
       <div class="card-actions">
         <a class="btn btn-primary" href="${escapeAttr(appUrl(app.id))}">Перейти</a>
         <button class="btn btn-secondary" type="button" data-iframe="${escapeAttr(appUrl(app.id))}">Окно</button>
@@ -3166,18 +3222,30 @@ function closeSettings() {
 
 /* --- Режим просмотра скриншотов: отдельное окно на затемнённом фоне.
        Единственный вход — клик по свободному месту скриншота на странице
-       приложения; закрывается кликом по затемнению или по самому окну --- */
+       приложения; закрывается крестиком в углу, кликом по затемнению или Esc --- */
+const VIEWER_CLOSE_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg>';
+
 function expandCover(cover) {
   if (cover.classList.contains("cover-expanded")) return;
   cover.classList.add("cover-expanded");
   const dim = document.getElementById("cover-viewer-dim");
   if (dim) dim.classList.add("show");
   setCoverSlide(cover, coverActiveIndex(cover)); // слайд мог быть ещё не загружен
+  // Крестик выхода живёт в углу окна, пока просмотр открыт
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "viewer-close";
+  closeBtn.setAttribute("aria-label", "Закрыть просмотр скриншотов");
+  closeBtn.title = "Закрыть";
+  closeBtn.innerHTML = VIEWER_CLOSE_SVG;
+  cover.appendChild(closeBtn);
   document.body.style.overflow = "hidden";
 }
 function collapseCover(cover) {
   if (!cover.classList.contains("cover-expanded")) return;
   cover.classList.remove("cover-expanded");
+  const closeBtn = cover.querySelector(".viewer-close");
+  if (closeBtn) closeBtn.remove();
   const dim = document.getElementById("cover-viewer-dim");
   if (dim && !document.querySelector(".card-icon.cover-expanded")) dim.classList.remove("show");
   document.body.style.overflow = "";
@@ -3228,6 +3296,7 @@ function bindEvents() {
 
   // Поиск по всему каталогу
   document.getElementById("catalog-search").addEventListener("input", e => {
+    exitAppViewForCatalog();
     catalogSearch = e.target.value.trim();
     render();
     updateResetBtn();
@@ -3246,6 +3315,7 @@ function bindEvents() {
   document.querySelector(".seg").addEventListener("click", e => {
     const btn = e.target.closest("[data-platform]");
     if (!btn) return;
+    exitAppViewForCatalog();
     document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     activePlatform = btn.dataset.platform;
@@ -3258,6 +3328,7 @@ function bindEvents() {
   document.getElementById("sort-options").addEventListener("click", e => {
     const btn = e.target.closest("[data-sort]");
     if (!btn) return;
+    exitAppViewForCatalog();
     sortMode = btn.dataset.sort;
     document.querySelectorAll(".sort-option").forEach(option =>
       option.classList.toggle("active", option === btn));
@@ -3270,6 +3341,7 @@ function bindEvents() {
   document.getElementById("tag-filters").addEventListener("click", e => {
     const btn = e.target.closest("[data-tag]");
     if (!btn) return;
+    exitAppViewForCatalog();
     applyTagFilter(btn.dataset.tag);
   });
 
@@ -3277,11 +3349,15 @@ function bindEvents() {
   document.getElementById("ai-filters").addEventListener("click", e => {
     const btn = e.target.closest("[data-ai]");
     if (!btn) return;
+    exitAppViewForCatalog();
     applyAiFilter(btn.dataset.ai);
   });
 
   // Сброс
-  document.getElementById("reset-btn").addEventListener("click", resetFilters);
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    exitAppViewForCatalog();
+    resetFilters();
+  });
 
   /* --- Карусель скриншотов: клавиши ←/→ на обложке, свайп (тач/перо).
          Слушаем на документе: работает и в карточках, и на странице приложения --- */
@@ -3423,16 +3499,9 @@ function bindEvents() {
     if (card) openAppPage(card.dataset.id);
   });
 
-  // Клики на странице приложения: назад, карусель, просмотр скриншотов,
+  // Клики на странице приложения: карусель, просмотр скриншотов (крестик),
   // кнопки, теги и нейросети (ведут в каталог с включённым фильтром)
   document.getElementById("app-page").addEventListener("click", async e => {
-    const backBtn = e.target.closest("[data-back]");
-    if (backBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeAppPage();
-      return;
-    }
     const arrow = e.target.closest(".cover-arrow");
     if (arrow) {
       e.preventDefault();
@@ -3447,6 +3516,15 @@ function bindEvents() {
       e.stopPropagation();
       const cover = dot.closest(".card-icon");
       if (cover) setCoverSlide(cover, Number(dot.dataset.dot));
+      return;
+    }
+    // Крестик в углу окна просмотра: закрыть просмотр
+    const viewerClose = e.target.closest(".viewer-close");
+    if (viewerClose) {
+      e.preventDefault();
+      e.stopPropagation();
+      const host = viewerClose.closest(".card-icon");
+      if (host) collapseCover(host);
       return;
     }
     // Клик по скриншоту или свободному месту карусели: в открытом просмотре —
@@ -3489,6 +3567,8 @@ function bindEvents() {
     }
   });
 
+  // «В каталог» в шапке: возврат с сохранением позиции скролла каталога
+  document.getElementById("app-back").addEventListener("click", () => closeAppPage());
   document.getElementById("modal-close").addEventListener("click", closeIframe);
   document.getElementById("app-modal").addEventListener("click", e => {
     if (e.target.id === "app-modal") closeIframe();
@@ -3662,12 +3742,7 @@ function showAppPage() {
     return;
   }
   if (!app) {
-    appPageInner.innerHTML = `
-      <button class="app-back" type="button" data-back aria-label="Вернуться в каталог" title="Вернуться в каталог">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-        Каталог
-      </button>
-      <div class="empty">Приложение не найдено</div>`;
+    appPageInner.innerHTML = `<div class="empty">Приложение не найдено</div>`;
     return;
   }
   appPageInner.innerHTML = renderAppPage(app);
@@ -3691,25 +3766,36 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
-/* --- Рендер страницы приложения: скриншоты, кнопки, полная информация, GitHub --- */
+/* --- Рендер страницы приложения: иконка с названием, скриншоты, кнопки,
+       полная информация с подписанными секциями, GitHub --- */
 function renderAppPage(app) {
   const url = appUrl(app.id);
   const tagsHtml = (app.tags || []).map(t => {
     const hue = hueFor(t);
     return `<button class="tag" type="button" data-tag="${escapeAttr(t)}" style="--hue:${hue}">${escapeHtml(t)}</button>`;
   }).join("");
-  const tagsWrap = tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : "";
   const langHtml = renderLangBadges(app.languages);
   const aiHtml = renderAiBadge(app.ai);
   const platformHtml = renderPlatformBadge(app.platform);
-  const metaHtml = (langHtml || aiHtml || platformHtml)
-    ? `<div class="card-meta">${langHtml}${aiHtml}${platformHtml}</div>` : "";
+
+  // Секции с подписями: пустые поля просто не рисуются
+  const descSection = app.description
+    ? `<div class="app-info-section"><h3 class="app-info-label">Описание:</h3><p class="card-desc">${escapeHtml(app.description)}</p></div>` : "";
+  const infoSection = app.info
+    ? `<div class="app-info-section"><h3 class="app-info-label">Дополнительная информация:</h3><p class="card-info">${escapeHtml(app.info)}</p></div>` : "";
+  const langSection = `<div class="app-info-section"><h3 class="app-info-label">Язык:</h3><div class="card-meta">${langHtml}</div></div>`;
+  const aiSection = aiHtml
+    ? `<div class="app-info-section"><h3 class="app-info-label">Нейросеть:</h3><div class="card-meta">${aiHtml}</div></div>` : "";
+  const platformSection = platformHtml
+    ? `<div class="app-info-section"><h3 class="app-info-label">Платформа:</h3><div class="card-meta">${platformHtml}</div></div>` : "";
+  const tagsSection = tagsHtml
+    ? `<div class="app-info-section"><h3 class="app-info-label">Теги:</h3><div class="card-meta">${tagsHtml}</div></div>` : "";
 
   return `
-    <button class="app-back" type="button" data-back aria-label="Вернуться в каталог" title="Вернуться в каталог">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-      Каталог
-    </button>
+    <div class="card-title-row app-title-row">
+      ${renderTileCompact(app)}
+      <h2 class="card-title">${escapeHtml(app.title)}</h2>
+    </div>
     ${renderCover(app, "app-shots")}
     <div class="app-actions">
       <a class="btn btn-primary" href="${escapeAttr(url)}">Перейти</a>
@@ -3719,14 +3805,12 @@ function renderAppPage(app) {
       </button>
     </div>
     <div class="app-info">
-      <div class="card-title-row">
-        ${renderTileCompact(app)}
-        <h2 class="card-title">${escapeHtml(app.title)}</h2>
-      </div>
-      ${app.description ? `<p class="card-desc">${escapeHtml(app.description)}</p>` : ""}
-      ${app.info ? `<p class="card-info">${escapeHtml(app.info)}</p>` : ""}
-      ${metaHtml}
-      ${tagsWrap}
+      ${descSection}
+      ${infoSection}
+      ${langSection}
+      ${aiSection}
+      ${platformSection}
+      ${tagsSection}
     </div>
     <footer class="github-footer">
       <a href="https://github.com/cvetyshayasiren" target="_blank" rel="noopener noreferrer" aria-label="GitHub автора: cvetyshayasiren">
@@ -3743,6 +3827,12 @@ function filterFromAppPage(kind, value) {
   else setAiFilter(value);
   ensureFiltersVisible(kind === "tag" ? "tags" : "ai");
   closeAppPage(true);
+}
+
+// Фильтры и поиск в шапке работают с каталогом: при открытой странице
+// приложения любое их применение возвращает на страницу каталога
+function exitAppViewForCatalog() {
+  if (document.body.classList.contains("app-view")) closeAppPage(true);
 }
 
 /* --- Кнопки прокрутки списка: видны, только когда есть куда идти --- */
