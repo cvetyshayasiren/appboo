@@ -1,0 +1,45 @@
+name: apply-tmp-patch
+
+# Механизм доставки больших правок (index.html на 176 КБ нельзя передать
+# одним вызовом Contents API — лимит размера запроса, а .github/workflows/*
+# интеграция писать не имеет права). Схема: ассистент пушит в ветку tmp/**
+# маленькие файлы — скрипт-применитель .tmp/apply.cjs, текст коммита
+# .tmp/message.txt и попутные мелкие правки; workflow применяет скрипт,
+# коммитит результат в main ОДНИМ коммитом и удаляет ветку.
+# .tmp/ в main не попадает. Пока message.txt не доставлен — run молча
+# выходит (файлы пушатся по одному).
+
+on:
+  push:
+    branches: ['tmp/**']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-tmp-patch
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Применить и закоммитить в main
+        run: |
+          if [ ! -f .tmp/message.txt ]; then
+            echo "доставка ещё не завершена (нет .tmp/message.txt) — выхожу"
+            exit 0
+          fi
+          MSG="$(cat .tmp/message.txt)"
+          node .tmp/apply.cjs
+          rm -rf .tmp
+          git config user.name "cvetyshayasiren"
+          git config user.email "75530391+cvetyshayasiren@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "изменений нет — ветку не трогаю"
+            exit 0
+          fi
+          git commit -m "$MSG"
+          git push origin HEAD:main
+          git push origin --delete "${GITHUB_REF_NAME}"
