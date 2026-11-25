@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Color Lab — лаборатория цвета</title>
+<link rel="icon" type="image/svg+xml" href="../meta/icon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/500.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/700.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
@@ -54,7 +55,7 @@ input,select{font-family:inherit;color:inherit}
   border-bottom:1px solid var(--border);flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.02em;white-space:nowrap}
 .logo .flask{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
-  background:linear-gradient(135deg,var(--base),var(--aur2));color:var(--base-ink);box-shadow:0 6px 18px -6px var(--base)}
+  background:conic-gradient(#f87171,#fbbf24,#4ade80,#38bdf8,#a78bfa,#f87171);color:#fff;box-shadow:0 6px 18px -6px #a78bfa4d}
 .logo b{color:var(--at)}
 #tabs{display:flex;gap:4px;background:var(--s2);padding:5px;border-radius:14px;border:1px solid var(--border)}
 .tab{display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:10px;font-weight:600;font-size:13.5px;
@@ -1980,7 +1981,7 @@ function init(){
  $('#colorInfoModal').addEventListener('click',e=>{if(e.target.id==='colorInfoModal')closeColorInfo();});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeColorInfo();});
  // icons
- $('#logoIcon').innerHTML=icon('flask',19);
+ $('#logoIcon').innerHTML=icon('flask',21);
  const tabIcons={color:'drop',palette:'palette',gradient:'grad',preview:'eye'};
  $$('.tab').forEach(t=>{t.querySelector('.t-ic').innerHTML=icon(tabIcons[t.dataset.tab],16);
   t.addEventListener('click',()=>switchTab(t.dataset.tab));});
