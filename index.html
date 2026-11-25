@@ -2034,18 +2034,44 @@ function softParseJson(text) {
   }
 }
 
-// Санитизация реестра: trim записей, отброс не-строк, пустых и дубликатов
-function sanitizeRegistry(ids) {
+// Санитизация каталога: tolerant reader — записи-не-объекты, без id,
+// дубликаты и кривые added отбрасываются; остальное мёржится в дефолты meta
+function sanitizeCatalog(data) {
   const seen = new Set();
   const out = [];
-  for (const raw of ids) {
-    if (typeof raw !== "string") continue;
-    const id = raw.trim();
+  for (const raw of data) {
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) continue;
+    const id = typeof raw.id === "string" ? raw.id.trim() : "";
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    out.push(id);
+    const meta = defaultMeta(id);
+    Object.assign(meta, {
+      title: raw.title != null ? String(raw.title) : id,
+      description: raw.description != null ? String(raw.description) : "",
+      info: raw.info != null ? String(raw.info) : "",
+      icon: raw.icon != null ? String(raw.icon) : "",
+      color: raw.color != null ? String(raw.color) : "",
+      ai: raw.ai != null ? String(raw.ai) : "",
+      platform: raw.platform != null ? String(raw.platform) : "",
+      tags: Array.isArray(raw.tags) ? raw.tags.map(String) : [],
+      languages: Array.isArray(raw.languages)
+        ? [...new Set(raw.languages.map(v => String(v).trim().toLowerCase()).filter(Boolean))]
+        : [],
+      screenshots: Array.isArray(raw.screenshots) ? raw.screenshots.map(String).filter(Boolean) : []
+      // неизвестные поля игнорируются
+    });
+    // added — полная ISO-метка из каталога; показ — первые 10 символов (дата)
+    meta.added = typeof raw.added === "string" && /^\d{4}-\d{2}-\d{2}T/.test(raw.added) ? raw.added : "";
+    out.push(meta);
   }
   return out;
+}
+
+// Сравнение дат добавления: ISO-метки одного формата сравниваются
+// лексикографически — Date не нужен (время не показываем и не парсим)
+function cmpAdded(a, b) {
+  const x = String(a.added || ""), y = String(b.added || "");
+  return x < y ? -1 : x > y ? 1 : 0;
 }
 
 // Похоже ли значение icon на путь к файлу (icon.png, logo.svg и т.п.)
@@ -2097,6 +2123,7 @@ function resolveMetaPath(val, id) {
 function defaultMeta(id) {
   return {
     id,
+    added: "", // дата добавления из каталога (полная ISO-метка; показ — первые 10 символов)
     title: id,
     description: "",
     info: "",
@@ -2110,56 +2137,21 @@ function defaultMeta(id) {
   };
 }
 
-/* --- Загрузка одного приложения --- */
-async function loadMeta(id) {
-  const meta = defaultMeta(id);
-  try {
-    // Защита от кэша через ?v=Date.now()
-    const res = await fetch(`apps/${encodeURIComponent(id)}/meta/meta.json?v=${Date.now()}`);
-    if (!res.ok) return meta; // файла нет — используем дефолт
-    const text = await res.text();
-    if (!text.trim()) return meta; // пустой файл — дефолт
-    const data = softParseJson(text); // битый JSON — дефолт, каталог не роняем
-    // Мерджим известные поля, списки приводим к массивам строк
-    Object.assign(meta, {
-      title: data.title != null ? String(data.title) : id,
-      description: data.description != null ? String(data.description) : "",
-      info: data.info != null ? String(data.info) : "",
-      icon: data.icon != null ? String(data.icon) : "",
-      color: data.color != null ? String(data.color) : "",
-      ai: data.ai != null ? String(data.ai) : "",
-      platform: data.platform != null ? String(data.platform) : "",
-      tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-      languages: Array.isArray(data.languages)
-        ? [...new Set(data.languages.map(v => String(v).trim().toLowerCase()).filter(Boolean))]
-        : [],
-      screenshots: Array.isArray(data.screenshots) ? data.screenshots.map(String).filter(Boolean) : []
-      // неизвестные поля игнорируем
-    });
-  } catch (e) {
-    // Битый JSON или сетевая ошибка — тихо используем дефолт
-    return meta;
-  }
-  return meta;
-}
-
-/* --- Основная загрузка --- */
+/* --- Основная загрузка: единый каталог, один запрос --- */
 async function loadApps() {
   showLoading();
-  let ids = [];
+  let entries = [];
   try {
-    const res = await fetch(`apps.json?v=${Date.now()}`);
+    const res = await fetch(`catalog.json?v=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = softParseJson(await res.text());
-    if (!Array.isArray(data)) throw new Error("apps.json не является массивом");
-    ids = sanitizeRegistry(data);
+    if (!Array.isArray(data)) throw new Error("catalog.json не является массивом");
+    entries = sanitizeCatalog(data);
   } catch (e) {
-    showError(`Не удалось загрузить apps.json — ${e.message}`);
+    showError(`Не удалось загрузить catalog.json — ${e.message}`);
     return;
   }
-  // Параллельно грузим meta.json всех приложений (порядок сохраняется)
-  const metas = await Promise.all(ids.map(id => loadMeta(String(id))));
-  allApps = metas.filter(Boolean);
+  allApps = entries; // порядок каталога: старые → новые
   buildTagFilters();
   buildAiFilters();
   render();
@@ -2556,13 +2548,17 @@ function render() {
   if (activePlatform !== "all") {
     list = list.filter(app => app.platform === activePlatform || app.platform === "both");
   }
-  // Сортировка: default — новые сверху (обратный порядок apps.json)
+  // Сортировка: «Новые»/«Старые» — по дате добавления (added; каталог уже
+  // в порядке возрастания — поведение прежнего обратного порядка реестра),
+  // А–Я / Я–А — по названию
   if (sortMode === "az") {
     list.sort((a, b) => a.title.localeCompare(b.title, "ru"));
   } else if (sortMode === "za") {
     list.sort((a, b) => b.title.localeCompare(a.title, "ru"));
   } else if (sortMode === "default") {
-    list.reverse(); // Новые добавленные — сверху
+    list.sort((a, b) => cmpAdded(b, a)); // Новые добавленные — сверху
+  } else if (sortMode === "first") {
+    list.sort((a, b) => cmpAdded(a, b)); // Старые добавленные — сверху
   }
 
   if (list.length === 0) {
@@ -3791,6 +3787,11 @@ function renderAppPage(app) {
   const tagsSection = tagsHtml
     ? `<div class="app-info-section"><h3 class="app-info-label">Теги:</h3><div class="card-meta">${tagsHtml}</div></div>` : "";
 
+  // Дата добавления: только дата, без времени — первые 10 символов ISO-метки
+  const addedSection = /^\d{4}-\d{2}-\d{2}/.test(String(app.added || ""))
+    ? `<div class="app-info-section"><h3 class="app-info-label">Добавлено:</h3><p class="card-info">${escapeHtml(String(app.added).slice(0, 10))}</p></div>`
+    : "";
+
   return `
     <div class="card-title-row app-title-row">
       ${renderTileCompact(app)}
@@ -3811,6 +3812,7 @@ function renderAppPage(app) {
       ${aiSection}
       ${platformSection}
       ${tagsSection}
+      ${addedSection}
     </div>
     <footer class="github-footer">
       <a href="https://github.com/cvetyshayasiren" target="_blank" rel="noopener noreferrer" aria-label="GitHub автора: cvetyshayasiren">

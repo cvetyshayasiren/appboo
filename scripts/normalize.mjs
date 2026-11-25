@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-/* normalize.mjs — идемпотентный фиксер контракта приложений appboo v2.
+/* normalize.mjs — идемпотентный фиксер контракта приложений appboo v3.
+   v3: реестр apps.json заменён каталогом catalog.json (этап 5): записи
+   {id, added, метаданные meta} в порядке «старые → новые»; новым приложениям
+   проставляется момент регистрации, README-таблица получает колонку
+   «Добавлено». Конвенция дат — в CONTRIBUTING.md, раздел «Даты добавления».
    Флаги:
      --dry-run   только показать план, ничего не менять
      --convert   конвертировать скриншоты в WebP (нужен sharp — опц. devDependency)
@@ -173,7 +177,7 @@ function extractTitle(htmlPath) {
   } catch { return ""; }
 }
 
-const catalogRows = [];
+const normById = new Map(); // id → нормализованные meta (для каталога и README-таблицы)
 
 for (const id of folders) {
   const dir = join(APPS, id);
@@ -303,37 +307,90 @@ for (const id of folders) {
     else { mkdirSync(metaDir, { recursive: true }); writeFileSync(metaPath, content); act(`write ${rel(metaPath)}`); }
   }
 
-  // --- строка каталога README ---
-  const enc = encodeURI(`${PAGES}/apps/${id}/src/index.html`);
-  const encIcon = encodeURI(`${PAGES}/apps/${id}/meta/${norm.icon}`);
-  const iconCell = norm.icon
-    ? (/\.(svg|png|webp|jpe?g)$/i.test(norm.icon) ? `<img src="${encIcon}" width="32">` : escapeCell(norm.icon))
-    : "";
-  catalogRows.push(`| ${iconCell} | [${escapeCell(norm.title)}](${enc}) | ${escapeCell(norm.description) || "—"} |`);
+  // --- нормализованные meta → сборка каталога и README-таблицы (этапы 5–6) ---
+  normById.set(id, norm);
 }
 
-/* ================= Этап 5: реестр ================= */
+/* ================= Этап 5: каталог catalog.json ================= */
+/* Реестр apps.json заменён каталогом: записи {id, added, метаданные meta} в
+   порядке «старые → новые». Инвариант: added строго возрастает вниз по файлу
+   (проверяет validate). Новым приложениям проставляется момент регистрации
+   (несколько сразу — каждая следующая +1 с, не раньше последней записи +1 с).
+   Выпавшие папки убираются из каталога без могильных камней — вернувшееся
+   приложение получит новую дату. Устаревший apps.json удаляется. */
+const addedById = new Map();
 {
-  const regPath = join(ROOT, "apps.json");
+  const catalogPath = join(ROOT, "catalog.json");
+  const ADD_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+03:00$/;
+  const toMsk = ms => {
+    // Москва = UTC+3 круглый год (без перехода на летнее время) — сдвигаем
+    // мгновение на 3 часа, чтобы UTC-геттеры дали московские часы и дату
+    const d = new Date(ms + 3 * 3600 * 1000);
+    const p = n => String(n).padStart(2, "0");
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}T${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}+03:00`;
+  };
+
   let raw = [];
-  try { raw = softParseJson(readFileSync(regPath, "utf8")); } catch { raw = []; }
-  if (!Array.isArray(raw)) raw = [];
-  const cleaned = [];
-  const seen = new Set();
-  for (const item of raw) {
-    if (typeof item !== "string") { act(`apps.json: отброшена не-строка ${JSON.stringify(item)}`); continue; }
-    const id = item.trim();
-    if (!id) { act("apps.json: отброшена пустая запись"); continue; }
-    if (seen.has(id)) { act(`apps.json: убран дубликат «${id}»`); continue; }
-    if (!existsSync(join(APPS, id))) { act(`apps.json: запись без папки удалена — «${id}»`); continue; }
-    seen.add(id);
-    cleaned.push(id);
+  if (existsSync(catalogPath)) {
+    try {
+      const parsed = softParseJson(readFileSync(catalogPath, "utf8"));
+      if (!Array.isArray(parsed)) act("catalog.json: не массив — начинаю с пустого");
+      else raw = parsed;
+    } catch { act("catalog.json: не парсится даже мягко — начинаю с пустого"); }
   }
+
+  // 1) чистка: не-объекты, без id, дубликаты, записи без папки
+  const kept = [];
+  const keptSeen = new Set();
+  for (const e of raw) {
+    if (typeof e !== "object" || e === null || Array.isArray(e)) { act("catalog.json: отброшена запись не-объект"); continue; }
+    const id = typeof e.id === "string" ? e.id.trim() : "";
+    if (!id) { act("catalog.json: отброшена запись без id"); continue; }
+    if (keptSeen.has(id)) { act(`catalog.json: убран дубликат «${id}»`); continue; }
+    if (!existsSync(join(APPS, id))) { act(`catalog.json: запись без папки удалена — «${id}» (могильных камней нет)`); continue; }
+    keptSeen.add(id);
+    const added = typeof e.added === "string" ? e.added.trim() : "";
+    if (e.added != null && e.added !== "" && !ADD_RE.test(added)) act(`catalog.json: кривой added у «${id}» (${e.added}) — перештампую`);
+    kept.push({ id, added: ADD_RE.test(added) ? added : "" });
+  }
+  // 2) новые папки — в конец каталога (алфавитный порядок, как раньше в реестре)
   for (const id of folders) {
-    if (!seen.has(id)) { cleaned.push(id); act(`apps.json: папка без записи добавлена в конец — «${id}»`); seen.add(id); }
+    if (!keptSeen.has(id)) { kept.push({ id, added: "" }); act(`catalog.json: папка без записи добавлена в конец — «${id}»`); }
   }
-  const regContent = JSON.stringify(cleaned, null, 2) + "\n";
-  writeFile(regPath, regContent, "apps.json");
+  // 3) штампы: инвариант для существующих, момент регистрации для новых
+  let lastMs = null, lastId = null, fresh = 0;
+  for (const e of kept) {
+    if (e.added) {
+      const ms = Date.parse(e.added);
+      if (lastMs != null && ms <= lastMs) {
+        console.error(`ОШИБКА инварианта: added не возрастает на «${lastId}» → «${e.id}» (${e.added}) — поправьте catalog.json (validate покажет детали)`);
+        process.exit(1);
+      }
+      lastMs = ms; lastId = e.id; fresh = 0;
+    } else {
+      fresh++;
+      const ms = Math.max(Date.now() + (fresh - 1) * 1000, (lastMs ?? 0) + fresh * 1000);
+      e.added = toMsk(ms);
+      act(`catalog.json: «${e.id}» зарегистрирован — added ${e.added}`);
+      lastMs = ms; lastId = e.id;
+    }
+  }
+  // 4) записи: {id, added, метаданные из norm}
+  const entries = kept.map(e => {
+    const norm = normById.get(e.id);
+    const entry = { id: e.id, added: e.added };
+    if (norm) for (const k of META_ORDER) entry[k] = norm[k];
+    return entry;
+  });
+  for (const e of entries) addedById.set(e.id, e.added);
+  writeFile(catalogPath, JSON.stringify(entries, null, 2) + "\n", "catalog.json");
+
+  // 5) устаревший apps.json — удалить
+  const regPath = join(ROOT, "apps.json");
+  if (existsSync(regPath)) {
+    if (!dryRun) unlinkSync(regPath);
+    act("apps.json: удалён (реестр заменён каталогом catalog.json)");
+  }
 }
 
 /* ================= Этап 6: README-таблица ================= */
@@ -341,7 +398,17 @@ for (const id of folders) {
   const readmePath = join(ROOT, "README.md");
   if (existsSync(readmePath)) {
     const readme = readFileSync(readmePath, "utf8");
-    const table = `<!-- catalog:start -->\n| | Приложение | Описание |\n|---|---|---|\n${catalogRows.join("\n")}\n<!-- catalog:end -->`;
+    const rows = folders.filter(id => normById.has(id)).map(id => {
+      const norm = normById.get(id);
+      const added = addedById.get(id) || "";
+      const enc = encodeURI(`${PAGES}/apps/${id}/src/index.html`);
+      const encIcon = encodeURI(`${PAGES}/apps/${id}/meta/${norm.icon}`);
+      const iconCell = norm.icon
+        ? (/\.(svg|png|webp|jpe?g)$/i.test(norm.icon) ? `<img src="${encIcon}" width="32">` : escapeCell(norm.icon))
+        : "";
+      return `| ${iconCell} | [${escapeCell(norm.title)}](${enc}) | ${escapeCell(norm.description) || "—"} | ${added ? added.slice(0, 10) : "—"} |`;
+    });
+    const table = `<!-- catalog:start -->\n| | Приложение | Описание | Добавлено |\n|---|---|---|---|\n${rows.join("\n")}\n<!-- catalog:end -->`;
 
     /* Блоки каталога ищем построчно и по вхождению маркера в строку: так в блок
        попадает и мусор вида "`<!-- catalog:start -->" или "<!-- catalog:end -->`

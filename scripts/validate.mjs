@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* validate.mjs — проверка контракта приложений appboo v2. Только чтение.
-   MUST-нарушения → exit 1; SHOULD-долги → warnings, exit 0.
+/* validate.mjs — проверка контракта приложений appboo v3 (каталог catalog.json).
+   Только чтение. MUST-нарушения → exit 1; SHOULD-долги → warnings, exit 0.
    Запуск: node scripts/validate.mjs */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
@@ -71,34 +71,53 @@ const warnings = [];
 function must(where, msg) { errors.push(`${where}: ${msg}`); }
 function should(where, msg) { warnings.push(`${where}: ${msg}`); }
 
-/* --- Реестр --- */
-let registry = [];
+/* --- Каталог --- */
+let registry = []; // id из каталога, в порядке файла (старые → новые)
+const catalogById = new Map();
 {
-  const path = join(ROOT, "apps.json");
-  if (!existsSync(path)) must("apps.json", "файл отсутствует в корне");
+  if (existsSync(join(ROOT, "apps.json")))
+    must("apps.json", "файл устарел — реестр теперь catalog.json (normalize.mjs удалит его)");
+  const path = join(ROOT, "catalog.json");
+  if (!existsSync(path)) must("catalog.json", "файл отсутствует в корне");
   else {
     const parsed = softParseJson(readFileSync(path, "utf8"));
-    if (!parsed.value) must("apps.json", `JSON не парсится даже мягко — ${parsed.error}`);
-    else if (!Array.isArray(parsed.value)) must("apps.json", "не является массивом");
+    if (!parsed.value) must("catalog.json", `JSON не парсится даже мягко — ${parsed.error}`);
+    else if (!Array.isArray(parsed.value)) must("catalog.json", "не является массивом");
     else {
-      if (!parsed.strict) should("apps.json", "нестрогий JSON (комментарии/висячие запятые) — прогоните normalize.mjs");
-      registry = parsed.value;
+      if (!parsed.strict) should("catalog.json", "нестрогий JSON (комментарии/висячие запятые) — прогоните normalize.mjs");
+      const ADD_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+03:00$/;
+      let prev = null; // {id, added} предыдущей записи — для проверки монотонности
       const seen = new Set();
-      registry.forEach((raw, i) => {
-        if (typeof raw !== "string") { must("apps.json", `запись №${i + 1} не строка — ${JSON.stringify(raw)}`); return; }
-        const id = raw.trim();
-        if (!id) { must("apps.json", `запись №${i + 1} пустая`); return; }
-        if (seen.has(id)) must("apps.json", `дубликат записи «${id}»`);
+      parsed.value.forEach((raw, i) => {
+        if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+          must("catalog.json", `запись №${i + 1} не объект`);
+          return;
+        }
+        const id = typeof raw.id === "string" ? raw.id.trim() : "";
+        if (!id) { must("catalog.json", `запись №${i + 1} без id`); return; }
+        if (seen.has(id)) { must("catalog.json", `дубликат записи «${id}»`); return; }
         seen.add(id);
-        if (!existsSync(join(APPS, id))) must("apps.json", `запись «${id}» без папки apps/${id}/`);
+        catalogById.set(id, raw);
+        if (!existsSync(join(APPS, id))) must("catalog.json", `запись «${id}» без папки apps/${id}/`);
         else if (!existsSync(join(APPS, id, "src", "index.html")))
           must(`apps/${id}`, "нет src/index.html (MUST)");
+        if (typeof raw.added !== "string" || !ADD_RE.test(raw.added.trim()))
+          must("catalog.json", `запись «${id}»: added ${JSON.stringify(raw.added)} не в формате 2026-11-17T00:00:00+03:00`);
+        else {
+          const added = raw.added.trim();
+          if (prev && !(prev.added < added))
+            must("catalog.json", `инвариант: added не возрастает — «${prev.id}» (${prev.added}) → «${id}» (${added})`);
+          prev = { id, added };
+        }
+        for (const key of META_KEYS) if (!(key in raw))
+          should("catalog.json", `запись «${id}»: нет поля «${key}» (SHOULD — все поля meta)`);
         if (!KEBCASE_RE.test(id)) should(`apps/${id}`, "имя папки не kebab-case (легаси не переименовываем)");
       });
-      // Папки без записи в реестре
+      registry = [...seen];
+      // Папки без записи в каталоге
       for (const name of readdirSync(APPS)) {
         if (!statSync(join(APPS, name)).isDirectory()) continue;
-        if (!seen.has(name)) should(`apps/${name}`, "папка без записи в apps.json (normalize добавит в конец)");
+        if (!seen.has(name)) should(`apps/${name}`, "папка без записи в catalog.json (normalize добавит в конец с датой регистрации)");
       }
     }
   }
@@ -127,6 +146,19 @@ for (const id of registry) {
   }
 
   const fields = meta || {};
+
+  // Рассинхрон каталога с meta.json: метаданные записей освежает normalize
+  const entry = catalogById.get(id);
+  if (entry && meta) {
+    for (const key of META_KEYS) {
+      if (!(key in entry)) continue;
+      const norm = v => Array.isArray(v) ? v.filter(Boolean).map(String) : (v == null ? "" : String(v));
+      if (JSON.stringify(norm(entry[key])) !== JSON.stringify(norm(meta[key]))) {
+        should("catalog.json", `запись «${id}»: поле «${key}» отстаёт от meta.json — прогоните normalize.mjs`);
+        break;
+      }
+    }
+  }
   for (const key of META_KEYS) if (!(key in fields)) should(`apps/${id}/meta/meta.json`, `нет поля «${key}» (SHOULD — все поля)`);
   if (fields.platform && !PLATFORMS.has(fields.platform))
     should(`apps/${id}/meta/meta.json`, `platform «${fields.platform}» вне desktop|mobile|both`);
@@ -185,7 +217,7 @@ for (const id of registry) {
 }
 
 /* --- Отчёт --- */
-console.log(`validate: ${registry.length} записей реестра`);
+console.log(`validate: ${registry.length} записей каталога`);
 if (warnings.length) {
   console.log(`\nSHOULD-долги (${warnings.length}):`);
   warnings.forEach(w => console.log(`  ⚠ ${w}`));
