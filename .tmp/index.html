@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4fcf6">
+<meta name="description" content="Maprandom — случайная точка для велопрогулки: радиус, прямоугольник, город или вся планета. Маршрут на внешних картах. Всё локально.">
+<title>Maprandom</title>
+
+<!-- Шрифты (fontsource CDN): Manrope + JetBrains Mono, оба с кириллицей -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/manrope@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono@5/index.css">
+<!-- Leaflet (CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+
+<script>
+/* Ранняя установка темы, чтобы не было «вспышки» светлого фона */
+(function(){try{var s=JSON.parse(localStorage.getItem('maprandom.v1')||'{}');var t=s.theme||'system';
+var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+document.documentElement.dataset.theme=d?'dark':'light';}catch(e){document.documentElement.dataset.theme='light';}})();
+</script>
+
+<style>
+/* ============================================================
+   Maprandom — Material You-палитра строится из базового цвета.
+   Ниже — запасные токены (сид #2e9e5b), JS пересчитывает их на лету.
+   ============================================================ */
+:root{
+  --primary:#007239;--on-primary:#ffffff;--primary-container:#94feb5;--on-primary-container:#00230d;
+  --secondary:#4a6652;--on-secondary:#ffffff;--secondary-container:#ccecd4;--on-secondary-container:#072210;
+  --tertiary:#236976;--tertiary-container:#abf0ff;--on-tertiary-container:#002027;
+  --surface:#f4fcf6;--on-surface:#181d19;--on-surface-variant:#3e4a41;
+  --outline:#6e7b71;--outline-variant:#bccbc0;
+  --surface-container-lowest:#ffffff;--surface-container-low:#eef6f0;--surface-container:#e9f0ea;
+  --surface-container-high:#e3eae5;--surface-container-highest:#dde5df;
+  --inverse-surface:#2c322e;--inverse-on-surface:#ebf3ed;--inverse-primary:#77e19a;
+  --error:#9e3630;--on-error:#ffffff;--error-container:#ffe0dc;--on-error-container:#3d0001;
+  --success:#007238;--success-container:#9dfcb8;--on-success-container:#00230c;
+  --warning:#785900;--warning-container:#ffe5b0;--on-warning-container:#261900;
+  --info:#2a6ead;--info-container:#d8ebff;--on-info-container:#001c39;
+  --primary-rgb:0 114 57;
+  --font-ui:'Manrope Variable',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'JetBrains Mono Variable',ui-monospace,'SF Mono',Consolas,monospace;
+  --header-h:64px;
+  --grain:.035;
+}
+:root[data-theme="dark"]{
+  --primary:#77e19a;--on-primary:#003c1b;--primary-container:#00562a;--on-primary-container:#94feb5;
+  --secondary:#b0d0b8;--on-secondary:#1c3725;--secondary-container:#334e3b;--on-secondary-container:#ccecd4;
+  --tertiary:#90d3e2;--tertiary-container:#00505d;--on-tertiary-container:#abf0ff;
+  --surface:#101511;--on-surface:#dde5df;--on-surface-variant:#bccbc0;
+  --outline:#87958a;--outline-variant:#3e4a41;
+  --surface-container-lowest:#0b100c;--surface-container-low:#181d19;--surface-container:#1c211d;
+  --surface-container-high:#262c27;--surface-container-highest:#313732;
+  --inverse-surface:#dde5df;--inverse-on-surface:#2c322e;--inverse-primary:#007239;
+  --error:#ffafa5;--on-error:#620004;--error-container:#821917;--on-error-container:#ffd8d3;
+  --success:#81df9c;--success-container:#005628;--on-success-container:#9dfcb8;
+  --warning:#edc05a;--warning-container:#5b4200;--on-warning-container:#ffde9a;
+  --info:#9acbff;--info-container:#004880;--on-info-container:#cee5ff;
+  --primary-rgb:119 225 154;
+  --grain:.05;
+}
+
+/* ---------- База ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;font-family:var(--font-ui);font-size:16px;line-height:1.5;
+  background:var(--surface);color:var(--on-surface);
+  transition:background-color .35s ease,color .35s ease;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* Мягкое «северное сияние» из акцента и третичного цвета */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(640px 420px at 88% -60px, color-mix(in srgb, var(--primary) 15%, transparent), transparent 70%),
+    radial-gradient(760px 520px at -12% 34%, color-mix(in srgb, var(--tertiary) 11%, transparent), transparent 72%),
+    radial-gradient(520px 380px at 55% 110%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 70%);
+}
+/* Зерно поверх фона */
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--grain);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+/* Картографическая сетка-«гратикула» */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(color-mix(in srgb, var(--outline) 26%, transparent) 1px, transparent 1.4px);
+  background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(1100px 720px at 50% -60px, #000 0%, transparent 82%);
+  mask-image:radial-gradient(1100px 720px at 50% -60px, #000 0%, transparent 82%);
+}
+::selection{background:var(--primary-container);color:var(--on-primary-container)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+button{font-family:inherit;color:inherit}
+input{font-family:inherit}
+a{color:var(--primary)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.ic{width:20px;height:20px;display:block;flex:none}
+.ic.inline{display:inline-block;width:14px;height:14px;vertical-align:-2px}
+
+/* Скроллбары в палитре приложения */
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--primary) 45%,var(--surface-container-high)) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--primary) 38%,var(--surface-container-high));border-radius:8px;border:2px solid var(--surface)}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--primary) 62%,var(--surface-container-high))}
+
+/* ---------- Шапка ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
+  padding:10px clamp(12px,3vw,28px);
+  background:color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25);
+  border-bottom:1px solid var(--outline-variant);
+  transition:box-shadow .25s ease, background-color .35s ease;
+}
+.topbar.scrolled{box-shadow:0 8px 24px -18px rgb(0 0 0/.45)}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{
+  width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;color:var(--primary);
+  background:linear-gradient(140deg,var(--primary),var(--tertiary));
+  box-shadow:0 6px 16px -6px rgb(var(--primary-rgb)/.6);
+}
+.brand-mark svg{width:24px;height:24px}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.brand-name{font-weight:800;font-size:1.12rem;letter-spacing:-.02em}
+.brand-tag{font-size:.68rem;color:var(--on-surface-variant);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-controls{display:flex;align-items:center;gap:8px;margin-left:auto;position:relative}
+
+/* Сегментированные переключатели */
+.seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--surface-container-high);border:1px solid var(--outline-variant)}
+.seg button{
+  border:none;background:transparent;border-radius:999px;height:30px;padding:0 12px;cursor:pointer;
+  font-weight:800;font-size:.78rem;color:var(--on-surface-variant);display:inline-flex;align-items:center;gap:6px;
+  transition:background-color .2s,color .2s;position:relative;overflow:hidden;
+}
+.seg button .ic{width:16px;height:16px}
+.seg button:hover{color:var(--on-surface)}
+.seg button.active{background:var(--secondary-container);color:var(--on-secondary-container);box-shadow:0 1px 3px rgb(0 0 0/.14)}
+.seg.big{width:100%;display:flex}
+.seg.big button{flex:1;height:44px;font-size:.92rem;justify-content:center}
+.seg.big button .ic{width:19px;height:19px}
+
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;border:none;background:transparent;cursor:pointer;
+  display:grid;place-items:center;color:var(--on-surface-variant);position:relative;overflow:hidden;
+  transition:background-color .2s,color .2s;flex:none;
+}
+.icon-btn:hover{background:color-mix(in srgb,var(--on-surface) 8%,transparent);color:var(--on-surface)}
+.accent-btn{border:1px solid var(--outline-variant);background:var(--surface-container-high)}
+.accent-dot{position:absolute;right:5px;bottom:5px;width:11px;height:11px;border-radius:50%;border:2px solid var(--surface-container-high);background:var(--primary)}
+
+/* Поповер акцента */
+.accent-pop{
+  position:absolute;right:0;top:calc(100% + 10px);z-index:60;width:min(320px,calc(100vw - 24px));
+  background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:22px;padding:16px;
+  box-shadow:0 24px 60px -24px rgb(0 0 0/.5);
+  opacity:0;transform:translateY(-6px) scale(.97);transform-origin:top right;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1);
+}
+.accent-pop.open{opacity:1;transform:none}
+.pop-title{font-weight:800;font-size:.95rem;margin-bottom:12px}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.swatch{
+  height:44px;border-radius:14px;border:2px solid transparent;cursor:pointer;display:grid;place-items:center;
+  position:relative;overflow:hidden;transition:transform .15s,border-color .2s;
+}
+.swatch:hover{transform:scale(1.06)}
+.swatch.active{border-color:var(--on-surface)}
+.swatch .ic{width:18px;height:18px}
+.custom-row{display:flex;align-items:center;gap:10px}
+.custom-row input[type="color"]{
+  width:44px;height:44px;border:none;padding:0;background:none;cursor:pointer;border-radius:12px;flex:none;
+}
+.custom-row input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+.custom-row input[type="color"]::-webkit-color-swatch{border-radius:11px;border:1px solid var(--outline-variant)}
+.custom-row input[type="color"]::-moz-color-swatch{border-radius:11px;border:1px solid var(--outline-variant)}
+.custom-txt{display:flex;flex-direction:column;line-height:1.25;font-size:.78rem;font-weight:700;min-width:0}
+.custom-txt .mono{font-size:.72rem;color:var(--on-surface-variant)}
+.custom-row .text-btn{margin-left:auto}
+.pop-hint{margin:12px 0 0;font-size:.7rem;color:var(--on-surface-variant);line-height:1.4}
+
+/* ---------- Каркас ---------- */
+.wrap{width:min(1240px,100% - clamp(24px,4vw,56px));margin-inline:auto;position:relative;z-index:1}
+main.wrap{padding-bottom:26px}
+.tabs-bar{
+  position:sticky;top:var(--header-h);z-index:40;padding:12px 0 10px;
+  background:color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+.tabs{position:relative;display:flex;max-width:560px;margin:0 auto;background:var(--surface-container-high);border:1px solid var(--outline-variant);border-radius:999px;padding:4px}
+.tab-pill{
+  position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);border-radius:999px;
+  background:var(--primary);box-shadow:0 5px 16px -5px rgb(var(--primary-rgb)/.65);
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),background-color .35s;
+}
+.tab-btn{
+  position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;
+  border:none;background:transparent;border-radius:999px;cursor:pointer;font-weight:800;
+  font-size:clamp(.82rem,2.4vw,.95rem);color:var(--on-surface-variant);transition:color .25s;overflow:hidden;
+}
+.tab-btn .ic{width:18px;height:18px}
+.tab-btn.active{color:var(--on-primary)}
+.tab-panel.enter{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}
+.layout{display:grid;grid-template-columns:minmax(340px,420px) minmax(0,1fr);gap:22px;align-items:start;padding-top:6px}
+.col{display:grid;gap:18px;min-width:0}
+
+/* Карточки */
+.card{
+  background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:24px;padding:20px;
+  box-shadow:0 1px 2px rgb(0 0 0/.05);transition:background-color .35s,border-color .35s;min-width:0;
+}
+.result-card{background:var(--surface-container-lowest);min-height:380px}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card-head h2{margin:0;font-size:1rem;font-weight:800;letter-spacing:-.01em}
+.head-ic{width:34px;height:34px;border-radius:11px;background:var(--primary-container);color:var(--on-primary-container);display:grid;place-items:center;flex:none;transition:background-color .35s}
+.head-ic .ic{width:18px;height:18px}
+.start-chip{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;max-width:46%;padding:5px 10px;border-radius:999px;
+  background:var(--tertiary-container);color:var(--on-tertiary-container);font-size:.72rem;font-weight:800;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.start-chip .ic{width:13px;height:13px}
+.stack{display:grid;gap:12px}
+.stack-lg{display:grid;gap:14px}
+.fine{margin:0;font-size:.73rem;color:var(--on-surface-variant);line-height:1.45}
+.fine.center{text-align:center}
+.fine .ic{color:var(--success)}
+
+/* Поля ввода */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:.72rem;font-weight:800;color:var(--on-surface-variant);letter-spacing:.03em}
+.field input{
+  height:46px;border-radius:13px;border:1.5px solid var(--outline-variant);background:var(--surface-container-lowest);
+  color:var(--on-surface);padding:0 12px;font-family:var(--font-mono);font-size:.93rem;width:100%;
+  transition:border-color .2s,box-shadow .2s,background-color .35s;
+}
+.field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+.field input.invalid{border-color:var(--error);box-shadow:0 0 0 3px color-mix(in srgb,var(--error) 15%,transparent)}
+.field-err{margin:0;font-size:.74rem;font-weight:700;color:var(--error)}
+
+/* Поиск с автодополнением */
+.search{position:relative}
+.search-box{position:relative;display:flex;align-items:center}
+.search-ic{position:absolute;left:12px;width:17px;height:17px;color:var(--on-surface-variant);pointer-events:none}
+.search-input{
+  width:100%;height:48px;border-radius:14px;border:1.5px solid var(--outline-variant);
+  background:var(--surface-container-lowest);color:var(--on-surface);padding:0 40px 0 38px;font-size:.92rem;font-weight:600;
+  transition:border-color .2s,box-shadow .2s,background-color .35s;
+}
+.search-input::placeholder{color:color-mix(in srgb,var(--on-surface-variant) 75%,transparent);font-weight:500}
+.search-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+.search-spin{position:absolute;right:13px}
+.search-list{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:45;max-height:264px;overflow:auto;
+  background:var(--surface-container-lowest);border:1px solid var(--outline-variant);border-radius:16px;padding:6px;
+  box-shadow:0 20px 48px -20px rgb(0 0 0/.45);
+}
+.search-item{
+  display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;background:transparent;
+  border-radius:11px;cursor:pointer;text-align:left;transition:background-color .15s;
+}
+.search-item .ic{width:16px;height:16px;color:var(--primary)}
+.search-item:hover,.search-item.active{background:var(--secondary-container)}
+.search-item:hover .s-name,.search-item.active .s-name{color:var(--on-secondary-container)}
+.s-txt{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.s-name{font-weight:800;font-size:.88rem;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-sub{font-size:.7rem;color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-status{margin-top:8px;font-size:.74rem;font-weight:600;color:var(--on-surface-variant);display:flex;gap:6px;align-items:flex-start;line-height:1.4}
+.search-status.err{color:var(--error)}
+
+/* Кнопки */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;border:none;cursor:pointer;text-decoration:none;
+  font-weight:800;border-radius:999px;position:relative;overflow:hidden;
+  transition:transform .15s,box-shadow .25s,background-color .2s,border-color .2s,color .2s;
+}
+.btn:active{transform:scale(.975)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn.full{width:100%}
+.btn.lg{height:60px;font-size:1.02rem;padding:0 26px;border-radius:20px;letter-spacing:-.01em}
+.btn.md{height:48px;font-size:.93rem;padding:0 20px}
+.btn.sm{height:42px;font-size:.88rem;padding:0 16px}
+.btn.filled{background:var(--primary);color:var(--on-primary);box-shadow:0 8px 22px -8px rgb(var(--primary-rgb)/.65)}
+.btn.filled:hover:not(:disabled){box-shadow:0 12px 28px -8px rgb(var(--primary-rgb)/.75);background:color-mix(in srgb,var(--primary) 92%,var(--on-primary))}
+.btn.tonal{background:var(--secondary-container);color:var(--on-secondary-container)}
+.btn.tonal:hover:not(:disabled){background:color-mix(in srgb,var(--secondary-container) 90%,var(--on-secondary-container))}
+.btn.tonal-primary{background:var(--primary-container);color:var(--on-primary-container)}
+.btn.tonal-primary:hover:not(:disabled){background:color-mix(in srgb,var(--primary-container) 90%,var(--on-primary-container))}
+.btn.outline{background:transparent;border:1.5px solid var(--outline);color:var(--primary)}
+.btn.outline:hover:not(:disabled){background:color-mix(in srgb,var(--primary) 9%,transparent);border-color:var(--primary)}
+.btn.text{background:transparent;color:var(--primary);height:42px;padding:0 14px;font-size:.86rem}
+.btn.text:hover:not(:disabled){background:color-mix(in srgb,var(--primary) 9%,transparent)}
+.text-btn{
+  display:inline-flex;align-items:center;gap:6px;border:none;background:transparent;cursor:pointer;
+  color:var(--primary);font-weight:800;font-size:.8rem;padding:8px 12px;border-radius:999px;position:relative;overflow:hidden;
+  transition:background-color .2s;
+}
+.text-btn:hover{background:color-mix(in srgb,var(--primary) 9%,transparent)}
+.text-btn .ic{width:15px;height:15px}
+.text-btn.danger{color:var(--error)}
+.text-btn.danger:hover{background:color-mix(in srgb,var(--error) 9%,transparent)}
+.text-btn.arm{background:var(--error-container);color:var(--on-error-container)}
+
+/* Режимы области */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.mode-card{
+  position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:12px 14px;
+  border-radius:17px;border:1.5px solid var(--outline-variant);background:var(--surface-container-low);
+  cursor:pointer;text-align:left;transition:border-color .2s,background-color .25s,transform .15s;overflow:hidden;
+}
+.mode-card:hover{border-color:var(--outline)}
+.mode-card:active{transform:scale(.98)}
+.mode-card>.ic{width:21px;height:21px;color:var(--on-surface-variant);transition:color .2s}
+.mode-card b{font-size:.9rem;font-weight:800;color:var(--on-surface);letter-spacing:-.01em}
+.mode-card small{font-size:.68rem;color:var(--on-surface-variant);font-weight:600;line-height:1.3}
+.mode-card.active{background:var(--secondary-container);border-color:var(--primary)}
+.mode-card.active>.ic,.mode-card.active b{color:var(--on-secondary-container)}
+.mode-card.active small{color:color-mix(in srgb,var(--on-secondary-container) 78%,transparent)}
+.mode-check{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+  background:var(--primary);color:var(--on-primary);display:none;place-items:center;
+}
+.mode-check .ic{width:11px;height:11px}
+.mode-card.active .mode-check{display:grid}
+.mode-panel{display:grid;gap:12px}
+
+/* Радиус */
+.radius-head{display:flex;align-items:baseline;justify-content:space-between;font-size:.8rem;font-weight:700;color:var(--on-surface-variant)}
+.radius-head b{font-size:1rem;color:var(--primary);font-family:var(--font-mono)}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:pointer;margin:0}
+input[type="range"]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--primary) var(--fill,50%),var(--surface-container-highest) var(--fill,50%))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--primary);border:3px solid var(--surface-container-low);margin-top:-7px;box-shadow:0 1px 5px rgb(0 0 0/.35);transition:transform .15s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-track{height:6px;border-radius:3px;background:var(--surface-container-highest)}
+input[type="range"]::-moz-range-progress{height:6px;border-radius:3px;background:var(--primary)}
+input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--primary);border:3px solid var(--surface-container-low);box-shadow:0 1px 5px rgb(0 0 0/.35)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  height:36px;padding:0 13px;border-radius:12px;border:1.5px solid var(--outline-variant);cursor:pointer;
+  background:var(--surface-container-low);color:var(--on-surface-variant);font-weight:800;font-size:.88rem;
+  display:inline-flex;align-items:center;gap:4px;position:relative;overflow:hidden;
+  transition:background-color .2s,border-color .2s,color .2s,transform .15s;
+}
+.chip:hover{border-color:var(--outline)}
+.chip:active{transform:scale(.95)}
+.chip.active{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.chip-u{font-size:.68em;opacity:.8;font-weight:700}
+
+/* Прямоугольник / город */
+.rect-group{display:grid;gap:6px}
+.grp-lbl{font-size:.72rem;font-weight:800;color:var(--on-surface-variant);letter-spacing:.05em;text-transform:uppercase}
+.city-chip{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;
+  background:var(--tertiary-container);color:var(--on-tertiary-container);
+}
+.city-chip>.ic{width:17px;height:17px;flex:none}
+.city-txt{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.city-txt b{font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.city-txt .mono{font-size:.7rem;opacity:.85}
+.city-chip .icon-btn{margin-left:auto;width:30px;height:30px;color:inherit}
+.city-chip .icon-btn:hover{background:color-mix(in srgb,var(--on-tertiary-container) 12%,transparent)}
+
+/* Заметки-предупреждения */
+.note{
+  display:flex;gap:9px;padding:10px 12px;border-radius:13px;font-size:.76rem;line-height:1.45;font-weight:600;
+  background:var(--warning-container);color:var(--on-warning-container);
+}
+.note .ic{width:16px;height:16px;flex:none;margin-top:1px;color:var(--warning)}
+.note.info{background:var(--info-container);color:var(--on-info-container)}
+.note.info .ic{color:var(--info)}
+
+/* Результат */
+.res-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.res-title{display:flex;align-items:center;gap:8px}
+.res-title h3{margin:0;font-size:1.08rem;font-weight:800;letter-spacing:-.01em}
+.count-badge{font-family:var(--font-mono);font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--surface-container-highest);color:var(--on-surface-variant)}
+.res-time{margin-left:auto;font-size:.72rem;color:var(--on-surface-variant);font-weight:600}
+.mode-chip{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;width:fit-content;max-width:100%;
+  background:var(--tertiary-container);color:var(--on-tertiary-container);font-weight:800;font-size:.78rem;
+}
+.mode-chip .ic{width:15px;height:15px}
+.mode-chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coords-box{
+  padding:14px 16px;border-radius:17px;
+  background:color-mix(in srgb,var(--primary-container) 40%,var(--surface-container-low));
+  border:1px solid color-mix(in srgb,var(--primary) 24%,var(--outline-variant));
+  transition:background-color .35s,border-color .35s;
+}
+.coords-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.lbl{font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-variant)}
+.coords{font-family:var(--font-mono);font-weight:700;font-size:clamp(1.06rem,4.2vw,1.55rem);letter-spacing:-.02em;white-space:nowrap;color:var(--on-surface)}
+.coords.settle{animation:settle .28s cubic-bezier(.2,.8,.2,1)}
+.copy-btn{width:34px;height:34px}
+.copy-btn .cp-c{display:none;color:var(--success)}
+.copy-btn.copied .cp-i{display:none}
+.copy-btn.copied .cp-c{display:block}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:15px;background:var(--surface-container);min-width:0;transition:background-color .35s}
+.stat>.ic{width:20px;height:20px;color:var(--primary)}
+.stat b{display:block;font-size:.98rem;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.stat span{display:block;font-size:.68rem;color:var(--on-surface-variant);font-weight:600;line-height:1.3}
+.bearing-ic{
+  width:34px;height:34px;border-radius:50%;background:var(--tertiary-container);color:var(--on-tertiary-container);
+  display:grid;place-items:center;flex:none;transition:transform .6s cubic-bezier(.2,.8,.2,1),background-color .35s;
+}
+.bearing-ic .ic{width:16px;height:16px}
+.svc-label{font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--on-surface-variant);margin-top:2px}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.svc{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:64px;border-radius:18px;text-decoration:none;
+  border:1.5px solid var(--outline-variant);background:var(--surface-container-lowest);color:var(--on-surface);
+  position:relative;overflow:hidden;transition:border-color .2s,transform .18s,box-shadow .25s,background-color .35s;
+}
+.svc:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 12px 26px -14px rgb(var(--primary-rgb)/.5)}
+.svc:active{transform:scale(.98)}
+.badge{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:800;flex:none;
+  font-size:15px;letter-spacing:-.03em;box-shadow:inset 0 -2px 4px rgb(0 0 0/.18);
+}
+.badge.small{width:30px;height:30px;border-radius:9px;font-size:11px}
+.svc-txt{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.svc-name{font-weight:800;font-size:.93rem;letter-spacing:-.01em;white-space:nowrap}
+.svc-sub{font-size:.7rem;color:var(--on-surface-variant);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc-ext{margin-left:auto;width:15px;height:15px;color:var(--on-surface-variant)}
+.svc.suggest{border-color:var(--primary)}
+.osm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.open-block{
+  display:grid;gap:10px;padding:14px;border-radius:18px;border:1.5px dashed var(--outline);
+  background:color-mix(in srgb,var(--surface-container-low) 55%,transparent);
+}
+.open-head{display:flex;align-items:center;gap:8px}
+.open-title{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:.85rem}
+.open-title .ic{width:16px;height:16px;color:var(--primary)}
+.info-btn{
+  margin-left:auto;width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;
+  display:grid;place-items:center;color:var(--on-surface-variant);transition:background-color .2s,color .2s;
+}
+.info-btn:hover{background:color-mix(in srgb,var(--on-surface) 8%,transparent);color:var(--primary)}
+.info-btn .ic{width:16px;height:16px}
+.dgis-note{display:flex;gap:6px;align-items:flex-start}
+.dgis-note .ic{width:13px;height:13px;margin-top:2px;color:var(--info);flex:none}
+
+/* Пустые состояния */
+.empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:26px 8px}
+.empty svg.illu{width:min(250px,80%);height:auto}
+.empty h3{margin:6px 0 0;font-size:1.05rem;font-weight:800}
+.empty p{margin:0;font-size:.83rem;color:var(--on-surface-variant);max-width:340px}
+.empty .btn{margin-top:10px}
+.illu-pin{animation:bob 3.2s ease-in-out infinite;transform-origin:center}
+
+/* Карта */
+.map-toggle-row{margin-top:14px;border-top:1px solid var(--outline-variant);padding-top:10px}
+.map-toggle{
+  display:inline-flex;align-items:center;gap:8px;border:none;background:transparent;cursor:pointer;
+  color:var(--primary);font-weight:800;font-size:.86rem;padding:9px 14px;border-radius:999px;position:relative;overflow:hidden;
+  transition:background-color .2s;
+}
+.map-toggle:hover{background:color-mix(in srgb,var(--primary) 9%,transparent)}
+.map-toggle .ic{width:17px;height:17px}
+.map-toggle .chev{transition:transform .3s;width:15px;height:15px}
+.map-toggle[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.map-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1)}
+.map-wrap[data-open="1"]{grid-template-rows:1fr}
+.map-clip{overflow:hidden;min-height:0}
+.map-inner{display:grid;gap:10px;padding-top:12px}
+.map-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#embedMap{height:340px;border-radius:16px;border:1px solid var(--outline-variant);position:relative;z-index:0;background:var(--surface-container-high)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.72rem;font-weight:700;color:var(--on-surface-variant)}
+.legend>span{display:inline-flex;align-items:center;gap:6px}
+.lg-dot{width:11px;height:11px;border-radius:50%;background:var(--tertiary);border:2px solid var(--surface-container-lowest);box-shadow:0 0 0 1px var(--outline-variant)}
+.lg-pin{width:14px;height:14px;color:var(--primary)}
+
+/* Маркеры Leaflet */
+.mk{background:none;border:none}
+.mk-dot{display:block;width:14px;height:14px;border-radius:50%;background:var(--tertiary);border:3px solid var(--surface-container-lowest);box-shadow:0 1px 5px rgb(0 0 0/.45)}
+.mk-pin svg{width:34px;height:44px;display:block;filter:drop-shadow(0 4px 6px rgb(0 0 0/.4));animation:drop .45s cubic-bezier(.2,.8,.3,1.2)}
+.leaflet-container{font-family:var(--font-ui);background:var(--surface-container-high)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 86%,transparent)!important;color:var(--on-surface-variant);font-size:10px}
+.leaflet-control-attribution a{color:var(--primary)}
+.leaflet-bar a{background:var(--surface-container-lowest);color:var(--on-surface);border-bottom-color:var(--outline-variant)}
+.leaflet-bar a:hover{background:var(--surface-container-high);color:var(--on-surface)}
+.leaflet-bar{border:1px solid var(--outline-variant);box-shadow:0 4px 14px -6px rgb(0 0 0/.4)}
+
+/* Маршрут */
+.route-wrap{max-width:820px;margin:0 auto;padding-top:6px}
+.route-head{display:flex;align-items:center;gap:10px}
+.route-head h3{margin:0;font-size:1.08rem;font-weight:800}
+.route-head .text-btn{margin-left:auto}
+.route-sum{
+  display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px;border-radius:17px;
+  background:var(--surface-container);border:1px solid var(--outline-variant);transition:background-color .35s;
+}
+.route-pts{display:grid;gap:4px;min-width:0}
+.rpt{display:flex;align-items:center;gap:12px;min-width:0}
+.rpt-dot{width:14px;height:14px;border-radius:50%;flex:none;margin-left:4px}
+.rpt-dot.start{background:var(--tertiary);border:3px solid var(--surface-container-lowest);box-shadow:0 0 0 1px var(--outline-variant)}
+.rpt-dot.end{width:22px;height:22px;margin-left:0;background:none;display:grid;place-items:center;color:var(--primary)}
+.rpt-dot.end .ic{width:20px;height:20px}
+.rpt-line{width:2px;height:16px;margin-left:10px;background:repeating-linear-gradient(var(--outline) 0 3px,transparent 3px 6px)}
+.rpt-lbl{display:block;font-size:.68rem;font-weight:800;color:var(--on-surface-variant);letter-spacing:.04em;text-transform:uppercase}
+.rpt-c{display:block;font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-dist{text-align:right}
+.route-dist b{display:block;font-size:clamp(1.3rem,3.4vw,1.7rem);font-weight:800;color:var(--primary);letter-spacing:-.02em;white-space:nowrap}
+.route-dist span{font-size:.68rem;color:var(--on-surface-variant);font-weight:700}
+.route-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Подвал */
+.footer{padding:8px 0 42px;display:grid;gap:10px}
+.foot-links{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.78rem;font-weight:700}
+.foot-links a{color:var(--on-surface-variant);text-decoration:none}
+.foot-links a:hover{color:var(--primary);text-decoration:underline}
+.foot-links .text-btn{margin-left:auto}
+
+/* Модальное окно рисования */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:14px;
+  background:rgb(0 0 0/.52);opacity:0;transition:opacity .22s;
+}
+.modal-backdrop.open{opacity:1}
+.modal{
+  width:min(940px,100%);height:min(680px,calc(100dvh - 28px));display:flex;flex-direction:column;
+  background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:26px;overflow:hidden;
+  box-shadow:0 40px 90px -30px rgb(0 0 0/.65);
+  transform:translateY(12px) scale(.97);transition:transform .24s cubic-bezier(.2,.8,.2,1);
+}
+.modal-backdrop.open .modal{transform:none}
+.modal-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--outline-variant)}
+.modal-head h3{margin:0;font-size:1rem;font-weight:800}
+.modal-head .icon-btn{margin-left:auto}
+.draw-body{position:relative;flex:1;min-height:180px}
+#drawMapEl{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;z-index:0}
+.draw-hint{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:600;pointer-events:none;
+  display:flex;align-items:center;gap:8px;max-width:calc(100% - 120px);padding:8px 14px;border-radius:999px;
+  background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--outline-variant);
+  color:var(--on-surface);font-size:.72rem;font-weight:700;box-shadow:0 6px 18px -8px rgb(0 0 0/.4);
+}
+.draw-hint .ic{width:14px;height:14px;color:var(--primary);flex:none}
+.draw-hint span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.draw-fail{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);z-index:601}
+.modal-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--outline-variant)}
+.draw-readout{font-size:.72rem;color:var(--on-surface-variant);flex:1;min-width:200px}
+.modal-btns{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+
+/* Тосты */
+.toasts{position:fixed;right:18px;bottom:18px;z-index:120;display:flex;flex-direction:column;gap:8px;width:min(400px,calc(100vw - 24px))}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:15px;
+  background:var(--surface-container-highest);color:var(--on-surface);border:1px solid var(--outline-variant);
+  box-shadow:0 16px 40px -16px rgb(0 0 0/.5);font-size:.83rem;font-weight:700;line-height:1.35;
+  animation:toast-in .32s cubic-bezier(.2,.8,.2,1);
+}
+.toast.out{opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+.toast-ic{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;flex:none}
+.toast-ic .ic{width:15px;height:15px}
+.toast.success .toast-ic{background:var(--success-container);color:var(--on-success-container)}
+.toast.error .toast-ic{background:var(--error-container);color:var(--on-error-container)}
+.toast.warn .toast-ic{background:var(--warning-container);color:var(--on-warning-container)}
+.toast.info .toast-ic{background:var(--info-container);color:var(--on-info-container)}
+
+/* Волна при нажатии (Material ripple) */
+.ripple{position:relative;overflow:hidden}
+.ink{position:absolute;border-radius:50%;background:currentColor;opacity:.16;transform:scale(0);animation:ink .55s ease-out forwards;pointer-events:none}
+
+/* Спиннер */
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,currentColor 25%,transparent);border-top-color:currentColor;animation:spin .7s linear infinite;flex:none}
+
+/* Анимации */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes settle{0%{transform:scale(1.045)}100%{transform:scale(1)}}
+@keyframes roll{to{transform:rotate(360deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ink{to{transform:scale(1);opacity:0}}
+@keyframes toast-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes drop{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+.rise{animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--d,0)*75ms)}
+.gen-btn.rolling .ic{animation:roll .55s cubic-bezier(.3,.6,.3,1)}
+body.locked{overflow:hidden}
+
+/* ---------- Адаптивность ---------- */
+@media (max-width:1020px){
+  .layout{grid-template-columns:1fr}
+  .result-card{min-height:0}
+}
+@media (max-width:700px){
+  .svc-grid{grid-template-columns:1fr}
+  .osm-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .brand-tag{display:none}
+  .card{padding:16px;border-radius:20px}
+  .route-sum{grid-template-columns:1fr}
+  .route-dist{text-align:left;display:flex;align-items:baseline;gap:8px}
+  .toasts{right:12px;left:12px;bottom:12px;width:auto}
+  #embedMap{height:280px}
+  .modal-backdrop{padding:8px}
+  .modal{height:calc(100dvh - 16px);border-radius:20px}
+  .draw-readout{min-width:100%;order:2}
+  .modal-btns{margin-left:0;width:100%;justify-content:flex-end}
+}
+@media (max-width:380px){
+  .seg button{padding:0 9px}
+  .tab-btn{gap:5px}
+  .stats{grid-template-columns:1fr}
+  .btn.lg{font-size:.94rem;padding:10px 18px;height:auto;min-height:60px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+
+/* Служебные правила */
+[hidden]{display:none!important}
+.spin{display:inline-block}
+.start-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#resultCard{scroll-margin-top:calc(var(--header-h) + 78px)}
+</style>
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ===================== Шапка ===================== -->
+<header class="topbar" id="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 22s-7.5-5.6-7.5-11.5A7.5 7.5 0 0 1 12 3a7.5 7.5 0 0 1 7.5 7.5C19.5 16.4 12 22 12 22z" fill="#fff" opacity=".96"/>
+        <circle cx="9.4" cy="8.2" r="1.2" fill="currentColor"/><circle cx="14.6" cy="8.2" r="1.2" fill="currentColor"/>
+        <circle cx="12" cy="10.9" r="1.2" fill="currentColor"/>
+        <circle cx="9.4" cy="13.6" r="1.2" fill="currentColor"/><circle cx="14.6" cy="13.6" r="1.2" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="brand-txt">
+      <span class="brand-name">Maprandom</span>
+      <span class="brand-tag" data-i18n="app.tagline"></span>
+    </div>
+  </div>
+  <div class="top-controls">
+    <div class="seg" role="group" id="langSeg" data-i18n-aria="header.lang">
+      <button type="button" class="ripple" data-action="lang" data-lang="ru">RU</button>
+      <button type="button" class="ripple" data-action="lang" data-lang="en">EN</button>
+    </div>
+    <div class="seg" role="group" id="themeSeg" data-i18n-aria="header.theme">
+      <button type="button" class="ripple" data-action="theme" data-theme="light" data-i18n-title="theme.light" data-i18n-aria="theme.light"><svg class="ic"><use href="#i-sun"/></svg></button>
+      <button type="button" class="ripple" data-action="theme" data-theme="dark" data-i18n-title="theme.dark" data-i18n-aria="theme.dark"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <button type="button" class="ripple" data-action="theme" data-theme="system" data-i18n-title="theme.system" data-i18n-aria="theme.system"><svg class="ic"><use href="#i-monitor"/></svg></button>
+    </div>
+    <button type="button" class="icon-btn accent-btn ripple" id="accentBtn" data-action="accent-toggle" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria="accent.title">
+      <svg class="ic"><use href="#i-palette"/></svg><span class="accent-dot" id="accentDot"></span>
+    </button>
+    <div class="accent-pop" id="accentPop" hidden role="dialog" data-i18n-aria="accent.title">
+      <div class="pop-title" data-i18n="accent.title"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="custom-row">
+        <input type="color" id="customColor" value="#2e9e5b" data-i18n-aria="accent.custom">
+        <div class="custom-txt"><span data-i18n="accent.custom"></span><span class="mono" id="customHex">#2E9E5B</span></div>
+        <button type="button" class="text-btn ripple" data-action="accent-reset"><svg class="ic"><use href="#i-refresh"/></svg><span data-i18n="accent.reset"></span></button>
+      </div>
+      <p class="pop-hint" data-i18n="accent.hint"></p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Вкладки -->
+  <div class="tabs-bar">
+    <div class="tabs" role="tablist" data-i18n-aria="tabs.aria">
+      <span class="tab-pill" id="tabPill" aria-hidden="true"></span>
+      <button type="button" class="tab-btn ripple active" id="tabBtnPoint" role="tab" aria-selected="true" aria-controls="panelPoint" data-action="tab" data-tab="point">
+        <svg class="ic"><use href="#i-dice"/></svg><span data-i18n="tabs.point"></span>
+      </button>
+      <button type="button" class="tab-btn ripple" id="tabBtnRoute" role="tab" aria-selected="false" aria-controls="panelRoute" data-action="tab" data-tab="route">
+        <svg class="ic"><use href="#i-route"/></svg><span data-i18n="tabs.route"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================== Вкладка 1: случайная точка ===================== -->
+  <section class="tab-panel" id="panelPoint" role="tabpanel" aria-labelledby="tabBtnPoint">
+    <div class="layout">
+      <div class="col">
+
+        <!-- Стартовая точка -->
+        <section class="card rise" style="--d:0">
+          <div class="card-head">
+            <span class="head-ic"><svg class="ic"><use href="#i-crosshair"/></svg></span>
+            <h2 data-i18n="start.title"></h2>
+            <span class="start-chip" id="startChip" hidden></span>
+          </div>
+          <div class="stack">
+            <div class="search" id="startSearch">
+              <div class="search-box">
+                <svg class="ic search-ic"><use href="#i-search"/></svg>
+                <input class="search-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-autocomplete="list" data-i18n-ph="start.search.ph" data-i18n-aria="start.search.label">
+                <span class="spin search-spin" hidden></span>
+              </div>
+              <div class="search-list" role="listbox" hidden></div>
+              <div class="search-status" hidden></div>
+            </div>
+            <div class="duo">
+              <div class="field"><label for="startLat" data-i18n="start.lat"></label><input id="startLat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+              <div class="field"><label for="startLon" data-i18n="start.lon"></label><input id="startLon" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <p class="field-err" id="startErr" hidden></p>
+            <button type="button" class="btn tonal md full ripple" id="geoBtn" data-action="geo">
+              <svg class="ic geo-ic"><use href="#i-crosshair"/></svg><span class="spin" id="geoSpin" hidden></span><span id="geoLabel" data-i18n="start.geo"></span>
+            </button>
+            <p class="fine" data-i18n="start.nominatim"></p>
+          </div>
+        </section>
+
+        <!-- Область генерации -->
+        <section class="card rise" style="--d:1">
+          <div class="card-head">
+            <span class="head-ic"><svg class="ic"><use href="#i-map"/></svg></span>
+            <h2 data-i18n="area.title"></h2>
+          </div>
+          <div class="mode-grid" role="group" data-i18n-aria="area.title">
+            <button type="button" class="mode-card ripple" data-action="mode" data-mode="radius" aria-pressed="true">
+              <span class="mode-check"><svg class="ic"><use href="#i-check"/></svg></span>
+              <svg class="ic"><use href="#i-crosshair"/></svg><b data-i18n="mode.radius"></b><small data-i18n="mode.radius.sub"></small>
+            </button>
+            <button type="button" class="mode-card ripple" data-action="mode" data-mode="rect" aria-pressed="false">
+              <span class="mode-check"><svg class="ic"><use href="#i-check"/></svg></span>
+              <svg class="ic"><use href="#i-square"/></svg><b data-i18n="mode.rect"></b><small data-i18n="mode.rect.sub"></small>
+            </button>
+            <button type="button" class="mode-card ripple" data-action="mode" data-mode="city" aria-pressed="false">
+              <span class="mode-check"><svg class="ic"><use href="#i-check"/></svg></span>
+              <svg class="ic"><use href="#i-home"/></svg><b data-i18n="mode.city"></b><small data-i18n="mode.city.sub"></small>
+            </button>
+            <button type="button" class="mode-card ripple" data-action="mode" data-mode="planet" aria-pressed="false">
+              <span class="mode-check"><svg class="ic"><use href="#i-check"/></svg></span>
+              <svg class="ic"><use href="#i-globe"/></svg><b data-i18n="mode.planet"></b><small data-i18n="mode.planet.sub"></small>
+            </button>
+          </div>
+
+          <!-- Режим: радиус -->
+          <div class="mode-panel" id="panel-radius">
+            <div class="radius-head"><span data-i18n="radius.label"></span><b id="radiusVal">10 км</b></div>
+            <input type="range" id="radiusRange" min="1" max="20" step="1" value="10" data-i18n-aria="radius.label">
+            <div class="chips" id="radiusChips"></div>
+          </div>
+
+          <!-- Режим: прямоугольник -->
+          <div class="mode-panel" id="panel-rect" hidden>
+            <div class="rect-group">
+              <span class="grp-lbl" data-i18n="rect.sw"></span>
+              <div class="duo">
+                <div class="field"><label for="rectSwLat" data-i18n="start.lat"></label><input id="rectSwLat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+                <div class="field"><label for="rectSwLon" data-i18n="start.lon"></label><input id="rectSwLon" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+              </div>
+            </div>
+            <div class="rect-group">
+              <span class="grp-lbl" data-i18n="rect.ne"></span>
+              <div class="duo">
+                <div class="field"><label for="rectNeLat" data-i18n="start.lat"></label><input id="rectNeLat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+                <div class="field"><label for="rectNeLon" data-i18n="start.lon"></label><input id="rectNeLon" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+              </div>
+            </div>
+            <p class="field-err" id="rectErr" hidden></p>
+            <p class="fine mono" id="rectDims"></p>
+            <button type="button" class="btn tonal md full ripple" id="drawOpenBtn" data-action="draw-open">
+              <svg class="ic"><use href="#i-square"/></svg><span data-i18n="rect.draw"></span>
+            </button>
+          </div>
+
+          <!-- Режим: город -->
+          <div class="mode-panel" id="panel-city" hidden>
+            <div class="search" id="citySearch">
+              <div class="search-box">
+                <svg class="ic search-ic"><use href="#i-search"/></svg>
+                <input class="search-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-autocomplete="list" data-i18n-ph="start.search.ph" data-i18n-aria="city.label">
+                <span class="spin search-spin" hidden></span>
+              </div>
+              <div class="search-list" role="listbox" hidden></div>
+              <div class="search-status" hidden></div>
+            </div>
+            <div id="cityBox"></div>
+            <div class="radius-head"><span data-i18n="radius.around"></span><b id="cityRadiusVal">10 км</b></div>
+            <div class="chips" id="cityChips"></div>
+            <p class="fine" data-i18n="start.nominatim"></p>
+          </div>
+
+          <!-- Режим: вся планета -->
+          <div class="mode-panel" id="panel-planet" hidden>
+            <div class="note"><svg class="ic"><use href="#i-alert"/></svg><span data-i18n="planet.warn"></span></div>
+          </div>
+        </section>
+
+        <button type="button" class="btn filled lg full gen-btn ripple rise" style="--d:2" id="genBtn" data-action="generate">
+          <svg class="ic"><use href="#i-dice"/></svg><span data-i18n="gen"></span>
+        </button>
+        <p class="fine center rise" style="--d:3"><svg class="ic inline"><use href="#i-check"/></svg> <span data-i18n="local.note"></span></p>
+      </div>
+
+      <!-- Результат -->
+      <div class="col">
+        <section class="card result-card rise" style="--d:2" id="resultCard">
+          <div id="resultBody" class="stack-lg"></div>
+          <div class="map-toggle-row" id="mapToggleRow" hidden>
+            <button type="button" class="map-toggle ripple" id="mapToggleBtn" data-action="map-toggle" aria-expanded="false">
+              <svg class="ic"><use href="#i-map"/></svg><span id="mapToggleLabel"></span><svg class="ic chev"><use href="#i-chevron"/></svg>
+            </button>
+          </div>
+          <div class="map-wrap" id="mapWrap" data-open="0" inert>
+            <div class="map-clip">
+              <div class="map-inner">
+                <div class="map-top">
+                  <div class="seg" role="group" id="tilesSeg" data-i18n-aria="map.tiles">
+                    <button type="button" class="ripple active" data-action="tiles" data-tiles="osm">OSM</button>
+                    <button type="button" class="ripple" data-action="tiles" data-tiles="topo">OpenTopoMap</button>
+                  </div>
+                </div>
+                <div id="embedMap"></div>
+                <div class="note info" id="mapFail" hidden><svg class="ic"><use href="#i-alert"/></svg><span data-i18n="map.fail"></span></div>
+                <div class="legend">
+                  <span><span class="lg-dot"></span><span data-i18n="map.legend.start"></span></span>
+                  <span><svg class="ic lg-pin"><use href="#i-pin"/></svg><span data-i18n="map.legend.point"></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Вкладка 2: маршрут ===================== -->
+  <section class="tab-panel" id="panelRoute" role="tabpanel" aria-labelledby="tabBtnRoute" hidden>
+    <div class="route-wrap">
+      <section class="card result-card" id="routeCard">
+        <div id="routeBody" class="stack-lg"></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== Подвал ===================== -->
+<footer class="wrap footer">
+  <p class="fine" data-i18n="footer.data"></p>
+  <div class="foot-links">
+    <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
+    <a href="https://opentopomap.org" target="_blank" rel="noopener noreferrer">OpenTopoMap</a>
+    <a href="https://nominatim.org" target="_blank" rel="noopener noreferrer">Nominatim</a>
+    <button type="button" class="text-btn danger ripple" id="resetBtn" data-action="reset">
+      <svg class="ic"><use href="#i-trash"/></svg><span data-i18n="footer.reset"></span>
+    </button>
+  </div>
+</footer>
+
+<!-- ===================== Модалка: рисование прямоугольника ===================== -->
+<div class="modal-backdrop" id="drawModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drawTitle">
+    <div class="modal-head">
+      <h3 id="drawTitle" data-i18n="draw.title"></h3>
+      <button type="button" class="icon-btn ripple" data-action="draw-cancel" data-i18n-aria="aria.close"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="draw-body">
+      <div id="drawMapEl"></div>
+      <div class="draw-hint" id="drawHint"><svg class="ic"><use href="#i-square"/></svg><span data-i18n="draw.hint"></span></div>
+      <div class="note info draw-fail" id="drawFail" hidden><svg class="ic"><use href="#i-alert"/></svg><span data-i18n="map.fail"></span></div>
+    </div>
+    <div class="modal-foot">
+      <span class="mono draw-readout" id="drawReadout"></span>
+      <div class="modal-btns">
+        <button type="button" class="btn text ripple" data-action="draw-clear" id="drawClear"><svg class="ic"><use href="#i-trash"/></svg><span data-i18n="draw.clear"></span></button>
+        <button type="button" class="btn outline md ripple" data-action="draw-cancel"><span data-i18n="draw.cancel"></span></button>
+        <button type="button" class="btn filled md ripple" data-action="draw-apply" id="drawApply" disabled><svg class="ic"><use href="#i-check"/></svg><span data-i18n="draw.apply"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px;text-align:center">Maprandom requires JavaScript / Для работы Maprandom нужен JavaScript.</p></noscript>
+
+<!-- ===================== SVG-спрайт иконок ===================== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-dice" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="currentColor" stroke="none"/></g></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="18.5" r="2.3"/><circle cx="18.5" cy="5.5" r="2.3"/><path d="M7.8 18.5h6.7a3.6 3.6 0 0 0 0-7.2H9.5a3.6 3.6 0 0 1 0-7.2h6.7" stroke-dasharray="3.2 3.2"/></g></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.5s-7.2-5.4-7.2-11A7.2 7.2 0 0 1 12 3.3a7.2 7.2 0 0 1 7.2 7.2c0 5.6-7.2 11-7.2 11z"/><circle cx="12" cy="10.4" r="2.6"/></g></symbol>
+  <symbol id="i-crosshair" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="6.8"/><path d="M12 2.2v3M12 18.8v3M2.2 12h3M18.8 12h3"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></g></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.6 16.6 21 21"/></g></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/></g></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 13.2A8.6 8.6 0 1 1 10.8 3.2a7 7 0 0 0 10 10z"/></g></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12.5" rx="2.2"/><path d="M8.5 20.5h7M12 16.5v4"/></g></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.2 0 2-.9 2-2 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1.1.9-2 2-2h2.3A4.7 4.7 0 0 0 22 9.8C21.5 6 17.2 3 12 3z"/><circle cx="7.6" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="10.6" cy="6.9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.2" cy="7.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="6.9" cy="14.6" r="1.2" fill="currentColor" stroke="none"/></g></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.6 5 5L19.5 6.5"/></g></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11.5" height="11.5" rx="2.2"/><path d="M5.5 15H4.8A2.3 2.3 0 0 1 2.5 12.7V4.8A2.3 2.3 0 0 1 4.8 2.5h7.9A2.3 2.3 0 0 1 15 4.8v.7"/></g></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4.5h5.5V10"/><path d="M19.5 4.5 10.5 13.5"/><path d="M19.5 14v4.2a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2V6.3a1.8 1.8 0 0 1 1.8-1.8H10"/></g></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 11.2v5"/><circle cx="12" cy="7.8" r="1.15" fill="currentColor" stroke="none"/></g></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></g></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20.5v-5h5"/><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 3.5v5h-5"/></g></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5 3.5 6.3v13.2L9 17.7l6 1.8 5.5-1.8V4.5L15 6.3 9 4.5z"/><path d="M9 4.5v13.2M15 6.3v13.2"/></g></symbol>
+  <symbol id="i-square" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2.5" stroke-dasharray="4 3.2"/></g></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M3.2 12h17.6"/><path d="M12 3.2c2.9 3.5 2.9 14.1 0 17.6-2.9-3.5-2.9-14.1 0-17.6z"/></g></symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.6" cy="17.4" r="3.4"/><circle cx="18.4" cy="17.4" r="3.4"/><circle cx="15" cy="5" r="1.1"/><path d="M12 17.4V14l-3-3 4-3 2 3h2.2"/></g></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.4" cy="4.6" r="1.7"/><path d="m13.4 7.6-2.9 4.4 2.9 3.4v5.4"/><path d="m10.5 12-2.4 1.6-1.3 4.2"/><path d="m13.4 9.6 2.8 2.2 2.6.6"/></g></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></g></symbol>
+  <symbol id="i-distance" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="19" r="1.9"/><circle cx="19" cy="5" r="1.9"/><path d="M6.5 17.5 17.5 6.5" stroke-dasharray="2.6 2.8"/></g></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 2.6 19.8h18.8L12 3.4z"/><path d="M12 9.6v4.4"/><circle cx="12" cy="16.9" r="1.05" fill="currentColor" stroke="none"/></g></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.2 7V5.3A1.6 1.6 0 0 1 10.8 3.7h2.4a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="m6.4 7 .8 12a2 2 0 0 0 2 1.9h5.6a2 2 0 0 0 2-1.9l.8-12"/></g></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9.5 6 6 6-6"/></g></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 11 8.5-7.5L20.5 11"/><path d="M6 9.3V20h12V9.3"/><path d="M10 20v-5.4h4V20"/></g></symbol>
+</svg>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+'use strict';
+/* ============================================================
+   Maprandom — вся логика приложения (без фреймворков)
+   ============================================================ */
+
+/* ---------- Словари интерфейса (RU / EN) ---------- */
+const I18N = {
+ru: {
+"app.tagline":"Случайная точка для велопрогулки",
+"tabs.point":"Случайная точка","tabs.route":"Маршрут","tabs.aria":"Вкладки приложения",
+"header.lang":"Язык интерфейса","header.theme":"Тема оформления",
+"theme.light":"Светлая тема","theme.dark":"Тёмная тема","theme.system":"Как в системе",
+"accent.title":"Акцентный цвет","accent.custom":"Свой цвет","accent.reset":"Сбросить",
+"accent.hint":"Фон, поверхности и контраст строятся из базового цвета автоматически — в духе Material You.",
+"start.title":"Стартовая точка","start.search.ph":"Город, посёлок, деревня…","start.search.label":"Поиск населённого пункта для старта",
+"start.lat":"Широта","start.lon":"Долгота",
+"start.geo":"Определить моё местоположение","start.geo.loading":"Определяем…","start.geoLabel":"Моё местоположение",
+"start.nominatim":"Поиск — Nominatim, сервис сообщества OpenStreetMap. Не чаще одного запроса в секунду.",
+"start.updated":"Стартовая точка обновлена","default.city":"Москва",
+"city.label":"Поиск населённого пункта для области","city.none":"Найдите населённый пункт — он станет центром области.","city.clear":"Убрать город",
+"search.loading":"Ищем…","search.empty":"Ничего не найдено. Уточните название.",
+"search.error":"Не удалось связаться с Nominatim. Проверьте соединение и попробуйте ещё раз.",
+"search.min":"Введите минимум два символа.",
+"geo.success":"Местоположение определено",
+"geo.denied":"Доступ к геолокации запрещён. Разрешите его в настройках браузера или введите координаты вручную.",
+"geo.unavailable":"Местоположение недоступно. Попробуйте ещё раз или введите координаты вручную.",
+"geo.timeout":"Геолокация не успела ответить. Попробуйте ещё раз.",
+"geo.unsupported":"Этот браузер не поддерживает геолокацию.",
+"valid.latlon":"Проверьте координаты: широта −90…90, долгота −180…180.",
+"valid.rect":"Юго-западный угол должен быть южнее и западнее северо-восточного.",
+"area.title":"Область генерации",
+"mode.radius":"Радиус","mode.radius.sub":"вокруг старта",
+"mode.rect":"Прямоугольник","mode.rect.sub":"своя область",
+"mode.city":"Город","mode.city.sub":"поиск поселения",
+"mode.planet":"Вся планета","mode.planet.sub":"куда угодно",
+"radius.label":"Радиус от старта","radius.around":"Радиус вокруг центра",
+"units.km":"км","units.m":"м",
+"rect.sw":"Юго-западный угол","rect.ne":"Северо-восточный угол","rect.swShort":"ЮЗ","rect.neShort":"СВ",
+"rect.draw":"Нарисовать область на карте","rect.dims":"≈ {w} × {h} {u}",
+"planet.warn":"Точка может оказаться в океане, пустыне или другом безлюдном месте — это нормально. Режим для игр и любопытства.",
+"gen":"Сгенерировать случайную точку","gen.again":"Сгенерировать заново",
+"gen.needCity":"Сначала найдите населённый пункт в режиме «Город».",
+"local.note":"Всё работает локально: настройки и последняя точка хранятся только в вашем браузере.",
+"result.empty.title":"Точка ещё не выбрана",
+"result.empty.text":"Настройте стартовую точку и область, затем нажмите «Сгенерировать случайную точку».",
+"result.title":"Ваша точка","result.coords":"Координаты",
+"result.mode.radius":"В радиусе {r} {u} от старта","result.mode.rect":"Внутри прямоугольника",
+"result.mode.city":"{name} · радиус {r} {u}","result.mode.planet":"Случайная точка планеты",
+"result.distance":"По прямой от старта","result.distance.ref":"По прямой от старта · справка","result.bearing":"Направление",
+"bear.N":"С","bear.NE":"СВ","bear.E":"В","bear.SE":"ЮВ","bear.S":"Ю","bear.SW":"ЮЗ","bear.W":"З","bear.NW":"СЗ",
+"copy":"Скопировать координаты","copied":"Координаты скопированы","copy.fail":"Не удалось скопировать координаты",
+"open.point":"Открыть точку на картах","open.route":"Построить маршрут",
+"maps.google":"Google Maps","maps.yandex":"Яндекс.Карты","maps.dgis":"2ГИС","maps.osm":"OpenStreetMap",
+"maps.sub.point":"точка","maps.sub.route":"маршрут","maps.sub.bike":"веломаршрут","maps.sub.walk":"пеший маршрут",
+"dgis.note":"2ГИС откроет точку — маршрут постройте в самом приложении.",
+"openmaps.title":"Открытые карты",
+"openmaps.warn":"Это сервисы сообщества OpenStreetMap: данные и маршруты могут быть неполными или неточными.",
+"map.show":"Показать на карте","map.hide":"Скрыть карту","map.tiles":"Слой карты",
+"map.legend.start":"Старт","map.legend.point":"Точка",
+"map.fail":"Не удалось загрузить библиотеку карты. Проверьте интернет-соединение — координаты и ссылки работают и без неё.",
+"route.title":"Маршрут до точки",
+"route.empty.title":"Сначала сгенерируйте точку",
+"route.empty.text":"Маршрут строится к последней случайной точке. Вернитесь на вкладку генерации и бросьте кубик.",
+"route.empty.cta":"К генератору",
+"route.from":"Старт","route.to":"Точка",
+"route.mode.bike":"Велосипед","route.mode.walk":"Пешком",
+"route.straight":"Расстояние по прямой — реальный маршрут будет длиннее.","route.straight.lbl":"по прямой",
+"route.other":"Другая точка",
+"draw.title":"Нарисуйте прямоугольник",
+"draw.hint":"Зажмите и протяните мышью или пальцем. Колесо и кнопки +/− — масштаб.",
+"draw.clear":"Очистить","draw.cancel":"Отмена","draw.apply":"Применить",
+"draw.readout.empty":"Область не выбрана","draw.applied":"Область обновлена",
+"footer.data":"Maprandom работает полностью локально, без API-ключей. Карты © участники OpenStreetMap, рельеф — OpenTopoMap (CC BY-SA), поиск — Nominatim.",
+"footer.reset":"Сбросить настройки","footer.reset.confirm":"Точно сбросить? Нажмите ещё раз","footer.reset.done":"Настройки сброшены",
+"aria.close":"Закрыть","aria.info":"Подробнее о сервисах"
+},
+en: {
+"app.tagline":"A random point for your bike ride",
+"tabs.point":"Random point","tabs.route":"Route","tabs.aria":"App tabs",
+"header.lang":"Interface language","header.theme":"Color theme",
+"theme.light":"Light theme","theme.dark":"Dark theme","theme.system":"Match system",
+"accent.title":"Accent color","accent.custom":"Custom color","accent.reset":"Reset",
+"accent.hint":"Background, surfaces and contrast are derived from the base color automatically — Material You style.",
+"start.title":"Starting point","start.search.ph":"City, town, village…","start.search.label":"Search a settlement for the start",
+"start.lat":"Latitude","start.lon":"Longitude",
+"start.geo":"Detect my location","start.geo.loading":"Locating…","start.geoLabel":"My location",
+"start.nominatim":"Search by Nominatim, an OpenStreetMap community service. At most one request per second.",
+"start.updated":"Starting point updated","default.city":"Moscow",
+"city.label":"Search a settlement for the area","city.none":"Find a settlement — it becomes the center of the area.","city.clear":"Remove city",
+"search.loading":"Searching…","search.empty":"Nothing found. Try a different name.",
+"search.error":"Couldn't reach Nominatim. Check your connection and try again.",
+"search.min":"Type at least two characters.",
+"geo.success":"Location detected",
+"geo.denied":"Location access denied. Allow it in your browser settings or enter coordinates manually.",
+"geo.unavailable":"Location unavailable. Try again or enter coordinates manually.",
+"geo.timeout":"Timed out while getting your location. Please try again.",
+"geo.unsupported":"This browser doesn't support geolocation.",
+"valid.latlon":"Check the coordinates: latitude −90…90, longitude −180…180.",
+"valid.rect":"The south-west corner must be south and west of the north-east one.",
+"area.title":"Generation area",
+"mode.radius":"Radius","mode.radius.sub":"around the start",
+"mode.rect":"Rectangle","mode.rect.sub":"custom bounds",
+"mode.city":"City","mode.city.sub":"settlement search",
+"mode.planet":"Whole planet","mode.planet.sub":"anywhere",
+"radius.label":"Radius from start","radius.around":"Radius around center",
+"units.km":"km","units.m":"m",
+"rect.sw":"South-west corner","rect.ne":"North-east corner","rect.swShort":"SW","rect.neShort":"NE",
+"rect.draw":"Draw area on the map","rect.dims":"≈ {w} × {h} {u}",
+"planet.warn":"The point may land in an ocean, a desert or somewhere uninhabited — that's fine. A mode for games and curiosity.",
+"gen":"Generate random point","gen.again":"Generate again",
+"gen.needCity":"Find a settlement first in “City” mode.",
+"local.note":"Everything runs locally: settings and the last point are stored only in your browser.",
+"result.empty.title":"No point yet",
+"result.empty.text":"Set the starting point and the area, then press “Generate random point”.",
+"result.title":"Your point","result.coords":"Coordinates",
+"result.mode.radius":"Within {r} {u} of the start","result.mode.rect":"Inside the rectangle",
+"result.mode.city":"{name} · radius {r} {u}","result.mode.planet":"Random point on the planet",
+"result.distance":"Straight line from start","result.distance.ref":"Straight line from start · FYI","result.bearing":"Bearing",
+"bear.N":"N","bear.NE":"NE","bear.E":"E","bear.SE":"SE","bear.S":"S","bear.SW":"SW","bear.W":"W","bear.NW":"NW",
+"copy":"Copy coordinates","copied":"Coordinates copied","copy.fail":"Couldn't copy the coordinates",
+"open.point":"Open the point on maps","open.route":"Get directions",
+"maps.google":"Google Maps","maps.yandex":"Yandex Maps","maps.dgis":"2GIS","maps.osm":"OpenStreetMap",
+"maps.sub.point":"point","maps.sub.route":"route","maps.sub.bike":"bike route","maps.sub.walk":"walking route",
+"dgis.note":"2GIS opens the point — build the route inside the app.",
+"openmaps.title":"Open maps",
+"openmaps.warn":"These are OpenStreetMap community services: data and routes may be incomplete or inaccurate.",
+"map.show":"Show on the map","map.hide":"Hide the map","map.tiles":"Map layer",
+"map.legend.start":"Start","map.legend.point":"Point",
+"map.fail":"Couldn't load the map library. Check your internet connection — coordinates and links work without it.",
+"route.title":"Route to the point",
+"route.empty.title":"Generate a point first",
+"route.empty.text":"The route uses your latest random point. Go back to the generator tab and roll the dice.",
+"route.empty.cta":"Go to generator",
+"route.from":"Start","route.to":"Point",
+"route.mode.bike":"Bicycle","route.mode.walk":"Walking",
+"route.straight":"Straight-line distance — the actual route will be longer.","route.straight.lbl":"straight line",
+"route.other":"Another point",
+"draw.title":"Draw a rectangle",
+"draw.hint":"Press and drag with a mouse or finger. Scroll wheel and +/− buttons zoom.",
+"draw.clear":"Clear","draw.cancel":"Cancel","draw.apply":"Apply",
+"draw.readout.empty":"No area selected","draw.applied":"Area updated",
+"footer.data":"Maprandom runs fully locally, no API keys. Maps © OpenStreetMap contributors, relief — OpenTopoMap (CC BY-SA), search — Nominatim.",
+"footer.reset":"Reset settings","footer.reset.confirm":"Really reset? Click again","footer.reset.done":"Settings reset",
+"aria.close":"Close","aria.info":"About these services"
+}
+};
+
+/* ---------- Константы и состояние ---------- */
+const KEY='maprandom.v1';
+const RADII=[1,3,5,10,15,20];
+const SWATCHES=['#2e9e5b','#00897b','#2563eb','#7c4dff','#c2185b','#d32f2f','#e65100','#f9a825'];
+const CARDINALS=['N','NE','E','SE','S','SW','W','NW'];
+const MODE_ICONS={radius:'crosshair',rect:'square',city:'home',planet:'globe'};
+const DEFAULTS={
+  lang:'ru',theme:'system',base:'#2e9e5b',
+  start:{lat:55.7558,lon:37.6173},startName:null,startGeo:false,
+  mode:'radius',radius:10,
+  rect:{swLat:55.6558,swLon:37.4173,neLat:55.8558,neLon:37.8173},
+  city:{name:'',lat:55.7558,lon:37.6173},
+  travel:'bike',tiles:'osm',count:0,point:null
+};
+
+/* ---------- Утилиты ---------- */
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+function wrapLon(v){return ((v+180)%360+360)%360-180;}
+function fmt5(v){return (Math.round(v*1e5)/1e5).toFixed(5);}
+function pair(lat,lon){return fmt5(lat)+', '+fmt5(lon);}
+function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function ic(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';}
+function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+function t(key){const d=I18N[state.lang]||I18N.ru;return d[key]!==undefined?d[key]:(I18N.ru[key]!==undefined?I18N.ru[key]:key);}
+function tf(key,vars){let s=t(key);Object.keys(vars).forEach(function(k){s=s.split('{'+k+'}').join(vars[k]);});return s;}
+function locale(){return state.lang==='ru'?'ru-RU':'en-US';}
+
+/* Расстояние по большой окружности, км */
+function haversine(a,b){
+  const R=6371.0088,r=Math.PI/180;
+  const dLat=(b.lat-a.lat)*r,dLon=(b.lon-a.lon)*r;
+  const h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+/* Начальный азимут, градусы 0…360 */
+function bearing(a,b){
+  const r=Math.PI/180;
+  const p1=a.lat*r,p2=b.lat*r,dl=(b.lon-a.lon)*r;
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return (Math.atan2(y,x)/r+360)%360;
+}
+function fmtDist(km){
+  if(km<1)return Math.round(km*1000)+' '+t('units.m');
+  const digits=km<10?2:(km<100?1:0);
+  return new Intl.NumberFormat(locale(),{maximumFractionDigits:digits}).format(km)+' '+t('units.km');
+}
+function fmtTime(ts){
+  const d=new Date(ts),now=new Date();
+  const tm=d.toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'});
+  if(d.toDateString()===now.toDateString())return tm;
+  return d.toLocaleDateString(locale(),{day:'numeric',month:'short'})+' '+tm;
+}
+function parseCoord(v){
+  const s=String(v).trim().replace(',','.');
+  if(!/^[+-]?\d+(\.\d+)?$/.test(s))return null;
+  const n=parseFloat(s);
+  return isFinite(n)?n:null;
+}
+
+/* ---------- Палитра Material You из базового цвета (OKLCH) ---------- */
+function hexToRgb(h){
+  h=h.replace('#','');
+  if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');
+  const n=parseInt(h,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function srgbToLin(u){u/=255;return u<=0.04045?u/12.92:Math.pow((u+0.055)/1.055,2.4);}
+function linToSrgb(u){return u<=0.0031308?12.92*u:1.055*Math.pow(u,1/2.4)-0.055;}
+function rgbToOklab(r,g,b){
+  const l=0.4122214708*r+0.5363325363*g+0.0514459929*b;
+  const m=0.2119034982*r+0.6806995451*g+0.1073969566*b;
+  const s=0.0883024619*r+0.2817188376*g+0.6299787005*b;
+  const l_=Math.cbrt(l),m_=Math.cbrt(m),s_=Math.cbrt(s);
+  return [0.2104542553*l_+0.7936177850*m_-0.0040720468*s_,
+          1.9779984951*l_-2.4285922050*m_+0.4505937099*s_,
+          0.0259040371*l_+0.7827717662*m_-0.8086757660*s_];
+}
+function oklabToRgb(L,a,b){
+  const l_=L+0.3963377774*a+0.2158037573*b;
+  const m_=L-0.1055613458*a-0.0638541728*b;
+  const s_=L-0.0894841775*a-1.2914855480*b;
+  const l=l_*l_*l_,m=m_*m_*m_,s=s_*s_*s_;
+  return [4.0767416621*l-3.3077115913*m+0.2309699292*s,
+          -1.2684380046*l+2.6097574011*m-0.3413193965*s,
+          -0.0041960863*l-0.7034186147*m+1.7076147010*s];
+}
+/* Тон M3 (L* CIELAB) → светлота OKLab */
+function toneL(tone){
+  const y=tone<=8?tone/903.3:Math.pow((tone+16)/116,3);
+  return Math.cbrt(y);
+}
+/* OKLCH → hex с сжатием хромы в sRGB-гамут */
+function oklchToHex(L,C,H){
+  const h=H*Math.PI/180;
+  function attempt(c){return oklabToRgb(L,c*Math.cos(h),c*Math.sin(h));}
+  function inside(rgb){return rgb.every(function(v){return v>=-0.0005&&v<=1.0005;});}
+  let rgb=attempt(C);
+  if(!inside(rgb)){
+    let lo=0,hi=C;
+    for(let i=0;i<20;i++){
+      const mid=(lo+hi)/2;
+      if(inside(attempt(mid)))lo=mid;else hi=mid;
+    }
+    rgb=attempt(lo);
+  }
+  return '#'+rgb.map(function(v){
+    const s=clamp(linToSrgb(clamp(v,0,1)),0,1);
+    return Math.round(s*255).toString(16).padStart(2,'0');
+  }).join('');
+}
+function relLum(hex){
+  const c=hexToRgb(hex).map(srgbToLin);
+  return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+}
+function buildPalette(seed,dark){
+  const lin=hexToRgb(seed).map(srgbToLin);
+  const lab=rgbToOklab(lin[0],lin[1],lin[2]);
+  const C=Math.hypot(lab[1],lab[2]);
+  let H=Math.atan2(lab[2],lab[1])*180/Math.PI;if(H<0)H+=360;
+  const cp=C<0.02?C:clamp(C,0.09,0.16);
+  const cs=Math.min(cp/3,0.06),ct=Math.min(cp/2,0.10),ht=(H+60)%360;
+  const cn=Math.min(cp*0.08,0.012),cnv=Math.min(cp*0.16,0.024);
+  function T(hue,ch,tone){return oklchToHex(toneL(tone),ch,hue);}
+  if(!dark)return {
+    'primary':T(H,cp,40),'on-primary':T(H,cp,100),'primary-container':T(H,cp,90),'on-primary-container':T(H,cp,10),
+    'secondary':T(H,cs,40),'on-secondary':T(H,cs,100),'secondary-container':T(H,cs,90),'on-secondary-container':T(H,cs,10),
+    'tertiary':T(ht,ct,40),'tertiary-container':T(ht,ct,90),'on-tertiary-container':T(ht,ct,10),
+    'surface':T(H,cn,98),'on-surface':T(H,cn,10),'on-surface-variant':T(H,cnv,30),
+    'outline':T(H,cnv,50),'outline-variant':T(H,cnv,80),
+    'surface-container-lowest':T(H,cn,100),'surface-container-low':T(H,cn,96),'surface-container':T(H,cn,94),
+    'surface-container-high':T(H,cn,92),'surface-container-highest':T(H,cn,90),
+    'inverse-surface':T(H,cn,20),'inverse-on-surface':T(H,cn,95),'inverse-primary':T(H,cp,80),
+    'error':T(27,0.14,40),'on-error':T(27,0.14,100),'error-container':T(27,0.14,92),'on-error-container':T(27,0.14,10),
+    'success':T(152,0.13,40),'success-container':T(152,0.13,90),'on-success-container':T(152,0.13,10),
+    'warning':T(85,0.13,40),'warning-container':T(85,0.13,92),'on-warning-container':T(85,0.13,10),
+    'info':T(250,0.12,45),'info-container':T(250,0.12,92),'on-info-container':T(250,0.12,10)
+  };
+  return {
+    'primary':T(H,cp,80),'on-primary':T(H,cp,20),'primary-container':T(H,cp,30),'on-primary-container':T(H,cp,90),
+    'secondary':T(H,cs,80),'on-secondary':T(H,cs,20),'secondary-container':T(H,cs,30),'on-secondary-container':T(H,cs,90),
+    'tertiary':T(ht,ct,80),'tertiary-container':T(ht,ct,30),'on-tertiary-container':T(ht,ct,90),
+    'surface':T(H,cn,6),'on-surface':T(H,cn,90),'on-surface-variant':T(H,cnv,80),
+    'outline':T(H,cnv,60),'outline-variant':T(H,cnv,30),
+    'surface-container-lowest':T(H,cn,4),'surface-container-low':T(H,cn,10),'surface-container':T(H,cn,12),
+    'surface-container-high':T(H,cn,17),'surface-container-highest':T(H,cn,22),
+    'inverse-surface':T(H,cn,90),'inverse-on-surface':T(H,cn,20),'inverse-primary':T(H,cp,40),
+    'error':T(27,0.14,80),'on-error':T(27,0.14,20),'error-container':T(27,0.14,30),'on-error-container':T(27,0.14,90),
+    'success':T(152,0.13,80),'success-container':T(152,0.13,30),'on-success-container':T(152,0.13,90),
+    'warning':T(85,0.13,80),'warning-container':T(85,0.13,30),'on-warning-container':T(85,0.13,90),
+    'info':T(250,0.12,80),'info-container':T(250,0.12,30),'on-info-container':T(250,0.12,90)
+  };
+}
+
+/* ---------- Загрузка / сохранение настроек ---------- */
+function num(v,min,max,fb){
+  const n=typeof v==='number'?v:parseFloat(v);
+  return isFinite(n)&&n>=min&&n<=max?n:fb;
+}
+function sanitizeRect(r,fb){
+  if(!r||typeof r!=='object')return fb;
+  const o={swLat:num(r.swLat,-90,90,fb.swLat),swLon:num(r.swLon,-180,180,fb.swLon),
+           neLat:num(r.neLat,-90,90,fb.neLat),neLon:num(r.neLon,-180,180,fb.neLon)};
+  return (o.swLat<o.neLat&&o.swLon<o.neLon)?o:fb;
+}
+function loadState(){
+  let s=null;
+  try{s=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){s=null;}
+  const d=JSON.parse(JSON.stringify(DEFAULTS));
+  if(!s||typeof s!=='object')return d;
+  d.lang=s.lang==='en'?'en':'ru';
+  d.theme=['light','dark','system'].indexOf(s.theme)>=0?s.theme:'system';
+  d.base=/^#[0-9a-fA-F]{6}$/.test(s.base||'')?s.base.toLowerCase():DEFAULTS.base;
+  if(s.start&&typeof s.start==='object')d.start={lat:num(s.start.lat,-90,90,DEFAULTS.start.lat),lon:num(s.start.lon,-180,180,DEFAULTS.start.lon)};
+  d.startName=(typeof s.startName==='string'&&s.startName)?s.startName.slice(0,80):null;
+  d.startGeo=!!s.startGeo;
+  d.mode=['radius','rect','city','planet'].indexOf(s.mode)>=0?s.mode:'radius';
+  d.radius=Math.round(num(s.radius,1,20,10));
+  d.rect=sanitizeRect(s.rect,DEFAULTS.rect);
+  if(s.city===null)d.city=null;
+  else if(s.city&&typeof s.city==='object'&&isFinite(parseFloat(s.city.lat))&&isFinite(parseFloat(s.city.lon)))
+    d.city={name:String(s.city.name||'').slice(0,80),lat:num(s.city.lat,-90,90,0),lon:num(s.city.lon,-180,180,0)};
+  d.travel=s.travel==='walk'?'walk':'bike';
+  d.tiles=s.tiles==='topo'?'topo':'osm';
+  d.count=Math.max(0,Math.round(num(s.count,0,1e9,0)));
+  if(s.point&&typeof s.point==='object'&&isFinite(parseFloat(s.point.lat))&&isFinite(parseFloat(s.point.lon))){
+    const p={lat:num(s.point.lat,-90,90,0),lon:num(s.point.lon,-180,180,0),
+      mode:['radius','rect','city','planet'].indexOf(s.point.mode)>=0?s.point.mode:'radius',
+      ts:num(s.point.ts,0,8.64e15,Date.now()),radius:Math.round(num(s.point.radius,1,20,10)),
+      center:null,cityName:null,rect:null};
+    if(s.point.center&&isFinite(parseFloat(s.point.center.lat))&&isFinite(parseFloat(s.point.center.lon)))
+      p.center={lat:num(s.point.center.lat,-90,90,0),lon:num(s.point.center.lon,-180,180,0)};
+    if(typeof s.point.cityName==='string'&&s.point.cityName)p.cityName=s.point.cityName.slice(0,80);
+    if(s.point.rect)p.rect=sanitizeRect(s.point.rect,null);
+    d.point=p;
+  }
+  return d;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+let state=loadState();
+const darkMq=matchMedia('(prefers-color-scheme: dark)');
+let activeTab='point',mapOpen=false,geoLoading=false,accentOpen=false;
+const notes={point:true,route:true};
+let startSearchApi=null,citySearchApi=null,resetTimer=null,scrambleTimer=null;
+
+/* ---------- Тема и акцент ---------- */
+function applyTheme(){
+  const resolved=state.theme==='system'?(darkMq.matches?'dark':'light'):state.theme;
+  document.documentElement.dataset.theme=resolved;
+  document.documentElement.style.colorScheme=resolved;
+  const tk=buildPalette(state.base,resolved==='dark');
+  const rs=document.documentElement.style;
+  Object.keys(tk).forEach(function(k){rs.setProperty('--'+k,tk[k]);});
+  const rgb=hexToRgb(tk.primary);
+  rs.setProperty('--primary-rgb',rgb[0]+' '+rgb[1]+' '+rgb[2]);
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute('content',tk.surface);
+  restyleEmbed();
+}
+function setBase(c){
+  if(!/^#[0-9a-fA-F]{6}$/.test(c))return;
+  state.base=c.toLowerCase();save();
+  applyTheme();renderHeader();
+}
+function renderHeader(){
+  $$('#langSeg button').forEach(function(b){b.classList.toggle('active',b.dataset.lang===state.lang);});
+  $$('#themeSeg button').forEach(function(b){b.classList.toggle('active',b.dataset.theme===state.theme);});
+  $('#accentDot').style.background=state.base;
+  $('#customColor').value=state.base;
+  $('#customHex').textContent=state.base.toUpperCase();
+  $('#swatches').innerHTML=SWATCHES.map(function(c){
+    const fg=relLum(c)>0.45?'#111111':'#ffffff';
+    const on=c===state.base;
+    return '<button type="button" class="swatch ripple'+(on?' active':'')+'" style="background:'+c+';color:'+fg+'" data-action="accent" data-color="'+c+'" aria-label="'+c+'" aria-pressed="'+on+'">'+(on?ic('check'):'')+'</button>';
+  }).join('');
+}
+function toggleAccent(force){
+  accentOpen=typeof force==='boolean'?force:!accentOpen;
+  const pop=$('#accentPop');
+  $('#accentBtn').setAttribute('aria-expanded',String(accentOpen));
+  if(accentOpen){pop.hidden=false;requestAnimationFrame(function(){pop.classList.add('open');});}
+  else{pop.classList.remove('open');setTimeout(function(){if(!accentOpen)pop.hidden=true;},200);}
+}
+
+/* ---------- Локализация ---------- */
+function applyI18n(){
+  document.documentElement.lang=state.lang;
+  document.title='Maprandom — '+t('app.tagline');
+  $$('[data-i18n]').forEach(function(el){el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-ph]').forEach(function(el){el.placeholder=t(el.dataset.i18nPh);});
+  $$('[data-i18n-aria]').forEach(function(el){el.setAttribute('aria-label',t(el.dataset.i18nAria));});
+  $$('[data-i18n-title]').forEach(function(el){el.title=t(el.dataset.i18nTitle);});
+  renderAll();
+}
+function renderAll(){
+  renderHeader();renderTabs();renderModes();renderRadius();renderCityBox();renderRectDims();renderStartChip();
+  renderResult(false);renderRoute();updateGeoBtn();updateMapToggle();
+  $$('#tilesSeg button').forEach(function(b){b.classList.toggle('active',b.dataset.tiles===state.tiles);});
+  const rb=$('#resetBtn');
+  rb.querySelector('span').textContent=rb.classList.contains('arm')?t('footer.reset.confirm'):t('footer.reset');
+  if(!$('#drawModal').hidden)updateReadout(drawnBounds);
+}
+
+/* ---------- Вкладки ---------- */
+function renderTabs(){
+  const p=activeTab==='point';
+  $('#tabBtnPoint').classList.toggle('active',p);
+  $('#tabBtnRoute').classList.toggle('active',!p);
+  $('#tabBtnPoint').setAttribute('aria-selected',String(p));
+  $('#tabBtnRoute').setAttribute('aria-selected',String(!p));
+  $('#tabPill').style.transform=p?'translateX(0)':'translateX(100%)';
+}
+function switchTab(name){
+  activeTab=name;renderTabs();
+  $('#panelPoint').hidden=name!=='point';
+  $('#panelRoute').hidden=name!=='route';
+  const panel=name==='point'?$('#panelPoint'):$('#panelRoute');
+  panel.classList.remove('enter');void panel.offsetWidth;panel.classList.add('enter');
+  if(name==='route')renderRoute();
+  else if(mapOpen&&embedMap)setTimeout(function(){embedMap.invalidateSize();},80);
+}
+
+/* ---------- Стартовая точка ---------- */
+function setStartInputs(){
+  $('#startLat').value=fmt5(state.start.lat);
+  $('#startLon').value=fmt5(state.start.lon);
+}
+function clearStartError(){
+  $('#startLat').classList.remove('invalid');
+  $('#startLon').classList.remove('invalid');
+  $('#startErr').hidden=true;
+}
+function validateStart(commit){
+  const la=parseCoord($('#startLat').value),lo=parseCoord($('#startLon').value);
+  const okLa=la!==null&&Math.abs(la)<=90,okLo=lo!==null&&Math.abs(lo)<=180;
+  $('#startLat').classList.toggle('invalid',!okLa);
+  $('#startLon').classList.toggle('invalid',!okLo);
+  const err=$('#startErr');
+  if(okLa&&okLo){
+    err.hidden=true;
+    if(commit){
+      state.start={lat:+fmt5(la),lon:+fmt5(lo)};
+      state.startName=null;state.startGeo=false;
+      renderStartChip();save();renderResult(false);renderRoute();updateEmbed(true);
+    }
+    return true;
+  }
+  err.hidden=false;err.textContent=t('valid.latlon');
+  return false;
+}
+function commitStart(lat,lon,name,isGeo){
+  state.start={lat:+fmt5(clamp(lat,-90,90)),lon:+fmt5(wrapLon(lon))};
+  state.startName=name||null;state.startGeo=!!isGeo;
+  setStartInputs();clearStartError();renderStartChip();save();
+  renderResult(false);renderRoute();updateEmbed(true);
+}
+function renderStartChip(){
+  const chip=$('#startChip');
+  let txt=null,icon='pin';
+  if(state.startName)txt=state.startName;
+  else if(state.startGeo){txt=t('start.geoLabel');icon='crosshair';}
+  else if(Math.abs(state.start.lat-DEFAULTS.start.lat)<1e-9&&Math.abs(state.start.lon-DEFAULTS.start.lon)<1e-9)txt=t('default.city');
+  if(!txt){chip.hidden=true;chip.innerHTML='';return;}
+  chip.hidden=false;chip.innerHTML=ic(icon)+'<span>'+esc(txt)+'</span>';
+}
+function updateGeoBtn(){
+  const b=$('#geoBtn');
+  b.disabled=geoLoading;
+  $('#geoSpin').hidden=!geoLoading;
+  b.querySelector('.geo-ic').style.display=geoLoading?'none':'';
+  $('#geoLabel').textContent=geoLoading?t('start.geo.loading'):t('start.geo');
+}
+function geolocate(){
+  if(geoLoading)return;
+  if(!navigator.geolocation){toast(t('geo.unsupported'),'error');return;}
+  geoLoading=true;updateGeoBtn();
+  navigator.geolocation.getCurrentPosition(function(pos){
+    geoLoading=false;updateGeoBtn();
+    commitStart(pos.coords.latitude,pos.coords.longitude,null,true);
+    toast(t('geo.success'),'success');
+  },function(err){
+    geoLoading=false;updateGeoBtn();
+    const k=err&&err.code===1?'geo.denied':(err&&err.code===3?'geo.timeout':'geo.unavailable');
+    toast(t(k),'error');
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+
+/* ---------- Поиск населённых пунктов (Nominatim) ---------- */
+function setupSearch(rootId,onPick){
+  const root=document.getElementById(rootId);
+  const input=root.querySelector('.search-input');
+  const list=root.querySelector('.search-list');
+  const status=root.querySelector('.search-status');
+  const spinner=root.querySelector('.search-spin');
+  let items=[],active=-1,ctrl=null,t1=null,t2=null,lastReq=0;
+  const cache=new Map();
+  function close(){list.hidden=true;active=-1;input.setAttribute('aria-expanded','false');}
+  function setStatus(msg,kind){
+    if(!msg){status.hidden=true;status.textContent='';status.classList.remove('err');return;}
+    status.hidden=false;status.textContent=msg;status.classList.toggle('err',kind==='err');
+  }
+  function renderList(){
+    list.innerHTML=items.map(function(it,i){
+      return '<button type="button" role="option" class="search-item'+(i===active?' active':'')+'" data-idx="'+i+'" aria-selected="'+(i===active)+'">'+ic('pin')+'<span class="s-txt"><span class="s-name">'+esc(it.name)+'</span><span class="s-sub">'+esc(it.sub)+'</span></span></button>';
+    }).join('');
+    list.hidden=items.length===0;
+    input.setAttribute('aria-expanded',String(items.length>0));
+  }
+  async function run(q){
+    if(cache.has(q)){items=cache.get(q);active=-1;renderList();setStatus(items.length?null:t('search.empty'));return;}
+    spinner.hidden=false;
+    ctrl=new AbortController();
+    try{
+      const lang=state.lang==='en'?'en,ru':'ru';
+      const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&featuretype=settlement&featureType=settlement&accept-language='+lang+'&q='+encodeURIComponent(q);
+      const res=await fetch(url,{signal:ctrl.signal,headers:{'Accept':'application/json'}});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const data=await res.json();
+      const SETTLE=['city','town','village','hamlet','municipality','suburb','quarter','neighbourhood','borough','locality','isolated_dwelling','farm','allotments','city_district'];
+      let arr=(Array.isArray(data)?data:[]).filter(function(d){
+        const cat=d.category||d.class;
+        return (cat==='place'&&SETTLE.indexOf(d.type)>=0)||(cat==='boundary'&&d.type==='administrative')||SETTLE.indexOf(d.addresstype)>=0;
+      });
+      if(!arr.length&&Array.isArray(data))arr=data; /* сервер уже ограничил выборку поселениями */
+      items=arr.slice(0,6).map(function(d){
+        const name=d.name||(d.display_name||'').split(',')[0]||'—';
+        let sub=d.display_name||'';
+        if(sub.indexOf(name)===0)sub=sub.slice(name.length).replace(/^,\s*/,'');
+        return {name:name,sub:sub,lat:parseFloat(d.lat),lon:parseFloat(d.lon)};
+      }).filter(function(it){return isFinite(it.lat)&&isFinite(it.lon);});
+      cache.set(q,items);
+      if(cache.size>30)cache.delete(cache.keys().next().value);
+      active=-1;renderList();
+      setStatus(items.length?null:t('search.empty'));
+    }catch(err){
+      if(err&&err.name==='AbortError')return;
+      items=[];renderList();close();
+      setStatus(t('search.error'),'err');
+    }finally{spinner.hidden=true;}
+  }
+  function schedule(){
+    const q=input.value.trim();
+    clearTimeout(t1);clearTimeout(t2);
+    if(ctrl){ctrl.abort();ctrl=null;}
+    spinner.hidden=true;
+    if(q.length<2){items=[];renderList();close();setStatus(q.length===1?t('search.min'):null);return;}
+    setStatus(t('search.loading'));
+    t1=setTimeout(function(){
+      const wait=Math.max(0,lastReq+1100-Date.now()); /* не чаще 1 запроса в секунду */
+      t2=setTimeout(function(){lastReq=Date.now();run(q);},wait);
+    },450);
+  }
+  function scrollActive(){const el=list.querySelector('.search-item.active');if(el)el.scrollIntoView({block:'nearest'});}
+  function pick(i){
+    const it=items[i];if(!it)return;
+    input.value=it.name;close();setStatus(null);onPick(it);
+  }
+  input.addEventListener('input',schedule);
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){close();return;}
+    if(list.hidden||!items.length)return;
+    if(e.key==='ArrowDown'){e.preventDefault();active=(active+1)%items.length;renderList();scrollActive();}
+    else if(e.key==='ArrowUp'){e.preventDefault();active=(active-1+items.length)%items.length;renderList();scrollActive();}
+    else if(e.key==='Enter'){e.preventDefault();pick(active>=0?active:0);}
+  });
+  list.addEventListener('click',function(e){
+    const b=e.target.closest('.search-item');
+    if(b)pick(+b.dataset.idx);
+  });
+  document.addEventListener('pointerdown',function(e){if(!root.contains(e.target))close();});
+  return {clear:function(){input.value='';items=[];cache.clear();close();setStatus(null);}};
+}
+
+/* ---------- Область: режимы, радиус, прямоугольник, город ---------- */
+function renderModes(){
+  $$('.mode-card').forEach(function(b){
+    const on=b.dataset.mode===state.mode;
+    b.classList.toggle('active',on);
+    b.setAttribute('aria-pressed',String(on));
+  });
+  ['radius','rect','city','planet'].forEach(function(m){
+    document.getElementById('panel-'+m).hidden=m!==state.mode;
+  });
+}
+function renderRadius(){
+  const html=RADII.map(function(r){
+    const on=r===state.radius;
+    return '<button type="button" class="chip ripple'+(on?' active':'')+'" data-action="radius" data-r="'+r+'" aria-pressed="'+on+'">'+r+'<span class="chip-u">'+t('units.km')+'</span></button>';
+  }).join('');
+  $('#radiusChips').innerHTML=html;
+  $('#cityChips').innerHTML=html;
+  const rv=state.radius+' '+t('units.km');
+  $('#radiusVal').textContent=rv;
+  $('#cityRadiusVal').textContent=rv;
+  const range=$('#radiusRange');
+  range.value=state.radius;
+  range.style.setProperty('--fill',((state.radius-1)/19*100)+'%');
+}
+function setRadius(r){
+  state.radius=clamp(Math.round(r),1,20);
+  save();renderRadius();
+}
+function setMode(m){
+  state.mode=m;save();renderModes();
+}
+function setRectInputs(){
+  const r=state.rect;
+  $('#rectSwLat').value=fmt5(r.swLat);
+  $('#rectSwLon').value=fmt5(r.swLon);
+  $('#rectNeLat').value=fmt5(r.neLat);
+  $('#rectNeLon').value=fmt5(r.neLon);
+}
+function clearRectError(){
+  ['rectSwLat','rectSwLon','rectNeLat','rectNeLon'].forEach(function(id){document.getElementById(id).classList.remove('invalid');});
+  $('#rectErr').hidden=true;
+}
+function readRect(){
+  const ids=['rectSwLat','rectSwLon','rectNeLat','rectNeLon'];
+  const v=ids.map(function(id){return parseCoord(document.getElementById(id).value);});
+  const bad=[];
+  if(v[0]===null||Math.abs(v[0])>90)bad.push(ids[0]);
+  if(v[1]===null||Math.abs(v[1])>180)bad.push(ids[1]);
+  if(v[2]===null||Math.abs(v[2])>90)bad.push(ids[2]);
+  if(v[3]===null||Math.abs(v[3])>180)bad.push(ids[3]);
+  if(bad.length)return {ok:false,err:'valid.latlon',bad:bad};
+  if(v[0]>=v[2]||v[1]>=v[3])return {ok:false,err:'valid.rect',bad:ids};
+  return {ok:true,rect:{swLat:v[0],swLon:v[1],neLat:v[2],neLon:v[3]}};
+}
+function validateRect(commit){
+  const v=readRect();
+  ['rectSwLat','rectSwLon','rectNeLat','rectNeLon'].forEach(function(id){
+    document.getElementById(id).classList.toggle('invalid',!v.ok&&v.bad.indexOf(id)>=0);
+  });
+  const err=$('#rectErr');
+  if(v.ok){
+    err.hidden=true;
+    if(commit){state.rect=v.rect;save();renderRectDims();}
+    return true;
+  }
+  err.hidden=false;err.textContent=t(v.err);
+  return false;
+}
+function renderRectDims(){
+  const r=state.rect;
+  const midLat=(r.swLat+r.neLat)/2,midLon=(r.swLon+r.neLon)/2;
+  const w=haversine({lat:midLat,lon:r.swLon},{lat:midLat,lon:r.neLon});
+  const h=haversine({lat:r.swLat,lon:midLon},{lat:r.neLat,lon:midLon});
+  const f=function(x){return new Intl.NumberFormat(locale(),{maximumFractionDigits:1}).format(x);};
+  $('#rectDims').textContent=tf('rect.dims',{w:f(w),h:f(h),u:t('units.km')});
+}
+function renderCityBox(){
+  const box=$('#cityBox');
+  if(!state.city){box.innerHTML='<p class="fine">'+t('city.none')+'</p>';return;}
+  box.innerHTML='<div class="city-chip">'+ic('pin')+'<span class="city-txt"><b>'+esc(state.city.name||t('default.city'))+'</b><span class="mono">'+pair(state.city.lat,state.city.lon)+'</span></span><button type="button" class="icon-btn ripple" data-action="city-clear" aria-label="'+t('city.clear')+'" title="'+t('city.clear')+'">'+ic('x')+'</button></div>';
+}
+
+/* ---------- Генерация случайной точки ---------- */
+function randCircle(center,rKm){
+  const d=rKm*Math.sqrt(Math.random()),a=Math.random()*2*Math.PI;
+  const lat=center.lat+d*Math.sin(a)/111.32;
+  const cosLat=Math.cos(center.lat*Math.PI/180);
+  const lon=center.lon+d*Math.cos(a)/(111.32*(Math.abs(cosLat)<1e-6?1e-6:cosLat));
+  return [clamp(lat,-90,90),wrapLon(lon)];
+}
+function generate(){
+  const m=state.mode;
+  let lat,lon,center=null,cityName=null,rectSnap=null;
+  if(m==='radius'){
+    center={lat:state.start.lat,lon:state.start.lon};
+    const pt=randCircle(center,state.radius);lat=pt[0];lon=pt[1];
+  }else if(m==='city'){
+    if(!state.city){
+      toast(t('gen.needCity'),'warn');
+      const inp=$('#citySearch .search-input');if(inp)inp.focus();
+      return;
+    }
+    center={lat:state.city.lat,lon:state.city.lon};
+    cityName=state.city.name||null;
+    const pt=randCircle(center,state.radius);lat=pt[0];lon=pt[1];
+  }else if(m==='rect'){
+    const v=readRect();
+    if(!v.ok){
+      validateRect(false);
+      toast(t(v.err),'error');
+      const first=document.getElementById(v.bad[0]);if(first)first.focus();
+      return;
+    }
+    state.rect=v.rect;rectSnap={swLat:v.rect.swLat,swLon:v.rect.swLon,neLat:v.rect.neLat,neLon:v.rect.neLon};
+    clearRectError();renderRectDims();
+    lat=v.rect.swLat+Math.random()*(v.rect.neLat-v.rect.swLat);
+    lon=v.rect.swLon+Math.random()*(v.rect.neLon-v.rect.swLon);
+  }else{
+    lat=Math.random()*180-90;
+    lon=Math.random()*360-180;
+  }
+  state.point={lat:+fmt5(lat),lon:+fmt5(wrapLon(lon)),mode:m,ts:Date.now(),radius:state.radius,center:center,cityName:cityName,rect:rectSnap};
+  state.count++;
+  save();
+  renderResult(true);renderRoute();updateEmbed(true);
+  $$('.gen-btn').forEach(function(b){b.classList.remove('rolling');void b.offsetWidth;b.classList.add('rolling');});
+  if(innerWidth<1020&&activeTab==='point')$('#resultCard').scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'});
+}
+/* «Бросок кубика»: координаты коротко перемешиваются и фиксируются */
+function animateCoords(p){
+  const el=$('#coordText');
+  if(!el)return;
+  if(reduced()){el.textContent=pair(p.lat,p.lon);return;}
+  clearInterval(scrambleTimer);
+  let n=0;
+  scrambleTimer=setInterval(function(){
+    n++;
+    if(n>=9){
+      clearInterval(scrambleTimer);
+      el.textContent=pair(p.lat,p.lon);
+      el.classList.add('settle');
+      setTimeout(function(){el.classList.remove('settle');},300);
+      return;
+    }
+    el.textContent=pair(clamp(p.lat+(Math.random()-.5)*.8,-90,90),wrapLon(p.lon+(Math.random()-.5)*.8));
+  },42);
+}
+
+/* ---------- Ссылки на внешние карты ---------- */
+function ptStr(p){return fmt5(p.lat)+','+fmt5(p.lon);}
+const LINKS={
+  googlePoint:function(p){return 'https://www.google.com/maps/search/?api=1&query='+ptStr(p);},
+  googleRoute:function(s,p,m){return 'https://www.google.com/maps/dir/?api=1&origin='+ptStr(s)+'&destination='+ptStr(p)+'&travelmode='+(m==='bike'?'bicycling':'walking');},
+  yandexPoint:function(p){return 'https://yandex.ru/maps/?pt='+fmt5(p.lon)+','+fmt5(p.lat)+'&z=14&l=map';},
+  yandexRoute:function(s,p,m){return 'https://yandex.ru/maps/?rtext='+ptStr(s)+'~'+ptStr(p)+'&rtt='+(m==='bike'?'bc':'pd');},
+  dgisPoint:function(p){return 'https://2gis.ru/geo/'+encodeURIComponent(fmt5(p.lon)+','+fmt5(p.lat));},
+  osmPoint:function(p){return 'https://www.openstreetmap.org/?mlat='+fmt5(p.lat)+'&mlon='+fmt5(p.lon)+'#map=14/'+fmt5(p.lat)+'/'+fmt5(p.lon);},
+  osmRoute:function(s,p,m){return 'https://www.openstreetmap.org/directions?engine='+(m==='bike'?'graphhopper_bicycle':'graphhopper_foot')+'&route='+encodeURIComponent(ptStr(s)+';'+ptStr(p));}
+};
+function svcBtn(href,color,glyph,name,sub,extra){
+  const fs=glyph.length>2?'10px':(glyph.length>1?'12px':'16px');
+  const fg=relLum(color)>0.35?'#0e2410':'#ffffff';
+  return '<a class="svc ripple'+(extra?' '+extra:'')+'" href="'+href+'" target="_blank" rel="noopener noreferrer">'+
+    '<span class="badge" style="background:'+color+';color:'+fg+';font-size:'+fs+'">'+glyph+'</span>'+
+    '<span class="svc-txt"><span class="svc-name">'+esc(name)+'</span><span class="svc-sub">'+esc(sub)+'</span></span>'+
+    ic('external','svc-ext')+'</a>';
+}
+
+/* ---------- Иллюстрация пустого состояния ---------- */
+const ILLU='<svg class="illu" viewBox="0 0 260 150" fill="none" aria-hidden="true">'+
+'<path d="M20 118C60 60 120 130 158 74" stroke="var(--outline)" stroke-width="2" stroke-dasharray="1 8" stroke-linecap="round"/>'+
+'<path d="M158 74C176 48 200 44 216 50" stroke="var(--primary)" stroke-width="2.5" stroke-dasharray="6 7" stroke-linecap="round"/>'+
+'<circle cx="20" cy="118" r="7" fill="var(--tertiary)"/>'+
+'<circle cx="20" cy="118" r="12" stroke="var(--tertiary)" opacity=".35" stroke-width="2"/>'+
+'<g class="illu-pin"><path d="M218 18c-11 0-19 8-19 18 0 13 19 31 19 31s19-18 19-31c0-10-8-18-19-18z" fill="var(--primary)"/>'+
+'<circle cx="218" cy="36" r="6.5" fill="var(--on-primary)"/></g>'+
+'<g transform="translate(94 24) rotate(-12)"><rect width="34" height="34" rx="8" fill="var(--secondary-container)" stroke="var(--outline)" stroke-width="1.5"/>'+
+'<circle cx="10" cy="10" r="2.6" fill="var(--on-secondary-container)"/><circle cx="24" cy="10" r="2.6" fill="var(--on-secondary-container)"/>'+
+'<circle cx="17" cy="17" r="2.6" fill="var(--on-secondary-container)"/>'+
+'<circle cx="10" cy="24" r="2.6" fill="var(--on-secondary-container)"/><circle cx="24" cy="24" r="2.6" fill="var(--on-secondary-container)"/></g>'+
+'<path d="M40 34h8M44 30v8" stroke="var(--outline)" stroke-width="1.6" stroke-linecap="round"/>'+
+'<path d="M236 108h8M240 104v8" stroke="var(--outline)" stroke-width="1.6" stroke-linecap="round"/>'+
+'<path d="M120 108h6M123 105v6" stroke="var(--outline)" stroke-width="1.4" stroke-linecap="round"/></svg>';
+
+/* ---------- Вкладка 1: результат ---------- */
+function renderResult(animate){
+  const body=$('#resultBody');
+  const p=state.point;
+  if(!p){
+    body.innerHTML='<div class="empty">'+ILLU+'<h3>'+t('result.empty.title')+'</h3><p>'+t('result.empty.text')+'</p></div>';
+    $('#mapToggleRow').hidden=true;
+    if(mapOpen)setMapOpen(false);
+    return;
+  }
+  const d=haversine(state.start,p);
+  const b=bearing(state.start,p);
+  const card=CARDINALS[Math.round(b/45)%8];
+  let modeTxt;
+  if(p.mode==='radius')modeTxt=tf('result.mode.radius',{r:p.radius,u:t('units.km')});
+  else if(p.mode==='rect')modeTxt=t('result.mode.rect');
+  else if(p.mode==='city')modeTxt=tf('result.mode.city',{name:p.cityName||t('default.city'),r:p.radius,u:t('units.km')});
+  else modeTxt=t('result.mode.planet');
+  body.innerHTML=
+  '<div class="res-head"><div class="res-title"><h3>'+t('result.title')+'</h3><span class="count-badge">№'+state.count+'</span></div><span class="res-time">'+fmtTime(p.ts)+'</span></div>'+
+  '<div class="mode-chip">'+ic(MODE_ICONS[p.mode]||'pin')+'<span>'+esc(modeTxt)+'</span></div>'+
+  '<div class="coords-box"><div class="coords-meta"><span class="lbl">'+t('result.coords')+'</span>'+
+  '<button type="button" class="icon-btn copy-btn ripple" data-action="copy" title="'+t('copy')+'" aria-label="'+t('copy')+'">'+ic('copy','cp-i')+ic('check','cp-c')+'</button></div>'+
+  '<div class="coords" id="coordText" aria-live="polite">'+pair(p.lat,p.lon)+'</div></div>'+
+  '<div class="stats">'+
+  '<div class="stat">'+ic('distance')+'<div><b>'+fmtDist(d)+'</b><span>'+(p.mode==='planet'?t('result.distance.ref'):t('result.distance'))+'</span></div></div>'+
+  '<div class="stat"><span class="bearing-ic" style="transform:rotate('+Math.round(b)+'deg)">'+ic('arrow')+'</span><div><b>'+t('bear.'+card)+'</b><span>'+t('result.bearing')+' · '+Math.round(b)+'°</span></div></div>'+
+  '</div>'+
+  '<button type="button" class="btn tonal-primary md full gen-btn ripple" data-action="generate">'+ic('refresh')+'<span>'+t('gen.again')+'</span></button>'+
+  '<div class="svc-label">'+t('open.point')+'</div>'+
+  '<div class="svc-grid">'+
+  svcBtn(LINKS.googlePoint(p),'#4285f4','G',t('maps.google'),t('maps.sub.point'))+
+  svcBtn(LINKS.yandexPoint(p),'#fc3f1d','Я',t('maps.yandex'),t('maps.sub.point'))+
+  svcBtn(LINKS.dgisPoint(p),'#2e7d32','2GIS',t('maps.dgis'),t('maps.sub.point'))+
+  '</div>'+
+  '<div class="open-block">'+
+  '<div class="open-head"><span class="open-title">'+ic('globe')+t('openmaps.title')+'</span>'+
+  '<button type="button" class="info-btn ripple" data-action="note" data-note="point" aria-expanded="'+notes.point+'" aria-label="'+t('aria.info')+'">'+ic('info')+'</button></div>'+
+  '<div class="note" id="note-point"'+(notes.point?'':' hidden')+'>'+ic('alert')+'<span>'+t('openmaps.warn')+'</span></div>'+
+  svcBtn(LINKS.osmPoint(p),'#7ebc6f','OSM',t('maps.osm'),t('maps.sub.point'))+
+  '</div>';
+  $('#mapToggleRow').hidden=false;
+  updateMapToggle();
+  if(animate)animateCoords(p);
+}
+
+/* ---------- Вкладка 2: маршрут ---------- */
+function renderRoute(){
+  const body=$('#routeBody');
+  const p=state.point;
+  if(!p){
+    body.innerHTML='<div class="empty">'+ILLU+'<h3>'+t('route.empty.title')+'</h3><p>'+t('route.empty.text')+'</p>'+
+    '<button type="button" class="btn filled md ripple" data-action="goto-point">'+ic('dice')+'<span>'+t('route.empty.cta')+'</span></button></div>';
+    return;
+  }
+  const s=state.start,d=haversine(s,p),m=state.travel;
+  let startLbl=t('route.from');
+  if(state.startName)startLbl+=' · '+state.startName;
+  else if(state.startGeo)startLbl+=' · '+t('start.geoLabel');
+  body.innerHTML=
+  '<div class="route-head"><h3>'+t('route.title')+'</h3><button type="button" class="text-btn ripple" data-action="other">'+ic('refresh')+'<span>'+t('route.other')+'</span></button></div>'+
+  '<div class="route-sum"><div class="route-pts">'+
+  '<div class="rpt"><span class="rpt-dot start"></span><div style="min-width:0"><span class="rpt-lbl">'+esc(startLbl)+'</span><span class="mono rpt-c">'+pair(s.lat,s.lon)+'</span></div></div>'+
+  '<div class="rpt-line"></div>'+
+  '<div class="rpt"><span class="rpt-dot end">'+ic('pin')+'</span><div style="min-width:0"><span class="rpt-lbl">'+t('route.to')+'</span><span class="mono rpt-c">'+pair(p.lat,p.lon)+'</span></div></div>'+
+  '</div><div class="route-dist"><b>'+fmtDist(d)+'</b><span>'+t('route.straight.lbl')+'</span></div></div>'+
+  '<div class="seg big" role="group" aria-label="'+t('route.title')+'">'+
+  '<button type="button" class="ripple'+(m==='bike'?' active':'')+'" data-action="travel" data-travel="bike" aria-pressed="'+(m==='bike')+'">'+ic('bike')+'<span>'+t('route.mode.bike')+'</span></button>'+
+  '<button type="button" class="ripple'+(m==='walk'?' active':'')+'" data-action="travel" data-travel="walk" aria-pressed="'+(m==='walk')+'">'+ic('walk')+'<span>'+t('route.mode.walk')+'</span></button>'+
+  '</div>'+
+  '<p class="fine">'+t('route.straight')+'</p>'+
+  '<div class="svc-label">'+t('open.route')+'</div>'+
+  '<div class="svc-grid">'+
+  svcBtn(LINKS.googleRoute(s,p,m),'#4285f4','G',t('maps.google'),t('maps.sub.route')+' · '+t('route.mode.'+m))+
+  svcBtn(LINKS.yandexRoute(s,p,m),'#fc3f1d','Я',t('maps.yandex'),t('maps.sub.route')+' · '+t('route.mode.'+m))+
+  svcBtn(LINKS.dgisPoint(p),'#2e7d32','2GIS',t('maps.dgis'),t('maps.sub.point'))+
+  '</div>'+
+  '<p class="fine dgis-note">'+ic('info')+'<span>'+t('dgis.note')+'</span></p>'+
+  '<div class="open-block">'+
+  '<div class="open-head"><span class="open-title">'+ic('globe')+t('openmaps.title')+'</span>'+
+  '<button type="button" class="info-btn ripple" data-action="note" data-note="route" aria-expanded="'+notes.route+'" aria-label="'+t('aria.info')+'">'+ic('info')+'</button></div>'+
+  '<div class="note" id="note-route"'+(notes.route?'':' hidden')+'>'+ic('alert')+'<span>'+t('openmaps.warn')+'</span></div>'+
+  '<div class="osm-grid">'+
+  svcBtn(LINKS.osmRoute(s,p,'bike'),'#7ebc6f','OSM',t('maps.osm'),t('maps.sub.bike'),m==='bike'?'suggest':'')+
+  svcBtn(LINKS.osmRoute(s,p,'walk'),'#7ebc6f','OSM',t('maps.osm'),t('maps.sub.walk'),m==='walk'?'suggest':'')+
+  '</div></div>'+
+  '<div class="route-actions"><button type="button" class="btn tonal md ripple" data-action="copy">'+ic('copy')+'<span>'+t('copy')+'</span></button></div>';
+}
+
+/* ---------- Встроенная карта Leaflet ---------- */
+let embedMap=null,embedBounds=null;
+const embedTiles={};
+const embedLayers={start:null,point:null,line:null,area:null};
+const TILE_DEFS={
+  osm:{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',opts:{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'}},
+  topo:{url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',opts:{maxZoom:19,maxNativeZoom:17,attribution:'&copy; <a href="https://opentopomap.org" target="_blank" rel="noopener noreferrer">OpenTopoMap</a> (CC-BY-SA) · &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'}}
+};
+function makeTiles(kind){const d=TILE_DEFS[kind];return L.tileLayer(d.url,Object.assign({},d.opts));}
+const LEAFLET_PREFIX='<a href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">Leaflet</a>';
+function startIcon(){return L.divIcon({className:'mk',html:'<span class="mk-dot"></span>',iconSize:[18,18],iconAnchor:[9,9]});}
+function pinIcon(){
+  return L.divIcon({className:'mk mk-pin',html:'<svg viewBox="0 0 34 44" fill="none"><path d="M17 43C17 43 32 26.5 32 15.5C32 7.5 25.3 1 17 1C8.7 1 2 7.5 2 15.5C2 26.5 17 43 17 43Z" fill="var(--primary)" stroke="var(--surface-container-lowest)" stroke-width="2"/><circle cx="17" cy="15.5" r="5.5" fill="var(--on-primary)"/></svg>',iconSize:[34,44],iconAnchor:[17,42]});
+}
+function ensureEmbed(){
+  if(embedMap)return true;
+  if(typeof L==='undefined')return false;
+  embedMap=L.map('embedMap',{scrollWheelZoom:false,worldCopyJump:true});
+  embedMap.attributionControl.setPrefix(LEAFLET_PREFIX);
+  embedTiles.osm=makeTiles('osm');
+  embedTiles.topo=makeTiles('topo');
+  embedTiles[state.tiles].addTo(embedMap);
+  embedMap.setView([state.start.lat,state.start.lon],10);
+  embedMap.on('click',function(){embedMap.scrollWheelZoom.enable();});
+  embedMap.on('mouseout',function(){embedMap.scrollWheelZoom.disable();});
+  return true;
+}
+function updateEmbed(fit){
+  if(!embedMap||!mapOpen)return;
+  const s=state.start,p=state.point;
+  const prim=cssVar('--primary'),tert=cssVar('--tertiary');
+  if(!embedLayers.start)embedLayers.start=L.marker([s.lat,s.lon],{icon:startIcon(),interactive:false,keyboard:false}).addTo(embedMap);
+  else embedLayers.start.setLatLng([s.lat,s.lon]);
+  if(p){
+    if(!embedLayers.point){
+      embedLayers.point=L.marker([p.lat,p.lon],{icon:pinIcon(),keyboard:false}).addTo(embedMap);
+    }else{
+      embedLayers.point.setLatLng([p.lat,p.lon]);
+      if(fit){const el=embedLayers.point.getElement();if(el){const svg=el.querySelector('svg');if(svg){svg.style.animation='none';void svg.offsetWidth;svg.style.animation='';}}}
+    }
+  }else if(embedLayers.point){embedMap.removeLayer(embedLayers.point);embedLayers.point=null;}
+  if(embedLayers.line){embedMap.removeLayer(embedLayers.line);embedLayers.line=null;}
+  if(p&&p.mode!=='planet')embedLayers.line=L.polyline([[s.lat,s.lon],[p.lat,p.lon]],{color:tert,weight:2.5,dashArray:'2 8',interactive:false}).addTo(embedMap);
+  if(embedLayers.area){embedMap.removeLayer(embedLayers.area);embedLayers.area=null;}
+  let bounds=null;
+  if(p){
+    const style={color:prim,weight:1.5,dashArray:'6 6',fillColor:prim,fillOpacity:.07,interactive:false};
+    if((p.mode==='radius'||p.mode==='city')&&p.center){
+      embedLayers.area=L.circle([p.center.lat,p.center.lon],Object.assign({radius:p.radius*1000},style)).addTo(embedMap);
+      bounds=embedLayers.area.getBounds();
+    }else if(p.mode==='rect'&&p.rect){
+      embedLayers.area=L.rectangle([[p.rect.swLat,p.rect.swLon],[p.rect.neLat,p.rect.neLon]],style).addTo(embedMap);
+      bounds=embedLayers.area.getBounds();
+    }
+    if(bounds)bounds.extend([p.lat,p.lon]);else bounds=L.latLngBounds([[p.lat,p.lon]]);
+    if(p.mode!=='planet')bounds.extend([s.lat,s.lon]);
+  }else bounds=L.latLngBounds([[s.lat,s.lon]]);
+  embedBounds=bounds;
+  if(fit)embedMap.fitBounds(bounds.pad(.25),{maxZoom:13});
+}
+function restyleEmbed(){
+  if(!embedMap)return;
+  const prim=cssVar('--primary'),tert=cssVar('--tertiary');
+  if(embedLayers.line)embedLayers.line.setStyle({color:tert});
+  if(embedLayers.area)embedLayers.area.setStyle({color:prim,fillColor:prim});
+}
+function setTiles(kind){
+  state.tiles=kind;save();
+  $$('#tilesSeg button').forEach(function(b){b.classList.toggle('active',b.dataset.tiles===kind);});
+  if(embedMap){
+    Object.keys(embedTiles).forEach(function(k){
+      if(embedTiles[k]&&embedMap.hasLayer(embedTiles[k]))embedMap.removeLayer(embedTiles[k]);
+    });
+    embedTiles[kind].addTo(embedMap);
+  }
+}
+function updateMapToggle(){
+  $('#mapToggleLabel').textContent=mapOpen?t('map.hide'):t('map.show');
+  $('#mapToggleBtn').setAttribute('aria-expanded',String(mapOpen));
+}
+function setMapOpen(open){
+  mapOpen=open;
+  const wrap=$('#mapWrap');
+  wrap.dataset.open=open?'1':'0';
+  if(open)wrap.removeAttribute('inert');else wrap.setAttribute('inert','');
+  updateMapToggle();
+  if(open){
+    const ok=ensureEmbed();
+    $('#mapFail').hidden=ok;
+    if(ok){
+      requestAnimationFrame(function(){embedMap.invalidateSize();updateEmbed(true);});
+      setTimeout(function(){if(embedMap){embedMap.invalidateSize();if(embedBounds)embedMap.fitBounds(embedBounds.pad(.25),{maxZoom:13});}},430);
+    }
+  }
+}
+
+/* ---------- Модалка: рисование прямоугольника ---------- */
+let drawMap=null,drawRectLayer=null,drawnBounds=null,drawing=false,drawStartPt=null,drawPrev=null;
+function rectStyle(){const prim=cssVar('--primary');return {color:prim,weight:2,dashArray:'6 5',fillColor:prim,fillOpacity:.12};}
+function evPoint(e){
+  const el=$('#drawMapEl'),r=el.getBoundingClientRect();
+  return L.point(clamp(e.clientX-r.left,0,r.width),clamp(e.clientY-r.top,0,r.height));
+}
+function updateReadout(b){
+  $('#drawReadout').textContent=b?
+    t('rect.swShort')+' '+pair(b.getSouth(),b.getWest())+' · '+t('rect.neShort')+' '+pair(b.getNorth(),b.getEast()):
+    t('draw.readout.empty');
+}
+function onDrawDown(e){
+  if(!drawMap)return;
+  if(e.target.closest('.leaflet-control-container'))return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  if(e.isPrimary===false)return;
+  drawing=true;drawPrev=drawnBounds;
+  drawStartPt=evPoint(e);
+  try{$('#drawMapEl').setPointerCapture(e.pointerId);}catch(err){}
+  e.preventDefault();
+}
+function onDrawMove(e){
+  if(!drawing||!drawMap)return;
+  const cur=evPoint(e);
+  const b=L.latLngBounds(drawMap.containerPointToLatLng(drawStartPt),drawMap.containerPointToLatLng(cur));
+  drawnBounds=b;
+  if(drawRectLayer)drawRectLayer.setBounds(b);
+  else drawRectLayer=L.rectangle(b,rectStyle()).addTo(drawMap);
+  updateReadout(b);
+  $('#drawApply').disabled=false;
+}
+function onDrawUp(e){
+  if(!drawing||!drawMap)return;
+  drawing=false;
+  const end=evPoint(e);
+  const moved=Math.hypot(end.x-drawStartPt.x,end.y-drawStartPt.y);
+  if(moved<6){ /* это клик, а не протяжка — возвращаем прежнюю область */
+    drawnBounds=drawPrev;
+    if(drawnBounds){
+      if(drawRectLayer)drawRectLayer.setBounds(drawnBounds);
+      else drawRectLayer=L.rectangle(drawnBounds,rectStyle()).addTo(drawMap);
+    }else if(drawRectLayer){drawMap.removeLayer(drawRectLayer);drawRectLayer=null;}
+    updateReadout(drawnBounds);
+    $('#drawApply').disabled=!drawnBounds;
+  }
+}
+function openDraw(){
+  const modal=$('#drawModal');
+  modal.hidden=false;
+  requestAnimationFrame(function(){modal.classList.add('open');});
+  document.body.classList.add('locked');
+  drawnBounds=null;drawRectLayer=null;drawing=false;drawPrev=null;
+  $('#drawFail').hidden=true;
+  if(typeof L==='undefined'){
+    $('#drawFail').hidden=false;
+    $('#drawHint').style.display='none';
+    $('#drawApply').disabled=true;
+    updateReadout(null);
+    setTimeout(function(){const b=$('#drawModal .icon-btn');if(b)b.focus();},80);
+    return;
+  }
+  $('#drawHint').style.display='';
+  const el=$('#drawMapEl');
+  drawMap=L.map(el,{dragging:false,doubleClickZoom:false,boxZoom:false,touchZoom:false,scrollWheelZoom:true,keyboard:true});
+  drawMap.attributionControl.setPrefix(LEAFLET_PREFIX);
+  makeTiles(state.tiles).addTo(drawMap);
+  const r=state.rect;
+  if(r&&r.swLat<r.neLat&&r.swLon<r.neLon){
+    drawnBounds=L.latLngBounds([[r.swLat,r.swLon],[r.neLat,r.neLon]]);
+    drawRectLayer=L.rectangle(drawnBounds,rectStyle()).addTo(drawMap);
+    drawMap.fitBounds(drawnBounds.pad(.4));
+  }else drawMap.setView([state.start.lat,state.start.lon],11);
+  $('#drawApply').disabled=!drawnBounds;
+  updateReadout(drawnBounds);
+  el.addEventListener('pointerdown',onDrawDown);
+  el.addEventListener('pointermove',onDrawMove);
+  el.addEventListener('pointerup',onDrawUp);
+  el.addEventListener('pointercancel',onDrawUp);
+  setTimeout(function(){
+    if(drawMap)drawMap.invalidateSize();
+    const b=$('#drawModal .icon-btn');if(b)b.focus();
+  },90);
+}
+function closeDraw(){
+  const modal=$('#drawModal');
+  if(modal.hidden)return;
+  modal.classList.remove('open');
+  document.body.classList.remove('locked');
+  const el=$('#drawMapEl');
+  el.removeEventListener('pointerdown',onDrawDown);
+  el.removeEventListener('pointermove',onDrawMove);
+  el.removeEventListener('pointerup',onDrawUp);
+  el.removeEventListener('pointercancel',onDrawUp);
+  if(drawMap){drawMap.remove();drawMap=null;}
+  drawRectLayer=null;drawnBounds=null;drawing=false;drawPrev=null;
+  setTimeout(function(){if(!modal.classList.contains('open'))modal.hidden=true;},230);
+  $('#drawOpenBtn').focus();
+}
+function clearDraw(){
+  drawnBounds=null;drawPrev=null;
+  if(drawRectLayer&&drawMap){drawMap.removeLayer(drawRectLayer);drawRectLayer=null;}
+  updateReadout(null);
+  $('#drawApply').disabled=true;
+}
+function applyDraw(){
+  if(!drawnBounds)return;
+  state.rect={
+    swLat:+fmt5(drawnBounds.getSouth()),swLon:+fmt5(drawnBounds.getWest()),
+    neLat:+fmt5(drawnBounds.getNorth()),neLon:+fmt5(drawnBounds.getEast())
+  };
+  setRectInputs();clearRectError();renderRectDims();save();
+  closeDraw();
+  toast(t('draw.applied'),'success');
+}
+
+/* ---------- Копирование координат ---------- */
+function fallbackCopy(text){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    const ok=document.execCommand('copy');
+    ta.remove();return ok;
+  }catch(e){return false;}
+}
+function copyPoint(btn){
+  if(!state.point)return;
+  const text=pair(state.point.lat,state.point.lon);
+  function ok(){
+    if(btn){btn.classList.add('copied');setTimeout(function(){btn.classList.remove('copied');},1500);}
+    toast(t('copied'),'success');
+  }
+  function fail(){toast(t('copy.fail'),'error');}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok,function(){if(fallbackCopy(text))ok();else fail();});
+  }else{if(fallbackCopy(text))ok();else fail();}
+}
+
+/* ---------- Тосты ---------- */
+function toast(msg,type){
+  const box=$('#toasts');
+  while(box.children.length>=3)box.removeChild(box.firstChild);
+  const el=document.createElement('div');
+  el.className='toast '+(type||'info');
+  const iconName=type==='success'?'check':(type==='error'||type==='warn')?'alert':'info';
+  el.innerHTML='<span class="toast-ic">'+ic(iconName)+'</span><span class="toast-msg">'+esc(msg)+'</span>';
+  box.appendChild(el);
+  setTimeout(function(){el.classList.add('out');setTimeout(function(){el.remove();},260);},3800);
+}
+
+/* ---------- Сброс настроек (двухшаговое подтверждение) ---------- */
+function disarmReset(){
+  const btn=$('#resetBtn');
+  btn.classList.remove('arm');
+  btn.querySelector('span').textContent=t('footer.reset');
+}
+function handleReset(btn){
+  if(!btn.classList.contains('arm')){
+    btn.classList.add('arm');
+    btn.querySelector('span').textContent=t('footer.reset.confirm');
+    clearTimeout(resetTimer);
+    resetTimer=setTimeout(disarmReset,3500);
+    return;
+  }
+  clearTimeout(resetTimer);disarmReset();
+  try{localStorage.removeItem(KEY);}catch(e){}
+  state=JSON.parse(JSON.stringify(DEFAULTS));
+  notes.point=true;notes.route=true;
+  setMapOpen(false);
+  if(embedMap)['start','point','line','area'].forEach(function(k){
+    if(embedLayers[k]){embedMap.removeLayer(embedLayers[k]);embedLayers[k]=null;}
+  });
+  if(startSearchApi)startSearchApi.clear();
+  if(citySearchApi)citySearchApi.clear();
+  applyTheme();applyI18n();
+  setStartInputs();setRectInputs();clearStartError();clearRectError();
+  toast(t('footer.reset.done'),'success');
+}
+
+/* ---------- Делегированные обработчики ---------- */
+function onClick(e){
+  const btn=e.target.closest('[data-action]');
+  if(!btn)return;
+  const a=btn.dataset.action;
+  if(a==='lang'){if(state.lang!==btn.dataset.lang){state.lang=btn.dataset.lang;save();if(startSearchApi)startSearchApi.clear();if(citySearchApi)citySearchApi.clear();applyI18n();}}
+  else if(a==='theme'){state.theme=btn.dataset.theme;save();applyTheme();renderHeader();}
+  else if(a==='accent-toggle'){toggleAccent();}
+  else if(a==='accent'){setBase(btn.dataset.color);}
+  else if(a==='accent-reset'){setBase(DEFAULTS.base);}
+  else if(a==='tab'){switchTab(btn.dataset.tab);}
+  else if(a==='mode'){setMode(btn.dataset.mode);}
+  else if(a==='radius'){setRadius(+btn.dataset.r);}
+  else if(a==='geo'){geolocate();}
+  else if(a==='draw-open'){openDraw();}
+  else if(a==='draw-cancel'){closeDraw();}
+  else if(a==='draw-clear'){clearDraw();}
+  else if(a==='draw-apply'){applyDraw();}
+  else if(a==='generate'){generate();}
+  else if(a==='map-toggle'){setMapOpen(!mapOpen);}
+  else if(a==='tiles'){setTiles(btn.dataset.tiles);}
+  else if(a==='travel'){state.travel=btn.dataset.travel;save();renderRoute();}
+  else if(a==='note'){
+    const k=btn.dataset.note;notes[k]=!notes[k];
+    const note=document.getElementById('note-'+k);
+    if(note)note.hidden=!notes[k];
+    btn.setAttribute('aria-expanded',String(notes[k]));
+  }
+  else if(a==='copy'){copyPoint(btn);}
+  else if(a==='goto-point'){switchTab('point');$('#genBtn').focus();}
+  else if(a==='other'){switchTab('point');generate();}
+  else if(a==='city-clear'){state.city=null;save();renderCityBox();}
+  else if(a==='reset'){handleReset(btn);}
+}
+/* Волна при нажатии */
+function onRipple(e){
+  const el=e.target.closest('.ripple');
+  if(!el||el.disabled)return;
+  const r=el.getBoundingClientRect();
+  const d=Math.max(r.width,r.height)*2;
+  const s=document.createElement('span');
+  s.className='ink';
+  s.style.width=s.style.height=d+'px';
+  s.style.left=(e.clientX-r.left-d/2)+'px';
+  s.style.top=(e.clientY-r.top-d/2)+'px';
+  el.appendChild(s);
+  s.addEventListener('animationend',function(){s.remove();});
+}
+function trapFocus(e){
+  const modal=$('#drawModal');
+  const foc=$$('button:not(:disabled), a[href], input, [tabindex]:not([tabindex="-1"])',modal).filter(function(el){return el.offsetParent!==null;});
+  if(!foc.length)return;
+  const first=foc[0],last=foc[foc.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+function onKey(e){
+  if(e.key==='Escape'){
+    if(!$('#drawModal').hidden){closeDraw();return;}
+    if(accentOpen){toggleAccent(false);return;}
+  }
+  if(e.key==='Tab'&&!$('#drawModal').hidden)trapFocus(e);
+}
+function outsideClose(e){
+  if(accentOpen&&!$('#accentPop').contains(e.target)&&!$('#accentBtn').contains(e.target))toggleAccent(false);
+}
+
+/* ---------- Инициализация ---------- */
+function init(){
+  applyTheme();
+  $('#radiusRange').addEventListener('input',function(e){setRadius(+e.target.value);});
+  ['startLat','startLon'].forEach(function(id){
+    const el=document.getElementById(id);
+    el.addEventListener('change',function(){validateStart(true);});
+    el.addEventListener('input',function(){if(el.classList.contains('invalid'))validateStart(false);});
+  });
+  ['rectSwLat','rectSwLon','rectNeLat','rectNeLon'].forEach(function(id){
+    const el=document.getElementById(id);
+    el.addEventListener('change',function(){validateRect(true);});
+    el.addEventListener('input',function(){if(el.classList.contains('invalid'))validateRect(false);});
+  });
+  $('#customColor').addEventListener('input',function(e){setBase(e.target.value);});
+  startSearchApi=setupSearch('startSearch',function(it){
+    commitStart(it.lat,it.lon,it.name,false);
+    toast(t('start.updated'),'success');
+  });
+  citySearchApi=setupSearch('citySearch',function(it){
+    state.city={name:it.name,lat:it.lat,lon:it.lon};
+    save();renderCityBox();
+  });
+  setStartInputs();setRectInputs();
+  applyI18n();
+  document.addEventListener('click',onClick);
+  document.addEventListener('pointerdown',onRipple);
+  document.addEventListener('pointerdown',outsideClose);
+  document.addEventListener('keydown',onKey);
+  const tb=$('#topbar');
+  addEventListener('scroll',function(){tb.classList.toggle('scrolled',scrollY>4);},{passive:true});
+  const setHeaderH=function(){document.documentElement.style.setProperty('--header-h',tb.offsetHeight+'px');};
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(setHeaderH).observe(tb);
+  else{addEventListener('resize',setHeaderH);setHeaderH();}
+  if(darkMq.addEventListener)darkMq.addEventListener('change',function(){if(state.theme==='system')applyTheme();});
+  else if(darkMq.addListener)darkMq.addListener(function(){if(state.theme==='system')applyTheme();});
+}
+init();
+</script>
+</body>
+</html>

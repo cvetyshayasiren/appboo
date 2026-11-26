@@ -1,0 +1,805 @@
+[
+  {
+    "id": "keyboardNotes",
+    "added": "2026-11-17T00:00:00+03:00",
+    "title": "Клавиатурные заметки",
+    "description": "Заметки поверх раскладки",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen3.8-Max",
+    "platform": "both",
+    "tags": [
+      "Productivity",
+      "Notes"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "pokegame",
+    "added": "2026-11-17T00:00:01+03:00",
+    "title": "Покемоны Пороховых",
+    "description": "Лови, сражайся, собирай",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen3.7-Plus",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "RPG"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "pokegen",
+    "added": "2026-11-17T00:00:02+03:00",
+    "title": "Покеген",
+    "description": "Генератор покевайба",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Preview",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Generator"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "kolagen",
+    "added": "2026-11-17T00:00:03+03:00",
+    "title": "KOLaGEN",
+    "description": "Генератор кольев",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Preview",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Generator"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "8-bit Music Maker",
+    "added": "2026-11-17T00:00:04+03:00",
+    "title": "8-bit Music Maker",
+    "description": "Редактор 8-bit музыки",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "desktop",
+    "tags": [
+      "Music",
+      "Editor"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "8-bit Melody Machine",
+    "added": "2026-11-17T00:00:05+03:00",
+    "title": "8-bit Melody Machine",
+    "description": "Рандомный чиптюн",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Music",
+      "Generator"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "8-bit Melody Machine v2",
+    "added": "2026-11-17T00:00:06+03:00",
+    "title": "8-bit Melody Machine v2",
+    "description": "Рандомный чиптюн v2",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "desktop",
+    "tags": [
+      "Music",
+      "Generator"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "scroll",
+    "added": "2026-11-17T00:00:07+03:00",
+    "title": "СКРОЛЛ",
+    "description": "Это соцсеть, которая проверяет, что ты реально видишь в ленте. Посты бесконечны и каждый запуск уникален. Скоро тебе напишет незнакомец…",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Social",
+      "Simulation"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "memory game",
+    "added": "2026-11-17T00:00:08+03:00",
+    "title": "Мгновенная память",
+    "description": "пиксель·ASCII консоль",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Puzzle"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "wars graffiti",
+    "added": "2026-11-17T00:00:09+03:00",
+    "title": "Граффити-войны",
+    "description": "Город поделён на районы. Команды А Б закрашивают всё подряд. Ты — уличный художник: перекрывай чужие теги своим и верни стены городу. Смена длится 3 минуты — обгони обе команды.",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Strategy"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "PIXEL LAB",
+    "added": "2026-11-17T00:00:10+03:00",
+    "title": "PIXEL LAB",
+    "description": "Пиксель-арт редактор",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Creative",
+      "Pixel Art"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "CRT·VIEW",
+    "added": "2026-11-17T00:00:11+03:00",
+    "title": "CRT·VIEW",
+    "description": "Просмотрщик изображений с эффектами",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Images"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "fractal book",
+    "added": "2026-11-17T00:00:12+03:00",
+    "title": "ФРАКТАЛБУК",
+    "description": "Старинная магическая книга живых фракталов",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Creative",
+      "Generative Art"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "Standard Model",
+    "added": "2026-11-17T00:00:13+03:00",
+    "title": "Стандартная модель",
+    "description": "Интерактивная карта элементарных частиц",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Education",
+      "Science"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "Standard Model v2",
+    "added": "2026-11-17T00:00:14+03:00",
+    "title": "Стандартная модель v2",
+    "description": "Интерактивная карта элементарных частиц",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Kimi K3",
+    "platform": "both",
+    "tags": [
+      "Education",
+      "Science"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "PixelForge",
+    "added": "2026-11-17T00:00:15+03:00",
+    "title": "PixelForge",
+    "description": "Студия пиксель-арта и цветовых палитр",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "GLM-5.2",
+    "platform": "both",
+    "tags": [
+      "Creative",
+      "Pixel Art"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "weather warden",
+    "added": "2026-11-17T00:00:16+03:00",
+    "title": "Погодный страж",
+    "description": "Хранитель погоды над маленьким островом",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "MiniMax M3.1-Flash",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Simulation"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "STYLE LAB",
+    "added": "2026-11-17T00:00:17+03:00",
+    "title": "STYLE LAB",
+    "description": "Интерактивный стенд: один тестовый экран — четырнадцать визуальных стилей. Чистые HTML/CSS/JS",
+    "info": "Надо исправить полосу справа",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Creative",
+      "Design"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "FFMPEGo",
+    "added": "2026-11-17T00:00:18+03:00",
+    "title": "FFMPEGo",
+    "description": "Браузерный конвертер на ffmpeg.wasm. Всё работает локально в браузере",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "Kimi K2.8 Preview",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Media"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "emoji-picker",
+    "added": "2026-11-17T00:00:19+03:00",
+    "title": "Эмодзиатор",
+    "description": "Пикер эмодзи",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "GLM-5.3",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Emoji"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "Pixel Metronome",
+    "added": "2026-11-17T00:00:20+03:00",
+    "title": "Pixel Metronome",
+    "description": "Пиксельный метроном с чиптюн-звуками и ритмическими паттернами",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "",
+    "ai": "ChatGPT",
+    "platform": "both",
+    "tags": [
+      "Music",
+      "Rhythm"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "WeatherGotchi",
+    "added": "2026-11-18T00:00:00+03:00",
+    "title": "WeatherGotchi",
+    "description": "Карманный погодный питомец: тамагочи с живой погодой и пиксельной графикой.",
+    "info": "Автор кода — Qwen4-Max.",
+    "icon": "icon.svg",
+    "color": "#8bac0f",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Pet"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "WikiRand",
+    "added": "2026-11-18T00:00:01+03:00",
+    "title": "WikiRand",
+    "description": "Случайные статьи из Википедии по разделам: наука, искусство или своя тема.",
+    "info": "Автор кода — GLM-5.3.",
+    "icon": "icon.svg",
+    "color": "#3366cc",
+    "ai": "GLM-5.3",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Education"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "heater",
+    "added": "2026-11-18T00:00:02+03:00",
+    "title": "Обогреватель",
+    "description": "Пиксельная визуальная новелла: бегайте по квартирам панельного дома, стучите по остывающим батареям и берегите тепло до приезда ремонтной бригады.",
+    "info": "Вносил небольшие правки GPT6",
+    "icon": "icon.svg",
+    "color": "#ff9a3c",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Survival",
+      "Pixel Art"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "NumConverter",
+    "added": "2026-11-18T00:00:03+03:00",
+    "title": "NumConverter",
+    "description": "Механический конвертер систем счисления от 2 до 36 с барабанами-одометрами и тремя темами оформления.",
+    "info": "Автор кода — GLM-5.3-Flash. Правки интерфейса и мобильного управления — GPT-6.",
+    "icon": "icon.svg",
+    "color": "#22d3ee",
+    "ai": "GLM-5.3-Flash",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Education"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "lostWorlds",
+    "added": "2026-11-19T00:00:00+03:00",
+    "title": "Lost Worlds",
+    "description": "Полароид-архив несуществующих миров: процедурные пиксельные снимки случайных миров с редактором параметров, локами, сидами, ссылками, историей снимков, экспортом PNG и эмбиент-звуком.",
+    "info": "Автор кода — Qwen4-Max. Правки и исправления — GPT6.",
+    "icon": "icon.svg",
+    "color": "#e2a45c",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Generator",
+      "Pixel Art",
+      "Procedural"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "lostWorlds2",
+    "added": "2026-11-19T00:00:01+03:00",
+    "title": "Lost Worlds v2",
+    "description": "Вторая версия полароид-архива несуществующих миров: система редкостей из 10 уровней — от обычной до сингулярности, частицы у редких снимков, анимация проявки полароида и обновлённый звук.",
+    "info": "Автор кода — Qwen4-Max. Правки и исправления — GPT6.",
+    "icon": "icon.svg",
+    "color": "#7fb2ff",
+    "ai": "Qwen4-Max",
+    "platform": "both",
+    "tags": [
+      "Generator",
+      "Pixel Art",
+      "Rarity"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "color-lab",
+    "added": "2026-11-20T00:00:00+03:00",
+    "title": "Color Lab",
+    "description": "Лаборатория цвета: конвертер HEX/RGB/HSL, генератор палитр с цветовыми гармониями, интерполяция градиентов и проверка контраста WCAG.",
+    "info": "Полностью переработанная версия Color Lab: вкладки Цвет / Палитры / Градиент / Превью, цветовое пространство и настройки темы.",
+    "icon": "icon.svg",
+    "color": "#7A5AF8",
+    "ai": "GLM-5.3-Flash",
+    "platform": "both",
+    "tags": [
+      "Creative",
+      "Color"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "random-source",
+    "added": "2026-11-20T00:00:01+03:00",
+    "title": "random source",
+    "description": "Лаборатория энтропии: собирает случайность из 17 источников — от CSPRNG браузера и микрофона до погодного API и random.org, смешивает пул через SHA-256, выдаёт байты в hex/base64 и монету, кубик, выбор из списка.",
+    "info": "Все вычисления локальны в браузере; сетевые источники (random.org, open-meteo.com) опциональны и включаются вручную.",
+    "icon": "icon.svg",
+    "color": "#41d9ff",
+    "ai": "GLM-5.3-Flash",
+    "platform": "both",
+    "tags": [
+      "Tool",
+      "Random",
+      "Entropy"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "notone",
+    "added": "2026-11-20T00:00:02+03:00",
+    "title": "Notone",
+    "description": "Справочник и тренажёры по теории музыки: интервалы, аккорды, лады, нотный стан и полифония. Без очков и таймеров.",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "#8b5cf6",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Music",
+      "Tool"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "mendeleev",
+    "added": "2026-11-20T00:00:03+03:00",
+    "title": "Менделеев",
+    "description": "Периодическая таблица: 118 элементов с полными карточками — свойства, изотопы, история и пиксельные электронные оболочки. Есть игра-викторина.",
+    "info": "Тема, базовый цвет, язык и размер текста настраиваются; всё хранится локально.",
+    "icon": "icon.svg",
+    "color": "#6C4BF6",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Science",
+      "Education",
+      "Game"
+    ],
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "treequiz",
+    "added": "2026-11-20T00:00:04+03:00",
+    "title": "Treequiz",
+    "description": "Узнавай деревья в лицо: 250 видов с фото и пиксель-арт портретами, фильтры по регионам мира и викторина на определение породы.",
+    "info": "Текст и фото — Википедия, CC BY-SA. Один файл, без трекеров.",
+    "icon": "icon.svg",
+    "color": "#257f55",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Education",
+      "Game"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "women-of-science-art",
+    "added": "2026-11-22T00:00:00+03:00",
+    "title": "Women of Science & Art",
+    "description": "Интерактивный справочник о женщинах в науке и искусстве: коллекции, карточки, избранное, темы оформления.",
+    "info": "",
+    "icon": "icon.svg",
+    "color": "#0D9488",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Education",
+      "Culture"
+    ],
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "noether",
+    "added": "2026-11-22T00:00:01+03:00",
+    "title": "Noether",
+    "description": "Пиксельная прогулка по жизни Эмми Нётер: 23 комнаты-эпохи от Эрлангена 1882 года до Брин-Мора 1934-го, 8 бонусных комнат о её математике, хронологический, бонусный и свободный режимы.",
+    "info": "Один файл, офлайн, без трекеров. Язык RU/EN переключается клавишей L. Прогресс сохраняется в localStorage, звук — Web Audio.",
+    "icon": "icon.svg",
+    "color": "#b04a32",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Education"
+    ],
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "orwell-1984",
+    "added": "2026-11-26T02:17:41+03:00",
+    "title": "1984",
+    "description": "Интерактивная книга Оруэлла «1984»: три части романа в 24 главах — живые пиксельные сцены, шкала рассудка Уинстона и автосохранение.",
+    "info": "Листайте страницы, тапайте по сценам, чтобы продвигать текст. Психика героя — от ПУСТОТЫ до НАДЕЖДЫ — меняет свет, глитчи и эмбиент сцен; прогресс и звук хранятся локально.",
+    "icon": "icon.svg",
+    "color": "#FF3242",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Book",
+      "Culture",
+      "Pixel Art"
+    ],
+    "languages": [
+      "ru"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  },
+  {
+    "id": "maprandom",
+    "added": "2026-11-26T03:07:12+03:00",
+    "title": "Maprandom",
+    "description": "Случайная точка для велопрогулки: радиус, прямоугольник, город или вся планета. Маршрут на внешних картах. Всё локально.",
+    "info": "Четыре режима генерации точки — радиус вокруг старта, свой прямоугольник (в том числе нарисованный на карте), город или вся планета. Вкладка «Маршрут» строит велосипедный или пеший маршрут и открывает его в Google Maps, Яндекс.Картах, 2ГИС или OpenStreetMap. Светлая, тёмная и системная темы, акцентный цвет в духе Material You, интерфейс RU/EN. Настройки и последняя точка хранятся только в вашем браузере.",
+    "icon": "icon.svg",
+    "color": "#2E9E5B",
+    "ai": "",
+    "platform": "both",
+    "tags": [
+      "Travel",
+      "Map",
+      "Random"
+    ],
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "screenshots": [
+      "screenshots/screenshot-1.webp",
+      "screenshots/screenshot-2.webp"
+    ]
+  }
+]
