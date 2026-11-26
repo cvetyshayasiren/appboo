@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Art Arter — образовательный некоммерческий проект: доступ к музеям через их открытые API по принципу «Только 100% допустимое».">
+<title>Art Arter — пульс музейных коллекций</title>
+<!-- Шрифты: Fontsource CDN (Playfair Display — кириллица+латиница, Manrope, JetBrains Mono) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5/900.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5/400-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/600.css">
+<style>
+/* ============================================================
+   ART ARTER · дизайн-система
+   Палитра строится от базового цвета (JS вычисляет HSL-переменные):
+   «артериальный» кармин по умолчанию + производные акценты,
+   тёплые/холодные нейтрали, семантические тона.
+   ============================================================ */
+:root{
+  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
+  --font-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --topbar-h:64px; --tabs-h:0px; --rad:14px; --rad-s:9px;
+  --accent:#9E2B25; --accent-ink:#fff; --accent-soft:#f3e2df;
+  --accent-2:#b4552a; --accent-3:#7c2f56;
+  --bg:#f7f1ee; --bg-2:#efe5e0; --surface:#fdfbfa; --surface-2:#f2e9e4; --mat:#e9ded7;
+  --text:#241a17; --muted:#6b5a54; --faint:#95837c;
+  --border:#e2d4cd; --border-2:#cdb9b0;
+  --ok:#177a4c; --ok-soft:rgba(23,122,76,.12);
+  --warn:#a86a12; --warn-soft:rgba(168,106,18,.13);
+  --danger:#bb3226; --danger-soft:rgba(187,50,38,.12);
+  --info:#2b53c4; --info-soft:rgba(43,83,196,.12);
+  --shadow:0 12px 32px rgba(60,30,20,.10); --scrim:rgba(28,16,12,.45);
+  --glow-1:rgba(158,43,37,.14); --glow-2:rgba(180,85,42,.11); --glow-3:rgba(124,47,86,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body); background:var(--bg); color:var(--text);
+  font-size:15.5px; line-height:1.55; min-height:100vh;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  transition:background-color .35s ease,color .35s ease;
+}
+body::after{
+  content:''; position:fixed; inset:0; z-index:2147483000; pointer-events:none; opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+.bg-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.bg-aurora::before,.bg-aurora::after{
+  content:''; position:absolute; width:70vmax;height:70vmax;border-radius:50%;
+  filter:blur(70px); opacity:1; will-change:transform;
+}
+.bg-aurora::before{
+  top:-28vmax;left:-18vmax;
+  background:radial-gradient(circle at 40% 40%,var(--glow-1),transparent 62%);
+  animation:drift1 26s ease-in-out infinite alternate;
+}
+.bg-aurora::after{
+  bottom:-30vmax;right:-20vmax;
+  background:radial-gradient(circle at 60% 60%,var(--glow-2),transparent 60%),
+             radial-gradient(circle at 30% 70%,var(--glow-3),transparent 55%);
+  animation:drift2 32s ease-in-out infinite alternate;
+}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(9vmax,6vmax) scale(1.12)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.05)}to{transform:translate(-8vmax,-7vmax) scale(.94)}}
+*{scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+::selection{background:var(--accent);color:var(--accent-ink)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font-family:inherit;font-size:inherit;color:inherit}
+input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+code,.mono{font-family:var(--font-mono)}
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:100;
+  display:flex;align-items:center;gap:14px;padding:0 clamp(14px,3vw,30px);
+  background:var(--bg);
+  background:color-mix(in srgb,var(--bg) 78%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none}
+.brand svg{flex:none}
+.brand-name{font-family:var(--font-display);font-weight:900;font-size:1.32rem;letter-spacing:.01em;line-height:1}
+.brand-name em{font-style:italic;color:var(--accent);font-weight:700}
+.brand-sub{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-top:3px}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px}
+.seg button{
+  padding:5px 11px;border-radius:999px;font-size:.78rem;font-weight:700;color:var(--muted);
+  display:flex;align-items:center;gap:5px;transition:all .2s;line-height:1;
+}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 2px 8px var(--glow-1)}
+.seg button svg{width:14px;height:14px}
+#museumTabs{
+  display:none;position:sticky;top:var(--topbar-h);z-index:90;
+  background:var(--bg);
+  background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:8px 12px;gap:8px;overflow-x:auto;
+}
+#museumTabs::-webkit-scrollbar{height:0}
+.tab-chip{
+  flex:none;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);font-weight:700;font-size:.82rem;
+  color:var(--muted);transition:all .2s;
+}
+.tab-chip.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.err{background:var(--danger)} .dot.idle{background:var(--faint)}
+#layout{
+  max-width:1560px;margin:0 auto;padding:calc(var(--topbar-h) + 26px) clamp(14px,3vw,30px) 0;
+  display:grid;grid-template-columns:296px minmax(0,1fr);grid-template-areas:"side main" "side foot";
+  gap:0 30px;align-items:start;
+}
+#sidebar{
+  grid-area:side;position:sticky;top:calc(var(--topbar-h) + 22px);
+  max-height:calc(100vh - var(--topbar-h) - 40px);overflow-y:auto;overscroll-behavior:contain;
+  padding:4px 10px 20px 2px;display:flex;flex-direction:column;gap:22px;
+}
+#main{grid-area:main;min-width:0;padding-bottom:34px}
+#appFooter{grid-area:foot}
+.side-label{
+  font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.side-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.mnav{display:flex;flex-direction:column;gap:7px}
+.mnav-item{
+  display:flex;align-items:center;gap:11px;text-align:left;width:100%;
+  padding:11px 13px;border-radius:var(--rad-s);border:1px solid transparent;transition:all .2s;
+}
+.mnav-item:hover{background:var(--surface-2)}
+.mnav-item.active{background:var(--surface);border-color:var(--border);box-shadow:var(--shadow)}
+.mnav-item.active .mnav-name{color:var(--accent)}
+.mnav-num{font-family:var(--font-display);font-style:italic;font-weight:700;font-size:1.05rem;color:var(--faint);width:22px;flex:none}
+.mnav-body{min-width:0;flex:1}
+.mnav-name{font-weight:800;font-size:.87rem;line-height:1.25;display:block}
+.mnav-meta{font-size:.7rem;color:var(--faint);display:flex;align-items:center;gap:6px;margin-top:2px}
+.presets{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.preset{
+  width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);
+  box-shadow:0 0 0 1px var(--border-2),0 3px 8px rgba(0,0,0,.14);transition:transform .18s;position:relative;
+}
+.preset:hover{transform:scale(1.14)}
+.preset[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.picker-row{display:flex;align-items:center;gap:10px}
+.picker-row input[type="color"]{
+  width:44px;height:32px;border:1px solid var(--border-2);border-radius:8px;background:var(--surface);
+  padding:2px;cursor:pointer;
+}
+.picker-hex{font-family:var(--font-mono);font-size:.78rem;color:var(--muted)}
+.trust-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:14px}
+.trust-nums{display:flex;justify-content:space-between;gap:6px;margin-bottom:10px}
+.trust-num{flex:1;text-align:center}
+.trust-num b{font-family:var(--font-display);font-size:1.35rem;font-weight:900;display:block;line-height:1.1}
+.trust-num span{font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.trust-num.ok b{color:var(--ok)} .trust-num.bad b{color:var(--danger)}
+.trust-bar{height:7px;border-radius:99px;background:var(--danger-soft);overflow:hidden;display:flex}
+.trust-bar i{display:block;height:100%;background:var(--ok);transition:width .5s ease;border-radius:99px}
+.trust-hint{font-size:.7rem;color:var(--faint);margin-top:9px;line-height:1.45}
+.side-tools{display:flex;flex-direction:column;gap:8px}
+.side-foot{font-size:.7rem;color:var(--faint);line-height:1.5;border-top:1px dashed var(--border-2);padding-top:14px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:.86rem;
+  padding:11px 20px;border-radius:999px;transition:all .2s;border:1px solid var(--accent);
+  box-shadow:0 6px 18px var(--glow-1);line-height:1.2;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px var(--glow-1);text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border-2);box-shadow:none}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);box-shadow:none}
+.btn-soft{background:var(--accent-soft);color:var(--accent);border:1px solid transparent;box-shadow:none}
+.btn-soft:hover{box-shadow:0 6px 16px var(--glow-1)}
+.btn-sm{padding:8px 14px;font-size:.79rem}
+.icon-btn{
+  width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .2s;flex:none;
+}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent)}
+.icon-btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn svg{width:16px;height:16px}
+.field{
+  display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;padding:0 14px;height:42px;transition:border-color .2s;min-width:0;
+}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field svg{width:15px;height:15px;color:var(--faint);flex:none}
+.field input{border:none;background:none;outline:none;flex:1;min-width:0;font-size:.88rem;height:100%}
+.field input::placeholder{color:var(--faint)}
+.field .clear-x{color:var(--faint);display:none;padding:4px}
+.field .clear-x:hover{color:var(--danger)}
+.field.has-value .clear-x{display:inline-flex}
+.select-wrap{position:relative;display:inline-flex;min-width:0}
+.select-wrap select{
+  appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;height:42px;padding:0 34px 0 15px;font-size:.82rem;font-weight:600;cursor:pointer;
+  max-width:230px;text-overflow:ellipsis;transition:border-color .2s;color:var(--text);
+}
+.select-wrap select:hover{border-color:var(--border-2)}
+.select-wrap::after{
+  content:'';position:absolute;right:14px;top:50%;width:7px;height:7px;pointer-events:none;
+  border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:translateY(-70%) rotate(45deg);
+}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:6px 2px}
+.toggle input{position:absolute;opacity:0;width:1px;height:1px}
+.toggle .track{
+  width:36px;height:20px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border-2);
+  position:relative;transition:all .2s;flex:none;
+}
+.toggle .track::after{
+  content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+  background:var(--faint);transition:all .22s;
+}
+.toggle input:checked + .track{background:var(--accent);border-color:var(--accent)}
+.toggle input:checked + .track::after{left:18px;background:var(--accent-ink)}
+.toggle input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px}
+.toggle .tl{font-size:.8rem;font-weight:700;color:var(--muted)}
+.toggle input:checked ~ .tl{color:var(--text)}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;
+  padding:3px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted);
+  border:1px solid var(--border);white-space:nowrap;
+}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.info{background:var(--info-soft);color:var(--info);border-color:transparent}
+.chip.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.view{display:none;animation:viewIn .45s ease both}
+.view.on{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.eyebrow{
+  font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.eyebrow::before{content:'';width:26px;height:2px;background:var(--accent)}
+.sec-title{font-family:var(--font-display);font-weight:900;font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.12;margin-bottom:10px}
+.sec-lead{color:var(--muted);max-width:70ch;margin-bottom:26px}
+section.block{margin-bottom:clamp(40px,6vw,74px);scroll-margin-top:calc(var(--topbar-h) + var(--tabs-h) + 20px)}
+#hero{position:relative;padding:clamp(26px,4.5vw,60px) 0 clamp(30px,4vw,52px);overflow:visible}
+.hero-art{position:absolute;inset:-30px -40px auto -40px;height:calc(100% + 40px);z-index:-1;pointer-events:none;opacity:.9}
+.hero-art svg{width:100%;height:100%}
+.artery-path{stroke-dasharray:1500;stroke-dashoffset:0;animation:flow 10s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-3000}}
+.hero-title{
+  font-family:var(--font-display);font-weight:900;font-size:clamp(2.3rem,5.4vw,4.3rem);
+  line-height:1.04;letter-spacing:-.01em;max-width:16ch;
+}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-desc{margin:20px 0 26px;color:var(--muted);max-width:62ch;font-size:1.02rem}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px}
+.hero-stats{display:flex;gap:clamp(16px,3vw,42px);flex-wrap:wrap;border-top:1px solid var(--border);padding-top:20px}
+.hstat b{font-family:var(--font-display);font-weight:900;font-size:clamp(1.5rem,2.6vw,2.1rem);display:block;line-height:1;color:var(--accent)}
+.hstat span{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.pr-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+  padding:22px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s;
+}
+.pr-card:hover{transform:translateY(-4px);border-color:var(--border-2)}
+.pr-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.pr-num{font-family:var(--font-display);font-style:italic;font-weight:700;font-size:2rem;color:var(--accent);opacity:.85;line-height:1}
+.pr-card h3{font-size:1.02rem;font-weight:800;margin:10px 0 7px}
+.pr-card p{font-size:.85rem;color:var(--muted)}
+.pr-code{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.pr-code code{
+  font-size:.68rem;background:var(--surface-2);border:1px solid var(--border);
+  padding:3px 8px;border-radius:6px;color:var(--ok);font-weight:600;
+}
+.mu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.mu-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+  padding:24px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+  transition:transform .25s,box-shadow .25s,border-color .25s;
+}
+.mu-card:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:var(--border-2)}
+.mu-card::after{
+  content:'';position:absolute;right:-46px;top:-46px;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle,var(--glow-1),transparent 70%);
+}
+.mu-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mu-name{font-family:var(--font-display);font-weight:700;font-size:1.22rem;line-height:1.2}
+.mu-city{font-size:.74rem;color:var(--faint);font-weight:600;margin-top:4px}
+.mu-desc{font-size:.85rem;color:var(--muted);flex:1}
+.mu-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.api-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.api-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:22px;font-size:.84rem}
+.api-card h3{font-family:var(--font-display);font-size:1.08rem;margin-bottom:4px}
+.api-card .api-sub{font-size:.7rem;color:var(--faint);margin-bottom:14px}
+.api-line{display:flex;gap:8px;margin-bottom:9px;align-items:baseline}
+.api-line .k{flex:none;font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);width:86px;padding-top:2px}
+.api-line .v{color:var(--muted);min-width:0}
+.api-line code{font-size:.68rem;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:2px 6px;word-break:break-all;color:var(--text)}
+.api-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;border-top:1px dashed var(--border);padding-top:12px;font-size:.76rem;font-weight:700}
+.gal-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.gal-title{font-family:var(--font-display);font-weight:900;font-size:clamp(1.7rem,3.4vw,2.6rem);line-height:1.08}
+.gal-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.gal-links{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar-box{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+  padding:12px;margin-bottom:12px;
+}
+.toolbar-box .field{flex:1 1 230px}
+#toolbarFilters,#whitFilters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#statusLine{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-height:30px;
+  font-size:.76rem;color:var(--faint);margin-bottom:14px;
+}
+#statusLine b{color:var(--muted)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:16px}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;
+  cursor:pointer;display:flex;flex-direction:column;transition:transform .25s,box-shadow .25s,border-color .25s;
+  animation:cardIn .5s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.card:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:var(--border-2)}
+.card-img{
+  aspect-ratio:4/3;background:radial-gradient(ellipse at 50% 42%,var(--surface-2),var(--mat));
+  display:flex;align-items:center;justify-content:center;padding:16px;position:relative;overflow:hidden;
+  background-size:cover;background-position:center;
+}
+.card-img img{
+  max-width:100%;max-height:100%;object-fit:contain;opacity:0;transition:opacity .5s ease,transform .5s ease;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.22));
+}
+.card-img img.loaded{opacity:1}
+.card:hover .card-img img.loaded{transform:scale(1.045)}
+.img-fail{display:none;flex-direction:column;align-items:center;gap:8px;color:var(--faint);font-size:.72rem;text-align:center;padding:10px}
+.card-img.failed img{display:none}
+.card-img.failed .img-fail{display:flex}
+.modal-imgwrap .img-fail{display:flex;color:var(--faint);font-size:.8rem}
+.seal{
+  position:absolute;top:10px;right:10px;display:inline-flex;align-items:center;gap:4px;
+  background:var(--ok);color:#fff;font-size:.62rem;font-weight:800;letter-spacing:.06em;
+  padding:4px 9px;border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-family:var(--font-mono);
+}
+.seal svg{width:10px;height:10px}
+.hl-badge{
+  position:absolute;top:10px;left:10px;background:var(--warn);color:#fff;font-size:.62rem;font-weight:800;
+  padding:4px 9px;border-radius:99px;display:inline-flex;gap:4px;align-items:center;box-shadow:0 3px 10px rgba(0,0,0,.25);
+}
+.card-body{padding:14px 15px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
+.card-title{
+  font-family:var(--font-display);font-weight:700;font-size:1.02rem;line-height:1.28;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.card-artist{font-size:.8rem;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{font-size:.72rem;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:9px}
+.card-dept{font-size:.66rem;color:var(--faint);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.card-link{flex:none;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--faint);border:1px solid var(--border);transition:all .2s}
+.card-link:hover{color:var(--accent);border-color:var(--accent)}
+.card-link svg{width:13px;height:13px}
+.card-license{
+  border-top:1px solid var(--border);background:var(--ok-soft);padding:7px 15px;
+  display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.63rem;color:var(--ok);font-weight:600;
+}
+.card-license svg{width:11px;height:11px;flex:none}
+.sk{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden}
+.sk-img{aspect-ratio:4/3}
+.sk-l{height:13px;border-radius:6px;margin:12px 15px 0}
+.sk-l.w60{width:60%}.sk-l.w80{width:80%}.sk-l.w40{width:40%;margin-bottom:16px}
+.shimmer{background:linear-gradient(100deg,var(--surface-2) 40%,var(--bg-2) 50%,var(--surface-2) 60%);background-size:200% 100%;animation:shim 1.4s infinite}
+@keyframes shim{to{background-position:-200% 0}}
+.state-box{
+  border:1px solid var(--border);border-radius:var(--rad);background:var(--surface);
+  padding:clamp(26px,4vw,46px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.state-box .big-ico{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.state-box .big-ico svg{width:24px;height:24px}
+.state-box.err .big-ico{background:var(--danger-soft);color:var(--danger)}
+.state-box.empty .big-ico{background:var(--warn-soft);color:var(--warn)}
+.state-box h3{font-family:var(--font-display);font-size:1.3rem}
+.state-box p{color:var(--muted);max-width:56ch;font-size:.88rem}
+.state-box .tech{font-family:var(--font-mono);font-size:.68rem;color:var(--faint);word-break:break-all}
+#pager{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:26px;flex-wrap:wrap}
+.page-num{font-family:var(--font-display);font-weight:900;font-size:1.7rem;min-width:70px;text-align:center;line-height:1}
+.page-num small{display:block;font-family:var(--font-body);font-weight:700;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+.pager-note{width:100%;text-align:center;font-size:.72rem;color:var(--faint)}
+.whit-status{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.strict-panel{
+  border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:var(--rad);
+  background:var(--surface);padding:clamp(20px,3vw,30px);margin-bottom:18px;position:relative;overflow:hidden;
+}
+.strict-panel::after{content:'';position:absolute;right:-60px;bottom:-60px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,var(--warn-soft),transparent 70%)}
+.strict-panel h3{font-family:var(--font-display);font-size:1.45rem;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.strict-panel h3 svg{width:22px;height:22px;color:var(--warn);flex:none}
+.strict-panel p{color:var(--muted);font-size:.9rem;max-width:78ch;margin-bottom:10px}
+.pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 6px}
+.pipe-step{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--rad-s);padding:14px;text-align:center}
+.pipe-step b{font-family:var(--font-display);font-size:1.7rem;font-weight:900;display:block;line-height:1.1}
+.pipe-step span{font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.pipe-step.bad b{color:var(--danger)} .pipe-step.zero b{color:var(--warn)}
+.journal{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;margin-bottom:18px;
+}
+.journal-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.journal-head b{font-size:.85rem}
+.journal-head .mono{font-size:.66rem;color:var(--faint)}
+.journal-list{max-height:280px;overflow-y:auto;padding:8px 0;font-family:var(--font-mono);font-size:.72rem}
+.jline{display:flex;gap:10px;padding:6px 16px;align-items:baseline;border-bottom:1px dashed var(--border);animation:viewIn .3s ease both}
+.jline:last-child{border-bottom:none}
+.jline .x{color:var(--danger);font-weight:600;flex:none}
+.jline .jt{color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.jline .jr{color:var(--danger);flex:none;font-size:.64rem}
+.journal-empty{padding:20px 16px;color:var(--faint);font-size:.75rem}
+.whit-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.whit-links{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;font-weight:700}
+.future-note{font-size:.78rem;color:var(--faint);border-top:1px dashed var(--border-2);padding-top:14px;margin-top:6px;max-width:80ch}
+#modalRoot{position:fixed;inset:0;z-index:500;display:none}
+#modalRoot.on{display:block}
+.modal-scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(7px);animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  position:absolute;inset:clamp(8px,3vh,34px) clamp(8px,3vw,40px);margin:auto;max-width:1150px;
+  height:min(88vh,840px);
+  background:var(--bg);border:1px solid var(--border-2);border-radius:18px;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);
+  box-shadow:0 30px 90px rgba(0,0,0,.4);
+  animation:modalIn .3s cubic-bezier(.2,.9,.3,1.2) both;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+.modal-left{
+  background:radial-gradient(ellipse at 50% 40%,var(--surface-2),var(--mat));
+  display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border);
+}
+.modal-imgwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:26px;min-height:0;position:relative}
+.modal-imgwrap img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14px 34px rgba(0,0,0,.3));opacity:0;transition:opacity .4s}
+.modal-imgwrap img.loaded{opacity:1}
+.modal-imgwrap .spin{position:absolute}
+.modal-thumbs{display:flex;gap:8px;padding:0 20px 16px;overflow-x:auto;flex:none}
+.modal-thumbs button{flex:none;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid var(--border);padding:0;background:var(--surface);transition:border-color .2s}
+.modal-thumbs button:hover,.modal-thumbs button.sel{border-color:var(--accent)}
+.modal-thumbs img{width:100%;height:100%;object-fit:cover}
+.modal-right{display:flex;flex-direction:column;min-height:0}
+.modal-head{padding:20px 22px 14px;border-bottom:1px solid var(--border);flex:none}
+.modal-kicker{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.modal-title{font-family:var(--font-display);font-weight:900;font-size:clamp(1.25rem,2.4vw,1.75rem);line-height:1.15;padding-right:36px}
+.modal-artist{color:var(--muted);font-weight:600;font-size:.9rem;margin-top:7px}
+.modal-bio{color:var(--faint);font-size:.76rem;margin-top:2px}
+.modal-close{position:absolute;top:14px;right:14px;z-index:5}
+.modal-scroll{overflow-y:auto;padding:18px 22px;flex:1;min-height:0}
+.license-panel{
+  background:var(--ok-soft);border:1px solid var(--ok);border-radius:var(--rad-s);
+  padding:15px 16px;margin-bottom:20px;
+}
+.license-panel h4{display:flex;align-items:center;gap:8px;color:var(--ok);font-size:.86rem;margin-bottom:8px}
+.license-panel h4 svg{width:15px;height:15px}
+.license-panel p{font-size:.78rem;color:var(--muted);margin-bottom:9px}
+.evidence{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.evidence code{font-size:.66rem;background:var(--surface);border:1px solid var(--ok);color:var(--ok);padding:3px 8px;border-radius:6px;font-weight:600}
+.credit-line{font-size:.78rem;border-top:1px dashed var(--ok);padding-top:9px}
+.credit-line b{display:block;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);margin-bottom:3px}
+.fgroup{margin-bottom:18px}
+.fgroup h5{
+  font-size:.66rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);
+  margin-bottom:8px;display:flex;align-items:center;gap:8px;
+}
+.fgroup h5::after{content:'';flex:1;height:1px;background:var(--border)}
+.frow{display:grid;grid-template-columns:minmax(110px,.42fr) 1fr;gap:12px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:.8rem}
+.frow:last-child{border-bottom:none}
+.frow .fk{color:var(--faint);font-weight:600;font-size:.72rem;padding-top:1px}
+.frow .fv{color:var(--text);min-width:0;word-break:break-word}
+.frow .fv a{word-break:break-all}
+.frow .fv .long{max-height:110px;overflow:hidden;position:relative}
+.frow .fv .long.open{max-height:none}
+.long-toggle{font-size:.7rem;font-weight:700;color:var(--accent);margin-top:4px;padding:0}
+.tagrow{display:flex;flex-wrap:wrap;gap:5px}
+.json-view{
+  font-family:var(--font-mono);font-size:.68rem;line-height:1.6;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rad-s);padding:16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;
+}
+.modal-foot{
+  flex:none;border-top:1px solid var(--border);padding:13px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  background:var(--surface);
+}
+.modal-nav{margin-left:auto;display:flex;gap:8px}
+.spin{
+  width:26px;height:26px;border-radius:50%;border:3px solid var(--border-2);border-top-color:var(--accent);
+  animation:rot .8s linear infinite;
+}
+@keyframes rot{to{transform:rotate(360deg)}}
+.btn .spin{width:14px;height:14px;border-width:2px;border-top-color:currentColor}
+#appFooter{border-top:1px solid var(--border);margin-top:10px;padding:26px 0 40px;font-size:.78rem;color:var(--muted)}
+.foot-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:26px}
+.foot-note{line-height:1.65;max-width:75ch}
+.foot-note b{color:var(--text)}
+.foot-links{display:flex;flex-direction:column;gap:7px;font-weight:600}
+.foot-bottom{margin-top:22px;padding-top:14px;border-top:1px dashed var(--border);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--faint);font-size:.7rem}
+#toastRoot{position:fixed;right:18px;bottom:18px;z-index:900;display:flex;flex-direction:column;gap:9px;max-width:min(360px,calc(100vw - 36px))}
+.toast{
+  background:var(--surface);border:1px solid var(--border-2);border-left:4px solid var(--info);
+  border-radius:12px;padding:12px 16px;font-size:.82rem;font-weight:600;box-shadow:var(--shadow);
+  animation:toastIn .3s cubic-bezier(.2,.9,.3,1.2) both;display:flex;gap:9px;align-items:center;
+}
+.toast.ok{border-left-color:var(--ok)} .toast.err{border-left-color:var(--danger)} .toast.warn{border-left-color:var(--warn)}
+.toast.out{animation:toastOut .3s ease both}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px)}}
+@media (max-width:1240px){#layout{grid-template-columns:258px minmax(0,1fr);gap:0 22px}}
+@media (max-width:1020px){
+  :root{--tabs-h:52px}
+  #museumTabs{display:flex}
+  #layout{grid-template-columns:1fr;grid-template-areas:"main" "side" "foot";padding-top:calc(var(--topbar-h) + 18px)}
+  #sidebar{position:static;max-height:none;overflow:visible;border-top:1px solid var(--border);padding-top:22px;margin-top:8px}
+  .side-nav-sec{display:none}
+  .modal{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);inset:8px;height:auto;max-height:none}
+  .modal-left{border-right:none;border-bottom:1px solid var(--border);max-height:38vh}
+  .modal-imgwrap{padding:14px}
+  .modal-thumbs{display:none}
+  .foot-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  body{font-size:14.5px}
+  .brand-sub{display:none}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:11px}
+  .card-body{padding:11px 12px 9px}
+  .card-title{font-size:.9rem}
+  .card-license{padding:6px 12px;font-size:.58rem}
+  .toolbar-box{padding:10px}
+  .select-wrap select{max-width:160px}
+  .hero-stats{gap:16px}
+  .seg button{padding:5px 8px;font-size:.72rem}
+  .seg button .seg-txt{display:none}
+  .frow{grid-template-columns:1fr;gap:2px}
+  .modal-foot{padding:11px 14px}
+  .modal-head{padding:16px 16px 12px}
+  .modal-scroll{padding:14px 16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="bg-aurora" aria-hidden="true"></div>
+
+<header id="topbar">
+  <div class="brand" data-nav="#/home" role="link" tabindex="0" aria-label="Art Arter">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <rect x="3" y="3" width="28" height="28" rx="4" stroke="var(--accent)" stroke-width="2.4"/>
+      <rect x="8.5" y="8.5" width="17" height="17" rx="2" stroke="var(--border-2)" stroke-width="1.4"/>
+      <polyline points="5,17 12,17 14.5,10.5 17.5,23.5 20,17 29,17" stroke="var(--accent-2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <div>
+      <div class="brand-name">Art <em>Arter</em></div>
+      <div class="brand-sub" data-i18n="brand.sub">пульс коллекций</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="seg" role="group" aria-label="Language" id="langSeg">
+      <button data-lang="ru" aria-pressed="true">RU</button>
+      <button data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <div class="seg" role="group" aria-label="Theme" id="themeSeg">
+      <button data-theme-mode="light" data-i18n-title="theme.light" title="Светлая">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
+        <span class="seg-txt" data-i18n="theme.light">Светлая</span>
+      </button>
+      <button data-theme-mode="dark" data-i18n-title="theme.dark" title="Тёмная">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.2A8.1 8.1 0 0 1 10.8 4a8.1 8.1 0 1 0 9.2 9.2Z"/></svg>
+        <span class="seg-txt" data-i18n="theme.dark">Тёмная</span>
+      </button>
+      <button data-theme-mode="system" aria-pressed="true" data-i18n-title="theme.system" title="Системная">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M9 21h6M12 17.5V21"/></svg>
+        <span class="seg-txt" data-i18n="theme.system">Системная</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav id="museumTabs" aria-label="Museums">
+  <button class="tab-chip" data-nav="#/home"><span data-i18n="nav.overview">Обзор</span></button>
+  <button class="tab-chip" data-nav="#/met"><span class="dot idle" id="tdot-met"></span>The Met</button>
+  <button class="tab-chip" data-nav="#/aic"><span class="dot idle" id="tdot-aic"></span>Art Institute</button>
+  <button class="tab-chip" data-nav="#/whitney"><span class="dot warn" id="tdot-whit"></span>Whitney</button>
+</nav>
+
+<div id="layout">
+<aside id="sidebar">
+  <section class="side-nav-sec">
+    <div class="side-label" data-i18n="nav.museums">Музеи</div>
+    <div class="mnav" id="mnav">
+      <button class="mnav-item" data-nav="#/home">
+        <span class="mnav-num">00</span>
+        <span class="mnav-body"><span class="mnav-name" data-i18n="nav.overview">Обзор</span>
+        <span class="mnav-meta" data-i18n="nav.overviewMeta">принцип · музеи · API</span></span>
+      </button>
+      <button class="mnav-item" data-nav="#/met">
+        <span class="mnav-num">01</span>
+        <span class="mnav-body"><span class="mnav-name">The Metropolitan Museum of Art</span>
+        <span class="mnav-meta"><span class="dot idle" id="sdot-met"></span><span data-i18n="museums.metCity">Нью-Йорк</span> · <span data-i18n="museums.apiCC0">API · CC0</span></span></span>
+      </button>
+      <button class="mnav-item" data-nav="#/aic">
+        <span class="mnav-num">02</span>
+        <span class="mnav-body"><span class="mnav-name">Art Institute of Chicago</span>
+        <span class="mnav-meta"><span class="dot idle" id="sdot-aic"></span><span data-i18n="museums.aicCity">Чикаго</span> · <span data-i18n="museums.apiPD">API · Public Domain</span></span></span>
+      </button>
+      <button class="mnav-item" data-nav="#/whitney">
+        <span class="mnav-num">03</span>
+        <span class="mnav-body"><span class="mnav-name">Whitney Museum of American Art</span>
+        <span class="mnav-meta"><span class="dot warn" id="sdot-whit"></span><span data-i18n="museums.whitCity">Нью-Йорк</span> · <span data-i18n="museums.apiStrict">API · строгий режим</span></span></span>
+      </button>
+    </div>
+  </section>
+
+  <section>
+    <div class="side-label" data-i18n="nav.baseColor">Базовый цвет</div>
+    <div class="presets" id="presets" role="group" aria-label="Color presets"></div>
+    <div class="picker-row">
+      <input type="color" id="basePicker" value="#9e2b25" data-i18n-title="nav.pickColor" title="Свой цвет">
+      <span class="picker-hex" id="baseHex">#9E2B25</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="side-label" data-i18n="nav.trust">Фильтр доверия</div>
+    <div class="trust-box">
+      <div class="trust-nums">
+        <div class="trust-num"><b data-trust="checked">0</b><span data-i18n="trust.checked">проверено</span></div>
+        <div class="trust-num ok"><b data-trust="admitted">0</b><span data-i18n="trust.admitted">допущено</span></div>
+        <div class="trust-num bad"><b data-trust="rejected">0</b><span data-i18n="trust.rejected">отклонено</span></div>
+      </div>
+      <div class="trust-bar"><i id="trustBar" style="width:0%"></i></div>
+      <div class="trust-hint" data-i18n="trust.hint">Счётчики этой сессии: каждый объект проходит проверку прав до показа.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="side-label" data-i18n="nav.tools">Инструменты</div>
+    <div class="side-tools">
+      <button class="btn btn-ghost btn-sm" id="clearCacheBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M9 7V4.8A1 1 0 0 1 10 4h4a1 1 0 0 1 1 .8V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></svg>
+        <span data-i18n="tools.clearCache">Очистить кэш</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" id="gotoApiBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 3 12l5 6M16 6l5 6-5 6M13.5 4l-3 16"/></svg>
+        <span data-i18n="tools.apiDocs">Как работают запросы</span>
+      </button>
+    </div>
+  </section>
+
+  <p class="side-foot" data-i18n="app.footnoteShort">Образовательный некоммерческий проект. Данные и изображения — музеи-источники.</p>
+</aside>
+
+<main id="main">
+
+<section id="view-home" class="view">
+  <section class="block" id="hero">
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" fill="none">
+        <defs>
+          <linearGradient id="artGrad" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="var(--accent)" stop-opacity="0"/>
+            <stop offset=".25" stop-color="var(--accent)"/>
+            <stop offset=".6" stop-color="var(--accent-2)"/>
+            <stop offset="1" stop-color="var(--accent-3)"/>
+          </linearGradient>
+        </defs>
+        <path class="artery-path" d="M-30 300 C 120 300 170 150 300 150 S 470 330 600 330 L 640 330 L 664 236 L 690 372 L 716 268 L 738 330 L 830 330 C 900 330 930 210 1000 210 S 1120 300 1240 300" stroke="url(#artGrad)" stroke-width="2.6" stroke-linecap="round" opacity=".65"/>
+        <path d="M-30 316 C 120 316 170 166 300 166 S 470 346 600 346 L 830 346 C 900 346 930 226 1000 226 S 1120 316 1240 316" stroke="var(--border-2)" stroke-width="1.2" opacity=".5"/>
+        <rect x="880" y="80" width="150" height="190" rx="6" stroke="var(--border-2)" stroke-width="1.6" opacity=".7"/>
+        <rect x="898" y="98" width="114" height="154" rx="3" stroke="var(--accent)" stroke-width="1.2" opacity=".45"/>
+        <circle cx="664" cy="236" r="4" fill="var(--accent-2)" opacity=".8"/>
+        <circle cx="300" cy="150" r="3.4" fill="var(--accent)" opacity=".6"/>
+      </svg>
+    </div>
+    <div class="eyebrow" data-i18n="hero.eyebrow">Образовательный некоммерческий проект</div>
+    <h1 class="hero-title"><span data-i18n="hero.title1">Искусство по открытым</span> <em data-i18n="hero.title2">артериям музеев</em></h1>
+    <p class="hero-desc" data-i18n="hero.desc">Art Arter даёт доступ к музеям через их открытые API — без ключей и регистрации. Список музеев может пополняться в будущем, если будут найдены другие открытые API. Каждый объект показывается только при явном подтверждении прав: принцип «Только 100% допустимое».</p>
+    <div class="hero-ctas">
+      <button class="btn" data-nav="#/met"><span data-i18n="hero.ctaMet">Открыть The Met</span> <span aria-hidden="true">→</span></button>
+      <button class="btn btn-ghost" data-nav="#/aic"><span data-i18n="hero.ctaAic">Открыть Art Institute</span></button>
+      <button class="btn btn-soft" data-nav="#/whitney"><span data-i18n="hero.ctaWhit">Whitney: строгий режим</span></button>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><b>3</b><span data-i18n="hero.sMuseums">музея</span></div>
+      <div class="hstat"><b>3</b><span data-i18n="hero.sApis">открытых API</span></div>
+      <div class="hstat"><b>0</b><span data-i18n="hero.sKeys">ключей API</span></div>
+      <div class="hstat"><b>100%</b><span data-i18n="hero.sCheck">проверка прав</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="principle">
+    <div class="eyebrow" data-i18n="principle.eyebrow">Главное правило</div>
+    <h2 class="sec-title" data-i18n="principle.title">Только 100% допустимое</h2>
+    <p class="sec-lead" data-i18n="principle.lead">Объект появляется на экране, только если все его части — метаданные и изображение — абсолютно точно разрешены к показу. При малейшем сомнении объект пропускается. Никаких предположений «наверное, можно».</p>
+    <div class="pr-grid">
+      <div class="pr-card">
+        <div class="pr-num">01</div>
+        <h3 data-i18n="principle.s1t">Явное поле прав</h3>
+        <p data-i18n="principle.s1d">API должно вернуть машиночитаемое подтверждение: флаг общественного достояния. Нет флага — нет показа.</p>
+        <div class="pr-code"><code>isPublicDomain === true</code><code>is_public_domain === true</code></div>
+      </div>
+      <div class="pr-card">
+        <div class="pr-num">02</div>
+        <h3 data-i18n="principle.s2t">Изображение от музея</h3>
+        <p data-i18n="principle.s2d">Показываем только файлы с серверов самого музея (или его IIIF-сервиса), на которые указывает проверенная запись.</p>
+        <div class="pr-code"><code>images.metmuseum.org</code><code>artic.edu/iiif/2</code></div>
+      </div>
+      <div class="pr-card">
+        <div class="pr-num">03</div>
+        <h3 data-i18n="principle.s3t">Сомнение = отказ</h3>
+        <p data-i18n="principle.s3d">Отклонённые объекты не отображаются вовсе. Счётчик «Фильтр доверия» показывает, сколько записей не прошло проверку.</p>
+        <div class="pr-code"><code>doubt → skip</code><code data-i18n="principle.s3code">журнал проверки</code></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="museums">
+    <div class="eyebrow" data-i18n="museums.eyebrow">Коллекции</div>
+    <h2 class="sec-title" data-i18n="museums.title">Три музея, три артерии</h2>
+    <div class="mu-grid">
+      <div class="mu-card">
+        <div class="mu-top">
+          <div><div class="mu-name">The Metropolitan Museum of Art</div>
+          <div class="mu-city"><span data-i18n="museums.metCity">Нью-Йорк</span> · <span data-i18n="museums.founded1870">осн. 1870</span></div></div>
+          <span class="chip ok" data-i18n="museums.apiCC0">API · CC0</span>
+        </div>
+        <p class="mu-desc" data-i18n="museums.metDesc">5000 лет искусства. Открытые данные и изображения общественного достояния передаются под CC0 в рамках инициативы Open Access.</p>
+        <div class="mu-foot">
+          <button class="btn btn-sm" data-nav="#/met"><span data-i18n="museums.enter">В коллекцию</span> →</button>
+          <a href="https://www.metmuseum.org/art/collection" target="_blank" rel="noopener noreferrer">metmuseum.org ↗</a>
+        </div>
+      </div>
+      <div class="mu-card">
+        <div class="mu-top">
+          <div><div class="mu-name">Art Institute of Chicago</div>
+          <div class="mu-city"><span data-i18n="museums.aicCity">Чикаго</span> · <span data-i18n="museums.founded1879">осн. 1879</span></div></div>
+          <span class="chip ok" data-i18n="museums.apiPD">API · Public Domain</span>
+        </div>
+        <p class="mu-desc" data-i18n="museums.aicDesc">Импрессионизм, гравюра, модернизм. API помечает объекты общественного достояния полем is_public_domain и отдаёт изображения по IIIF.</p>
+        <div class="mu-foot">
+          <button class="btn btn-sm" data-nav="#/aic"><span data-i18n="museums.enter">В коллекцию</span> →</button>
+          <a href="https://www.artic.edu/collection" target="_blank" rel="noopener noreferrer">artic.edu ↗</a>
+        </div>
+      </div>
+      <div class="mu-card">
+        <div class="mu-top">
+          <div><div class="mu-name">Whitney Museum of American Art</div>
+          <div class="mu-city"><span data-i18n="museums.whitCity">Нью-Йорк</span> · <span data-i18n="museums.founded1930">осн. 1930</span></div></div>
+          <span class="chip warn" data-i18n="museums.apiStrict">API · строгий режим</span>
+        </div>
+        <p class="mu-desc" data-i18n="museums.whitDesc">Американское искусство XX–XXI веков. Открытый API есть, но явного подтверждения прав на изображения он не даёт — фильтр не допускает показ.</p>
+        <div class="mu-foot">
+          <button class="btn btn-soft btn-sm" data-nav="#/whitney"><span data-i18n="museums.whitWhy">Почему пусто?</span></button>
+          <a href="https://whitney.org/collection" target="_blank" rel="noopener noreferrer">whitney.org ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="api">
+    <div class="eyebrow" data-i18n="api.eyebrow">Прозрачность</div>
+    <h2 class="sec-title" data-i18n="api.title">Как работают запросы</h2>
+    <p class="sec-lead" data-i18n="api.lead">Каждый музей — отдельный адаптер: свой поиск, своя пагинация, свои лимиты вежливости и своё поле подтверждения прав. Ответы кэшируются в localStorage, чтобы не дёргать API повторно.</p>
+    <div class="api-grid">
+      <div class="api-card">
+        <h3>The Met</h3>
+        <div class="api-sub">collectionapi.metmuseum.org</div>
+        <div class="api-line"><span class="k" data-i18n="api.kReq">Запросы</span><span class="v"><code>GET /public/collection/v1.1/search</code> → <code>GET /objects/{id}</code></span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kFlow">Схема</span><span class="v" data-i18n="api.metFlow">Поиск возвращает страницы ID (offset/limit, hasImages=true). Каждый объект загружается отдельно и проверяется по флагу.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kVerify">Проверка</span><span class="v"><code>isPublicDomain === true</code> + <code>primaryImageSmall</code></span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kLimits">Лимиты</span><span class="v" data-i18n="api.metLimits">Лимит музея — 80 запросов/с; приложение держит ≤ 5 параллельных и паузу 80 мс.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kRights">Права</span><span class="v" data-i18n="api.metRights">Данные и PD-изображения — CC0 (Open Access). Атрибуция: creditLine.</span></div>
+        <div class="api-links">
+          <a href="https://metmuseum.github.io/" target="_blank" rel="noopener noreferrer" data-i18n="api.docs">Документация API</a>
+          <a href="https://www.metmuseum.org/policies/image-resources" target="_blank" rel="noopener noreferrer" data-i18n="api.terms">Условия использования</a>
+        </div>
+      </div>
+      <div class="api-card">
+        <h3>Art Institute of Chicago</h3>
+        <div class="api-sub">api.artic.edu</div>
+        <div class="api-line"><span class="k" data-i18n="api.kReq">Запросы</span><span class="v"><code>GET /api/v1/artworks/search?params={JSON}</code></span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kFlow">Схема</span><span class="v" data-i18n="api.aicFlow">Elasticsearch-запрос: term is_public_domain=true + exists image_id. Одна страница — до 36 записей со всеми полями; изображения строятся по IIIF.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kVerify">Проверка</span><span class="v"><code>is_public_domain === true</code> + <code>image_id</code></span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kLimits">Лимиты</span><span class="v" data-i18n="api.aicLimits">Анонимно — 60 запросов/мин; приложение делает не чаще 1 запроса в 1,15 с. Глубина поиска ограничена API.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kRights">Права</span><span class="v" data-i18n="api.aicRights">Метаданные — CC0 (кроме поля description, CC-BY); PD-изображения — по флагу музея. Атрибуция: credit_line.</span></div>
+        <div class="api-links">
+          <a href="https://api.artic.edu/docs/" target="_blank" rel="noopener noreferrer" data-i18n="api.docs">Документация API</a>
+          <a href="https://www.artic.edu/terms" target="_blank" rel="noopener noreferrer" data-i18n="api.terms">Условия использования</a>
+        </div>
+      </div>
+      <div class="api-card">
+        <h3>Whitney Museum</h3>
+        <div class="api-sub">whitney.org/api</div>
+        <div class="api-line"><span class="k" data-i18n="api.kReq">Запросы</span><span class="v"><code>GET /api/artworks?q[…]&page=N</code></span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kFlow">Схема</span><span class="v" data-i18n="api.whitFlow">JSON:API, 30 записей на страницу, поиск через q[title_cont] и т. п. Записи читаются, но ни одна не допускается к показу.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kVerify">Проверка</span><span class="v" data-i18n="api.whitVerify">Явного поля прав на изображение в ответе нет → отказ по правилу «Только 100% допустимое».</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kLimits">Лимиты</span><span class="v" data-i18n="api.whitLimits">Просьба музея «be respectful»: 1 запрос в 1,2 с, без параллельных обращений.</span></div>
+        <div class="api-line"><span class="k" data-i18n="api.kRights">Права</span><span class="v" data-i18n="api.whitRights">Данные — для некоммерческого образовательного использования с атрибуцией; изображения не входят в открытые данные (CC0 — только CSV-датасеты).</span></div>
+        <div class="api-links">
+          <a href="https://whitney.org/about/website/api" target="_blank" rel="noopener noreferrer" data-i18n="api.docs">Документация API</a>
+          <a href="https://github.com/whitneymuseum/open-access" target="_blank" rel="noopener noreferrer" data-i18n="whit.dataset">Открытые данные (CSV)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<section id="view-gallery" class="view">
+  <div class="gal-head">
+    <div>
+      <h2 class="gal-title" id="galTitle">The Metropolitan Museum of Art</h2>
+      <div class="gal-meta" id="galMeta"></div>
+    </div>
+    <div class="gal-links">
+      <a class="btn btn-ghost btn-sm" id="galSite" href="#" target="_blank" rel="noopener noreferrer"><span data-i18n="gallery.site">Сайт музея</span> ↗</a>
+    </div>
+  </div>
+  <div id="toolbar" class="toolbar-box">
+    <label class="field" id="searchField">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      <input type="search" id="searchInput" autocomplete="off" spellcheck="false" data-i18n-ph="gallery.searchPh.met" placeholder="Поиск: monet, samurai, portrait…">
+      <button class="clear-x" id="searchClear" data-i18n-title="gallery.clear" title="Очистить" aria-label="clear">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </label>
+    <div id="toolbarFilters"></div>
+    <button class="icon-btn" id="resetFilters" data-i18n-title="gallery.reset" title="Сбросить фильтры">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a9 9 0 1 1-1 6.5M3.5 3v5h5"/></svg>
+    </button>
+    <button class="btn btn-soft btn-sm" id="randomBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.6" cy="8.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.4" cy="8.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="8.6" cy="15.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.15" fill="currentColor" stroke="none"/></svg>
+      <span data-i18n="gallery.random">Случайный объект</span>
+    </button>
+  </div>
+  <div id="statusLine" aria-live="polite"></div>
+  <div id="grid"></div>
+  <div id="stateBox" hidden></div>
+  <nav id="pager" aria-label="Pagination">
+    <button class="icon-btn" id="firstPage" data-i18n-title="status.first" title="Первая страница">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7l-5 5 5 5M18 7l-5 5 5 5"/></svg>
+    </button>
+    <button class="icon-btn" id="prevPage" data-i18n-title="status.prev" title="Назад">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6 8.5 12l6 6"/></svg>
+    </button>
+    <div class="page-num"><b id="pageNum">1</b><small data-i18n="status.page">страница</small></div>
+    <button class="icon-btn" id="nextPage" data-i18n-title="status.next" title="Вперёд">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></svg>
+    </button>
+    <div class="pager-note" id="pagerNote"></div>
+  </nav>
+</section>
+
+<section id="view-whitney" class="view">
+  <div class="gal-head">
+    <div>
+      <h2 class="gal-title">Whitney Museum of American Art</h2>
+      <div class="gal-meta" id="whitMeta"></div>
+    </div>
+    <div class="gal-links">
+      <a class="btn btn-ghost btn-sm" href="https://whitney.org/collection" target="_blank" rel="noopener noreferrer"><span data-i18n="gallery.site">Сайт музея</span> ↗</a>
+    </div>
+  </div>
+  <div class="toolbar-box" id="whitToolbar">
+    <label class="field" id="whitSearchField">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      <input type="search" id="whitSearchInput" autocomplete="off" spellcheck="false" data-i18n-ph="gallery.searchPh.whit" placeholder="Поиск: hopper, o'keeffe, moon…">
+      <button class="clear-x" id="whitSearchClear" data-i18n-title="gallery.clear" title="Очистить" aria-label="clear">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </label>
+    <div id="whitFilters"></div>
+    <button class="icon-btn" id="whitReset" data-i18n-title="gallery.reset" title="Сбросить фильтры">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a9 9 0 1 1-1 6.5M3.5 3v5h5"/></svg>
+    </button>
+  </div>
+  <div class="whit-status" id="whitStatus" aria-live="polite"></div>
+  <div class="strict-panel">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5c0 4.6 3.2 8.4 7.5 10 4.3-1.6 7.5-5.4 7.5-10V6L12 3Z"/><path d="M9 12l6 0M9 9.5 15 14.5"/></svg>
+      <span data-i18n="whit.title">Ни один объект не допущен к показу</span>
+    </h3>
+    <p data-i18n="whit.lead1">API Уитни работает и отдаёт метаданные: их условия разрешают некоммерческое образовательное использование с сохранением уведомлений об авторских правах и указанием источника. Но в ответах нет явного машиночитаемого поля, подтверждающего право на показ изображений.</p>
+    <p data-i18n="whit.lead2">Правило «Только 100% допустимое» запрещает показ при малейшем сомнении — поэтому коллекция здесь не отображается. Это не ошибка: это работа фильтра. Ниже — живой журнал проверки записей, полученных из API прямо сейчас.</p>
+    <div class="pipeline">
+      <div class="pipe-step"><b id="whitChecked">0</b><span data-i18n="whit.pipe1">записей получено</span></div>
+      <div class="pipe-step bad"><b id="whitRights">0</b><span data-i18n="whit.pipe2">явных полей прав</span></div>
+      <div class="pipe-step zero"><b id="whitAdmitted">0</b><span data-i18n="whit.pipe3">допущено к показу</span></div>
+    </div>
+  </div>
+  <div class="journal">
+    <div class="journal-head">
+      <b data-i18n="whit.journal">Журнал проверки</b>
+      <span class="mono" data-i18n="whit.journalNote">объекты не показываются — только результат фильтра</span>
+    </div>
+    <div class="journal-list" id="whitJournal"></div>
+  </div>
+  <div class="whit-actions">
+    <button class="btn btn-sm" id="whitMore"><span data-i18n="whit.checkMore">Проверить ещё 30 записей</span></button>
+    <span id="whitMoreState"></span>
+  </div>
+  <div class="whit-links">
+    <a href="https://whitney.org/collection" target="_blank" rel="noopener noreferrer" data-i18n="whit.openCollection">Коллекция на whitney.org ↗</a>
+    <a href="https://whitney.org/about/website/api" target="_blank" rel="noopener noreferrer" data-i18n="api.docs">Документация API</a>
+    <a href="https://github.com/whitneymuseum/open-access" target="_blank" rel="noopener noreferrer" data-i18n="whit.dataset">Открытые данные (CSV)</a>
+  </div>
+  <p class="future-note" data-i18n="whit.future">Если Уитни добавит в API явное поле прав (например, public_domain: true), объекты пройдут фильтр и появятся здесь автоматически — код адаптера уже проверяет такие поля. Список музеев проекта может пополняться, когда находятся другие открытые API.</p>
+</section>
+
+</main>
+
+<footer id="appFooter">
+  <div class="foot-grid">
+    <p class="foot-note"><b>Art Arter</b> — <span data-i18n="app.footnote">образовательный некоммерческий проект. Приложение даёт доступ к музеям через их открытые API. Список музеев может пополняться в будущем, если будут найдены другие открытые API. Все данные и изображения принадлежат музеям-источникам и показываются только при явном подтверждении прав на показ («Только 100% допустимое»); атрибуция указана в каждой карточке.</span></p>
+    <div class="foot-links">
+      <a href="https://www.metmuseum.org/policies/image-resources" target="_blank" rel="noopener noreferrer">The Met · Open Access / CC0 ↗</a>
+      <a href="https://www.artic.edu/terms" target="_blank" rel="noopener noreferrer">Art Institute of Chicago · Terms ↗</a>
+      <a href="https://whitney.org/about/website/api" target="_blank" rel="noopener noreferrer">Whitney · API &amp; data terms ↗</a>
+      <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer">Creative Commons Zero 1.0 ↗</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span data-i18n="footer.edu">Сделано для обучения. Не аффилировано с музеями.</span>
+    <span>© <span id="year">2026</span> Art Arter · <span class="mono">RU / EN</span></span>
+  </div>
+</footer>
+</div>
+
+<div id="modalRoot" role="dialog" aria-modal="true"></div>
+<div id="toastRoot" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ================================================================
+   ART ARTER · чистый JS, без библиотек
+   ----------------------------------------------------------------
+   КАК РАБОТАЮТ ЗАПРОСЫ К КАЖДОМУ API (сверено с документацией 11.2026):
+
+   1) THE MET — https://collectionapi.metmuseum.org
+      · GET /public/collection/v1.1/search?hasImages=true[&q=…][&departmentId=…]
+        [&medium=…][&isHighlight=true][&isOnView=true]&offset=N&limit=100
+        → { total, objectIDs[] }  (v1/search удалён 01.10.2026 → используем v1.1;
+        offset+limit ≤ 10 000, limit ≤ 500; q не обязателен).
+      · GET /public/collection/v1/objects/{id} → полная запись объекта.
+      · СТРОГАЯ ПРОВЕРКА: isPublicDomain === true И primaryImageSmall —
+        HTTPS-URL на images.metmuseum.org И objectURL на metmuseum.org.
+        Параметр isPublicDomain в search игнорируется сервером — поэтому
+        проверяем КАЖДУЮ запись, а не доверяем поиску.
+      · Лимит музея: 80 запросов/с. Наш планировщик: ≤5 параллельно, пауза 80 мс.
+      · Права: данные и PD-изображения — CC0 (Open Access). Атрибуция: creditLine.
+
+   2) ART INSTITUTE OF CHICAGO — https://api.artic.edu/api/v1
+      · GET /artworks/search?params={URL-encoded JSON} — рекомендованный способ:
+        { q?, query:{bool:{filter:[{term:{is_public_domain:true}},
+          {exists:{field:"image_id"}}, …доп. фильтры]}},
+          fields:[…все нужные поля…], page:N, limit:36 }
+        → { data[], pagination{total,total_pages,…}, config{iiif_url} }.
+      · Изображения: {config.iiif_url}/{image_id}/full/843,/0/default.jpg
+        (843 — рекомендованный размер; 1686 разрешён для PD).
+      · СТРОГАЯ ПРОВЕРКА каждой записи: is_public_domain === true И image_id.
+      · Лимит: 60 запросов/мин анонимно → 1 запрос в 1,15 с, без параллелизма.
+        Глубина поиска ограничена API (page·limit ≤ 1000) — честно сообщаем.
+      · Заголовок вежливости AIC-User-Agent (рекомендация документации).
+      · Права: метаданные CC0; description — CC-BY 4.0; PD — по флагу музея.
+
+   3) WHITNEY — https://whitney.org/api
+      · GET /api/artworks?page=N[&q[title_or_display_artist_text_cont]=…]
+        [&q[classification_eq]=…][&q[on_view_true]=true]
+        → JSON:API { data[{attributes}], meta{total}, links{next,…} }, 30/стр.
+      · В attributes НЕТ явного поля прав на изображение (проверено на живых
+        ответах: title, images[], credit_line, description… — флаг PD отсутствует).
+        Условия API разрешают лишь некоммерческое образовательное использование
+        ДАННЫХ с атрибуцией; изображения в открытые данные не входят.
+      · Поэтому адаптер читает записи, но строгий фильтр отклоняет их все:
+        нет явного подтверждения → нет показа. Журнал проверки виден в UI.
+        Если музей добавит флаг (is_public_domain и т.п.) — код пропустит объект.
+      · Вежливость: 1 запрос в 1,2 с, без параллелизма («be respectful»).
+
+   КЭШ: ответы хранятся в localStorage с TTL (объекты 30 дней, поиск 12 ч,
+   списки 30 дней, Whitney 6 ч) + память как запасной вариант. Пагинация
+   страниц галереи кэшируется в памяти сессии (курсорами), чтобы «Назад»
+   не дёргала API повторно. Размер страницы фиксирован: 12 объектов.
+   ================================================================ */
+
+/* ---------------- Конфигурация ---------------- */
+const CFG = {
+  PAGE_SIZE: 12,
+  MET: { API:'https://collectionapi.metmuseum.org/public/collection/v1',
+         SEARCH:'https://collectionapi.metmuseum.org/public/collection/v1.1/search',
+         ID_PAGE:100, MAX_IDS:10000, GAP:80, CONC:5 },
+  AIC: { API:'https://api.artic.edu/api/v1', API_PAGE:36, MAX_DEPTH:1000, GAP:1150, CONC:1 },
+  WHIT:{ API:'https://whitney.org/api', GAP:1200, CONC:1 },
+  TTL: { OBJ:30*864e5, SEARCH:12*36e5, LIST:30*864e5, WHIT:6*36e5 }
+};
+
+/* ---------------- Локализация ---------------- */
+const I18N = {
+ru: {
+ 'brand.sub':'пульс коллекций',
+ 'nav.overview':'Обзор','nav.overviewMeta':'принцип · музеи · API','nav.museums':'Музеи',
+ 'nav.baseColor':'Базовый цвет','nav.pickColor':'Свой базовый цвет','nav.trust':'Фильтр доверия','nav.tools':'Инструменты',
+ 'theme.light':'Светлая','theme.dark':'Тёмная','theme.system':'Системная',
+ 'trust.checked':'проверено','trust.admitted':'допущено','trust.rejected':'отклонено',
+ 'trust.hint':'Счётчики этой сессии: каждый объект проходит проверку прав до показа.',
+ 'tools.clearCache':'Очистить кэш','tools.apiDocs':'Как работают запросы',
+ 'app.footnoteShort':'Образовательный некоммерческий проект. Данные и изображения — музеи-источники.',
+ 'app.footnote':'образовательный некоммерческий проект. Приложение даёт доступ к музеям через их открытые API. Список музеев может пополняться в будущем, если будут найдены другие открытые API. Все данные и изображения принадлежат музеям-источникам и показываются только при явном подтверждении прав на показ («Только 100% допустимое»); атрибуция указана в каждой карточке.',
+ 'hero.eyebrow':'Образовательный некоммерческий проект',
+ 'hero.title1':'Искусство по открытым','hero.title2':'артериям музеев',
+ 'hero.desc':'Art Arter даёт доступ к музеям через их открытые API — без ключей и регистрации. Список музеев может пополняться в будущем, если будут найдены другие открытые API. Каждый объект показывается только при явном подтверждении прав: принцип «Только 100% допустимое».',
+ 'hero.ctaMet':'Открыть The Met','hero.ctaAic':'Открыть Art Institute','hero.ctaWhit':'Whitney: строгий режим',
+ 'hero.sMuseums':'музея','hero.sApis':'открытых API','hero.sKeys':'ключей API','hero.sCheck':'проверка прав',
+ 'principle.eyebrow':'Главное правило','principle.title':'Только 100% допустимое',
+ 'principle.lead':'Объект появляется на экране, только если все его части — метаданные и изображение — абсолютно точно разрешены к показу. При малейшем сомнении объект пропускается. Никаких предположений «наверное, можно».',
+ 'principle.s1t':'Явное поле прав','principle.s1d':'API должно вернуть машиночитаемое подтверждение: флаг общественного достояния. Нет флага — нет показа.',
+ 'principle.s2t':'Изображение от музея','principle.s2d':'Показываем только файлы с серверов самого музея (или его IIIF-сервиса), на которые указывает проверенная запись.',
+ 'principle.s3t':'Сомнение = отказ','principle.s3d':'Отклонённые объекты не отображаются вовсе. Счётчик «Фильтр доверия» показывает, сколько записей не прошло проверку.','principle.s3code':'журнал проверки',
+ 'museums.eyebrow':'Коллекции','museums.title':'Три музея, три артерии',
+ 'museums.metCity':'Нью-Йорк','museums.aicCity':'Чикаго','museums.whitCity':'Нью-Йорк',
+ 'museums.founded1870':'осн. 1870','museums.founded1879':'осн. 1879','museums.founded1930':'осн. 1930',
+ 'museums.apiCC0':'API · CC0','museums.apiPD':'API · Public Domain','museums.apiStrict':'API · строгий режим',
+ 'museums.metDesc':'5000 лет искусства. Открытые данные и изображения общественного достояния передаются под CC0 в рамках инициативы Open Access.',
+ 'museums.aicDesc':'Импрессионизм, гравюра, модернизм. API помечает объекты общественного достояния полем is_public_domain и отдаёт изображения по IIIF.',
+ 'museums.whitDesc':'Американское искусство XX–XXI веков. Открытый API есть, но явного подтверждения прав на изображения он не даёт — фильтр не допускает показ.',
+ 'museums.enter':'В коллекцию','museums.whitWhy':'Почему пусто?',
+ 'api.eyebrow':'Прозрачность','api.title':'Как работают запросы',
+ 'api.lead':'Каждый музей — отдельный адаптер: свой поиск, своя пагинация, свои лимиты вежливости и своё поле подтверждения прав. Ответы кэшируются в localStorage, чтобы не дёргать API повторно.',
+ 'api.kReq':'Запросы','api.kFlow':'Схема','api.kVerify':'Проверка','api.kLimits':'Лимиты','api.kRights':'Права',
+ 'api.metFlow':'Поиск возвращает страницы ID (offset/limit, hasImages=true). Каждый объект загружается отдельно и проверяется по флагу.',
+ 'api.metLimits':'Лимит музея — 80 запросов/с; приложение держит ≤ 5 параллельных и паузу 80 мс.',
+ 'api.metRights':'Данные и PD-изображения — CC0 (Open Access). Атрибуция: creditLine.',
+ 'api.aicFlow':'Elasticsearch-запрос: term is_public_domain=true + exists image_id. Одна страница — до 36 записей со всеми полями; изображения строятся по IIIF.',
+ 'api.aicLimits':'Анонимно — 60 запросов/мин; приложение делает не чаще 1 запроса в 1,15 с. Глубина поиска ограничена API.',
+ 'api.aicRights':'Метаданные — CC0 (кроме поля description, CC-BY); PD-изображения — по флагу музея. Атрибуция: credit_line.',
+ 'api.whitFlow':'JSON:API, 30 записей на страницу, поиск через q[title_cont] и т. п. Записи читаются, но ни одна не допускается к показу.',
+ 'api.whitVerify':'Явного поля прав на изображение в ответе нет → отказ по правилу «Только 100% допустимое».',
+ 'api.whitLimits':'Просьба музея «be respectful»: 1 запрос в 1,2 с, без параллельных обращений.',
+ 'api.whitRights':'Данные — для некоммерческого образовательного использования с атрибуцией; изображения не входят в открытые данные (CC0 — только CSV-датасеты).',
+ 'api.docs':'Документация API','api.terms':'Условия использования',
+ 'gallery.site':'Сайт музея','gallery.searchPh.met':'Поиск: monet, samurai, portrait…',
+ 'gallery.searchPh.aic':'Поиск: van gogh, cats, seurat…','gallery.searchPh.whit':"Поиск: hopper, o'keeffe, moon…",
+ 'gallery.clear':'Очистить поиск','gallery.reset':'Сбросить фильтры','gallery.random':'Случайный объект',
+ 'gallery.dept':'Департамент','gallery.deptAny':'Все департаменты','gallery.deptLoading':'Департаменты…',
+ 'gallery.medium':'Тип','gallery.mediumAny':'Любой тип',
+ 'gallery.type':'Вид произведения','gallery.typeAny':'Все виды','gallery.typeLoading':'Виды…',
+ 'gallery.classification':'Классификация','gallery.classAny':'Все классификации',
+ 'gallery.highlight':'Шедевры','gallery.onview':'В экспозиции','gallery.boosted':'Избранное музеем',
+ 'gallery.locked':'только разрешённые','gallery.lockedTip':'Фильтр «Только 100% допустимое» включён всегда: показываются лишь объекты с явным подтверждением прав.',
+ 'status.shown':'Показано','status.candidates':'кандидатов в выборке','status.sec':'с',
+ 'status.fromCache':'из кэша','status.netCalls':'запросов к API','status.loading':'Загрузка и проверка прав…',
+ 'status.depth':'Достигнут лимит глубины поиска API — дальше листать нельзя.','status.end':'Конец выборки: все допущенные объекты показаны.',
+ 'status.page':'страница','status.prev':'Предыдущая страница','status.next':'Следующая страница','status.first':'Первая страница',
+ 'empty.title':'Нет объектов со 100% подтверждением','empty.text':'По этому запросу API не вернул ни одной записи, где права на метаданные и изображение подтверждены явно. По правилу проекта мы ничего не показываем «наверное». Попробуйте другой запрос или сбросьте фильтры.',
+ 'empty.reset':'Сбросить фильтры',
+ 'err.title':'API музея не ответил','err.network':'Не удалось соединиться с API. Проверьте подключение к интернету и попробуйте ещё раз.',
+ 'err.timeout':'API не ответил вовремя. Возможно, музей временно перегружен — повторите попытку.',
+ 'err.http':'API вернул ошибку. Это может быть временный сбой или ограничение доступа.',
+ 'err.blocked':'Похоже, запрос заблокирован защитой API (например, Cloudflare) из вашей сети. Попробуйте позже или из другой сети.',
+ 'err.retry':'Повторить запрос',
+ 'card.cc0':'PD · CC0','card.pd':'PD ✓','card.cc0Tip':'CC0 / Public Domain: подтверждено полем API isPublicDomain=true',
+ 'card.pdTip':'Public Domain: подтверждено полем API is_public_domain=true',
+ 'card.highlight':'Шедевр','card.openPage':'Страница объекта на сайте музея (новое окно)','card.noImg':'Изображение не загрузилось',
+ 'modal.rights':'Права подтверждены','modal.rightsMet':'Изображение и данные переданы в общественное достояние (CC0) в рамках инициативы Open Access The Met. Статус подтверждён полем API isPublicDomain=true; файл размещён на сервере музея.',
+ 'modal.rightsAic':'Объект помечен музеем как общественное достояние (is_public_domain=true). Изображение отдаёт IIIF-сервис музея. Метаданные — CC0; поле description — CC BY 4.0 (показано как текст, источник указан).',
+ 'modal.rightsWhit':'Явное подтверждение прав найдено в поле API. Показ — по условиям музея для некоммерческого образовательного использования с атрибуцией.',
+ 'modal.credit':'Атрибуция (строка музея)','modal.copy':'Скопировать атрибуцию','modal.copied':'Атрибуция скопирована',
+ 'modal.copyFail':'Не удалось скопировать — скопируйте вручную','modal.json':'JSON API','modal.fields':'Поля',
+ 'modal.museumPage':'Страница музея','modal.close':'Закрыть','modal.prev':'Предыдущий объект','modal.next':'Следующий объект',
+ 'modal.more':'показать полностью','modal.less':'свернуть','modal.additional':'Дополнительные изображения объекта',
+ 'whit.dataset':'Открытые данные (CSV)','whit.title':'Ни один объект не допущен к показу',
+ 'whit.lead1':'API Уитни работает и отдаёт метаданные: их условия разрешают некоммерческое образовательное использование с сохранением уведомлений об авторских правах и указанием источника. Но в ответах нет явного машиночитаемого поля, подтверждающего право на показ изображений.',
+ 'whit.lead2':'Правило «Только 100% допустимое» запрещает показ при малейшем сомнении — поэтому коллекция здесь не отображается. Это не ошибка: это работа фильтра. Ниже — живой журнал проверки записей, полученных из API прямо сейчас.',
+ 'whit.pipe1':'записей получено','whit.pipe2':'явных полей прав','whit.pipe3':'допущено к показу',
+ 'whit.journal':'Журнал проверки','whit.journalNote':'объекты не показываются — только результат фильтра',
+ 'whit.checkMore':'Проверить ещё 30 записей','whit.openCollection':'Коллекция на whitney.org ↗',
+ 'whit.future':'Если Уитни добавит в API явное поле прав (например, public_domain: true), объекты пройдут фильтр и появятся здесь автоматически — код адаптера уже проверяет такие поля. Список музеев проекта может пополняться, когда находятся другие открытые API.',
+ 'whit.apiOnline':'API на связи','whit.apiOffline':'API недоступен','whit.records':'записей в выборке',
+ 'whit.checking':'Проверяем записи…','whit.exhausted':'Выборка исчерпана','whit.moreDone':'Проверено ещё',
+ 'whit.reasonNoField':'нет явного поля прав','whit.reasonNoImg':'нет изображения музея','whit.reasonOk':'допущено',
+ 'footer.edu':'Сделано для обучения. Не аффилировано с музеями.',
+ 'toast.cacheCleared':'Кэш очищен: удалено записей —','toast.cacheEmpty':'Кэш уже пуст',
+ 'random.fail':'Не удалось найти допущенный случайный объект. Попробуйте ещё раз.','random.loading':'Ищем…',
+ 'misc.yes':'да','misc.no':'нет','misc.untitled':'Без названия','misc.anon':'Автор не указан','misc.elements':'элементов',
+ 'misc.groupId':'Идентификация','misc.groupCreation':'Создание','misc.groupPhysical':'Физические данные',
+ 'misc.groupGeo':'География','misc.groupRights':'Права и атрибуция','misc.groupContext':'Контекст и связи',
+ 'misc.groupApi':'Служебные поля API','misc.groupOther':'Прочие поля'
+},
+en: {
+ 'brand.sub':'the pulse of collections',
+ 'nav.overview':'Overview','nav.overviewMeta':'principle · museums · API','nav.museums':'Museums',
+ 'nav.baseColor':'Base color','nav.pickColor':'Custom base color','nav.trust':'Trust filter','nav.tools':'Tools',
+ 'theme.light':'Light','theme.dark':'Dark','theme.system':'System',
+ 'trust.checked':'checked','trust.admitted':'admitted','trust.rejected':'rejected',
+ 'trust.hint':'This session\u2019s counters: every object passes a rights check before it is shown.',
+ 'tools.clearCache':'Clear cache','tools.apiDocs':'How requests work',
+ 'app.footnoteShort':'Educational non-commercial project. Data and images belong to the source museums.',
+ 'app.footnote':'an educational non-commercial project. The app provides access to museums through their open APIs. The list of museums may grow in the future if other open APIs are found. All data and images belong to the source museums and are shown only when display rights are explicitly confirmed (\u201cOnly 100% permitted\u201d); attribution is included in every card.',
+ 'hero.eyebrow':'Educational non-commercial project',
+ 'hero.title1':'Art through the open','hero.title2':'arteries of museums',
+ 'hero.desc':'Art Arter provides access to museums through their open APIs — no keys, no registration. The list of museums may grow in the future if other open APIs are found. Every object is shown only when its rights are explicitly confirmed: the \u201cOnly 100% permitted\u201d principle.',
+ 'hero.ctaMet':'Open The Met','hero.ctaAic':'Open Art Institute','hero.ctaWhit':'Whitney: strict mode',
+ 'hero.sMuseums':'museums','hero.sApis':'open APIs','hero.sKeys':'API keys','hero.sCheck':'rights verification',
+ 'principle.eyebrow':'The main rule','principle.title':'Only 100% permitted',
+ 'principle.lead':'An object appears on screen only if every part of it — metadata and image — is absolutely, explicitly permitted for display. At the slightest doubt the object is skipped. No \u201cprobably allowed\u201d assumptions.',
+ 'principle.s1t':'An explicit rights field','principle.s1d':'The API must return machine-readable proof: a public-domain flag. No flag — no display.',
+ 'principle.s2t':'Image from the museum','principle.s2d':'We only show files hosted by the museum itself (or its IIIF service) that the verified record points to.',
+ 'principle.s3t':'Doubt = rejection','principle.s3d':'Rejected objects are never displayed. The Trust filter counter shows how many records failed verification.','principle.s3code':'verification log',
+ 'museums.eyebrow':'Collections','museums.title':'Three museums, three arteries',
+ 'museums.metCity':'New York','museums.aicCity':'Chicago','museums.whitCity':'New York',
+ 'museums.founded1870':'est. 1870','museums.founded1879':'est. 1879','museums.founded1930':'est. 1930',
+ 'museums.apiCC0':'API · CC0','museums.apiPD':'API · Public Domain','museums.apiStrict':'API · strict mode',
+ 'museums.metDesc':'5,000 years of art. Open data and public-domain images are released under CC0 as part of the Open Access initiative.',
+ 'museums.aicDesc':'Impressionism, prints, modernism. The API marks public-domain objects with is_public_domain and serves images via IIIF.',
+ 'museums.whitDesc':'20th–21st-century American art. An open API exists, but it gives no explicit image-rights confirmation — the filter admits nothing.',
+ 'museums.enter':'Enter collection','museums.whitWhy':'Why is it empty?',
+ 'api.eyebrow':'Transparency','api.title':'How the requests work',
+ 'api.lead':'Each museum is a separate adapter: its own search, pagination, politeness limits and rights-confirmation field. Responses are cached in localStorage so the API is not hit twice.',
+ 'api.kReq':'Requests','api.kFlow':'Flow','api.kVerify':'Verify','api.kLimits':'Limits','api.kRights':'Rights',
+ 'api.metFlow':'Search returns pages of IDs (offset/limit, hasImages=true). Each object is fetched separately and verified by its flag.',
+ 'api.metLimits':'Museum limit is 80 req/s; the app keeps ≤ 5 in flight with an 80 ms gap.',
+ 'api.metRights':'Data and PD images are CC0 (Open Access). Attribution: creditLine.',
+ 'api.aicFlow':'Elasticsearch query: term is_public_domain=true + exists image_id. One page — up to 36 records with all fields; images are built via IIIF.',
+ 'api.aicLimits':'Anonymous: 60 req/min; the app makes at most 1 request per 1.15 s. Search depth is capped by the API.',
+ 'api.aicRights':'Metadata is CC0 (except description, CC BY); PD images per the museum\u2019s flag. Attribution: credit_line.',
+ 'api.whitFlow':'JSON:API, 30 records per page, search via q[title_cont] etc. Records are read, but none is admitted for display.',
+ 'api.whitVerify':'No explicit image-rights field in the response → rejected by the \u201cOnly 100% permitted\u201d rule.',
+ 'api.whitLimits':'The museum asks to \u201cbe respectful\u201d: 1 request per 1.2 s, no parallel calls.',
+ 'api.whitRights':'Data: non-commercial educational use with attribution; images are not part of the open data (CC0 covers the CSV datasets only).',
+ 'api.docs':'API documentation','api.terms':'Terms of use',
+ 'gallery.site':'Museum website','gallery.searchPh.met':'Search: monet, samurai, portrait…',
+ 'gallery.searchPh.aic':'Search: van gogh, cats, seurat…','gallery.searchPh.whit':"Search: hopper, o'keeffe, moon…",
+ 'gallery.clear':'Clear search','gallery.reset':'Reset filters','gallery.random':'Random object',
+ 'gallery.dept':'Department','gallery.deptAny':'All departments','gallery.deptLoading':'Departments…',
+ 'gallery.medium':'Type','gallery.mediumAny':'Any type',
+ 'gallery.type':'Artwork type','gallery.typeAny':'All types','gallery.typeLoading':'Types…',
+ 'gallery.classification':'Classification','gallery.classAny':'All classifications',
+ 'gallery.highlight':'Highlights','gallery.onview':'On view','gallery.boosted':'Museum picks',
+ 'gallery.locked':'permitted only','gallery.lockedTip':'The \u201cOnly 100% permitted\u201d filter is always on: only objects with explicit rights confirmation are shown.',
+ 'status.shown':'Shown','status.candidates':'candidates in result set','status.sec':'s',
+ 'status.fromCache':'from cache','status.netCalls':'API calls','status.loading':'Loading and verifying rights…',
+ 'status.depth':'API search depth limit reached — no further pages.','status.end':'End of results: every admitted object is shown.',
+ 'status.page':'page','status.prev':'Previous page','status.next':'Next page','status.first':'First page',
+ 'empty.title':'No objects with 100% confirmation','empty.text':'For this query the API returned no record whose metadata and image rights are explicitly confirmed. Per the project rule we never show anything \u201cprobably allowed\u201d. Try another query or reset the filters.',
+ 'empty.reset':'Reset filters',
+ 'err.title':'The museum API did not respond','err.network':'Could not reach the API. Check your internet connection and try again.',
+ 'err.timeout':'The API did not respond in time. The museum may be temporarily busy — please retry.',
+ 'err.http':'The API returned an error. It may be a temporary outage or an access restriction.',
+ 'err.blocked':'The request seems blocked by API protection (e.g. Cloudflare) from your network. Try later or from another network.',
+ 'err.retry':'Retry request',
+ 'card.cc0':'PD · CC0','card.pd':'PD ✓','card.cc0Tip':'CC0 / Public Domain: confirmed by the API field isPublicDomain=true',
+ 'card.pdTip':'Public Domain: confirmed by the API field is_public_domain=true',
+ 'card.highlight':'Highlight','card.openPage':'Object page on the museum website (new window)','card.noImg':'Image failed to load',
+ 'modal.rights':'Rights confirmed','modal.rightsMet':'Image and data are dedicated to the public domain (CC0) under The Met Open Access initiative. Status confirmed by the API field isPublicDomain=true; the file is hosted by the museum.',
+ 'modal.rightsAic':'The museum marks this object as public domain (is_public_domain=true). The image is served by the museum\u2019s IIIF service. Metadata is CC0; the description field is CC BY 4.0 (shown as plain text, source credited).',
+ 'modal.rightsWhit':'Explicit rights confirmation found in an API field. Display follows the museum\u2019s terms for non-commercial educational use with attribution.',
+ 'modal.credit':'Attribution (museum credit line)','modal.copy':'Copy attribution','modal.copied':'Attribution copied',
+ 'modal.copyFail':'Could not copy — please copy manually','modal.json':'API JSON','modal.fields':'Fields',
+ 'modal.museumPage':'Museum page','modal.close':'Close','modal.prev':'Previous object','modal.next':'Next object',
+ 'modal.more':'show full text','modal.less':'collapse','modal.additional':'Additional images of the object',
+ 'whit.dataset':'Open data (CSV)','whit.title':'Not a single object is admitted for display',
+ 'whit.lead1':'The Whitney API works and returns metadata: its terms allow non-commercial educational use provided copyright notices are retained and the source is cited. But the responses contain no explicit machine-readable field confirming the right to display images.',
+ 'whit.lead2':'The \u201cOnly 100% permitted\u201d rule forbids display at the slightest doubt — so the collection is not shown here. This is not an error: it is the filter at work. Below is a live verification log of records fetched from the API right now.',
+ 'whit.pipe1':'records fetched','whit.pipe2':'explicit rights fields','whit.pipe3':'admitted for display',
+ 'whit.journal':'Verification log','whit.journalNote':'objects are not displayed — filter results only',
+ 'whit.checkMore':'Check 30 more records','whit.openCollection':'Collection on whitney.org ↗',
+ 'whit.future':'If the Whitney adds an explicit rights field to its API (e.g. public_domain: true), objects will pass the filter and appear here automatically — the adapter already checks for such fields. The project\u2019s museum list may grow as other open APIs are found.',
+ 'whit.apiOnline':'API online','whit.apiOffline':'API unreachable','whit.records':'records in result set',
+ 'whit.checking':'Verifying records…','whit.exhausted':'Result set exhausted','whit.moreDone':'Checked',
+ 'whit.reasonNoField':'no explicit rights field','whit.reasonNoImg':'no museum image','whit.reasonOk':'admitted',
+ 'footer.edu':'Built for learning. Not affiliated with the museums.',
+ 'toast.cacheCleared':'Cache cleared: entries removed —','toast.cacheEmpty':'Cache is already empty',
+ 'random.fail':'Could not find an admitted random object. Please try again.','random.loading':'Searching…',
+ 'misc.yes':'yes','misc.no':'no','misc.untitled':'Untitled','misc.anon':'Artist unknown','misc.elements':'items',
+ 'misc.groupId':'Identification','misc.groupCreation':'Creation','misc.groupPhysical':'Physical data',
+ 'misc.groupGeo':'Geography','misc.groupRights':'Rights & attribution','misc.groupContext':'Context & links',
+ 'misc.groupApi':'API service fields','misc.groupOther':'Other fields'
+}};
+let lang = 'ru';
+const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+const fmtNum = n => new Intl.NumberFormat(lang==='ru'?'ru-RU':'en-US').format(n);
+
+/* ---------------- Утилиты ---------------- */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clampN = (v,a,b) => Math.min(b, Math.max(a, v));
+const debounce = (fn,ms) => { let id; return (...a)=>{ clearTimeout(id); id=setTimeout(()=>fn(...a),ms); }; };
+/* HTML из API (description и т.п.) превращаем в чистый текст — без внедрения разметки */
+const stripHtml = html => { try { return new DOMParser().parseFromString(String(html),'text/html').body.textContent || ''; } catch(e){ return String(html).replace(/<[^>]*>/g,''); } };
+function hexToHsl(hex){
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex||''); if(!m) return {h:3,s:60,l:38};
+  const n = parseInt(m[1],16), r=((n>>16)&255)/255, g=((n>>8)&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
+  if(mx!==mn){ const d=mx-mn; s=l>0.5? d/(2-mx-mn) : d/(mx+mn);
+    h = mx===r ? (g-b)/d+(g<b?6:0) : mx===g ? (b-r)/d+2 : (r-g)/d+4; h*=60; }
+  return {h:Math.round(h), s:Math.round(s*100), l:Math.round(l*100)};
+}
+function hslToRgb(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  return [f(0),f(8),f(4)].map(x=>Math.round(x*255)); }
+const lum = (r,g,b) => (0.2126*r+0.7152*g+0.0722*b)/255;
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+/* ---------------- Кэш (localStorage + память, TTL) ---------------- */
+const memCache = new Map();
+const C_PREFIX = 'artarter:c:';
+function cacheGet(key){
+  const hit = memCache.get(key);
+  if(hit && hit.e > Date.now()) { netStats.cache++; return hit.v; }
+  try{
+    const raw = localStorage.getItem(C_PREFIX+key);
+    if(raw){ const o = JSON.parse(raw);
+      if(o.e > Date.now()){ memCache.set(key,o); netStats.cache++; return o.v; }
+      localStorage.removeItem(C_PREFIX+key);
+    }
+  }catch(e){}
+  return undefined;
+}
+function cacheSet(key,v,ttl){
+  const o = {e:Date.now()+ttl, v};
+  if(memCache.size > 500) memCache.delete(memCache.keys().next().value);
+  memCache.set(key,o);
+  try{ localStorage.setItem(C_PREFIX+key, JSON.stringify(o)); }
+  catch(e){ pruneCache(); try{ localStorage.setItem(C_PREFIX+key, JSON.stringify(o)); }catch(e2){} }
+}
+function pruneCache(){
+  try{
+    const items=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+      if(k && k.startsWith(C_PREFIX)){ let e=0; try{ e=JSON.parse(localStorage.getItem(k)).e||0; }catch(_){}
+        items.push([k,e]); } }
+    items.sort((a,b)=>a[1]-b[1]);
+    items.slice(0, Math.max(1, Math.floor(items.length*0.3))).forEach(([k])=>localStorage.removeItem(k));
+  }catch(e){}
+}
+function clearCache(){
+  let n=0;
+  try{ const keys=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(C_PREFIX)) keys.push(k); }
+    keys.forEach(k=>{localStorage.removeItem(k);n++;}); }catch(e){}
+  memCache.clear(); streams.clear();
+  toast(n? t('toast.cacheCleared')+' '+fmtNum(n) : t('toast.cacheEmpty'), n?'ok':'info');
+  if(state.view==='gallery') loadPage(state.ctx[state.museum].page);
+  if(state.view==='whitney'){ whitState.journal=[]; whitState.cursor=1; whitState.checked=0; whitState.total=null; whitState.exhausted=false; whitState.started=false; enterWhitney(); }
+}
+const netStats = {net:0, cache:0};
+
+/* ---------------- Планировщик запросов (лимиты вежливости) ---------------- */
+class Limiter{
+  constructor(gap,conc){ this.gap=gap; this.conc=conc; this.active=0; this.last=0; this.q=[]; this._t=null; }
+  run(fn){ return new Promise((res,rej)=>{ this.q.push({fn,res,rej}); this._pump(); }); }
+  _pump(){
+    while(this.active < this.conc && this.q.length){
+      const wait = this.last + this.gap - Date.now();
+      if(wait > 0){ if(!this._t) this._t = setTimeout(()=>{ this._t=null; this._pump(); }, wait); return; }
+      const job = this.q.shift(); this.active++; this.last = Date.now();
+      Promise.resolve().then(job.fn).then(job.res, job.rej).finally(()=>{ this.active--; this._pump(); });
+    }
+  }
+}
+async function fetchJSON(url, {headers={}, timeout=16000, retries=1}={}){
+  for(let attempt=0; ; attempt++){
+    const ctl = new AbortController();
+    const timer = setTimeout(()=>ctl.abort(), timeout);
+    try{
+      const resp = await fetch(url, {headers, signal:ctl.signal, credentials:'omit'});
+      clearTimeout(timer);
+      if(!resp.ok){ const e=new Error('HTTP '+resp.status+' · '+url); e.kind='http'; e.status=resp.status; throw e; }
+      const j = await resp.json(); netStats.net++; return j;
+    }catch(err){
+      clearTimeout(timer);
+      if(err.kind==='http' && err.status<500 && err.status!==429) throw err;
+      if(attempt < retries){ await sleep(900*(attempt+1)); continue; }
+      if(err.name==='AbortError'){ const e=new Error('Timeout · '+url); e.kind='timeout'; throw e; }
+      if(!err.kind) err.kind='network';
+      throw err;
+    }
+  }
+}
+
+/* ---------------- Настройки и тема ---------------- */
+const PRESETS = [
+  {hex:'#9E2B25', ru:'Кармин', en:'Carmine'},
+  {hex:'#2743C9', ru:'Ультрамарин', en:'Ultramarine'},
+  {hex:'#1F7A63', ru:'Патина', en:'Verdigris'},
+  {hex:'#B8741A', ru:'Охра', en:'Ochre'},
+  {hex:'#AD1E7E', ru:'Маджента', en:'Magenta'},
+  {hex:'#3D4657', ru:'Графит', en:'Graphite'}
+];
+const settings = {
+  lang: store.get('artarter:lang') || ((navigator.language||'en').toLowerCase().startsWith('ru') ? 'ru':'en'),
+  theme: store.get('artarter:theme') || 'system',
+  base: store.get('artarter:base') || '#9E2B25'
+};
+const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+function resolvedTheme(){ return settings.theme==='system' ? (mqDark.matches?'dark':'light') : settings.theme; }
+function applyTheme(){
+  const dark = resolvedTheme()==='dark';
+  const {h,s} = hexToHsl(settings.base);
+  const H=(x)=>((x%360)+360)%360;
+  const accL = dark ? clampN(hexToHsl(settings.base).l+24,58,72) : clampN(hexToHsl(settings.base).l,28,44);
+  const accS = clampN(s,45,90);
+  const acc = hslToRgb(h,accS,accL);
+  const v = {
+    '--accent':`hsl(${h} ${accS}% ${accL}%)`,
+    '--accent-ink': lum(...acc)>0.55 ? '#20140f' : '#ffffff',
+    '--accent-soft':`hsla(${h} ${dark?55:65}% ${dark?60:45}% / ${dark?0.16:0.12})`,
+    '--accent-2':`hsl(${H(h+40)} 72% ${dark?62:44}%)`,
+    '--accent-3':`hsl(${H(h-30)} 62% ${dark?60:40}%)`,
+    '--bg': dark?`hsl(${h} 26% 6.5%)`:`hsl(${h} 34% 96%)`,
+    '--bg-2': dark?`hsl(${h} 24% 9%)`:`hsl(${h} 30% 92.5%)`,
+    '--surface': dark?`hsl(${h} 22% 10%)`:`hsl(${h} 40% 99%)`,
+    '--surface-2': dark?`hsl(${h} 20% 14.5%)`:`hsl(${h} 28% 94%)`,
+    '--mat': dark?`hsl(${h} 16% 17%)`:`hsl(${h} 20% 89%)`,
+    '--text': dark?`hsl(${h} 20% 93%)`:`hsl(${h} 32% 11%)`,
+    '--muted': dark?`hsl(${h} 11% 66%)`:`hsl(${h} 13% 37%)`,
+    '--faint': dark?`hsl(${h} 9% 48%)`:`hsl(${h} 10% 54%)`,
+    '--border': dark?`hsl(${h} 17% 20%)`:`hsl(${h} 24% 86%)`,
+    '--border-2': dark?`hsl(${h} 15% 31%)`:`hsl(${h} 20% 75%)`,
+    '--ok': dark?'#46d68c':'#177a4c', '--warn': dark?'#e5a83f':'#a86a12',
+    '--danger': dark?'#ff7a68':'#bb3226', '--info': dark?'#7fa7ff':'#2b53c4',
+    '--ok-soft': dark?'rgba(70,214,140,.15)':'rgba(23,122,76,.12)',
+    '--warn-soft': dark?'rgba(229,168,63,.15)':'rgba(168,106,18,.13)',
+    '--danger-soft': dark?'rgba(255,122,104,.15)':'rgba(187,50,38,.12)',
+    '--info-soft': dark?'rgba(127,167,255,.15)':'rgba(43,83,196,.12)',
+    '--shadow': dark?'0 14px 40px rgba(0,0,0,.5)':`0 12px 32px hsla(${h} 45% 22% / .12)`,
+    '--scrim': dark?'rgba(5,4,3,.66)':`hsla(${h} 30% 12% / .45)`,
+    '--glow-1':`hsla(${h} 85% ${dark?62:50}% / ${dark?0.20:0.13})`,
+    '--glow-2':`hsla(${H(h+40)} 85% ${dark?60:52}% / ${dark?0.14:0.10})`,
+    '--glow-3':`hsla(${H(h-30)} 75% ${dark?58:48}% / ${dark?0.12:0.09})`
+  };
+  const root = document.documentElement;
+  Object.entries(v).forEach(([k,val])=>root.style.setProperty(k,val));
+  root.dataset.theme = dark?'dark':'light';
+  root.style.colorScheme = dark?'dark':'light';
+  $('#basePicker').value = settings.base.toLowerCase();
+  $('#baseHex').textContent = settings.base.toUpperCase();
+  $$('#presets .preset').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.hex.toLowerCase()===settings.base.toLowerCase())));
+  $$('#themeSeg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.themeMode===settings.theme)));
+}
+function renderPresets(){
+  $('#presets').innerHTML = PRESETS.map(p=>
+    `<button class="preset" data-hex="${p.hex}" style="background:${p.hex}" title="${esc(lang==='ru'?p.ru:p.en)}" aria-label="${esc(lang==='ru'?p.ru:p.en)}" aria-pressed="false"></button>`).join('');
+}
+function setBase(hex){ if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return; settings.base=hex; store.set('artarter:base',hex); applyTheme(); }
+function setTheme(mode){ settings.theme=mode; store.set('artarter:theme',mode); applyTheme(); }
+mqDark.addEventListener('change', ()=>{ if(settings.theme==='system') applyTheme(); });
+
+/* ---------------- Фильтр доверия (счётчики сессии) ---------------- */
+const trust = {checked:0, admitted:0, rejected:0};
+function renderTrust(){
+  $$('[data-trust]').forEach(el=>{ el.textContent = fmtNum(trust[el.dataset.trust]); });
+  const pct = trust.checked ? Math.round(trust.admitted/trust.checked*100) : 0;
+  $('#trustBar').style.width = pct+'%';
+}
+
+/* ---------------- Адаптер: The Met ---------------- */
+const MET = {
+  limiter: new Limiter(CFG.MET.GAP, CFG.MET.CONC),
+  deptFallback: [
+    {departmentId:1,displayName:'American Decorative Arts'},{departmentId:3,displayName:'Ancient Near Eastern Art'},
+    {departmentId:4,displayName:'Arms and Armor'},{departmentId:5,displayName:'Arts of Africa, Oceania, and the Americas'},
+    {departmentId:6,displayName:'Asian Art'},{departmentId:7,displayName:'The Cloisters'},
+    {departmentId:8,displayName:'The Costume Institute'},{departmentId:9,displayName:'Drawings and Prints'},
+    {departmentId:10,displayName:'Egyptian Art'},{departmentId:11,displayName:'European Paintings'},
+    {departmentId:12,displayName:'European Sculpture and Decorative Arts'},{departmentId:13,displayName:'Greek and Roman Art'},
+    {departmentId:14,displayName:'Islamic Art'},{departmentId:15,displayName:'The Robert Lehman Collection'},
+    {departmentId:17,displayName:'Medieval Art'},{departmentId:18,displayName:'Musical Instruments'},
+    {departmentId:19,displayName:'Photographs'},{departmentId:21,displayName:'Modern Art'}
+  ],
+  media: ['Paintings','Sculpture','Ceramics','Textiles','Furniture','Prints','Drawings','Photographs'],
+  params(ctx){
+    const p = new URLSearchParams();
+    if(ctx.q) p.set('q', ctx.q);
+    p.set('hasImages','true');
+    if(ctx.dept) p.set('departmentId', ctx.dept);
+    if(ctx.medium) p.set('medium', ctx.medium);
+    if(ctx.highlight) p.set('isHighlight','true');
+    if(ctx.onview) p.set('isOnView','true');
+    return p;
+  },
+  async departments(){
+    const c = cacheGet('met:deps'); if(c) return c;
+    try{
+      const j = await this.limiter.run(()=>fetchJSON(CFG.MET.API+'/departments'));
+      const list = (j.departments||[]).filter(d=>d.departmentId!==16);
+      cacheSet('met:deps', list, CFG.TTL.LIST); return list;
+    }catch(e){ return this.deptFallback; }
+  },
+  async idPage(ctx, offset){
+    const qs = this.params(ctx).toString();
+    const key = 'met:ids:'+qs+':'+offset;
+    const c = cacheGet(key); if(c) return c;
+    const j = await this.limiter.run(()=>fetchJSON(CFG.MET.SEARCH+'?'+qs+'&offset='+offset+'&limit='+CFG.MET.ID_PAGE));
+    const out = {total: j.total||0, ids: Array.isArray(j.objectIDs)? j.objectIDs : []};
+    cacheSet(key, out, CFG.TTL.SEARCH); return out;
+  },
+  async object(id){
+    const key = 'met:obj:'+id;
+    const c = cacheGet(key); if(c!==undefined) return c;
+    try{
+      const j = await this.limiter.run(()=>fetchJSON(CFG.MET.API+'/objects/'+id));
+      cacheSet(key, j, CFG.TTL.OBJ); return j;
+    }catch(e){ if(e.kind==='http' && e.status===404) return null; throw e; }
+  },
+  /* СТРОГАЯ ПРОВЕРКА: только явный флаг + изображение музея + ссылка музея */
+  verify(raw){
+    const ok = !!raw && raw.isPublicDomain === true
+      && typeof raw.primaryImageSmall==='string' && /^https:\/\/images\.metmuseum\.org\//.test(raw.primaryImageSmall)
+      && typeof raw.objectURL==='string' && /^https:\/\/www\.metmuseum\.org\//.test(raw.objectURL);
+    return {ok, evidence: ok? ['isPublicDomain === true','primaryImageSmall ✓ images.metmuseum.org','objectURL ✓ metmuseum.org'] : []};
+  },
+  normalize(raw, v){
+    return {
+      museum:'met', id:raw.objectID,
+      title: raw.title || t('misc.untitled'),
+      artist: raw.artistDisplayName || raw.culture || '',
+      bio: raw.artistDisplayBio || '',
+      date: raw.objectDate || '', medium: raw.medium || '', dimensions: raw.dimensions || '',
+      dept: raw.department || '', credit: raw.creditLine || '', accession: raw.accessionNumber || '',
+      img: raw.primaryImageSmall, imgLarge: raw.primaryImage || raw.primaryImageSmall,
+      url: raw.objectURL, altText: raw.title || '',
+      extraImages: (raw.additionalImages||[]).filter(u=>/^https:\/\/images\.metmuseum\.org\//.test(u)).slice(0,8),
+      highlight: !!raw.isHighlight, evidence: v.evidence, lqip:null, raw
+    };
+  }
+};
+
+/* ---------------- Адаптер: Art Institute of Chicago ---------------- */
+const AIC = {
+  limiter: new Limiter(CFG.AIC.GAP, CFG.AIC.CONC),
+  HEADERS: {'AIC-User-Agent':'ArtArter (educational noncommercial project)'},
+  FIELDS: ['id','api_model','api_link','is_boosted','title','alt_titles','thumbnail','main_reference_number',
+    'department_title','department_id','artist_id','artist_title','artist_ids','artist_titles','artist_display',
+    'category_titles','classification_title','classification_titles','artwork_type_title','artwork_type_id',
+    'style_title','style_titles','subject_titles','material_titles','medium_display','inscriptions','markings',
+    'technique_titles','dimensions','dimensions_detail','credit_line','place_of_origin','description',
+    'short_description','provenance_text','publication_history','exhibition_history','edition',
+    'publishing_verification_level','date_display','date_start','date_end','is_public_domain','is_on_view',
+    'on_loan_display','gallery_title','gallery_id','image_id','alt_image_ids','colorfulness','color',
+    'fiscal_year','source_updated_at','updated_at'],
+  async types(){
+    const c = cacheGet('aic:types'); if(c) return c;
+    try{
+      const j = await this.limiter.run(()=>fetchJSON(CFG.AIC.API+'/artwork-types?limit=100&fields=id,title',{headers:this.HEADERS}));
+      const list = (j.data||[]).slice().sort((a,b)=>String(a.title).localeCompare(String(b.title)));
+      cacheSet('aic:types', list, CFG.TTL.LIST); return list;
+    }catch(e){ return null; }
+  },
+  payload(ctx, page){
+    const filter = [{term:{is_public_domain:true}},{exists:{field:'image_id'}}];
+    if(ctx.type) filter.push({term:{artwork_type_id:Number(ctx.type)}});
+    if(ctx.boosted) filter.push({term:{is_boosted:true}});
+    if(ctx.onview) filter.push({term:{is_on_view:true}});
+    const p = {query:{bool:{filter}}, fields:this.FIELDS, page, limit:CFG.AIC.API_PAGE};
+    if(ctx.q) p.q = ctx.q;
+    return p;
+  },
+  async searchPage(ctx, page){
+    const payload = this.payload(ctx, page);
+    const key = 'aic:s:'+JSON.stringify(payload);
+    const c = cacheGet(key); if(c) return c;
+    const url = CFG.AIC.API+'/artworks/search?params='+encodeURIComponent(JSON.stringify(payload));
+    const j = await this.limiter.run(()=>fetchJSON(url,{headers:this.HEADERS}));
+    cacheSet(key, j, CFG.TTL.SEARCH); return j;
+  },
+  iiifBase(config){
+    let u = config && config.iiif_url;
+    if(!u || /test/.test(u) || !/^https:\/\//.test(u)) u='https://www.artic.edu/iiif/2';
+    return u;
+  },
+  img(base,id,size){ return base+'/'+id+'/full/'+size+',/0/default.jpg'; },
+  verify(d){
+    const ok = !!d && d.is_public_domain === true && typeof d.image_id==='string' && d.image_id.length>0;
+    return {ok, evidence: ok? ['is_public_domain === true','image_id ✓ IIIF (artic.edu)'] : []};
+  },
+  normalize(d, v, iiif){
+    return {
+      museum:'aic', id:d.id,
+      title: d.title || t('misc.untitled'),
+      artist: d.artist_title || (d.artist_display||'').split('\n')[0] || '',
+      bio: d.artist_display && d.artist_display.includes('\n') ? d.artist_display.split('\n').slice(1).join(' · ') : '',
+      date: d.date_display || '', medium: d.medium_display || '', dimensions: d.dimensions || '',
+      dept: d.department_title || '', credit: d.credit_line || '', accession: d.main_reference_number || '',
+      img: this.img(iiif,d.image_id,843), imgLarge: this.img(iiif,d.image_id,1686),
+      url: 'https://www.artic.edu/artworks/'+d.id,
+      altText: (d.thumbnail && d.thumbnail.alt_text) || d.title || '',
+      extraImages: (d.alt_image_ids||[]).slice(0,8).map(x=>this.img(iiif,x,843)),
+      highlight: !!d.is_boosted, evidence: v.evidence,
+      lqip: (d.thumbnail && d.thumbnail.lqip) || null, raw: d
+    };
+  }
+};
+
+/* ---------------- Адаптер: Whitney (строгий режим) ---------------- */
+const WHIT = {
+  limiter: new Limiter(CFG.WHIT.GAP, CFG.WHIT.CONC),
+  classes: ['Paintings','Sculpture','Prints','Drawings','Photographs'],
+  /* Поля, которые музей мог бы вернуть как ЯВНОЕ подтверждение прав.
+     На 11.2026 ни одно из них в ответах не встречается → все записи отклоняются. */
+  RIGHTS_KEYS: ['is_public_domain','public_domain','rights_confirmed','is_cc0','license_cc0'],
+  query(ctx, page){
+    const p = new URLSearchParams();
+    if(ctx.q) p.set('q[title_or_display_artist_text_cont]', ctx.q);
+    if(ctx.cls) p.set('q[classification_eq]', ctx.cls);
+    if(ctx.onview) p.set('q[on_view_true]','true');
+    if(page>1) p.set('page', String(page));
+    return p;
+  },
+  async page(ctx, page){
+    const qs = this.query(ctx,page).toString();
+    const key = 'whit:l:'+qs;
+    const c = cacheGet(key); if(c) return c;
+    const j = await this.limiter.run(()=>fetchJSON(CFG.WHIT.API+'/artworks'+(qs?'?'+qs:'')));
+    cacheSet(key, j, CFG.TTL.WHIT); return j;
+  },
+  verify(a){
+    const explicit = this.RIGHTS_KEYS.find(k=>a && a[k]===true);
+    const img = a && Array.isArray(a.images) ? a.images.find(i=>i && /^https:\/\/whitneymedia\.org\//.test(i.url||'')) : null;
+    if(explicit && img) return {ok:true, evidence:[explicit+' === true','images[0] ✓ whitneymedia.org'], img};
+    return {ok:false, reason: explicit? 'noImg' : 'noField', img};
+  },
+  normalize(a, v){
+    return {
+      museum:'whit', id:a.tms_id, title:a.title||t('misc.untitled'), artist:a.display_artist_text||'',
+      bio:'', date:a.display_date||'', medium:a.medium||'', dimensions:a.dimensions||'',
+      dept:a.classification||'', credit:a.credit_line||'', accession:a.accession_number||'',
+      img:v.img.url, imgLarge:v.img.url, url:'https://whitney.org/artworks/'+a.tms_id,
+      altText:a.alt_text||a.ai_alt_text||a.title||'',
+      extraImages:(a.images||[]).slice(1,8).filter(i=>/^https:\/\/whitneymedia\.org\//.test(i.url||'')).map(i=>i.url),
+      highlight:false, evidence:v.evidence, lqip:null, raw:a
+    };
+  }
+};
+const MUSEUM_INFO = {
+  met:{name:'The Metropolitan Museum of Art', site:'https://www.metmuseum.org/art/collection', cityKey:'museums.metCity', foundedKey:'museums.founded1870', badgeKey:'museums.apiCC0'},
+  aic:{name:'Art Institute of Chicago', site:'https://www.artic.edu/collection', cityKey:'museums.aicCity', foundedKey:'museums.founded1879', badgeKey:'museums.apiPD'},
+  whit:{name:'Whitney Museum of American Art', site:'https://whitney.org/collection', cityKey:'museums.whitCity', foundedKey:'museums.founded1930', badgeKey:'museums.apiStrict'}
+};
+</script>
+<script>
+'use strict';
+/* ================= Иконки (inline SVG) ================= */
+const ICONS = {
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5c0 4.6 3.2 8.4 7.5 10 4.3-1.6 7.5-5.4 7.5-10V6L12 3Z"/><path d="m8.8 12 2.2 2.2 4.2-4.4"/></svg>',
+  external:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H5v14h14v-4M14 4h6v6M20 4 11 13"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6 8.5 12l6 6"/></svg>',
+  right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></svg>',
+  copy:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></svg>',
+  imgOff:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="m3 16 5-4.5 4 3.5M14.5 13l2.5-2 4 3.5M4 4l16 16"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 22 20H2L12 3.5Z"/><path d="M12 10v4.2M12 17.3v.2"/></svg>',
+  empty:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M8 10.5h5"/></svg>'
+};
+
+/* ================= Подписи полей API (RU/EN) ================= */
+const MET_LABELS = {
+objectID:['ID объекта','Object ID'],isHighlight:['Шедевр коллекции','Collection highlight'],accessionNumber:['Инвентарный номер','Accession number'],accessionYear:['Год поступления','Accession year'],isPublicDomain:['Общественное достояние','Public domain'],primaryImage:['Основное изображение (оригинал)','Primary image (original)'],primaryImageSmall:['Основное изображение (web)','Primary image (web)'],additionalImages:['Дополнительные изображения','Additional images'],constituents:['Участники создания','Constituents'],department:['Департамент','Department'],objectName:['Тип объекта','Object name'],title:['Название','Title'],culture:['Культура','Culture'],period:['Период','Period'],dynasty:['Династия','Dynasty'],reign:['Правление','Reign'],portfolio:['Портфолио / серия','Portfolio'],artistRole:['Роль автора','Artist role'],artistPrefix:['Префикс атрибуции','Attribution prefix'],artistDisplayName:['Автор','Artist'],artistDisplayBio:['Об авторе','Artist bio'],artistSuffix:['Суффикс атрибуции','Attribution suffix'],artistAlphaSort:['Автор (для сортировки)','Artist (alpha sort)'],artistNationality:['Национальность','Nationality'],artistBeginDate:['Год рождения','Birth year'],artistEndDate:['Год смерти','Death year'],artistGender:['Пол автора','Artist gender'],artistWikidata_URL:['Wikidata автора','Artist Wikidata'],artistULAN_URL:['ULAN автора','Artist ULAN'],objectDate:['Дата создания','Object date'],objectBeginDate:['Начало создания (год)','Creation start (year)'],objectEndDate:['Завершение создания (год)','Creation end (year)'],medium:['Материалы и техника','Medium'],dimensions:['Размеры','Dimensions'],dimensionsParsed:['Размеры (разобрано, см)','Dimensions (parsed, cm)'],measurements:['Измерения по элементам','Measurements by element'],creditLine:['Строка атрибуции','Credit line'],geographyType:['Тип географии','Geography type'],city:['Город','City'],state:['Штат / провинция','State / province'],county:['Округ / графство','County'],country:['Страна','Country'],region:['Регион','Region'],subregion:['Субрегион','Subregion'],locale:['Локация','Locale'],locus:['Место находки','Locus'],excavation:['Раскопки','Excavation'],river:['Река','River'],classification:['Классификация','Classification'],rightsAndReproduction:['Права и репродукция','Rights and reproduction'],linkResource:['Ссылка на ресурс','Link resource'],metadataDate:['Обновление метаданных','Metadata updated'],repository:['Хранилище','Repository'],objectURL:['Страница объекта','Object page'],tags:['Теги-сюжеты','Subject tags'],objectWikidata_URL:['Wikidata объекта','Object Wikidata'],isTimelineWork:['В Timeline of Art History','In Timeline of Art History'],GalleryNumber:['Номер галереи','Gallery number']
+};
+const AIC_LABELS = {
+id:['ID записи','Record ID'],api_model:['Модель API','API model'],api_link:['Ссылка API','API link'],is_boosted:['Избранное музеем','Museum pick (boosted)'],title:['Название','Title'],alt_titles:['Альтернативные названия','Alternative titles'],thumbnail:['Миниатюра и alt-текст','Thumbnail & alt text'],main_reference_number:['Инвентарный номер','Main reference number'],department_title:['Департамент','Department'],department_id:['ID департамента','Department ID'],artist_id:['ID автора','Artist ID'],artist_title:['Автор','Artist'],artist_ids:['ID авторов','Artist IDs'],artist_titles:['Авторы','Artists'],artist_display:['Автор (полная строка)','Artist display'],category_titles:['Категории','Categories'],classification_title:['Классификация','Classification'],classification_titles:['Классификации','Classifications'],artwork_type_title:['Вид произведения','Artwork type'],artwork_type_id:['ID вида','Artwork type ID'],style_title:['Стиль','Style'],style_titles:['Стили','Styles'],subject_titles:['Сюжеты','Subjects'],material_titles:['Материалы','Materials'],medium_display:['Материалы и техника','Medium'],inscriptions:['Надписи','Inscriptions'],markings:['Маркировки','Markings'],technique_titles:['Техники','Techniques'],dimensions:['Размеры','Dimensions'],dimensions_detail:['Размеры (детально)','Dimensions detail'],credit_line:['Строка атрибуции','Credit line'],place_of_origin:['Место создания','Place of origin'],description:['Описание (CC BY 4.0)','Description (CC BY 4.0)'],short_description:['Краткое описание','Short description'],provenance_text:['Провенанс','Provenance'],publication_history:['Публикации','Publication history'],exhibition_history:['Выставки','Exhibition history'],edition:['Тираж / издание','Edition'],publishing_verification_level:['Уровень проверки публикации','Publishing verification level'],date_display:['Дата','Date'],date_start:['Начало (год)','Start year'],date_end:['Завершение (год)','End year'],is_public_domain:['Общественное достояние','Public domain'],is_on_view:['В экспозиции','On view'],on_loan_display:['В займе / на выставке','On loan'],gallery_title:['Галерея','Gallery'],gallery_id:['ID галереи','Gallery ID'],image_id:['ID изображения (IIIF)','Image ID (IIIF)'],alt_image_ids:['Доп. изображения (IIIF)','Alt images (IIIF)'],colorfulness:['Цветовая насыщенность','Colorfulness'],color:['Доминирующий цвет','Dominant color'],fiscal_year:['Финансовый год','Fiscal year'],source_updated_at:['Обновление источника','Source updated'],updated_at:['Обновление записи','Record updated']
+};
+const MET_GROUPS = {
+id:['objectID','accessionNumber','accessionYear','objectName','title','classification'],
+creation:['artistDisplayName','artistRole','artistPrefix','artistSuffix','artistDisplayBio','artistAlphaSort','artistNationality','artistBeginDate','artistEndDate','artistGender','constituents','culture','period','dynasty','reign','objectDate','objectBeginDate','objectEndDate'],
+physical:['medium','dimensions','dimensionsParsed','measurements'],
+geo:['geographyType','city','state','county','country','region','subregion','locale','locus','excavation','river'],
+rights:['isPublicDomain','creditLine','rightsAndReproduction','repository'],
+context:['department','portfolio','tags','GalleryNumber','isHighlight','isTimelineWork','objectURL','linkResource','objectWikidata_URL','artistWikidata_URL','artistULAN_URL'],
+api:['primaryImage','primaryImageSmall','additionalImages','metadataDate']
+};
+const AIC_GROUPS = {
+id:['id','title','alt_titles','main_reference_number','classification_title','classification_titles','artwork_type_title'],
+creation:['artist_title','artist_display','artist_titles','artist_id','artist_ids','date_display','date_start','date_end','place_of_origin','style_title','style_titles'],
+physical:['medium_display','dimensions','dimensions_detail','inscriptions','markings','technique_titles','material_titles','edition','colorfulness','color'],
+rights:['is_public_domain','credit_line','publishing_verification_level','fiscal_year'],
+context:['department_title','department_id','gallery_title','gallery_id','is_on_view','on_loan_display','is_boosted','category_titles','subject_titles','description','short_description','provenance_text','publication_history','exhibition_history','thumbnail'],
+api:['api_model','api_link','image_id','alt_image_ids','source_updated_at','updated_at']
+};
+const GROUP_ORDER = ['id','creation','physical','geo','rights','context','api','other'];
+const GROUP_TITLES = {id:'misc.groupId',creation:'misc.groupCreation',physical:'misc.groupPhysical',geo:'misc.groupGeo',rights:'misc.groupRights',context:'misc.groupContext',api:'misc.groupApi',other:'misc.groupOther'};
+
+/* ================= Состояние приложения ================= */
+const state = {
+  view:'home', museum:'met',
+  ctx:{
+    met:{q:'',dept:'',medium:'',highlight:false,onview:false,page:1},
+    aic:{q:'',type:'',boosted:false,onview:false,page:1},
+    whit:{q:'',cls:'',onview:false}
+  }
+};
+const streams = new Map();      // кэш страниц галереи в памяти сессии
+let loadSeq = 0;                // защита от гонок при переключении видов/фильтров
+let lastRecs = [];              // записи текущей страницы (для модалки)
+let lastStatus = null;          // данные строки статуса для перерисовки при смене языка
+let retryFn = null;
+
+function streamKey(m,ctx){
+  const {page, ...filters} = ctx;
+  return m+'|'+JSON.stringify(filters);
+}
+function getStream(m,ctx){
+  const key = streamKey(m,ctx);
+  if(streams.has(key)) return streams.get(key);
+  if(streams.size >= 8) streams.delete(streams.keys().next().value);
+  const st = {key, pages:[], exhausted:false, total:null, note:null, pending:[], iiif:null,
+              cursor: m==='met'? {idx:0} : {apiPage:1}, idPage:null, idCap:Infinity};
+  streams.set(key,st);
+  return st;
+}
+
+/* ================= Пакетная загрузка с проверкой ================= */
+async function metBatch(st,ctx){
+  const out=[];
+  while(out.length<CFG.PAGE_SIZE && !st.exhausted){
+    if(st.cursor.idx>=st.idCap){ st.exhausted=true; if(st.total>st.idCap) st.note='depth'; break; }
+    const pageEnd = st.idPage ? st.idPage.offset+st.idPage.ids.length : 0;
+    if(!st.idPage || st.cursor.idx>=pageEnd){
+      const off = Math.floor(st.cursor.idx/CFG.MET.ID_PAGE)*CFG.MET.ID_PAGE;
+      if(off>=CFG.MET.MAX_IDS){ st.exhausted=true; st.note='depth'; break; }
+      const r = await MET.idPage(ctx,off);
+      st.total=r.total; st.idCap=Math.min(r.total,CFG.MET.MAX_IDS);
+      st.idPage={offset:off, ids:r.ids};
+      if(!r.ids.length){ st.exhausted=true; break; }
+      continue;
+    }
+    const end = Math.min(pageEnd, st.idCap, st.cursor.idx + (CFG.PAGE_SIZE-out.length));
+    /* ВАЖНО: курсор глобальный, а ids — локальная страница; берём локальные индексы */
+    const chunk = st.idPage.ids.slice(st.cursor.idx - st.idPage.offset, end - st.idPage.offset);
+    st.cursor.idx += chunk.length;
+    const results = await Promise.allSettled(chunk.map(id=>MET.object(id)));
+    let netFails=0, firstErr=null;
+    for(const res of results){
+      trust.checked++;
+      if(res.status==='rejected'){ netFails++; firstErr=firstErr||res.reason; trust.rejected++; continue; }
+      const raw=res.value;
+      if(!raw){ trust.rejected++; continue; }
+      const v=MET.verify(raw);
+      if(v.ok){ trust.admitted++; out.push(MET.normalize(raw,v)); } else trust.rejected++;
+    }
+    renderTrust();
+    if(chunk.length && netFails===chunk.length) throw firstErr;
+    if(!chunk.length){ st.exhausted=true; break; }
+  }
+  return out;
+}
+async function aicBatch(st,ctx){
+  const out=[];
+  while(out.length<CFG.PAGE_SIZE){
+    while(out.length<CFG.PAGE_SIZE && st.pending.length) out.push(st.pending.shift());
+    if(out.length>=CFG.PAGE_SIZE || st.exhausted) break;
+    const pg = st.cursor.apiPage;
+    if(pg*CFG.AIC.API_PAGE > CFG.AIC.MAX_DEPTH){ st.exhausted=true; st.note='depth'; break; }
+    const r = await AIC.searchPage(ctx,pg);
+    st.total = (r.pagination && r.pagination.total)!=null ? r.pagination.total : st.total;
+    st.iiif = AIC.iiifBase(r.config);
+    const rows = r.data||[];
+    for(const d of rows){
+      trust.checked++;
+      const v=AIC.verify(d);
+      if(v.ok){ trust.admitted++; const rec=AIC.normalize(d,v,st.iiif); (out.length<CFG.PAGE_SIZE?out:st.pending).push(rec); }
+      else trust.rejected++;
+    }
+    renderTrust();
+    st.cursor.apiPage++;
+    const tp = (r.pagination && r.pagination.total_pages) || pg;
+    if(pg>=tp || !rows.length) st.exhausted=true;
+  }
+  return out;
+}
+
+/* ================= Галерея: загрузка страницы ================= */
+async function loadPage(n){
+  const m=state.museum, ctx=state.ctx[m];
+  if(m!=='met' && m!=='aic') return;
+  ctx.page=Math.max(1,n);
+  const seq=++loadSeq;
+  const st=getStream(m,ctx);
+  const n0=netStats.net, c0=netStats.cache, t0=performance.now();
+  showSkeleton(); hideState(); renderPager(st,ctx.page,true); setStatusLoading();
+  try{
+    while(st.pages.length<ctx.page && (!st.exhausted || (st.pending && st.pending.length))){
+      const batch = m==='met' ? await metBatch(st,ctx) : await aicBatch(st,ctx);
+      if(seq!==loadSeq) return;
+      if(!batch.length){ st.exhausted=true; break; }
+      st.pages.push(batch);
+      if(batch.length<CFG.PAGE_SIZE) st.exhausted=true;
+    }
+    if(seq!==loadSeq) return;
+    if(ctx.page>st.pages.length && st.pages.length) ctx.page=st.pages.length;
+    const recs = st.pages[ctx.page-1]||[];
+    lastRecs = recs;
+    renderGrid(recs);
+    lastStatus = {st, page:ctx.page, ms:performance.now()-t0, net:netStats.net-n0, cache:netStats.cache-c0, count:recs.length};
+    renderStatus();
+    renderPager(st,ctx.page,false);
+    if(!recs.length) showEmpty();
+    setDot(m,'ok');
+  }catch(err){
+    if(seq!==loadSeq) return;
+    setDot(m,'err');
+    $('#grid').innerHTML='';
+    showError(err, ()=>loadPage(ctx.page));
+    renderPager(st,ctx.page,false);
+  }
+}
+function cardHTML(rec,i){
+  const sealTxt = rec.museum==='met'? t('card.cc0') : t('card.pd');
+  const sealTip = rec.museum==='met'? t('card.cc0Tip') : t('card.pdTip');
+  return `<article class="card" data-idx="${i}" tabindex="0" role="button" aria-label="${esc(rec.title)}" style="animation-delay:${Math.min(i*45,450)}ms">
+    <div class="card-img"${rec.lqip?` style="background-image:url('${rec.lqip}')"`:''}>
+      <img src="${esc(rec.img)}" alt="${esc(rec.altText)}" loading="lazy" decoding="async">
+      <div class="img-fail">${ICONS.imgOff}<span>${t('card.noImg')}</span></div>
+      ${rec.highlight?`<span class="hl-badge">★ ${t('card.highlight')}</span>`:''}
+      <span class="seal" title="${esc(sealTip)}">${ICONS.shield}${sealTxt}</span>
+    </div>
+    <div class="card-body">
+      <h3 class="card-title">${esc(rec.title)}</h3>
+      <div class="card-artist">${esc(rec.artist||t('misc.anon'))}</div>
+      <div class="card-meta">${esc([rec.date,rec.medium].filter(Boolean).join(' · '))}</div>
+      <div class="card-foot">
+        <span class="card-dept">${esc(rec.dept||rec.accession||'')}</span>
+        <a class="card-link" href="${esc(rec.url)}" target="_blank" rel="noopener noreferrer" title="${esc(t('card.openPage'))}" aria-label="${esc(t('card.openPage'))}">${ICONS.external}</a>
+      </div>
+    </div>
+    <div class="card-license">${ICONS.shield}<span>${esc(rec.evidence[0]||'')}</span></div>
+  </article>`;
+}
+function renderGrid(recs){ $('#grid').innerHTML = recs.map(cardHTML).join(''); }
+function showSkeleton(){
+  $('#grid').innerHTML = Array.from({length:CFG.PAGE_SIZE},()=>
+    '<div class="sk"><div class="sk-img shimmer"></div><div class="sk-l w80 shimmer"></div><div class="sk-l w60 shimmer"></div><div class="sk-l w40 shimmer"></div></div>').join('');
+}
+function setStatusLoading(){ $('#statusLine').innerHTML = '<span class="spin" style="width:14px;height:14px;border-width:2px"></span><span>'+t('status.loading')+'</span>'; }
+function renderStatus(){
+  if(!lastStatus) return;
+  const {st,ms,net,cache,count} = lastStatus;
+  $('#statusLine').innerHTML =
+    `<span>${t('status.shown')}: <b>${fmtNum(count)}</b></span>`+
+    (st.total!=null?`<span>· ${t('status.candidates')}: <b>≈ ${fmtNum(st.total)}</b></span>`:'')+
+    `<span>· ${(ms/1000).toFixed(1)} ${t('status.sec')}</span>`+
+    (net===0&&cache>0?`<span class="chip ok">${t('status.fromCache')}</span>`:`<span class="chip">${t('status.netCalls')}: ${fmtNum(net)}</span>`)+
+    `<span class="chip acc" title="${esc(t('gallery.lockedTip'))}">${t('gallery.locked')}</span>`;
+}
+function renderPager(st,page,loading){
+  $('#pageNum').textContent = fmtNum(page);
+  const hasNext = st.pages.length>page || !st.exhausted || (st.pending && st.pending.length>0);
+  $('#prevPage').disabled = loading || page<=1;
+  $('#firstPage').disabled = loading || page<=1;
+  $('#nextPage').disabled = loading || !hasNext;
+  $('#pagerNote').textContent = st.note==='depth' ? t('status.depth')
+    : (st.exhausted && !(st.pending && st.pending.length) && st.pages.length===page && page>0 && (st.pages[page-1]||[]).length ? t('status.end') : '');
+}
+function hideState(){ const b=$('#stateBox'); b.hidden=true; b.innerHTML=''; }
+function showEmpty(){
+  const b=$('#stateBox'); b.hidden=false; b.className='state-box empty';
+  b.innerHTML = `<div class="big-ico">${ICONS.empty}</div><h3>${t('empty.title')}</h3><p>${t('empty.text')}</p>
+    <button class="btn btn-soft btn-sm" id="emptyReset">${t('empty.reset')}</button>`;
+}
+function errMsg(e){
+  if(e && e.kind==='timeout') return t('err.timeout');
+  if(e && e.kind==='http') return e.status===403 ? t('err.blocked') : t('err.http')+' (HTTP '+e.status+')';
+  return t('err.network');
+}
+function showError(err, retry){
+  retryFn = retry;
+  const b=$('#stateBox'); b.hidden=false; b.className='state-box err';
+  b.innerHTML = `<div class="big-ico">${ICONS.alert}</div><h3>${t('err.title')}</h3><p>${esc(errMsg(err))}</p>
+    <div class="tech">${esc(err && err.message || '')}</div>
+    <button class="btn btn-sm" id="errRetry">${t('err.retry')}</button>`;
+  $('#statusLine').innerHTML='';
+}
+
+/* ================= Тулбар фильтров ================= */
+function buildToolbar(){
+  const m=state.museum, ctx=state.ctx[m];
+  const inp=$('#searchInput');
+  inp.value=ctx.q; inp.placeholder=t('gallery.searchPh.'+m);
+  $('#searchField').classList.toggle('has-value', !!ctx.q);
+  const F=$('#toolbarFilters');
+  const toggleHTML=(id,val,label)=>`<label class="toggle"><input type="checkbox" id="${id}"${val?' checked':''}><span class="track"></span><span class="tl">${label}</span></label>`;
+  if(m==='met'){
+    F.innerHTML =
+      `<span class="select-wrap"><select id="fDept" aria-label="${esc(t('gallery.dept'))}"><option value="">${t('gallery.deptLoading')}</option></select></span>`+
+      `<span class="select-wrap"><select id="fMedium" aria-label="${esc(t('gallery.medium'))}"><option value="">${t('gallery.mediumAny')}</option>${MET.media.map(x=>`<option value="${x}">${x}</option>`).join('')}</select></span>`+
+      toggleHTML('fHighlight',ctx.highlight,t('gallery.highlight'))+
+      toggleHTML('fOnview',ctx.onview,t('gallery.onview'));
+    $('#fMedium').value=ctx.medium;
+    $('#fMedium').addEventListener('change',e=>{ctx.medium=e.target.value;loadPage(1);});
+    $('#fHighlight').addEventListener('change',e=>{ctx.highlight=e.target.checked;loadPage(1);});
+    $('#fOnview').addEventListener('change',e=>{ctx.onview=e.target.checked;loadPage(1);});
+    MET.departments().then(list=>{
+      const sel=$('#fDept'); if(!sel || state.museum!=='met') return;
+      sel.innerHTML=`<option value="">${t('gallery.deptAny')}</option>`+list.map(d=>`<option value="${d.departmentId}">${esc(d.displayName)}</option>`).join('');
+      sel.value=ctx.dept||'';
+      sel.addEventListener('change',e=>{ctx.dept=e.target.value;loadPage(1);});
+    });
+  } else if(m==='aic'){
+    F.innerHTML =
+      `<span class="select-wrap"><select id="fType" aria-label="${esc(t('gallery.type'))}"><option value="">${t('gallery.typeLoading')}</option></select></span>`+
+      toggleHTML('fBoosted',ctx.boosted,t('gallery.boosted'))+
+      toggleHTML('fOnview',ctx.onview,t('gallery.onview'));
+    $('#fBoosted').addEventListener('change',e=>{ctx.boosted=e.target.checked;loadPage(1);});
+    $('#fOnview').addEventListener('change',e=>{ctx.onview=e.target.checked;loadPage(1);});
+    AIC.types().then(list=>{
+      const sel=$('#fType'); if(!sel || state.museum!=='aic') return;
+      if(!list){ sel.closest('.select-wrap').remove(); return; }
+      sel.innerHTML=`<option value="">${t('gallery.typeAny')}</option>`+list.map(d=>`<option value="${d.id}">${esc(d.title)}</option>`).join('');
+      sel.value=ctx.type||'';
+      sel.addEventListener('change',e=>{ctx.type=e.target.value;loadPage(1);});
+    });
+  }
+}
+function resetFilters(){
+  const m=state.museum;
+  if(m==='met') state.ctx.met={q:'',dept:'',medium:'',highlight:false,onview:false,page:1};
+  else if(m==='aic') state.ctx.aic={q:'',type:'',boosted:false,onview:false,page:1};
+  buildToolbar(); loadPage(1);
+}
+function renderGalMeta(){
+  const info=MUSEUM_INFO[state.museum];
+  $('#galMeta').innerHTML =
+    `<span class="chip">${t(info.cityKey)}</span><span class="chip">${t(info.foundedKey)}</span><span class="chip ok">${t(info.badgeKey)}</span>`;
+}
+
+/* ================= Случайный объект ================= */
+async function randomObject(){
+  const m=state.museum; if(m!=='met'&&m!=='aic') return;
+  const btn=$('#randomBtn'); const orig=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span><span>'+t('random.loading')+'</span>';
+  try{
+    let rec=null;
+    if(m==='met'){
+      const ctx=state.ctx.met;
+      const probe=await MET.idPage(ctx,0);
+      const total=Math.min(probe.total||0,CFG.MET.MAX_IDS);
+      for(let i=0;i<6 && !rec && total;i++){
+        const off=Math.floor(Math.random()*total);
+        const r=await MET.idPage(ctx,Math.floor(off/CFG.MET.ID_PAGE)*CFG.MET.ID_PAGE);
+        const id=r.ids[off%CFG.MET.ID_PAGE]; if(id==null) continue;
+        const raw=await MET.object(id); trust.checked++;
+        if(raw){ const v=MET.verify(raw); if(v.ok){trust.admitted++; rec=MET.normalize(raw,v);} else trust.rejected++; }
+        else trust.rejected++;
+        renderTrust();
+      }
+    } else {
+      const ctx=state.ctx.aic;
+      for(let i=0;i<3 && !rec;i++){
+        const payload=AIC.payload(ctx,1);
+        payload.limit=1;
+        payload.query={function_score:{query:payload.query,boost_mode:'replace',random_score:{field:'id',seed:(Date.now()+i*131)%100000}}};
+        const url=CFG.AIC.API+'/artworks/search?params='+encodeURIComponent(JSON.stringify(payload));
+        const j=await AIC.limiter.run(()=>fetchJSON(url,{headers:AIC.HEADERS}));
+        const d=(j.data||[])[0]; trust.checked++;
+        if(d){ const v=AIC.verify(d); if(v.ok){trust.admitted++; rec=AIC.normalize(d,v,AIC.iiifBase(j.config));} else trust.rejected++; }
+        else trust.rejected++;
+        renderTrust();
+      }
+    }
+    if(rec) openModal(rec,[rec],0); else toast(t('random.fail'),'warn');
+  }catch(e){ toast(errMsg(e),'err'); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+
+/* ================= Whitney: строгий режим ================= */
+const whitState={journal:[],cursor:1,checked:0,rights:0,admitted:0,total:null,exhausted:false,started:false,loading:false,seq:0,ctxKey:'',apiOk:null,error:null};
+function whitCtxKey(){ const c=state.ctx.whit; return JSON.stringify([c.q,c.cls,c.onview]); }
+function resetWhit(){ Object.assign(whitState,{journal:[],cursor:1,checked:0,rights:0,admitted:0,total:null,exhausted:false,started:true,ctxKey:whitCtxKey(),apiOk:null,error:null}); }
+function enterWhitney(){
+  renderWhitMeta(); buildWhitToolbar();
+  if(!whitState.started || whitState.ctxKey!==whitCtxKey()){ resetWhit(); whitCheck(); }
+  else renderWhit();
+}
+async function whitCheck(){
+  if(whitState.loading || whitState.exhausted){ renderWhit(); return; }
+  whitState.loading=true; whitState.error=null;
+  const seq=++whitState.seq;
+  renderWhit();
+  try{
+    const j=await WHIT.page(state.ctx.whit,whitState.cursor);
+    if(seq!==whitState.seq) return;
+    whitState.total=(j.meta && j.meta.total)!=null? j.meta.total : whitState.total;
+    const rows=j.data||[];
+    for(const d of rows){
+      const a=d.attributes||{};
+      const v=WHIT.verify(a);
+      whitState.checked++; trust.checked++;
+      if(v.ok){ whitState.rights++; whitState.admitted++; trust.admitted++; }
+      else trust.rejected++;
+      whitState.journal.unshift({id:a.tms_id, title:a.title||t('misc.untitled'), artist:a.display_artist_text||'',
+        imgs:(a.images||[]).length, reason: v.ok?'ok':v.reason});
+    }
+    renderTrust();
+    whitState.cursor++;
+    if(!j.links || !j.links.next || !rows.length) whitState.exhausted=true;
+    whitState.journal=whitState.journal.slice(0,90);
+    whitState.apiOk=true;
+    setDot('whit','ok');
+  }catch(e){
+    if(seq!==whitState.seq) return;
+    whitState.apiOk=false; whitState.error=e; setDot('whit','err');
+  }finally{
+    if(seq===whitState.seq){ whitState.loading=false; renderWhit(); }
+  }
+}
+function renderWhitMeta(){
+  const info=MUSEUM_INFO.whit;
+  $('#whitMeta').innerHTML =
+    `<span class="chip">${t(info.cityKey)}</span><span class="chip">${t(info.foundedKey)}</span><span class="chip warn">${t(info.badgeKey)}</span>`;
+}
+function buildWhitToolbar(){
+  const ctx=state.ctx.whit;
+  const inp=$('#whitSearchInput');
+  inp.value=ctx.q; inp.placeholder=t('gallery.searchPh.whit');
+  $('#whitSearchField').classList.toggle('has-value', !!ctx.q);
+  $('#whitFilters').innerHTML =
+    `<span class="select-wrap"><select id="wCls" aria-label="${esc(t('gallery.classification'))}"><option value="">${t('gallery.classAny')}</option>${WHIT.classes.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></span>`+
+    `<label class="toggle"><input type="checkbox" id="wOnview"${ctx.onview?' checked':''}><span class="track"></span><span class="tl">${t('gallery.onview')}</span></label>`;
+  $('#wCls').value=ctx.cls;
+  $('#wCls').addEventListener('change',e=>{ctx.cls=e.target.value; resetWhit(); whitCheck();});
+  $('#wOnview').addEventListener('change',e=>{ctx.onview=e.target.checked; resetWhit(); whitCheck();});
+}
+function renderWhit(){
+  $('#whitChecked').textContent=fmtNum(whitState.checked);
+  $('#whitRights').textContent=fmtNum(whitState.rights);
+  $('#whitAdmitted').textContent=fmtNum(whitState.admitted);
+  const S=$('#whitStatus');
+  if(whitState.apiOk===false){
+    S.innerHTML=`<span class="chip" style="background:var(--danger-soft);color:var(--danger);border-color:transparent">${t('whit.apiOffline')}</span>
+      <span style="font-size:.76rem;color:var(--muted)">${esc(errMsg(whitState.error))}</span>
+      <button class="btn btn-soft btn-sm" id="whitRetry">${t('err.retry')}</button>`;
+  } else if(whitState.loading && !whitState.checked){
+    S.innerHTML=`<span class="spin" style="width:14px;height:14px;border-width:2px"></span><span style="font-size:.78rem;color:var(--muted)">${t('whit.checking')}</span>`;
+  } else {
+    S.innerHTML=`<span class="chip ok">● ${t('whit.apiOnline')}</span>`+
+      (whitState.total!=null?`<span class="chip">${t('whit.records')}: <b>&nbsp;${fmtNum(whitState.total)}</b></span>`:'')+
+      `<span class="chip warn">${t('gallery.locked')}</span>`;
+  }
+  const J=$('#whitJournal');
+  J.innerHTML = whitState.journal.length ? whitState.journal.map(e=>
+    `<div class="jline"><span class="x"${e.reason==='ok'?' style="color:var(--ok)"':''}>${e.reason==='ok'?'✓':'✗'}</span>`+
+    `<span class="jt">#${esc(e.id)} · ${esc(e.title)}${e.artist?' — '+esc(e.artist):''}</span>`+
+    `<span class="jr"${e.reason==='ok'?' style="color:var(--ok)"':''}>${e.reason==='ok'?t('whit.reasonOk'):(e.reason==='noImg'?t('whit.reasonNoImg'):t('whit.reasonNoField'))} · ${e.imgs} img</span></div>`).join('')
+    : `<div class="journal-empty">${whitState.loading?t('whit.checking'):'—'}</div>`;
+  const more=$('#whitMore');
+  more.disabled = whitState.loading || whitState.exhausted;
+  more.innerHTML = whitState.loading ? '<span class="spin"></span><span>'+t('whit.checking')+'</span>' : '<span>'+t('whit.checkMore')+'</span>';
+  $('#whitMoreState').innerHTML = whitState.exhausted ? `<span class="chip warn">${t('whit.exhausted')}</span>`
+    : (whitState.checked?`<span class="chip info">${t('trust.checked')}: ${fmtNum(whitState.checked)}</span>`:'');
+}
+
+/* ================= Модальное окно объекта ================= */
+const modalState={rec:null,list:[],idx:0,json:false,mainSrc:null,lastFocus:null};
+function openModal(rec,list,idx){
+  modalState.rec=rec; modalState.list=list; modalState.idx=idx; modalState.json=false; modalState.mainSrc=null;
+  modalState.lastFocus=document.activeElement;
+  $('#modalRoot').classList.add('on');
+  document.body.style.overflow='hidden';
+  renderModal();
+  const c=$('#modalRoot .modal-close'); if(c) c.focus();
+}
+function closeModal(){
+  $('#modalRoot').classList.remove('on');
+  $('#modalRoot').innerHTML='';
+  document.body.style.overflow='';
+  modalState.rec=null;
+  if(modalState.lastFocus && modalState.lastFocus.focus) modalState.lastFocus.focus();
+}
+function humanize(k){ return k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+function fmtObj(o){
+  if(o==null) return '';
+  if(o.term) return String(o.term);
+  if(o.name) return String(o.name)+(o.role?' — '+o.role:'');
+  if(o.elementName){
+    const ms=Object.entries(o.elementMeasurements||{}).map(([k,v])=>v+' '+k).join(' × ');
+    return o.elementName+(o.elementDescription?' ('+o.elementDescription+')':'')+(ms?': '+ms:'');
+  }
+  if(o.lqip!==undefined) return (o.alt_text||'')+(o.width?' ('+o.width+'×'+o.height+' px)':'');
+  if(o.element && o.dimensionType) return o.element+' '+o.dimensionType+': '+o.dimension;
+  return Object.entries(o).filter(([k,v])=>v!=null&&v!==''&&typeof v!=='object'&&k!=='lqip')
+    .map(([k,v])=>humanize(k)+': '+v).join('; ');
+}
+function fmtVal(v){
+  if(v==null || v==='' || (Array.isArray(v)&&!v.length)) return null;
+  if(typeof v==='boolean') return {text:t(v?'misc.yes':'misc.no')};
+  if(typeof v==='number') return {text:String(v)};
+  if(typeof v==='string'){
+    if(/^https?:\/\//.test(v)) return {link:v};
+    const txt = /<[a-z][\s\S]*>/i.test(v) ? stripHtml(v) : v;
+    return txt.trim()? {text:txt.trim()} : null;
+  }
+  if(Array.isArray(v)){
+    if(v.every(x=>x==null||typeof x!=='object')){
+      const clean=v.filter(x=>x!=null&&x!=='');
+      if(!clean.length) return null;
+      const shown=clean.slice(0,14).join(', ')+(clean.length>14?' … (+'+(clean.length-14)+')':'');
+      return {text:shown};
+    }
+    if(v[0] && v[0].term) return {tags:v.map(x=>x.term).filter(Boolean)};
+    const parts=v.map(fmtObj).filter(Boolean);
+    return parts.length? {text:parts.join(' · ')} : null;
+  }
+  if(typeof v==='object'){ const s=fmtObj(v); return s?{text:s}:null; }
+  return null;
+}
+function renderFields(r){
+  const labels = r.museum==='met'? MET_LABELS : r.museum==='aic'? AIC_LABELS : {};
+  const groups = r.museum==='met'? MET_GROUPS : r.museum==='aic'? AIC_GROUPS : {};
+  const keyGroup={};
+  Object.entries(groups).forEach(([g,keys])=>keys.forEach(k=>keyGroup[k]=g));
+  const buckets={}; GROUP_ORDER.forEach(g=>buckets[g]=[]);
+  const raw=r.raw||{};
+  const knownOrder=[].concat(...GROUP_ORDER.map(g=>groups[g]||[]));
+  const keys=knownOrder.filter(k=>k in raw).concat(Object.keys(raw).filter(k=>!knownOrder.includes(k)));
+  for(const k of keys){
+    const fv=fmtVal(raw[k]); if(!fv) continue;
+    const lab=labels[k]? labels[k][lang==='ru'?0:1] : humanize(k);
+    const g=keyGroup[k]||'other';
+    let valHTML;
+    if(fv.link) valHTML=`<a href="${esc(fv.link)}" target="_blank" rel="noopener noreferrer">${esc(fv.link)}</a>`;
+    else if(fv.tags) valHTML=`<div class="tagrow">${fv.tags.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>`;
+    else if(fv.text.length>320) valHTML=`<div class="long">${esc(fv.text)}</div><button class="long-toggle">${t('modal.more')}</button>`;
+    else valHTML=esc(fv.text);
+    buckets[g].push(`<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${valHTML}</span></div>`);
+  }
+  return GROUP_ORDER.filter(g=>buckets[g].length).map(g=>
+    `<div class="fgroup"><h5>${t(GROUP_TITLES[g])}</h5>${buckets[g].join('')}</div>`).join('');
+}
+function renderModal(){
+  const r=modalState.rec; if(!r) return;
+  const info=MUSEUM_INFO[r.museum];
+  const rightsText = r.museum==='met'? t('modal.rightsMet') : r.museum==='aic'? t('modal.rightsAic') : t('modal.rightsWhit');
+  const mainSrc = modalState.mainSrc || r.imgLarge;
+  const thumbs = [r.imgLarge, ...r.extraImages];
+  $('#modalRoot').innerHTML = `
+  <div class="modal-scrim" data-close="1"></div>
+  <div class="modal">
+    <button class="icon-btn modal-close" data-close="1" title="${esc(t('modal.close'))}" aria-label="${esc(t('modal.close'))}">${ICONS.x}</button>
+    <div class="modal-left">
+      <div class="modal-imgwrap"><span class="spin"></span><img src="${esc(mainSrc)}" alt="${esc(r.altText)}"></div>
+      ${thumbs.length>1?`<div class="modal-thumbs" aria-label="${esc(t('modal.additional'))}">${thumbs.map(u=>
+        `<button data-src="${esc(u)}" class="${u===mainSrc?'sel':''}"><img src="${esc(u===r.imgLarge?r.img:u)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
+    </div>
+    <div class="modal-right">
+      <div class="modal-head">
+        <div class="modal-kicker"><span class="chip acc">${esc(info.name)}</span>${r.highlight?`<span class="chip warn">★ ${t('card.highlight')}</span>`:''}<span class="chip ok">${r.museum==='met'?t('card.cc0'):t('card.pd')}</span></div>
+        <h3 class="modal-title">${esc(r.title)}</h3>
+        ${r.artist?`<div class="modal-artist">${esc(r.artist)}</div>`:''}
+        ${r.bio?`<div class="modal-bio">${esc(r.bio)}</div>`:''}
+      </div>
+      <div class="modal-scroll">
+        <div class="license-panel">
+          <h4>${ICONS.shield}<span>${t('modal.rights')}</span></h4>
+          <div class="evidence">${r.evidence.map(e=>`<code>${esc(e)}</code>`).join('')}</div>
+          <p>${esc(rightsText)}</p>
+          ${r.credit?`<div class="credit-line"><b>${t('modal.credit')}</b>${esc(r.credit)}</div>`:''}
+        </div>
+        <div id="modalFields">${modalState.json?`<pre class="json-view">${esc(JSON.stringify(r.raw,null,2))}</pre>`:renderFields(r)}</div>
+      </div>
+      <div class="modal-foot">
+        <a class="btn btn-sm" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${t('modal.museumPage')} ↗</a>
+        <button class="btn btn-ghost btn-sm" id="copyAttrBtn">${ICONS.copy}<span>${t('modal.copy')}</span></button>
+        <button class="btn btn-soft btn-sm" id="jsonToggle">${modalState.json?t('modal.fields'):t('modal.json')}</button>
+        <div class="modal-nav">
+          <button class="icon-btn" id="mPrev" title="${esc(t('modal.prev'))}" aria-label="${esc(t('modal.prev'))}"${modalState.idx<=0?' disabled':''}>${ICONS.left}</button>
+          <button class="icon-btn" id="mNext" title="${esc(t('modal.next'))}" aria-label="${esc(t('modal.next'))}"${modalState.idx>=modalState.list.length-1?' disabled':''}>${ICONS.right}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function modalNav(d){
+  const ni=modalState.idx+d;
+  if(ni<0||ni>=modalState.list.length) return;
+  modalState.idx=ni; modalState.rec=modalState.list[ni]; modalState.mainSrc=null; modalState.json=false;
+  renderModal();
+}
+function copyAttribution(){
+  const r=modalState.rec; if(!r) return;
+  const text=[r.title,r.artist,r.date].filter(Boolean).join(', ')+'. '+MUSEUM_INFO[r.museum].name+
+    (r.credit?'. '+r.credit:'')+'. '+r.url+' — '+(r.evidence[0]||'');
+  const done=()=>toast(t('modal.copied'),'ok');
+  const fail=()=>toast(t('modal.copyFail'),'warn');
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done,()=>fallbackCopy(text,done,fail)); }
+  else fallbackCopy(text,done,fail);
+}
+function fallbackCopy(text,done,fail){
+  try{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    const ok=document.execCommand('copy'); ta.remove(); ok?done():fail();
+  }catch(e){ fail(); }
+}
+
+/* ================= Тосты ================= */
+function toast(msg,type){
+  const el=document.createElement('div');
+  el.className='toast '+(type||'info'); el.setAttribute('role','status');
+  el.textContent=msg;
+  $('#toastRoot').appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),320); },3600);
+}
+
+/* ================= Роутер и виды ================= */
+function parseHash(){
+  const h=location.hash.replace(/^#\/?/,'');
+  return ['met','aic','whitney','home'].includes(h)? h : 'home';
+}
+function scrollTopNow(){
+  const root=document.documentElement; const prev=root.style.scrollBehavior;
+  root.style.scrollBehavior='auto'; window.scrollTo(0,0); root.style.scrollBehavior=prev;
+}
+function showView(route){
+  loadSeq++; whitState.seq++;
+  state.view = (route==='met'||route==='aic') ? 'gallery' : route;
+  if(route==='met'||route==='aic') state.museum=route;
+  $$('.view').forEach(v=>v.classList.remove('on'));
+  $('#view-'+state.view).classList.add('on');
+  $$('[data-nav]').forEach(b=>b.classList.toggle('active', b.dataset.nav==='#/'+route));
+  scrollTopNow();
+  if(state.view==='gallery'){
+    const info=MUSEUM_INFO[state.museum];
+    $('#galTitle').textContent=info.name;
+    $('#galSite').href=info.site;
+    renderGalMeta(); buildToolbar();
+    loadPage(state.ctx[state.museum].page);
+  } else if(state.view==='whitney'){
+    enterWhitney();
+  }
+}
+function setDot(m,status){
+  ['sdot-','tdot-'].forEach(p=>{ const el=document.getElementById(p+m); if(el) el.className='dot '+status; });
+}
+
+/* ================= Язык ================= */
+function applyStaticLang(){
+  document.documentElement.lang=lang;
+  $$('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
+  $$('[data-i18n-ph]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPh); });
+  $$('[data-i18n-title]').forEach(el=>{ const v=t(el.dataset.i18nTitle); el.title=v; if(el.hasAttribute('aria-label')) el.setAttribute('aria-label',v); });
+  $$('#langSeg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.lang===lang)));
+}
+function applyLang(newLang){
+  lang=newLang; settings.lang=newLang; store.set('artarter:lang',newLang);
+  applyStaticLang(); renderPresets(); applyTheme(); renderTrust();
+  if(state.view==='gallery'){
+    buildToolbar();
+    if(lastRecs.length) renderGrid(lastRecs);
+    renderStatus();
+    const st=streams.get(streamKey(state.museum,state.ctx[state.museum]));
+    if(st) renderPager(st,state.ctx[state.museum].page,false);
+    renderGalMeta();
+  }
+  if(state.view==='whitney'){ renderWhitMeta(); buildWhitToolbar(); renderWhit(); }
+  if(modalState.rec) renderModal();
+}
+
+/* ================= Инициализация и события ================= */
+function init(){
+  lang=settings.lang;
+  renderPresets(); applyTheme(); applyStaticLang(); renderTrust();
+  $('#year').textContent=String(new Date().getFullYear());
+
+  document.addEventListener('click',e=>{
+    const nav=e.target.closest('[data-nav]');
+    if(nav){ const target=nav.dataset.nav;
+      if(location.hash===target) showView(parseHash()); else location.hash=target; }
+  });
+  $('.brand').addEventListener('keydown',e=>{ if(e.key==='Enter'){ location.hash='#/home'; } });
+  window.addEventListener('hashchange',()=>showView(parseHash()));
+  $('#gotoApiBtn').addEventListener('click',()=>{
+    if(location.hash!=='#/home' && location.hash!=='') location.hash='#/home';
+    else showView('home');
+    setTimeout(()=>{ const el=$('#api'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },80);
+  });
+
+  $('#langSeg').addEventListener('click',e=>{ const b=e.target.closest('button[data-lang]'); if(b&&b.dataset.lang!==lang) applyLang(b.dataset.lang); });
+  $('#themeSeg').addEventListener('click',e=>{ const b=e.target.closest('button[data-theme-mode]'); if(b) setTheme(b.dataset.themeMode); });
+  $('#presets').addEventListener('click',e=>{ const b=e.target.closest('.preset'); if(b) setBase(b.dataset.hex); });
+  $('#basePicker').addEventListener('input',e=>setBase(e.target.value));
+  $('#clearCacheBtn').addEventListener('click',clearCache);
+
+  const doSearch=()=>{ const ctx=state.ctx[state.museum]; if(!ctx) return;
+    ctx.q=$('#searchInput').value.trim();
+    $('#searchField').classList.toggle('has-value', !!$('#searchInput').value);
+    loadPage(1); };
+  const debSearch=debounce(doSearch,550);
+  $('#searchInput').addEventListener('input',debSearch);
+  $('#searchInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(); } });
+  $('#searchClear').addEventListener('click',()=>{ $('#searchInput').value=''; doSearch(); $('#searchInput').focus(); });
+  $('#resetFilters').addEventListener('click',resetFilters);
+  $('#randomBtn').addEventListener('click',randomObject);
+
+  $('#prevPage').addEventListener('click',()=>loadPage(state.ctx[state.museum].page-1));
+  $('#firstPage').addEventListener('click',()=>loadPage(1));
+  $('#nextPage').addEventListener('click',()=>loadPage(state.ctx[state.museum].page+1));
+
+  $('#grid').addEventListener('click',e=>{
+    if(e.target.closest('.card-link')) return;
+    const card=e.target.closest('.card'); if(!card) return;
+    const i=Number(card.dataset.idx); const rec=lastRecs[i];
+    if(rec) openModal(rec,lastRecs,i);
+  });
+  $('#grid').addEventListener('keydown',e=>{
+    if(e.key!=='Enter'&&e.key!==' ') return;
+    const card=e.target.closest('.card'); if(!card) return;
+    e.preventDefault();
+    const i=Number(card.dataset.idx); const rec=lastRecs[i];
+    if(rec) openModal(rec,lastRecs,i);
+  });
+  $('#stateBox').addEventListener('click',e=>{
+    if(e.target.closest('#errRetry')&&retryFn) retryFn();
+    if(e.target.closest('#emptyReset')) resetFilters();
+  });
+
+  const doWhitSearch=()=>{ state.ctx.whit.q=$('#whitSearchInput').value.trim();
+    $('#whitSearchField').classList.toggle('has-value', !!$('#whitSearchInput').value);
+    resetWhit(); whitCheck(); };
+  const debWhit=debounce(doWhitSearch,550);
+  $('#whitSearchInput').addEventListener('input',debWhit);
+  $('#whitSearchInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doWhitSearch(); } });
+  $('#whitSearchClear').addEventListener('click',()=>{ $('#whitSearchInput').value=''; doWhitSearch(); });
+  $('#whitReset').addEventListener('click',()=>{ state.ctx.whit={q:'',cls:'',onview:false}; buildWhitToolbar(); resetWhit(); whitCheck(); });
+  $('#whitMore').addEventListener('click',whitCheck);
+  $('#whitStatus').addEventListener('click',e=>{ if(e.target.closest('#whitRetry')){ whitState.exhausted=false; whitCheck(); } });
+
+  $('#modalRoot').addEventListener('click',e=>{
+    if(e.target.closest('[data-close]')){ closeModal(); return; }
+    if(e.target.closest('#copyAttrBtn')){ copyAttribution(); return; }
+    if(e.target.closest('#jsonToggle')){ modalState.json=!modalState.json; renderModal(); return; }
+    if(e.target.closest('#mPrev')){ modalNav(-1); return; }
+    if(e.target.closest('#mNext')){ modalNav(1); return; }
+    const th=e.target.closest('.modal-thumbs button');
+    if(th){ modalState.mainSrc=th.dataset.src; renderModal(); return; }
+    const lt=e.target.closest('.long-toggle');
+    if(lt){ const box=lt.previousElementSibling; const open=box.classList.toggle('open'); lt.textContent=t(open?'modal.less':'modal.more'); }
+  });
+
+  document.addEventListener('load',e=>{
+    if(e.target.tagName==='IMG'){ e.target.classList.add('loaded');
+      const w=e.target.closest('.modal-imgwrap'); if(w){ const s=w.querySelector('.spin'); if(s) s.remove(); } }
+  },true);
+  document.addEventListener('error',e=>{
+    if(e.target.tagName!=='IMG') return;
+    const ci=e.target.closest('.card-img'); if(ci){ ci.classList.add('failed'); return; }
+    const w=e.target.closest('.modal-imgwrap');
+    if(w){ w.innerHTML='<div class="img-fail" style="display:flex">'+ICONS.imgOff+'<span>'+t('card.noImg')+'</span></div>'; }
+  },true);
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && modalState.rec){ closeModal(); return; }
+    if(modalState.rec){
+      if(e.key==='ArrowLeft') modalNav(-1);
+      if(e.key==='ArrowRight') modalNav(1);
+      return;
+    }
+    if(e.key==='/' && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)){
+      if(state.view==='gallery'){ e.preventDefault(); $('#searchInput').focus(); }
+      else if(state.view==='whitney'){ e.preventDefault(); $('#whitSearchInput').focus(); }
+    }
+  });
+
+  window.addEventListener('offline',()=>toast(t('err.network'),'err'));
+
+  showView(parseHash());
+}
+init();
+</script>
+</body>
+</html>

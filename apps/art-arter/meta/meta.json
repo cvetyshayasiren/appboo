@@ -1,0 +1,22 @@
+{
+  "title": "Art Arter",
+  "description": "Пульс музейных коллекций: The Met, Art Institute и Whitney через их открытые API — поиск, фильтры и проверка прав до показа («Только 100% допустимое»).",
+  "info": "Образовательный некоммерческий проект, без ключей и регистрации. Атрибуция в каждой карточке; тема, базовый цвет, язык RU/EN и кэш хранятся локально. Whitney — строгий режим: данные без изображений.",
+  "icon": "icon.svg",
+  "color": "#9E2B25",
+  "ai": "",
+  "platform": "both",
+  "tags": [
+    "Art",
+    "Education",
+    "Culture"
+  ],
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "screenshots": [
+    "screenshots/screenshot-1.webp",
+    "screenshots/screenshot-2.webp"
+  ]
+}
