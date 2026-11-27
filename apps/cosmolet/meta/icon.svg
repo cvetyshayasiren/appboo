@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- фургончик мчится за звездой мечты -->
+  <path d="M3.5 15.5v-4.2a1.5 1.5 0 0 1 1.5-1.5h6.7l4.3 3.2v2.5z"/>
+  <circle cx="7.2" cy="15.5" r="1.7"/>
+  <circle cx="14.6" cy="15.5" r="1.7"/>
+  <path d="M18.7 2.9l.75 1.8 1.8.75-1.8.75-.75 1.8-.75-1.8-1.8-.75 1.8-.75z"/>
+  <path d="M4.4 19h4.8M13.4 19h2.2"/>
+</svg>
