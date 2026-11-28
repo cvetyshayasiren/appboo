@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- крона -->
+  <path d="M11 4.4c2.8 0 5.1 2.1 5.5 4.8a3.6 3.6 0 0 1 1 6.9 3.9 3.9 0 0 1-3.7 2.5H8.6a3.9 3.9 0 0 1-3.7-2.5 3.6 3.6 0 0 1 1-6.9c.4-2.7 2.7-4.8 5.1-4.8z"/>
+  <!-- ствол и ветка -->
+  <path d="M11 18.6V21"/>
+  <path d="M7.8 21h6.4"/>
+  <path d="M11 18.6 8.8 16.4"/>
+  <!-- нота в кроне -->
+  <path d="M13.3 6.4v4.1"/>
+  <path d="M13.3 6.4 15.1 7.1v1.4"/>
+  <circle cx="12.3" cy="10.6" r="1"/>
+</svg>

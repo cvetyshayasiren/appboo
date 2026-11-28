@@ -1,0 +1,27 @@
+[
+  {
+    "src": "src-index.html.gz.b64",
+    "dest": "apps/treendom/src/index.html",
+    "encoding": "gzip+base64"
+  },
+  {
+    "src": "meta.json",
+    "dest": "apps/treendom/meta/meta.json",
+    "encoding": "raw"
+  },
+  {
+    "src": "icon.svg",
+    "dest": "apps/treendom/meta/icon.svg",
+    "encoding": "raw"
+  },
+  {
+    "src": "screenshot-1.webp.b64",
+    "dest": "apps/treendom/meta/screenshots/screenshot-1.webp",
+    "encoding": "base64"
+  },
+  {
+    "src": "screenshot-2.webp.b64",
+    "dest": "apps/treendom/meta/screenshots/screenshot-2.webp",
+    "encoding": "base64"
+  }
+]
