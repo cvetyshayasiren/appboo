@@ -2,8 +2,9 @@
 /* normalize.mjs — идемпотентный фиксер контракта приложений appboo v3.
    v3: реестр apps.json заменён каталогом catalog.json (этап 5): записи
    {id, added, метаданные meta} в порядке «старые → новые»; новым приложениям
-   проставляется момент регистрации, README-таблица получает колонку
-   «Добавлено». Конвенция дат — в CONTRIBUTING.md, раздел «Даты добавления».
+   проставляется момент регистрации. README-каталог упразднён: normalize
+   больше не трогает README.md. Конвенция дат — в CONTRIBUTING.md, раздел
+   «Даты добавления».
    Флаги:
      --dry-run   только показать план, ничего не менять
      --convert   конвертировать скриншоты в WebP (нужен sharp — опц. devDependency)
@@ -34,7 +35,6 @@ if (wantConvert) {
 const META_ORDER = ["title", "description", "info", "icon", "color", "ai", "platform", "tags", "languages", "screenshots"];
 const ICON_PRIORITY = [".svg", ".png", ".webp", ".jpg", ".jpeg"];
 const SHOT_EXT = new Set([".webp", ".jpg", ".jpeg", ".png"]);
-const PAGES = "https://cvetyshayasiren.github.io/appboo";
 
 const actions = [];
 const debts = [];
@@ -111,10 +111,6 @@ function naturalCompare(a, b) {
   return a.localeCompare(b, "en");
 }
 
-function escapeCell(s) {
-  return String(s).replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
-}
-
 /* ================= Этап 1: структура папок ================= */
 const folders = readdirSync(APPS).filter(n => statSync(join(APPS, n)).isDirectory()).sort((a, b) => a.localeCompare(b, "en"));
 
@@ -177,7 +173,7 @@ function extractTitle(htmlPath) {
   } catch { return ""; }
 }
 
-const normById = new Map(); // id → нормализованные meta (для каталога и README-таблицы)
+const normById = new Map(); // id → нормализованные meta (для каталога)
 
 for (const id of folders) {
   const dir = join(APPS, id);
@@ -307,7 +303,7 @@ for (const id of folders) {
     else { mkdirSync(metaDir, { recursive: true }); writeFileSync(metaPath, content); act(`write ${rel(metaPath)}`); }
   }
 
-  // --- нормализованные meta → сборка каталога и README-таблицы (этапы 5–6) ---
+  // --- нормализованные meta → сборка каталога (этап 5) ---
   normById.set(id, norm);
 }
 
@@ -318,7 +314,6 @@ for (const id of folders) {
    (несколько сразу — каждая следующая +1 с, не раньше последней записи +1 с).
    Выпавшие папки убираются из каталога без могильных камней — вернувшееся
    приложение получит новую дату. Устаревший apps.json удаляется. */
-const addedById = new Map();
 {
   const catalogPath = join(ROOT, "catalog.json");
   const ADD_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+03:00$/;
@@ -382,7 +377,6 @@ const addedById = new Map();
     if (norm) for (const k of META_ORDER) entry[k] = norm[k];
     return entry;
   });
-  for (const e of entries) addedById.set(e.id, e.added);
   writeFile(catalogPath, JSON.stringify(entries, null, 2) + "\n", "catalog.json");
 
   // 5) устаревший apps.json — удалить
@@ -390,66 +384,6 @@ const addedById = new Map();
   if (existsSync(regPath)) {
     if (!dryRun) unlinkSync(regPath);
     act("apps.json: удалён (реестр заменён каталогом catalog.json)");
-  }
-}
-
-/* ================= Этап 6: README-таблица ================= */
-{
-  const readmePath = join(ROOT, "README.md");
-  if (existsSync(readmePath)) {
-    const readme = readFileSync(readmePath, "utf8");
-    const rows = folders.filter(id => normById.has(id)).map(id => {
-      const norm = normById.get(id);
-      const added = addedById.get(id) || "";
-      const enc = encodeURI(`${PAGES}/apps/${id}/src/index.html`);
-      const encIcon = encodeURI(`${PAGES}/apps/${id}/meta/${norm.icon}`);
-      const iconCell = norm.icon
-        ? (/\.(svg|png|webp|jpe?g)$/i.test(norm.icon) ? `<img src="${encIcon}" width="32">` : escapeCell(norm.icon))
-        : "";
-      return `| ${iconCell} | [${escapeCell(norm.title)}](${enc}) | ${escapeCell(norm.description) || "—"} | ${added ? added.slice(0, 10) : "—"} |`;
-    });
-    const table = `<!-- catalog:start -->\n| | Приложение | Описание | Добавлено |\n|---|---|---|---|\n${rows.join("\n")}\n<!-- catalog:end -->`;
-
-    /* Блоки каталога ищем построчно и по вхождению маркера в строку: так в блок
-       попадает и мусор вида "`<!-- catalog:start -->" или "<!-- catalog:end -->`
-       проза" — при перегенерации строки маркеров становятся чистыми. Блок
-       должен быть один: первый заменяем свежей таблицей, дубликаты после него
-       сворачиваем (заодно убирая одну соседнюю пустую строку, чтобы не дыра). */
-    const lines = readme.split("\n");
-    const blocks = [];
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].includes("<!-- catalog:start -->")) {
-        let j = i;
-        while (j < lines.length && !lines[j].includes("<!-- catalog:end -->")) j++;
-        blocks.push([i, Math.min(j, lines.length - 1)]);
-        i = Math.min(j, lines.length - 1);
-      }
-    }
-
-    let next;
-    if (!blocks.length) {
-      next = readme.replace(/\s*$/, "") + "\n\n## Каталог приложений\n\n" + table + "\n";
-    } else {
-      const drop = new Set();
-      blocks.forEach(([s, e], idx) => {
-        for (let i = s; i <= e; i++) drop.add(i);
-        if (idx > 0 && lines[e + 1] === "") drop.add(e + 1);
-      });
-      const out = [];
-      let placed = false;
-      for (let i = 0; i < lines.length; i++) {
-        if (drop.has(i)) {
-          if (!placed) { out.push(...table.split("\n")); placed = true; }
-          continue;
-        }
-        out.push(lines[i]);
-      }
-      next = out.join("\n");
-      if (blocks.length > 1) act(`README.md: блок каталога задублирован (${blocks.length}×) — свёрнут до одного`);
-    }
-    writeFile(readmePath, next, "README.md (каталог)");
-  } else {
-    debts.push("README.md отсутствует — каталог не вписан");
   }
 }
 

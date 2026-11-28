@@ -10,6 +10,9 @@
 грузится. Строгость обеспечивают скрипты (`scripts/validate.mjs`,
 `scripts/normalize.mjs`), а не плеер.
 
+Практическая инструкция для ИИ-агентов — как выложить приложение одним
+коммитом — в [AGENTS.md](AGENTS.md).
+
 ## Термины
 
 - **Плеер** — `index.html` в корне appboo: каталог, фильтры, темы, отдельная
@@ -49,6 +52,7 @@ appboo/
 ├── catalog.json                # каталог: записи {id, added, ...meta}, старые → новые
 ├── README.md
 ├── CONTRIBUTING.md             # этот документ
+├── AGENTS.md                   # инструкция для ИИ-агентов: выкладка приложений
 ├── docs/
 │   └── meta.template.json      # шаблон метаданных (строгий JSON)
 ├── scripts/
@@ -87,8 +91,6 @@ appboo/
 - Ровно 2 скриншота: `meta/screenshots/screenshot-1.webp`,
   `screenshot-2.webp` — 1280×800, ≤300 КБ, WebP q≈85 (пиксель-арт — lossless),
   объявленные в массиве `screenshots`.
-- Строка в README-каталоге (между маркерами `<!-- catalog:start -->` /
-  `<!-- catalog:end -->`; перегенерируется нормализатором).
 - Имена новых папок — kebab-case: `^[a-z0-9]+(-[a-z0-9]+)*$`. Легаси-имена не
   переименовываем.
 
@@ -168,7 +170,7 @@ appboo/
 1. `apps/<имя>/src/index.html` — папка и точка входа.
 2. `node scripts/normalize.mjs` — впишет приложение в конец `catalog.json` с
    датой регистрации.
-3. Остальное (meta, иконка, скриншоты, README) — потом; плеер покажет карточку
+3. Остальное (meta, иконка, скриншоты) — потом; плеер покажет карточку
    с буквой из названия и бейджем `ru`.
 
 ### Строгая установка
@@ -182,15 +184,15 @@ appboo/
 4. 2 скриншота `meta/screenshots/screenshot-1.webp` и `screenshot-2.webp`
    (1280×800, ≤300 КБ, WebP q≈85; пиксель-арт — lossless) и пути в
    `screenshots`.
-5. Прогон `node scripts/normalize.mjs` — впишет строку в README-каталог и
-   запись в `catalog.json` (дата регистрации).
+5. Прогон `node scripts/normalize.mjs` — впишет запись в `catalog.json`
+   (дата регистрации).
 6. `npm run validate` — MUST зелёные.
 
 ### Удаление приложения
 
 1. Удалить папку `apps/<имя>/`.
-2. Прогнать `node scripts/normalize.mjs` — уберёт запись из `catalog.json` и
-   строку из README. Могильных камней нет: git-история хранит всё, вернувшееся
+2. Прогнать `node scripts/normalize.mjs` — уберёт запись из `catalog.json`.
+   Могильных камней нет: git-история хранит всё, вернувшееся
    приложение получит новую дату регистрации.
 3. Проверить отсутствие ссылок: `grep -rn "<имя>" --include="*.html"
    --include="*.md" --include="*.json"` — старые прямые ссылки на страницу

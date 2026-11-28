@@ -182,38 +182,6 @@ for (const id of registry) {
     const p = join(metaDir, fields.icon.trim());
     if (!existsSync(p)) should(`apps/${id}`, `иконка «${fields.icon}» объявлена, но не существует`);
   }
-
-  // README-синхронизация проверяем отдельно после сбора списка
-}
-
-/* --- README: рассинхрон каталога --- */
-{
-  const readmePath = join(ROOT, "README.md");
-  if (existsSync(readmePath)) {
-    const readme = readFileSync(readmePath, "utf8");
-    const starts = (readme.match(/<!-- catalog:start -->/g) || []).length;
-    const ends = (readme.match(/<!-- catalog:end -->/g) || []).length;
-    if (!starts || !ends) should("README.md", "нет маркеров <!-- catalog:start/end --> (normalize перегенерирует таблицу)");
-    else {
-      // Ровно один блок: дубликат выводит каталог дважды, а проверка ниже
-      // видит только первое вхождение и молча пропускает рассинхрон в остальных.
-      if (starts > 1 || ends > 1)
-        should("README.md", `блок каталога задублирован (${starts}×start / ${ends}×end) — таблица выводится дважды, прогоните normalize.mjs`);
-      // Маркеры — на отдельных строках: мусор вокруг маркера (например, backtick
-      // от соседнего предложения) рвёт таблицу и абзац вокруг неё.
-      const ownLine = (readme.match(/^[ \t]*<!-- catalog:(?:start|end) -->[ \t]*$/gm) || []).length;
-      if (ownLine !== starts + ends)
-        should("README.md", "маркеры каталога должны стоять на отдельных строках без окружающего текста");
-      const m = readme.match(/<!-- catalog:start -->([\s\S]*?)<!-- catalog:end -->/);
-      const table = m ? m[1] : "";
-      for (const id of registry) {
-        if (typeof id !== "string" || !id.trim()) continue;
-        const enc = encodeURIComponent(id);
-        if (!table.includes(`/apps/${enc}/src/index.html`))
-          should("README.md", `в каталоге нет ссылки на «${id}»`);
-      }
-    }
-  } else should("README.md", "файл отсутствует");
 }
 
 /* --- Отчёт --- */
