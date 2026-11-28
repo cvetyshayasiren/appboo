@@ -848,5 +848,24 @@
       "screenshots/screenshot-1.webp",
       "screenshots/screenshot-2.webp"
     ]
+  },
+  {
+    "id": "six-thousand-dogs",
+    "added": "2026-11-28T07:13:42+03:00",
+    "title": "Six Thousand Dogs",
+    "description": "A playful pixel-art game about finding dogs by size, coat color, tail shape, and ears.",
+    "info": "Tap BARK to add dogs. Find the dog that matches all four traits. Up to five dogs appear at once.",
+    "icon": "icon.svg",
+    "color": "#8BAC68",
+    "ai": "ChatGPT",
+    "platform": "both",
+    "tags": [
+      "Game",
+      "Pixel Art"
+    ],
+    "languages": [
+      "en"
+    ],
+    "screenshots": []
   }
 ]
