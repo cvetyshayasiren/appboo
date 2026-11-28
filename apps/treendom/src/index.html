@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Генератор Деревьев, Климата и Музыки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Базовые стили полноэкранного приложения в тёмной теме */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020617;
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #treeCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Кастомный скроллбар для выдвижной панели */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.28);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(52, 211, 153, 0.55);
+        }
+
+        /* Аккуратные ползунки в тёмной теме */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 9999px;
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 9999px;
+            background: #10b981;
+            border: 2px solid #020617;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+            margin-top: -6px;
+            transition: transform 0.12s ease, background-color 0.12s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #34d399;
+        }
+        input[type="range"]:focus {
+            outline: none;
+        }
+
+        /* Короткая стартовая анимация названия Treendom */
+        @keyframes treendomTitleAnim {
+            0% {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+                letter-spacing: 0.14em;
+            }
+            25% {
+                opacity: 1;
+                transform: translateY(0px) scale(1);
+                letter-spacing: 0.08em;
+            }
+            72% {
+                opacity: 1;
+                transform: translateY(0px) scale(1);
+                letter-spacing: 0.08em;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-8px) scale(1.03);
+                letter-spacing: 0.12em;
+            }
+        }
+
+        .treendom-intro-animate {
+            animation: treendomTitleAnim 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+    </style>
+</head>
+<body class="fixed inset-0 bg-slate-950 text-slate-100 overflow-hidden">
+
+    <!-- КОРОТКАЯ ЗАСТАВКА В НАЧАЛЕ С НАЗВАНИЕМ TREENDOM -->
+    <div id="intro-splash" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm pointer-events-none transition-opacity duration-500">
+        <div class="treendom-intro-animate text-center px-6">
+            <div class="text-4xl sm:text-6xl font-bold tracking-wider text-emerald-300 drop-shadow-[0_4px_24px_rgba(16,185,129,0.45)]">
+                Treendom
+            </div>
+        </div>
+    </div>
+
+    <!-- ПОЛНОЭКРАННЫЙ ХОЛСТ С ДЕРЕВОМ -->
+    <main id="canvas-container" class="fixed inset-0 w-full h-full overflow-hidden bg-slate-950">
+        <div id="scene-viewport" class="w-full h-full transition-transform duration-300 ease-out will-change-transform" style="transform: translateY(0px) scale(1); transform-origin: 50% 88%;">
+            <canvas id="treeCanvas"></canvas>
+        </div>
+
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ: Название биома слева и кнопка скрытия дополнительной информации справа -->
+        <div class="fixed top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex justify-between items-start gap-2 pointer-events-none z-20">
+            <div class="flex flex-col gap-1.5 pointer-events-auto max-w-[75vw]">
+                <div class="bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border border-slate-700/70">
+                    <div id="biome-name" class="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2 truncate">
+                        <span>🌲 Ночной лес</span>
+                    </div>
+                </div>
+
+                <!-- Дополнительная информация (скрывается кнопкой справа сверху) -->
+                <div id="extra-info-panel" class="flex flex-col gap-1.5 transition-all duration-200 origin-top-left">
+                    <div id="music-badge" class="bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800/90 flex items-center gap-2 text-[11px] text-slate-300 shadow-lg">
+                        <span id="music-dot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+                        <span id="music-info" class="font-medium truncate max-w-[240px] sm:max-w-[360px]">Звук выключен • Нажмите 🎵</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pointer-events-auto">
+                <!-- Вспомогательные кнопки сида и сохранения (скрываются вместе с доп. информацией) -->
+                <div id="extra-action-buttons" class="flex items-center gap-1.5 transition-all duration-200">
+                    <button id="btn-new-seed" title="Новый сид дерева" class="bg-slate-900/85 hover:bg-slate-800 active:scale-95 text-slate-200 p-2 sm:p-2.5 rounded-2xl shadow-lg border border-slate-700/70 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    </button>
+                    <button id="btn-save" title="Сохранить PNG" class="bg-slate-900/85 hover:bg-slate-800 active:scale-95 text-slate-200 p-2 sm:p-2.5 rounded-2xl shadow-lg border border-slate-700/70 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Аккуратная кнопка скрытия/показа дополнительной информации -->
+                <button id="btn-toggle-hud" title="Скрыть или показать доп. информацию" class="bg-slate-900/85 hover:bg-slate-800 active:scale-95 text-slate-200 p-2 sm:p-2.5 rounded-2xl shadow-lg border border-slate-700/70 transition flex items-center justify-center">
+                    <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Уведомление Toast -->
+        <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-800/95 text-emerald-300 border border-slate-700 text-xs sm:text-sm px-4 py-2 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+            Сохранено!
+        </div>
+    </main>
+
+    <!-- ВЫДВИЖНАЯ НИЖНЯЯ ПАНЕЛЬ ГЕНОМА (сворачивается вниз / выдвигается на половину экрана) -->
+    <section id="genome-drawer" class="fixed inset-x-0 bottom-0 h-[50dvh] max-h-[480px] min-h-[260px] z-30 flex flex-col transition-transform duration-300 ease-out will-change-transform pointer-events-none">
+
+        <!-- Две компактные иконочные кнопки прямо над панелью: слева музыка, справа случайная генерация -->
+        <div class="px-4 pb-3 flex items-center justify-between pointer-events-none shrink-0">
+            <button id="btn-music-compact" title="Включить или выключить музыку" class="pointer-events-auto w-12 h-12 rounded-2xl bg-slate-900/95 hover:bg-indigo-600/90 active:scale-95 text-slate-100 border border-slate-700/80 shadow-xl backdrop-blur-md flex items-center justify-center transition shrink-0">
+                <span id="compact-music-icon" class="text-lg leading-none">🎵</span>
+            </button>
+
+            <button id="btn-randomize-compact" title="Случайный мир с плавным перетеканием" class="pointer-events-auto w-12 h-12 rounded-2xl bg-slate-900/95 hover:bg-emerald-600/90 active:scale-95 text-slate-100 border border-slate-700/80 shadow-xl backdrop-blur-md flex items-center justify-center transition shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    <circle cx="8" cy="9.5" r="0.9" fill="currentColor" stroke="none"></circle>
+                    <circle cx="16" cy="9.5" r="0.9" fill="currentColor" stroke="none"></circle>
+                    <circle cx="12" cy="7.2" r="0.9" fill="currentColor" stroke="none"></circle>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Тело выдвижной панели -->
+        <div class="pointer-events-auto flex-1 min-h-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/80 shadow-[0_-12px_40px_rgba(0,0,0,0.85)] rounded-t-3xl flex flex-col overflow-hidden">
+
+            <!-- Ручка для свернуть / развернуть на 50% экрана -->
+            <button type="button" id="drawer-handle" class="h-[46px] shrink-0 px-4 sm:px-5 border-b border-slate-800/90 flex items-center justify-between gap-2 w-full text-left bg-slate-900 hover:bg-slate-800/60 active:bg-slate-800 transition cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-1 rounded-full bg-slate-500 inline-block"></span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-100">Настройка генома и среды</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+                    <span id="drawer-state-label">Открыть</span>
+                    <svg id="drawer-chevron" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </div>
+            </button>
+
+            <!-- Пресеты биомов -->
+            <div class="px-4 sm:px-5 py-2 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto custom-scrollbar shrink-0 bg-slate-900/90">
+                <button data-preset="sakura" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-pink-950/70 text-pink-300 hover:bg-pink-900/80 border border-pink-800/60 transition whitespace-nowrap">🌸 Сакура</button>
+                <button data-preset="storm" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-indigo-950/70 text-indigo-300 hover:bg-indigo-900/80 border border-indigo-800/60 transition whitespace-nowrap">⚡ Гроза</button>
+                <button data-preset="autumn" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-amber-950/70 text-amber-300 hover:bg-amber-900/80 border border-amber-800/60 transition whitespace-nowrap">🍁 Осень</button>
+                <button data-preset="winter" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-sky-950/70 text-sky-300 hover:bg-sky-900/80 border border-sky-800/60 transition whitespace-nowrap">❄️ Метель</button>
+                <button data-preset="magic" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-purple-950/70 text-purple-300 hover:bg-purple-900/80 border border-purple-800/60 transition whitespace-nowrap">✨ Магия</button>
+                <button data-preset="savanna" class="preset-btn text-xs font-medium px-2.5 py-1 rounded-xl bg-orange-950/70 text-orange-300 hover:bg-orange-900/80 border border-orange-800/60 transition whitespace-nowrap">🦁 Саванна</button>
+            </div>
+
+            <!-- Скроллируемая сетка осей -->
+            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3.5 sm:p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-7xl mx-auto">
+
+                    <!-- 1. Температура -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="temp" class="text-xs font-semibold text-slate-200">🌡️ Температура</label>
+                            <span id="val-temp" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">+18°C</span>
+                        </div>
+                        <input type="range" id="temp" min="-20" max="45" value="18" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Мороз (-20°)</span>
+                            <span>Жара (+45°)</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Осадки -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="precipitation" class="text-xs font-semibold text-slate-200">⛈️ Осадки и гроза</label>
+                            <span id="val-precipitation" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-sky-400 border border-slate-700/70">Ясно</span>
+                        </div>
+                        <input type="range" id="precipitation" min="0" max="100" value="15" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Ясно</span>
+                            <span>Дождь / Снег</span>
+                            <span>Гроза</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Влажность -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="humidity" class="text-xs font-semibold text-slate-200">💧 Влажность</label>
+                            <span id="val-humidity" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">65%</span>
+                        </div>
+                        <input type="range" id="humidity" min="0" max="100" value="65" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Засуха</span>
+                            <span>Тропики</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Сезон года -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="season" class="text-xs font-semibold text-slate-200">🍂 Сезон года</label>
+                            <span id="val-season" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-amber-400 border border-slate-700/70">Лето</span>
+                        </div>
+                        <input type="range" id="season" min="0" max="100" value="38" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Весна</span>
+                            <span>Лето</span>
+                            <span>Осень</span>
+                            <span>Зима</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Ветер -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="wind" class="text-xs font-semibold text-slate-200">💨 Ветер</label>
+                            <span id="val-wind" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">+15%</span>
+                        </div>
+                        <input type="range" id="wind" min="-100" max="100" value="15" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Влево</span>
+                            <span>Штиль</span>
+                            <span>Вправо</span>
+                        </div>
+                    </div>
+
+                    <!-- 6. Туман и облака -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="fog" class="text-xs font-semibold text-slate-200">🌫️ Туман и облака</label>
+                            <span id="val-fog" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-700/70">20%</span>
+                        </div>
+                        <input type="range" id="fog" min="0" max="100" value="20" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Ясно</span>
+                            <span>Дымка</span>
+                        </div>
+                    </div>
+
+                    <!-- 7. Время суток -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="timeOfDay" class="text-xs font-semibold text-slate-200">🌙 Время суток</label>
+                            <span id="val-timeOfDay" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-indigo-300 border border-slate-700/70">21:30</span>
+                        </div>
+                        <input type="range" id="timeOfDay" min="0" max="24" value="21.5" step="0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Ночь</span>
+                            <span>Утро</span>
+                            <span>День</span>
+                            <span>Вечер</span>
+                        </div>
+                    </div>
+
+                    <!-- 8. Плодородие -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="fertility" class="text-xs font-semibold text-slate-200">🌱 Плодородие</label>
+                            <span id="val-fertility" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">70%</span>
+                        </div>
+                        <input type="range" id="fertility" min="10" max="100" value="70" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Бонсай</span>
+                            <span>Гигант</span>
+                        </div>
+                    </div>
+
+                    <!-- 9. Гравитация -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="gravity" class="text-xs font-semibold text-slate-200">🌍 Гравитация</label>
+                            <span id="val-gravity" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">1.0g</span>
+                        </div>
+                        <input type="range" id="gravity" min="-50" max="150" value="20" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Вверх</span>
+                            <span>Вниз</span>
+                        </div>
+                    </div>
+
+                    <!-- 10. Магический фон -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="magic" class="text-xs font-semibold text-slate-200">✨ Магический фон</label>
+                            <span id="val-magic" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-purple-400 border border-slate-700/70">15%</span>
+                        </div>
+                        <input type="range" id="magic" min="0" max="100" value="15" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Реализм</span>
+                            <span>Эфир</span>
+                        </div>
+                    </div>
+
+                    <!-- 11. Извилистость / Штрих -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="chaos" class="text-xs font-semibold text-slate-200">🌀 Извилистость / Штрих</label>
+                            <span id="val-chaos" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">35%</span>
+                        </div>
+                        <input type="range" id="chaos" min="0" max="100" value="35" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Легато</span>
+                            <span>Стаккато</span>
+                        </div>
+                    </div>
+
+                    <!-- 12. Пестрота листвы -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="colorVar" class="text-xs font-semibold text-slate-200">🎨 Пестрота листвы</label>
+                            <span id="val-colorVar" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">45%</span>
+                        </div>
+                        <input type="range" id="colorVar" min="0" max="100" value="45" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Ровно</span>
+                            <span>Перелив</span>
+                        </div>
+                    </div>
+
+                    <!-- 13. Высота над морем -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="altitude" class="text-xs font-semibold text-slate-200">⛰️ Высота над морем</label>
+                            <span id="val-altitude" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">650 м</span>
+                        </div>
+                        <input type="range" id="altitude" min="0" max="3500" value="650" step="50">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Низина</span>
+                            <span>Горы</span>
+                        </div>
+                    </div>
+
+                    <!-- 14. Цветы и плоды -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="bloom" class="text-xs font-semibold text-slate-200">🌸 Цветы и плоды</label>
+                            <span id="val-bloom" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-pink-400 border border-slate-700/70">25%</span>
+                        </div>
+                        <input type="range" id="bloom" min="0" max="100" value="25" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Листья</span>
+                            <span>Цветение</span>
+                        </div>
+                    </div>
+
+                    <!-- 15. Мощность ствола -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="trunkThickness" class="text-xs font-semibold text-slate-200">🪵 Мощность ствола</label>
+                            <span id="val-trunkThickness" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-amber-400 border border-slate-700/70">100%</span>
+                        </div>
+                        <input type="range" id="trunkThickness" min="35" max="320" value="100" step="5">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Тонкий</span>
+                            <span>Мощный</span>
+                        </div>
+                    </div>
+
+                    <!-- 16. Раздвоение ствола -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="split" class="text-xs font-semibold text-slate-200">🔱 Раздвоение ствола</label>
+                            <span id="val-split" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-amber-400 border border-slate-700/70">25%</span>
+                        </div>
+                        <input type="range" id="split" min="0" max="100" value="25" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Единый</span>
+                            <span>Многоствольный</span>
+                        </div>
+                    </div>
+
+                    <!-- 17. Размах веток -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="branchSpread" class="text-xs font-semibold text-slate-200">🌿 Размах веток</label>
+                            <span id="val-branchSpread" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">50%</span>
+                        </div>
+                        <input type="range" id="branchSpread" min="10" max="100" value="50" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Узкий</span>
+                            <span>Широкий</span>
+                        </div>
+                    </div>
+
+                    <!-- 18. Форма листвы -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="leafStyle" class="text-xs font-semibold text-slate-200">🍃 Форма листвы</label>
+                            <span id="val-leafStyle" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">Авто</span>
+                        </div>
+                        <input type="range" id="leafStyle" min="0" max="4" value="0" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Авто</span>
+                            <span>Хвоя</span>
+                            <span>Клён</span>
+                            <span>Пышная</span>
+                        </div>
+                    </div>
+
+                    <!-- 19. Облачность кроны -->
+                    <div class="bg-slate-800/75 p-3 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="clumpiness" class="text-xs font-semibold text-slate-200">☁️ Облака кроны</label>
+                            <span id="val-clumpiness" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 border border-slate-700/70">85%</span>
+                        </div>
+                        <input type="range" id="clumpiness" min="0" max="100" value="85" step="1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>Листики</span>
+                            <span>Облака</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /**
+         * 1. СОСТОЯНИЕ ОСЕЙ И ПЛАВНОЕ ПЕРЕТЕКАНИЕ ГЕНОМА
+         */
+        const state = {
+            seed: Math.floor(Math.random() * 1000000),
+            temp: 18,
+            precipitation: 15,
+            humidity: 65,
+            season: 38,
+            wind: 15,
+            fog: 20,
+            timeOfDay: 21.5,
+            fertility: 70,
+            gravity: 20,
+            magic: 15,
+            chaos: 35,
+            colorVar: 45,
+            altitude: 650,
+            bloom: 25,
+            trunkThickness: 100,
+            split: 25,
+            branchSpread: 50,
+            leafStyle: 0,
+            clumpiness: 85
+        };
+
+        const morphableKeys = [
+            'temp', 'precipitation', 'humidity', 'season', 'wind', 'fog',
+            'timeOfDay', 'fertility', 'gravity', 'magic', 'chaos', 'colorVar',
+            'altitude', 'bloom', 'trunkThickness', 'split', 'branchSpread',
+            'clumpiness'
+        ];
+
+        const morph = {
+            active: false,
+            startTime: 0,
+            duration: 1250,
+            from: {},
+            to: {}
+        };
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * Math.max(0, Math.min(1, t));
+        }
+
+        function startMorphToTargets(targetValues, newSeed = null) {
+            morph.from = {};
+            morph.to = {};
+            morphableKeys.forEach((k) => {
+                morph.from[k] = state[k];
+                morph.to[k] = targetValues[k] !== undefined ? targetValues[k] : state[k];
+            });
+            if (targetValues.leafStyle !== undefined) {
+                state.leafStyle = targetValues.leafStyle;
+                const leafEl = document.getElementById('leafStyle');
+                if (leafEl) leafEl.value = state.leafStyle;
+            }
+            if (newSeed !== null) {
+                state.seed = newSeed;
+            }
+            morph.startTime = performance.now();
+            morph.active = true;
+        }
+
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        let worldData = {
+            width: 800,
+            height: 600,
+            roots: [],
+            branches: [],
+            vines: [],
+            canopyClouds: [],
+            accentLeaves: [],
+            grass: [],
+            stars: [],
+            clouds: [],
+            birds: [],
+            weather: [],
+            lightning: {
+                flashAlpha: 0,
+                nextStrikeAt: 2.5,
+                segments: []
+            }
+        };
+
+        function createPRNG(seed) {
+            let s = seed >>> 0;
+            return function() {
+                s = (s + 0x6D2B79F5) >>> 0;
+                let t = Math.imul(s ^ (s >>> 15), 1 | s);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        /**
+         * 2. ГЕНЕРАТИВНЫЙ МУЗЫКАЛЬНЫЙ ДВИЖОК + МЯГКИЙ ФОНОВЫЙ СЛОЙ ЭФФЕКТОВ
+         */
+        const musicEngine = {
+            ctx: null,
+            masterGain: null,
+            filterNode: null,
+            delayNode: null,
+            delayFeedback: null,
+            delayWet: null,
+            ambientGain: null,
+            ambientFilter: null,
+            noiseBuffer: null,
+            isPlaying: false,
+            timerId: null,
+            stepIndex: 0,
+            currentParams: null,
+
+            scales: {
+                lydianMagic: [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19],
+                majorSpring: [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19],
+                dorianSummer: [0, 2, 3, 5, 7, 9, 10, 12, 14, 15, 17, 19],
+                naturalAutumn: [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19],
+                phrygianWinter: [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19],
+                harmonicStorm: [0, 2, 3, 5, 7, 8, 11, 12, 14, 15, 17, 19],
+                pentatonicHot: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26]
+            },
+
+            computeMusicParams() {
+                const {
+                    temp, precipitation, humidity, season, wind, fog,
+                    timeOfDay, magic, chaos, gravity, altitude, bloom
+                } = state;
+
+                const isStorm = precipitation > 68 && temp >= 1;
+                const baseBpm = 76 + ((temp + 20) / 65) * 46 + (Math.abs(wind) / 100) * 18 - (fog / 100) * 14 + (isStorm ? 10 : 0);
+                const bpm = Math.max(52, Math.min(160, Math.round(baseBpm)));
+
+                let leadWave = 'triangle';
+                if (magic > 65) leadWave = 'sine';
+                else if (isStorm) leadWave = 'sawtooth';
+                else if (temp > 26 && chaos > 45) leadWave = 'square';
+                else if (altitude > 1800) leadWave = 'sawtooth';
+
+                const bassWave = magic > 50 || fog > 55 ? 'sine' : 'triangle';
+
+                const legatoAmount = 1 - (chaos / 100);
+                const gateRatio = lerp(0.24, 0.96, legatoAmount);
+                const attackTime = lerp(0.008, 0.095, legatoAmount);
+
+                // Выбор лада под настроение текущих осей
+                let scale = this.scales.dorianSummer;
+                let scaleName = 'Дорийский';
+                if (isStorm) {
+                    scale = this.scales.harmonicStorm;
+                    scaleName = 'Гарм. минор (Гроза)';
+                } else if (magic > 55) {
+                    scale = this.scales.lydianMagic;
+                    scaleName = 'Лидийский (Эфир)';
+                } else if (season < 25) {
+                    scale = this.scales.majorSpring;
+                    scaleName = 'Мажор (Весна)';
+                } else if (season >= 55 && season <= 82) {
+                    scale = this.scales.naturalAutumn;
+                    scaleName = 'Минор (Осень)';
+                } else if (season > 82 || temp < -3) {
+                    scale = this.scales.phrygianWinter;
+                    scaleName = 'Фригийский (Зима)';
+                } else if (temp > 30 && humidity < 35) {
+                    scale = this.scales.pentatonicHot;
+                    scaleName = 'Пентатоника (Зной)';
+                }
+
+                const isNight = timeOfDay < 5.5 || timeOfDay > 19.5;
+                const rootMidi = Math.round(45 + (altitude / 3500) * 7 + (isNight ? -2 : 2));
+                const cutoffHz = lerp(650, 4200, (1 - fog / 100 * 0.7) * (isNight ? 0.65 : 1.0));
+                const echoMix = Math.min(0.45, (humidity / 100) * 0.25 + (magic / 100) * 0.22);
+                const ornamentProb = Math.min(0.85, (bloom / 100) * 0.45 + (state.fertility / 100) * 0.3);
+                const gravBias = (20 - gravity) / 100;
+
+                const waveLabels = {
+                    sine: 'Sine',
+                    triangle: 'Triangle',
+                    square: 'Pulse',
+                    sawtooth: 'Saw'
+                };
+
+                return {
+                    bpm,
+                    leadWave,
+                    bassWave,
+                    waveLabel: waveLabels[leadWave] || 'Triangle',
+                    articLabel: legatoAmount > 0.65 ? 'Легато' : (legatoAmount < 0.35 ? 'Стаккато' : 'Смешанный'),
+                    scale,
+                    scaleName,
+                    rootMidi,
+                    cutoffHz,
+                    echoMix,
+                    ornamentProb,
+                    gravBias,
+                    rainLevel: temp >= 1 ? (precipitation / 100) : 0,
+                    windLevel: Math.abs(wind) / 100,
+                    isStorm
+                };
+            },
+
+            createNoiseBuffer(ctx) {
+                const length = ctx.sampleRate * 3;
+                const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                return buffer;
+            },
+
+            initAudio() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                this.noiseBuffer = this.createNoiseBuffer(this.ctx);
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.28;
+
+                this.filterNode = this.ctx.createBiquadFilter();
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.value = 2200;
+                this.filterNode.Q.value = 1.4;
+
+                this.delayNode = this.ctx.createDelay(1.0);
+                this.delayNode.delayTime.value = 0.28;
+
+                this.delayFeedback = this.ctx.createGain();
+                this.delayFeedback.gain.value = 0.32;
+
+                this.delayWet = this.ctx.createGain();
+                this.delayWet.gain.value = 0.15;
+
+                this.filterNode.connect(this.masterGain);
+                this.filterNode.connect(this.delayNode);
+                this.delayNode.connect(this.delayFeedback);
+                this.delayFeedback.connect(this.delayNode);
+                this.delayNode.connect(this.delayWet);
+                this.delayWet.connect(this.masterGain);
+                this.masterGain.connect(this.ctx.destination);
+
+                // Негромкий непрерывный фоновый слой шума дождя и ветра
+                const ambSrc = this.ctx.createBufferSource();
+                ambSrc.buffer = this.noiseBuffer;
+                ambSrc.loop = true;
+
+                this.ambientFilter = this.ctx.createBiquadFilter();
+                this.ambientFilter.type = 'bandpass';
+                this.ambientFilter.frequency.value = 900;
+                this.ambientFilter.Q.value = 0.65;
+
+                this.ambientGain = this.ctx.createGain();
+                this.ambientGain.gain.value = 0.0001;
+
+                ambSrc.connect(this.ambientFilter);
+                this.ambientFilter.connect(this.ambientGain);
+                this.ambientGain.connect(this.masterGain);
+                ambSrc.start();
+            },
+
+            updateAmbientLayer(p) {
+                if (!this.ctx || !this.ambientGain || !this.ambientFilter || !this.isPlaying) return;
+                const now = this.ctx.currentTime;
+                if (!Number.isFinite(now)) return;
+
+                // Намеренно негромкий фон (максимум ~0.065 от masterGain)
+                const rainAmp = p.rainLevel * 0.045;
+                const windAmp = p.windLevel * 0.035;
+                const targetGain = Math.max(0.0001, Math.min(0.065, rainAmp + windAmp));
+                const targetFreq = p.rainLevel > p.windLevel
+                    ? lerp(750, 2200, p.rainLevel)
+                    : lerp(280, 950, p.windLevel);
+
+                this.ambientGain.gain.setTargetAtTime(targetGain, now, 0.25);
+                this.ambientFilter.frequency.setTargetAtTime(targetFreq, now, 0.25);
+            },
+
+            playThunderRumble() {
+                if (!this.ctx || !this.isPlaying) return;
+                const now = this.ctx.currentTime;
+                if (!Number.isFinite(now)) return;
+
+                const src = this.ctx.createBufferSource();
+                src.buffer = this.noiseBuffer;
+
+                const lp = this.ctx.createBiquadFilter();
+                lp.type = 'lowpass';
+                lp.frequency.setValueAtTime(160, now);
+                lp.frequency.exponentialRampToValueAtTime(52, now + 1.6);
+
+                const env = this.ctx.createGain();
+                env.gain.setValueAtTime(0.0001, now);
+                env.gain.linearRampToValueAtTime(0.11, now + 0.12);
+                env.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+
+                src.connect(lp);
+                lp.connect(env);
+                env.connect(this.masterGain);
+
+                src.start(now);
+                src.stop(now + 1.75);
+            },
+
+            midiToFreq(midi) {
+                if (!Number.isFinite(midi)) return 440;
+                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                return Number.isFinite(freq) && freq > 0 ? freq : 440;
+            },
+
+            playNote(freq, duration, waveType, attack, gainPeak, pan = 0) {
+                if (!this.ctx || !this.isPlaying) return;
+                if (!Number.isFinite(freq) || freq <= 0) return;
+
+                const safeDuration = Number.isFinite(duration) && duration > 0 ? Math.min(4, duration) : 0.15;
+                const safeAttack = Number.isFinite(attack) && attack >= 0 ? Math.max(0.004, Math.min(safeDuration * 0.8, attack)) : 0.01;
+                const safePeak = Number.isFinite(gainPeak) && gainPeak > 0 ? Math.max(0.001, Math.min(0.5, gainPeak)) : 0.08;
+                const safePan = Number.isFinite(pan) ? Math.max(-0.85, Math.min(0.85, pan)) : 0;
+
+                const now = this.ctx.currentTime;
+                if (!Number.isFinite(now)) return;
+
+                const attackTime = now + safeAttack;
+                const endTime = now + Math.max(0.03, safeDuration);
+                const stopTime = endTime + 0.04;
+                if (!Number.isFinite(attackTime) || !Number.isFinite(endTime) || !Number.isFinite(stopTime)) return;
+
+                const osc = this.ctx.createOscillator();
+                const env = this.ctx.createGain();
+
+                osc.type = waveType || 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+
+                env.gain.setValueAtTime(0.0001, now);
+                env.gain.linearRampToValueAtTime(safePeak, attackTime);
+                env.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+                if (typeof this.ctx.createStereoPanner === 'function') {
+                    const panner = this.ctx.createStereoPanner();
+                    panner.pan.setValueAtTime(safePan, now);
+                    osc.connect(env);
+                    env.connect(panner);
+                    panner.connect(this.filterNode);
+                } else {
+                    osc.connect(env);
+                    env.connect(this.filterNode);
+                }
+
+                osc.start(now);
+                osc.stop(stopTime);
+            },
+
+            scheduleStep() {
+                if (!this.isPlaying) return;
+                const p = this.computeMusicParams();
+                this.currentParams = p;
+                this.updateAmbientLayer(p);
+
+                const safeBpm = Number.isFinite(p.bpm) && p.bpm > 0 ? p.bpm : 96;
+                const safeCutoff = Number.isFinite(p.cutoffHz) && p.cutoffHz > 20 ? p.cutoffHz : 1800;
+                const safeEcho = Number.isFinite(p.echoMix) ? Math.max(0, Math.min(0.7, p.echoMix)) : 0.15;
+                const safeAttack = Number.isFinite(p.attackTime) && p.attackTime >= 0 ? p.attackTime : 0.02;
+                const safeGate = Number.isFinite(p.gateRatio) && p.gateRatio > 0 ? p.gateRatio : 0.6;
+                const safeRootMidi = Number.isFinite(p.rootMidi) ? p.rootMidi : 57;
+                const safeScale = Array.isArray(p.scale) && p.scale.length > 0 ? p.scale : [0, 2, 4, 7, 9, 12];
+
+                if (this.filterNode && this.ctx && Number.isFinite(this.ctx.currentTime)) {
+                    this.filterNode.frequency.setTargetAtTime(safeCutoff, this.ctx.currentTime, 0.08);
+                    this.delayWet.gain.setTargetAtTime(safeEcho, this.ctx.currentTime, 0.1);
+                }
+
+                const stepDuration = 60 / safeBpm / 2;
+                const noteDur = Math.max(0.04, stepDuration * safeGate);
+
+                if (this.stepIndex % 4 === 0) {
+                    const bassSteps = [0, 4, 2, 3];
+                    const bDegree = bassSteps[(this.stepIndex / 4) % bassSteps.length];
+                    const bInterval = safeScale[bDegree % safeScale.length] ?? 0;
+                    const bassMidi = safeRootMidi - 12 + bInterval;
+                    this.playNote(this.midiToFreq(bassMidi), stepDuration * 3.2 * safeGate, p.bassWave, safeAttack, 0.13, 0);
+                }
+
+                const rng = createPRNG(state.seed + this.stepIndex * 31);
+                const ornamentProb = Number.isFinite(p.ornamentProb) ? p.ornamentProb : 0.3;
+                const gravBias = Number.isFinite(p.gravBias) ? p.gravBias : 0;
+                const playMelody = this.stepIndex % 2 === 0 || rng() < ornamentProb * 0.65;
+                if (playMelody) {
+                    const baseIdx = Math.floor(
+                        ((Math.sin(this.stepIndex * 0.65 + (state.seed % 17)) + 1) * 0.5) * (safeScale.length - 1)
+                    );
+                    const gravShift = Math.round(gravBias * 2);
+                    const idx = Math.max(0, Math.min(safeScale.length - 1, baseIdx + gravShift + (rng() < 0.35 ? (rng() > 0.5 ? 1 : -1) : 0)));
+                    const interval = safeScale[idx] ?? 0;
+                    const midi = safeRootMidi + interval;
+                    const windVal = Number.isFinite(state.wind) ? state.wind : 0;
+                    const pan = (windVal / 100) * 0.45 + (rng() - 0.5) * 0.25;
+                    this.playNote(this.midiToFreq(midi), noteDur, p.leadWave, safeAttack, 0.1, pan);
+                }
+
+                this.stepIndex = (this.stepIndex + 1) % 64;
+                this.updateMusicBadge();
+
+                this.timerId = setTimeout(() => this.scheduleStep(), stepDuration * 1000);
+            },
+
+            toggle() {
+                if (!this.isPlaying) {
+                    this.initAudio();
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    this.isPlaying = true;
+                    this.stepIndex = 0;
+                    this.scheduleStep();
+                } else {
+                    this.isPlaying = false;
+                    if (this.timerId) {
+                        clearTimeout(this.timerId);
+                        this.timerId = null;
+                    }
+                    if (this.ambientGain && this.ctx && Number.isFinite(this.ctx.currentTime)) {
+                        this.ambientGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.1);
+                    }
+                }
+                this.updateMusicBadge();
+            },
+
+            updateMusicBadge() {
+                const dot = document.getElementById('music-dot');
+                const info = document.getElementById('music-info');
+                const compactIcon = document.getElementById('compact-music-icon');
+
+                if (!this.isPlaying) {
+                    dot.className = 'w-2 h-2 rounded-full bg-slate-500 shrink-0';
+                    info.textContent = 'Звук выключен • Нажмите 🎵';
+                    compactIcon.textContent = '🎵';
+                } else {
+                    const p = this.currentParams || this.computeMusicParams();
+                    dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0';
+                    info.textContent = `${p.bpm} BPM • ${p.waveLabel} • ${p.articLabel} • ${p.scaleName}`;
+                    compactIcon.textContent = '🔊';
+                }
+            }
+        };
+
+        /**
+         * 3. ГЕНЕРАТОР ДЕРЕВА, ПРИРОДЫ, МЕРЦАЮЩИХ ЗВЁЗД И ГРОЗЫ
+         */
+        function updateBiomeLabel() {
+            const el = document.getElementById('biome-name');
+            const { temp, humidity, season, magic, altitude, precipitation, trunkThickness, split } = state;
+
+            let weather = '';
+            if (precipitation > 68 && temp >= 1) weather = ' • Гроза';
+            else if (precipitation > 65) weather = temp < 1 ? ' • Буран' : ' • Ливень';
+            else if (precipitation > 25) weather = temp < 1 ? ' • Снегопад' : ' • Дождь';
+
+            let biome = '🌳 Лесное дерево';
+            if (magic > 65) biome = '🔮 Эфирный лес';
+            else if (trunkThickness > 180 && humidity < 45) biome = '🌴 Древний баобаб';
+            else if (split > 75 && state.fertility < 55) biome = '🌿 Кустарник / Бонсай';
+            else if (season > 82 || temp < -5) biome = '❄️ Зимний лес';
+            else if (altitude > 2200) biome = '🏔️ Горное криволесье';
+            else if (season < 22 && state.bloom > 55) biome = '🌸 Цветущий сад';
+            else if (season >= 55 && season <= 82) biome = '🍁 Осенний бор';
+            else if (humidity > 78 && state.gravity > 65) biome = '🌿 Плакучая ива';
+            else if (humidity < 25 && temp > 26) biome = '🦁 Саванна';
+            else if (humidity > 75 && temp > 24) biome = '🌴 Тропики';
+
+            el.innerHTML = `<span>${biome}${weather}</span>`;
+        }
+
+        function getLeafColor(rng, depthRatio, clusterHue = null) {
+            const { temp, humidity, season, magic, colorVar, bloom } = state;
+            const isFlower = bloom > 25 && rng() < ((bloom - 25) / 75) * 0.14;
+            const variation = (rng() - 0.5) * (colorVar / 100) * 24;
+
+            if (magic > 68 && rng() < ((magic - 68) / 32) * 0.35) {
+                const baseHue = clusterHue !== null ? clusterHue : [170, 200, 265, 145][Math.floor(rng() * 4)];
+                return {
+                    h: (baseHue + variation * 0.4 + 360) % 360,
+                    s: lerp(50, 72, rng()),
+                    l: lerp(46, 62, rng()),
+                    isFlower: false
+                };
+            }
+
+            if (isFlower) {
+                let flowerHue = 345;
+                if (season >= 55 && season <= 82) flowerHue = 22;
+                else if (temp > 26 && humidity > 65) flowerHue = 44;
+                return {
+                    h: (flowerHue + variation * 0.25 + 360) % 360,
+                    s: lerp(48, 68, rng()),
+                    l: lerp(72, 84, rng()),
+                    isFlower: true
+                };
+            }
+
+            let h = 115;
+            let s = lerp(38, 60, humidity / 100);
+            let l = lerp(24, 38, depthRatio);
+
+            if (season < 25) {
+                h = lerp(94, 124, rng());
+                s = lerp(42, 62, humidity / 100);
+                l = lerp(33, 46, depthRatio);
+            } else if (season < 55) {
+                h = humidity < 28 ? lerp(70, 92, humidity / 28) : lerp(104, 134, humidity / 100);
+                s = lerp(30, 58, humidity / 100);
+                l = lerp(23, 38, depthRatio);
+            } else if (season <= 82) {
+                const p = (season - 55) / 27;
+                h = lerp(44, 14, p * (0.45 + rng() * 0.55));
+                s = lerp(48, 70, rng());
+                l = lerp(30, 45, depthRatio);
+            } else {
+                h = temp < -5 ? lerp(155, 185, rng()) : lerp(125, 148, rng());
+                s = temp < -5 ? 18 : 28;
+                l = temp < -5 ? lerp(44, 60, rng()) : lerp(19, 29, depthRatio);
+            }
+
+            const baseH = clusterHue !== null ? clusterHue : h;
+            return {
+                h: (baseH + variation + 360) % 360,
+                s: Math.max(12, Math.min(76, s)),
+                l: Math.max(14, Math.min(70, l)),
+                isFlower: false
+            };
+        }
+
+        function getResolvedLeafShape() {
+            if (state.leafStyle !== 0) return state.leafStyle;
+            if (state.temp < 2 || state.altitude > 2100) return 2;
+            if (state.season >= 55 && state.season <= 82) return 3;
+            if (state.humidity > 78 && state.temp > 22) return 4;
+            return 1;
+        }
+
+        function generateTreeData() {
+            const rng = createPRNG(state.seed);
+            const w = worldData.width;
+            const h = worldData.height;
+
+            worldData.roots = [];
+            worldData.branches = [];
+            worldData.vines = [];
+            worldData.canopyClouds = [];
+            worldData.accentLeaves = [];
+            worldData.grass = [];
+
+            const altFactor = 1 - (state.altitude / 3500) * 0.42;
+            const fertFactor = lerp(0.55, 1.22, state.fertility / 100);
+            const baseLength = Math.min(h * 0.24, w * 0.22) * altFactor * fertFactor;
+            const thicknessMult = state.trunkThickness / 100;
+            const effectiveMult = Math.pow(thicknessMult, 1.2);
+            const baseThickness = Math.max(3, baseLength * 0.145 * effectiveMult);
+            const maxDepth = Math.min(7, Math.round(lerp(5, 7, state.fertility / 100) - (state.altitude / 3500) * 1.2));
+            const leafShape = getResolvedLeafShape();
+
+            let leafDensity = lerp(0.3, 0.88, state.humidity / 100);
+            if (state.season > 82) {
+                leafDensity = leafShape === 2 ? 0.45 : lerp(0.1, 0.0, (state.season - 82) / 18);
+            } else if (state.season > 68 && leafShape !== 2) {
+                leafDensity *= lerp(1.0, 0.35, (state.season - 68) / 15);
+            }
+
+            let barkHue = lerp(28, 20, state.humidity / 100);
+            let barkSat = lerp(20, 36, state.temp / 45);
+            let barkLight = lerp(34, 18, state.humidity / 100);
+            const isBirch = state.trunkThickness < 80 && state.temp > 0 && state.temp < 24 && state.magic < 25 && rng() > 0.55;
+            if (isBirch) {
+                barkHue = 35;
+                barkSat = 12;
+                barkLight = 76;
+            } else if (state.magic > 50) {
+                barkHue = lerp(barkHue, 265, (state.magic - 50) / 50);
+                barkSat = 35;
+                barkLight = 22;
+            }
+
+            const startX = w * 0.5;
+            const startY = h * 0.89;
+
+            const rootCount = Math.floor(lerp(2, 6, Math.min(1, (thicknessMult - 0.35) / 2.0)));
+            for (let r = 0; r < rootCount; r++) {
+                const side = r % 2 === 0 ? -1 : 1;
+                const spread = baseThickness * lerp(0.9, 2.2, rng()) * side;
+                const rootLen = baseThickness * lerp(0.7, 1.35, rng());
+                worldData.roots.push({
+                    x1: startX + side * (baseThickness * 0.2),
+                    y1: startY - rootLen * 0.5,
+                    cx: startX + spread * 0.5,
+                    cy: startY - rootLen * 0.08,
+                    x2: startX + spread,
+                    y2: startY + lerp(3, 10, rng()),
+                    thickness: Math.max(1.5, baseThickness * lerp(0.18, 0.32, rng())),
+                    color: `hsl(${barkHue}, ${barkSat}%, ${Math.max(10, barkLight - 5)}%)`
+                });
+            }
+
+            const clumpFactor = state.clumpiness / 100;
+            let leafBudget = 320;
+
+            function grow(x, y, length, angle, curveVel, thickness, depth) {
+                if (depth > maxDepth || length < 5) return;
+
+                const windPull = (state.wind / 100) * 0.022 * Math.pow(depth, 1.2);
+                const gravPull = ((state.gravity - 20) / 100) * 0.035 * Math.sin(angle) * Math.pow(depth, 1.15);
+                const targetCurve = (rng() - 0.5) * (state.chaos / 100) * 0.4;
+                const nextCurveVel = curveVel * 0.65 + targetCurve * 0.35;
+
+                const midAngle = angle + nextCurveVel * 0.5 + windPull * 0.4 + gravPull * 0.4;
+                const endAngle = angle + nextCurveVel + windPull + gravPull;
+
+                const midX = x + Math.sin(midAngle) * (length * 0.52);
+                const midY = y - Math.cos(midAngle) * (length * 0.52);
+                const endX = midX + Math.sin(endAngle) * (length * 0.5);
+                const endY = midY - Math.cos(endAngle) * (length * 0.5);
+
+                const taper = depth <= 2 && thicknessMult > 1.45 ? lerp(0.58, 0.70, rng()) : lerp(0.68, 0.78, rng());
+                const nextThickness = Math.max(1.2, thickness * taper);
+                const midThickness = thickness * 0.62 + nextThickness * 0.38;
+
+                worldData.branches.push({
+                    x1: x, y1: y,
+                    cx: midX, cy: midY,
+                    x2: endX, y2: endY,
+                    tStart: thickness,
+                    tMid: midThickness,
+                    tEnd: nextThickness,
+                    depth,
+                    swayFactor: Math.pow(depth / maxDepth, 1.5),
+                    color: `hsl(${barkHue}, ${barkSat}%, ${Math.min(88, barkLight + depth)}%)`,
+                    isBirch,
+                    hasSnow: (state.season > 80 || state.temp < 0) && Math.abs(Math.sin(endAngle)) > 0.35 && depth < maxDepth - 1
+                });
+
+                if (state.humidity > 78 && state.temp > 16 && depth >= 3 && depth <= maxDepth - 2 && rng() < 0.22 && worldData.vines.length < 28) {
+                    worldData.vines.push({
+                        x: endX,
+                        y: endY,
+                        length: lerp(24, 65, rng()) * (state.humidity / 100),
+                        swayFactor: Math.pow(depth / maxDepth, 1.5),
+                        phase: rng() * Math.PI * 2,
+                        hue: state.magic > 40 ? 280 : lerp(100, 140, rng())
+                    });
+                }
+
+                if (depth >= maxDepth - 2 && leafDensity > 0.02) {
+                    const nodeColor = getLeafColor(rng, depth / maxDepth);
+                    const swayFactor = Math.pow(depth / maxDepth, 1.5);
+
+                    if (clumpFactor > 0.05 && worldData.canopyClouds.length < 85) {
+                        const lobeCount = Math.floor(lerp(2, 4, clumpFactor));
+                        const rad = (thickness * 2.2 + 24) * lerp(0.85, 1.35, clumpFactor) * lerp(0.85, 1.18, state.humidity / 100);
+                        const lobes = [];
+                        for (let p = 0; p < lobeCount; p++) {
+                            const a = (p / lobeCount) * Math.PI * 2 + (rng() - 0.5) * 0.65;
+                            const dist = rad * lerp(0.2, 0.48, rng());
+                            lobes.push({
+                                ox: Math.cos(a) * dist,
+                                oy: Math.sin(a) * dist * 0.7,
+                                rx: rad * lerp(1.05, 1.25, rng()),
+                                ry: rad * lerp(0.75, 0.92, rng()),
+                                hue: (nodeColor.h + (rng() - 0.5) * (state.colorVar / 100) * 14 + 360) % 360
+                            });
+                        }
+
+                        worldData.canopyClouds.push({
+                            x: endX,
+                            y: endY,
+                            lobes,
+                            swayFactor,
+                            phase: rng() * Math.PI * 2,
+                            sat: nodeColor.s,
+                            light: nodeColor.l
+                        });
+                    }
+
+                    if (leafBudget > 0) {
+                        const rareScale = lerp(0.95, 0.22, clumpFactor);
+                        const count = Math.min(leafBudget, Math.max(clumpFactor > 0.3 && rng() < 0.5 ? 1 : 0, Math.floor(lerp(1, 3, leafDensity) * rareScale)));
+                        leafBudget -= count;
+
+                        for (let i = 0; i < count; i++) {
+                            const spread = (thickness * 2.4 + 28) * lerp(0.9, 1.25, clumpFactor);
+                            const cData = getLeafColor(rng, depth / maxDepth, nodeColor.h);
+                            worldData.accentLeaves.push({
+                                x: endX + (rng() - 0.5) * spread,
+                                y: endY + (rng() - 0.5) * spread * 0.8,
+                                size: lerp(5.5, 10.5, rng()),
+                                angle: endAngle + (rng() - 0.5) * 1.5,
+                                shape: leafShape,
+                                colorData: cData,
+                                swayFactor,
+                                phase: rng() * Math.PI * 2
+                            });
+                        }
+                    }
+                }
+
+                let branchesCount = 2;
+                const splitChance = state.split / 100;
+                if (depth === 1 && splitChance > 0.65 && rng() < (splitChance - 0.5) * 1.5) {
+                    branchesCount = 3;
+                } else if (depth < 4 && rng() < 0.2 * (state.fertility / 100) + splitChance * 0.2) {
+                    branchesCount = 3;
+                }
+
+                const spreadFactor = lerp(0.22, 0.76, state.branchSpread / 100);
+                const splitBoost = depth <= 2 ? lerp(0.85, 1.4, splitChance) : 1.0;
+                const spreadBase = spreadFactor * splitBoost * (state.gravity < 0 ? 0.65 : 1.0);
+                const asymmetry = (rng() - 0.5) * 0.2;
+
+                for (let i = 0; i < branchesCount; i++) {
+                    let dir = branchesCount === 2 ? (i === 0 ? -1 : 1) : (i - 1);
+                    if (branchesCount === 2 && depth <= 2 && splitChance > 0.3) {
+                        dir *= lerp(1.0, 1.32, splitChance);
+                    }
+                    grow(
+                        endX,
+                        endY,
+                        length * lerp(0.73, 0.84, rng()) * (dir === 0 ? 0.94 : 1.0),
+                        endAngle + dir * spreadBase * lerp(0.8, 1.2, rng()) + asymmetry * dir,
+                        nextCurveVel * 0.5 + dir * 0.05,
+                        nextThickness,
+                        depth + 1
+                    );
+                }
+            }
+
+            const trunkAngle = (state.wind / 100) * 0.1;
+            const splitChance = state.split / 100;
+            if (splitChance > 0.72) {
+                const multi = splitChance > 0.9 ? 3 : 2;
+                for (let t = 0; t < multi; t++) {
+                    const dir = multi === 2 ? (t === 0 ? -1 : 1) : (t - 1);
+                    grow(startX + dir * (baseThickness * 0.2), startY, baseLength * lerp(0.85, 1.05, rng()), trunkAngle + dir * lerp(0.16, 0.34, rng()), dir * 0.04, baseThickness * lerp(0.62, 0.78, rng()), 1);
+                }
+            } else {
+                grow(startX, startY, baseLength * lerp(1.12, 0.7, splitChance), trunkAngle, 0, baseThickness, 1);
+            }
+
+            const grassCount = Math.floor(lerp(18, 95, state.humidity / 100));
+            for (let i = 0; i < grassCount; i++) {
+                const gx = rng() * w;
+                const normX = (gx / w) - 0.5;
+                const hillY = h * 0.90 - (1 - 4 * normX * normX) * (h * 0.035);
+                worldData.grass.push({
+                    x: gx,
+                    y: hillY + rng() * 14,
+                    len: lerp(8, 20, rng()) * (state.fertility / 85),
+                    phase: rng() * Math.PI * 2
+                });
+            }
+
+            const skyRng = createPRNG(424242);
+            worldData.stars = [];
+            for (let i = 0; i < 110; i++) {
+                worldData.stars.push({
+                    x: skyRng() * w,
+                    y: skyRng() * h * 0.72,
+                    r: skyRng() > 0.82 ? 1.8 : 1.1,
+                    speed: 1.8 + skyRng() * 4.2,
+                    phase: skyRng() * Math.PI * 2,
+                    twinkleSpark: skyRng() > 0.75
+                });
+            }
+
+            worldData.clouds = [];
+            for (let i = 0; i < 7; i++) {
+                worldData.clouds.push({
+                    x: skyRng() * w,
+                    y: h * (0.08 + skyRng() * 0.28),
+                    scale: 0.75 + skyRng() * 0.85,
+                    speed: 6 + skyRng() * 12
+                });
+            }
+
+            worldData.birds = [];
+            for (let i = 0; i < 5; i++) {
+                worldData.birds.push({
+                    x: skyRng() * w,
+                    y: h * (0.14 + skyRng() * 0.24),
+                    speed: 28 + skyRng() * 24,
+                    phase: skyRng() * Math.PI * 2
+                });
+            }
+
+            const weatherRng = createPRNG(state.seed + 999);
+            worldData.weather = [];
+            for (let i = 0; i < 240; i++) {
+                worldData.weather.push({
+                    x: weatherRng() * w,
+                    y: weatherRng() * h,
+                    len: weatherRng() * 14 + 8,
+                    speed: weatherRng() * 220 + 260,
+                    drift: weatherRng() * Math.PI * 2
+                });
+            }
+
+            updateBiomeLabel();
+        }
+
+        function drawSkyAndGround(w, h, time) {
+            const t = state.timeOfDay;
+            let skyTop, skyBottom, sunVis = 0, moonVis = 0;
+
+            if (t >= 5 && t < 8) {
+                const p = (t - 5) / 3;
+                skyTop = `rgb(${lerp(15, 50, p)}, ${lerp(20, 100, p)}, ${lerp(45, 165, p)})`;
+                skyBottom = `rgb(${lerp(65, 235, p)}, ${lerp(45, 155, p)}, ${lerp(80, 105, p)})`;
+                sunVis = p;
+            } else if (t >= 8 && t < 17) {
+                skyTop = '#1e5f8a';
+                skyBottom = '#7cc6d6';
+                sunVis = 1;
+            } else if (t >= 17 && t < 20.5) {
+                const p = (t - 17) / 3.5;
+                skyTop = `rgb(${lerp(30, 16, p)}, ${lerp(95, 18, p)}, ${lerp(138, 46, p)})`;
+                skyBottom = `rgb(${lerp(124, 200, p)}, ${lerp(198, 82, p)}, ${lerp(214, 120, p)})`;
+                sunVis = 1 - p * 0.7;
+                moonVis = p * 0.7;
+            } else {
+                skyTop = '#040712';
+                skyBottom = '#0f172a';
+                moonVis = 1;
+            }
+
+            const overcast = Math.min(0.8, (state.precipitation / 100) * 0.58 + (state.fog / 100) * 0.35);
+            if (state.magic > 35) {
+                const m = (state.magic - 35) / 65;
+                skyTop = `rgb(${lerp(10, 36, m)}, ${lerp(14, 12, m)}, ${lerp(34, 70, m)})`;
+                skyBottom = `rgb(${lerp(22, 82, m)}, ${lerp(30, 34, m)}, ${lerp(48, 110, m)})`;
+            }
+
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, skyTop);
+            grad.addColorStop(1, skyBottom);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            if (overcast > 0.05) {
+                ctx.fillStyle = `rgba(15, 23, 42, ${overcast * 0.72})`;
+                ctx.fillRect(0, 0, w, h);
+            }
+
+            // Мерцающие звёзды ночью
+            const starVis = Math.max(0, Math.max(moonVis, state.magic / 100) * (1 - overcast * 0.85));
+            if (starVis > 0.08) {
+                worldData.stars.forEach(s => {
+                    const wave = 0.5 + 0.5 * Math.sin(time * s.speed + s.phase);
+                    const twinkle = Math.pow(wave, 1.8);
+                    const alpha = starVis * (0.15 + twinkle * 0.85);
+                    ctx.fillStyle = `rgba(248, 250, 252, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r * (0.75 + twinkle * 0.45), 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (s.twinkleSpark && twinkle > 0.82 && moonVis > 0.4) {
+                        ctx.strokeStyle = `rgba(224, 242, 254, ${alpha * 0.65})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - 4, s.y);
+                        ctx.lineTo(s.x + 4, s.y);
+                        ctx.moveTo(s.x, s.y - 4);
+                        ctx.lineTo(s.x, s.y + 4);
+                        ctx.stroke();
+                    }
+                });
+            }
+
+            if (sunVis * (1 - overcast * 0.85) > 0.1) {
+                // X: дуга по времени суток (от рассвета в ~4:30 до заката в ~21:00)
+                const dayProgress = Math.max(0, Math.min(1, (t - 4.5) / 16.5));
+                const sunX = lerp(w * 0.10, w * 0.90, dayProgress);
+
+                // Y: на рассвете и закате уходит низко к горизонту (~0.84h), в зените поднимается выше в зависимости от сезона
+                const seasonNorm = 1 - Math.abs(state.season - 45) / 55;
+                const arcLift = Math.pow(Math.sin(dayProgress * Math.PI), 0.72) * (h * 0.62);
+                const zenithY = lerp(h * 0.30, h * 0.13, Math.max(0, Math.min(1, seasonNorm)));
+                const horizonY = h * 0.84;
+                const sunY = Math.max(h * 0.08, horizonY - (horizonY - zenithY) * (arcLift / (h * 0.62)));
+
+                // Размер: ещё крупнее (от 28px до 115px+) с учётом температуры и магии
+                const tempNorm = Math.max(0, Math.min(1, (state.temp + 20) / 65));
+                const sunR = lerp(28, 108, tempNorm) * (1 + (state.magic / 100) * 0.25);
+
+                // Мультяшно-стилизованное солнце с мягким внешним свечением и чётким телом
+                const sunAlpha = sunVis * 0.98;
+                const warmShift = lerp(0, 22, tempNorm) + (state.fog / 100) * 14;
+                const glowGrad = ctx.createRadialGradient(sunX, sunY, sunR * 0.65, sunX, sunY, sunR * 1.65);
+                glowGrad.addColorStop(0, `hsla(${46 - warmShift * 0.4}, 100%, 62%, ${sunAlpha * 0.48})`);
+                glowGrad.addColorStop(0.65, `hsla(${34 - warmShift * 0.5}, 98%, 54%, ${sunAlpha * 0.18})`);
+                glowGrad.addColorStop(1, `hsla(${22 - warmShift * 0.4}, 95%, 50%, 0)`);
+
+                ctx.save();
+                ctx.fillStyle = glowGrad;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunR * 1.65, 0, Math.PI * 2);
+                ctx.fill();
+
+                const bodyGrad = ctx.createLinearGradient(sunX, sunY - sunR, sunX, sunY + sunR);
+                bodyGrad.addColorStop(0, `hsla(${52 - warmShift * 0.3}, 100%, 74%, ${sunAlpha})`);
+                bodyGrad.addColorStop(0.65, `hsla(${40 - warmShift * 0.5}, 98%, 58%, ${sunAlpha})`);
+                bodyGrad.addColorStop(1, `hsla(${24 - warmShift * 0.6}, 95%, 50%, ${sunAlpha})`);
+
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.lineWidth = Math.max(2, sunR * 0.045);
+                ctx.strokeStyle = `hsla(${34 - warmShift * 0.5}, 90%, 44%, ${sunAlpha * 0.72})`;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (moonVis * (1 - overcast * 0.75) > 0.1) {
+                // X: ночной путь луны по времени суток (от 17:00 до 09:00)
+                const nightHour = t >= 17 ? t - 17 : t + 7;
+                const nightProgress = Math.max(0, Math.min(1, nightHour / 16));
+                const moonX = lerp(w * 0.12, w * 0.88, nightProgress);
+
+                // Y: на восходе и закате опускается низко к горизонту (~0.84h), выше поднимается при большой высоте и лете
+                const seasonNorm = 1 - Math.abs(state.season - 45) / 55;
+                const altNorm = Math.max(0, Math.min(1, state.altitude / 3500));
+                const moonArc = Math.pow(Math.sin(nightProgress * Math.PI), 0.72);
+                const zenithMoonY = lerp(h * 0.28, h * 0.12, Math.max(0, Math.min(1, seasonNorm * 0.55 + altNorm * 0.45)));
+                const horizonMoonY = h * 0.84;
+                const moonY = Math.max(h * 0.08, horizonMoonY - (horizonMoonY - zenithMoonY) * moonArc);
+
+                // Размер: сильно увеличен (от 22px до 88px+) с учётом влажности, высоты и магии
+                const humNorm = state.humidity / 100;
+                const moonR = lerp(22, 82, humNorm * 0.75 + altNorm * 0.25) * (1 + (state.magic / 100) * 0.28);
+
+                // Мультяшно-стилизованная луна с мягким свечением и стилизованными кратерами
+                const moonAlpha = moonVis * 0.98;
+                const magicMix = state.magic / 100;
+                const coreHue = lerp(212, 268, magicMix);
+                const haloHue = lerp(206, 285, magicMix);
+
+                const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.7, moonX, moonY, moonR * 1.6);
+                moonGlow.addColorStop(0, `hsla(${coreHue}, ${lerp(45, 80, magicMix)}%, 84%, ${moonAlpha * 0.42})`);
+                moonGlow.addColorStop(0.65, `hsla(${haloHue}, ${lerp(55, 82, magicMix)}%, 72%, ${moonAlpha * 0.15})`);
+                moonGlow.addColorStop(1, `hsla(${haloHue}, 65%, 64%, 0)`);
+
+                ctx.save();
+                ctx.fillStyle = moonGlow;
+                ctx.beginPath();
+                ctx.arc(moonX, moonY, moonR * 1.6, 0, Math.PI * 2);
+                ctx.fill();
+
+                const moonBody = ctx.createLinearGradient(moonX - moonR * 0.4, moonY - moonR, moonX + moonR * 0.6, moonY + moonR);
+                moonBody.addColorStop(0, `hsla(${coreHue}, ${lerp(28, 70, magicMix)}%, 95%, ${moonAlpha})`);
+                moonBody.addColorStop(1, `hsla(${haloHue}, ${lerp(42, 76, magicMix)}%, 76%, ${moonAlpha})`);
+
+                ctx.fillStyle = moonBody;
+                ctx.beginPath();
+                ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Несколько стилизованных кратеров внутри диска луны
+                ctx.fillStyle = `hsla(${haloHue}, ${lerp(35, 65, magicMix)}%, 66%, ${moonAlpha * 0.36})`;
+                ctx.beginPath();
+                ctx.arc(moonX - moonR * 0.28, moonY - moonR * 0.18, moonR * 0.2, 0, Math.PI * 2);
+                ctx.arc(moonX + moonR * 0.24, moonY + moonR * 0.14, moonR * 0.16, 0, Math.PI * 2);
+                ctx.arc(moonX - moonR * 0.05, moonY + moonR * 0.34, moonR * 0.11, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.lineWidth = Math.max(2, moonR * 0.045);
+                ctx.strokeStyle = `hsla(${haloHue}, 50%, 58%, ${moonAlpha * 0.65})`;
+                ctx.beginPath();
+                ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            const cloudAlpha = lerp(0.14, 0.55, Math.max(state.fog / 100, state.precipitation / 100));
+            ctx.fillStyle = moonVis > 0.5 || overcast > 0.4 ? `rgba(148, 163, 184, ${cloudAlpha * 0.4})` : `rgba(241, 245, 249, ${cloudAlpha})`;
+            worldData.clouds.forEach(c => {
+                const cx = ((c.x + time * c.speed * (1 + Math.abs(state.wind) * 0.02)) % (w + 140)) - 70;
+                const cy = c.y;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 22 * c.scale, 0, Math.PI * 2);
+                ctx.arc(cx + 20 * c.scale, cy - 5 * c.scale, 26 * c.scale, 0, Math.PI * 2);
+                ctx.arc(cx + 42 * c.scale, cy, 20 * c.scale, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (moonVis < 0.6 && state.precipitation < 45 && state.temp > -5) {
+                ctx.strokeStyle = 'rgba(15, 23, 42, 0.65)';
+                ctx.lineWidth = 1.6;
+                worldData.birds.forEach(b => {
+                    const bx = ((b.x + time * b.speed) % (w + 80)) - 40;
+                    const by = b.y + Math.sin(time * 3 + b.phase) * 6;
+                    const flap = Math.sin(time * 10 + b.phase) * 4;
+                    ctx.beginPath();
+                    ctx.moveTo(bx - 6, by + flap);
+                    ctx.quadraticCurveTo(bx - 3, by - 2, bx, by);
+                    ctx.quadraticCurveTo(bx + 3, by - 2, bx + 6, by + flap);
+                    ctx.stroke();
+                });
+            }
+
+            if (state.altitude > 200) {
+                const mAlpha = Math.min(0.65, (state.altitude - 200) / 2500);
+                ctx.fillStyle = moonVis > 0.5 ? `rgba(30, 41, 59, ${mAlpha})` : `rgba(71, 85, 105, ${mAlpha * 0.75})`;
+                ctx.beginPath();
+                ctx.moveTo(0, h * 0.88);
+                ctx.lineTo(w * 0.22, h * 0.56);
+                ctx.lineTo(w * 0.48, h * 0.78);
+                ctx.lineTo(w * 0.75, h * 0.52);
+                ctx.lineTo(w, h * 0.74);
+                ctx.lineTo(w, h);
+                ctx.lineTo(0, h);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            const isSnowy = state.season > 82 || state.temp < -2;
+            const isDesert = state.humidity < 25 && state.temp > 25;
+            const isAutumn = state.season >= 55 && state.season <= 82;
+
+            let gTop = moonVis > 0.5 ? '#064e3b' : '#15803d';
+            let gBot = moonVis > 0.5 ? '#022c22' : '#14532d';
+            if (isSnowy) {
+                gTop = moonVis > 0.5 ? '#475569' : '#cbd5e1';
+                gBot = moonVis > 0.5 ? '#1e293b' : '#94a3b8';
+            } else if (isDesert) {
+                gTop = moonVis > 0.5 ? '#78350f' : '#d97706';
+                gBot = moonVis > 0.5 ? '#451a03' : '#92400e';
+            } else if (isAutumn) {
+                gTop = moonVis > 0.5 ? '#7c2d12' : '#b45309';
+                gBot = moonVis > 0.5 ? '#431407' : '#78350f';
+            }
+
+            const gGrad = ctx.createLinearGradient(0, h * 0.84, 0, h);
+            gGrad.addColorStop(0, gTop);
+            gGrad.addColorStop(1, gBot);
+            ctx.fillStyle = gGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.90);
+            ctx.quadraticCurveTo(w * 0.5, h * 0.83, w, h * 0.90);
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.fill();
+
+            if (!isSnowy && !isDesert) {
+                ctx.strokeStyle = moonVis > 0.5 ? 'rgba(16, 185, 129, 0.45)' : 'rgba(22, 163, 74, 0.85)';
+                ctx.lineWidth = 1.6;
+                const bend = (state.wind / 100) * 7 + Math.sin(time * 3) * 2;
+                worldData.grass.forEach(g => {
+                    ctx.beginPath();
+                    ctx.moveTo(g.x, g.y);
+                    ctx.quadraticCurveTo(g.x + bend * 0.5, g.y - g.len * 0.6, g.x + bend, g.y - g.len);
+                    ctx.stroke();
+                });
+            }
+        }
+
+        function updateAndDrawStorm(w, h, time, dt) {
+            const isStorm = state.precipitation > 68 && state.temp >= 1;
+            const storm = worldData.lightning;
+
+            if (isStorm && time >= storm.nextStrikeAt) {
+                storm.flashAlpha = 0.72;
+                storm.nextStrikeAt = time + 3.2 + Math.random() * 5.5;
+
+                const startX = w * (0.2 + Math.random() * 0.6);
+                let curX = startX;
+                let curY = 0;
+                const segs = [{ x: curX, y: curY }];
+                while (curY < h * 0.68) {
+                    curX += (Math.random() - 0.5) * 36 + (state.wind / 100) * 10;
+                    curY += 18 + Math.random() * 22;
+                    segs.push({ x: curX, y: curY });
+                }
+                storm.segments = segs;
+
+                if (musicEngine.isPlaying) {
+                    setTimeout(() => musicEngine.playThunderRumble(), 240);
+                }
+            }
+
+            if (storm.flashAlpha > 0.01) {
+                ctx.fillStyle = `rgba(224, 242, 254, ${storm.flashAlpha * 0.26})`;
+                ctx.fillRect(0, 0, w, h);
+
+                if (storm.segments.length > 1) {
+                    ctx.save();
+                    ctx.strokeStyle = `rgba(240, 249, 255, ${Math.min(1, storm.flashAlpha * 1.25)})`;
+                    ctx.lineWidth = 2.4;
+                    ctx.beginPath();
+                    ctx.moveTo(storm.segments[0].x, storm.segments[0].y);
+                    for (let i = 1; i < storm.segments.length; i++) {
+                        ctx.lineTo(storm.segments[i].x, storm.segments[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                storm.flashAlpha = Math.max(0, storm.flashAlpha - dt * 2.8);
+            }
+        }
+
+        function drawWeatherAndFog(w, h, time, dt) {
+            updateAndDrawStorm(w, h, time, dt);
+
+            const isSnow = state.temp < 1 || state.season > 82;
+            const windSlope = (state.wind / 100) * 0.45;
+
+            if (state.precipitation > 2) {
+                const count = Math.floor((state.precipitation / 100) * worldData.weather.length);
+                ctx.save();
+                for (let i = 0; i < count; i++) {
+                    const d = worldData.weather[i];
+                    if (isSnow) {
+                        d.y += d.speed * 0.25 * dt;
+                        d.x += (Math.sin(time * 2 + d.drift) * 18 + (state.wind / 100) * 55) * dt;
+                        if (d.y > h) { d.y = -10; d.x = (d.x + w * 0.3) % w; }
+                        if (d.x > w) d.x -= w;
+                        if (d.x < 0) d.x += w;
+                        ctx.fillStyle = 'rgba(248, 250, 252, 0.85)';
+                        ctx.beginPath();
+                        ctx.arc(d.x, d.y, 2.1, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        d.y += d.speed * 1.55 * dt;
+                        d.x += windSlope * d.speed * 1.55 * dt;
+                        if (d.y > h) { d.y = -15; d.x = (d.x + w * 0.3) % w; }
+                        if (d.x > w) d.x -= w;
+                        if (d.x < 0) d.x += w;
+                        ctx.strokeStyle = 'rgba(147, 197, 253, 0.58)';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(d.x, d.y);
+                        ctx.lineTo(d.x + windSlope * d.len, d.y + d.len);
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
+            }
+
+            if (state.fog > 5) {
+                const fogA = (state.fog / 100) * 0.42;
+                const fGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+                fGrad.addColorStop(0, 'rgba(148, 163, 184, 0)');
+                fGrad.addColorStop(1, `rgba(148, 163, 184, ${fogA})`);
+                ctx.fillStyle = fGrad;
+                ctx.fillRect(0, 0, w, h);
+            }
+        }
+
+        function updateMorph(nowMs) {
+            if (!morph.active) return;
+            const rawT = (nowMs - morph.startTime) / morph.duration;
+            const clampedT = Math.max(0, Math.min(1, rawT));
+            const eased = easeInOutCubic(clampedT);
+
+            morphableKeys.forEach((k) => {
+                const val = lerp(morph.from[k], morph.to[k], eased);
+                if (k === 'timeOfDay') {
+                    state[k] = Math.round(val * 2) / 2;
+                } else if (k === 'altitude') {
+                    state[k] = Math.round(val / 50) * 50;
+                } else if (k === 'trunkThickness') {
+                    state[k] = Math.round(val / 5) * 5;
+                } else {
+                    state[k] = Math.round(val);
+                }
+                const inputEl = document.getElementById(k);
+                if (inputEl) inputEl.value = state[k];
+            });
+
+            updateUIValues();
+            generateTreeData();
+
+            if (rawT >= 1) {
+                morph.active = false;
+                morphableKeys.forEach((k) => {
+                    state[k] = morph.to[k];
+                    const inputEl = document.getElementById(k);
+                    if (inputEl) inputEl.value = state[k];
+                });
+                updateUIValues();
+                generateTreeData();
+            }
+        }
+
+        let lastTime = 0;
+        function render(timestamp) {
+            updateMorph(timestamp);
+
+            const now = timestamp * 0.001;
+            const dt = lastTime ? Math.min(0.05, now - lastTime) : 0.016;
+            lastTime = now;
+
+            const w = worldData.width;
+            const h = worldData.height;
+
+            drawSkyAndGround(w, h, now);
+
+            const windSway = Math.sin(now * 2.2) * (state.wind / 100) * 10 + (state.wind / 100) * 14;
+
+            ctx.lineCap = 'round';
+            for (let r = 0; r < worldData.roots.length; r++) {
+                const root = worldData.roots[r];
+                ctx.strokeStyle = root.color;
+                ctx.lineWidth = root.thickness;
+                ctx.beginPath();
+                ctx.moveTo(root.x1, root.y1);
+                ctx.quadraticCurveTo(root.cx, root.cy, root.x2, root.y2);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < worldData.branches.length; i++) {
+                const b = worldData.branches[i];
+                const s1 = windSway * Math.pow(Math.max(0, b.depth - 1) / 7, 1.5);
+                const s2 = windSway * b.swayFactor;
+
+                const x1 = b.x1 + s1;
+                const y1 = b.y1;
+                const cx = b.cx + (s1 + s2) * 0.5;
+                const cy = b.cy;
+                const x2 = b.x2 + s2;
+                const y2 = b.y2;
+
+                ctx.strokeStyle = b.color;
+                ctx.lineWidth = (b.tStart + b.tMid) * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+
+                ctx.lineWidth = (b.tMid + b.tEnd) * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                if (b.isBirch && b.tStart > 5) {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+                    ctx.fillRect((x1 + cx) * 0.5 - 3, (y1 + cy) * 0.5, 6, 2);
+                }
+
+                if (b.hasSnow) {
+                    ctx.strokeStyle = 'rgba(248, 250, 252, 0.85)';
+                    ctx.lineWidth = Math.max(1.5, b.tEnd * 0.35);
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1 - b.tStart * 0.25);
+                    ctx.lineTo(cx, cy - b.tMid * 0.25);
+                    ctx.lineTo(x2, y2 - b.tEnd * 0.25);
+                    ctx.stroke();
+                }
+            }
+
+            for (let v = 0; v < worldData.vines.length; v++) {
+                const vine = worldData.vines[v];
+                const topS = windSway * vine.swayFactor;
+                const botS = topS + Math.sin(now * 2.5 + vine.phase) * 7;
+                ctx.strokeStyle = `hsla(${vine.hue}, 55%, 40%, 0.75)`;
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(vine.x + topS, vine.y);
+                ctx.quadraticCurveTo(vine.x + (topS + botS) * 0.5, vine.y + vine.length * 0.5, vine.x + botS, vine.y + vine.length);
+                ctx.stroke();
+            }
+
+            const isNight = state.timeOfDay < 5.5 || state.timeOfDay > 19.5;
+            const dim = isNight ? 0.68 : 1.0;
+
+            for (let c = 0; c < worldData.canopyClouds.length; c++) {
+                const cl = worldData.canopyClouds[c];
+                const sway = windSway * cl.swayFactor + Math.sin(now * 2.2 + cl.phase) * 2.2;
+                const baseX = cl.x + sway;
+                const baseY = cl.y;
+
+                for (let l = 0; l < cl.lobes.length; l++) {
+                    const lb = cl.lobes[l];
+                    const lx = baseX + lb.ox;
+                    const ly = baseY + lb.oy;
+                    const light = lb.light * dim;
+
+                    ctx.fillStyle = `hsl(${lb.hue}, ${cl.sat}%, ${light}%)`;
+                    ctx.beginPath();
+                    ctx.ellipse(lx, ly, lb.rx, lb.ry, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = `hsla(${lb.hue}, ${Math.min(80, cl.sat + 6)}%, ${Math.max(10, light - 11)}%, 0.52)`;
+                    ctx.beginPath();
+                    ctx.ellipse(lx, ly + lb.ry * 0.25, lb.rx * 0.92, lb.ry * 0.45, 0, 0, Math.PI);
+                    ctx.fill();
+
+                    ctx.fillStyle = `hsla(${lb.hue}, ${cl.sat}%, ${Math.min(85, light + 12)}%, 0.38)`;
+                    ctx.beginPath();
+                    ctx.ellipse(lx - 2, ly - lb.ry * 0.28, lb.rx * 0.7, lb.ry * 0.35, 0, Math.PI, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < worldData.accentLeaves.length; i++) {
+                const lf = worldData.accentLeaves[i];
+                const sway = windSway * lf.swayFactor + Math.sin(now * 3.2 + lf.phase) * 3;
+                const { h: hue, s, l, isFlower } = lf.colorData;
+
+                ctx.save();
+                ctx.translate(lf.x + sway, lf.y);
+                ctx.rotate(lf.angle + Math.sin(now * 4 + lf.phase) * 0.15);
+                ctx.fillStyle = `hsl(${hue}, ${s}%, ${l * dim}%)`;
+
+                if (isFlower) {
+                    for (let p = 0; p < 5; p++) {
+                        const a = (p / 5) * Math.PI * 2;
+                        ctx.beginPath();
+                        ctx.arc(Math.cos(a) * lf.size * 0.42, Math.sin(a) * lf.size * 0.42, lf.size * 0.34, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, lf.size * 0.22, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (lf.shape === 2) {
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = ctx.fillStyle;
+                    for (let n = -1; n <= 1; n++) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(Math.cos(n * 0.55) * lf.size * 1.2, Math.sin(n * 0.55) * lf.size * 1.2);
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, lf.size * 0.8, lf.size * 0.45, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            drawWeatherAndFog(w, h, now, dt);
+
+            requestAnimationFrame(render);
+        }
+
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+            canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            worldData.width = rect.width;
+            worldData.height = rect.height;
+            generateTreeData();
+        }
+
+        /**
+         * 4. УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ, ВЫДВИЖНОЙ ПАНЕЛЬЮ И СОБЫТИЯМИ
+         */
+        function updateUIValues() {
+            document.getElementById('val-temp').textContent = `${state.temp > 0 ? '+' : ''}${state.temp}°C`;
+
+            let pText = 'Ясно';
+            if (state.precipitation > 68 && state.temp >= 1) pText = 'Гроза';
+            else if (state.precipitation > 65) pText = state.temp < 1 ? 'Буран' : 'Ливень';
+            else if (state.precipitation > 25) pText = state.temp < 1 ? 'Снег' : 'Дождь';
+            else if (state.precipitation > 5) pText = state.temp < 1 ? 'Снежок' : 'Морось';
+            document.getElementById('val-precipitation').textContent = pText;
+
+            document.getElementById('val-humidity').textContent = `${state.humidity}%`;
+
+            let sText = 'Лето';
+            if (state.season < 25) sText = 'Весна';
+            else if (state.season < 55) sText = 'Лето';
+            else if (state.season < 83) sText = 'Осень';
+            else sText = 'Зима';
+            document.getElementById('val-season').textContent = sText;
+
+            document.getElementById('val-wind').textContent = `${state.wind > 0 ? '+' : ''}${state.wind}%`;
+            document.getElementById('val-fog').textContent = `${state.fog}%`;
+
+            const hours = Math.floor(state.timeOfDay);
+            const mins = state.timeOfDay % 1 === 0.5 ? '30' : '00';
+            document.getElementById('val-timeOfDay').textContent = `${String(hours).padStart(2, '0')}:${mins}`;
+
+            document.getElementById('val-fertility').textContent = `${state.fertility}%`;
+            document.getElementById('val-gravity').textContent = `${(1 + (state.gravity - 20) / 100).toFixed(1)}g`;
+            document.getElementById('val-magic').textContent = `${state.magic}%`;
+            document.getElementById('val-chaos').textContent = `${state.chaos}%`;
+            document.getElementById('val-colorVar').textContent = `${state.colorVar}%`;
+            document.getElementById('val-altitude').textContent = `${state.altitude} м`;
+            document.getElementById('val-bloom').textContent = `${state.bloom}%`;
+            document.getElementById('val-trunkThickness').textContent = `${state.trunkThickness}%`;
+            document.getElementById('val-split').textContent = `${state.split}%`;
+            document.getElementById('val-branchSpread').textContent = `${state.branchSpread}%`;
+            document.getElementById('val-clumpiness').textContent = `${state.clumpiness}%`;
+
+            const leafNames = ['Авто', 'Классика', 'Хвоя', 'Резная', 'Пышная'];
+            document.getElementById('val-leafStyle').textContent = leafNames[state.leafStyle] || 'Авто';
+
+            if (musicEngine.isPlaying) {
+                const p = musicEngine.computeMusicParams();
+                musicEngine.currentParams = p;
+                musicEngine.updateAmbientLayer(p);
+                musicEngine.updateMusicBadge();
+            }
+        }
+
+        const sliderIds = [
+            'temp', 'precipitation', 'humidity', 'season', 'wind', 'fog',
+            'timeOfDay', 'fertility', 'gravity', 'magic', 'chaos', 'colorVar',
+            'altitude', 'bloom', 'trunkThickness', 'split', 'branchSpread',
+            'leafStyle', 'clumpiness'
+        ];
+
+        sliderIds.forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', (e) => {
+                morph.active = false;
+                state[id] = parseFloat(e.target.value);
+                updateUIValues();
+                generateTreeData();
+            });
+        });
+
+        // Выдвижная панель генома и уменьшение/сдвиг сцены при открытии
+        let isDrawerOpen = false;
+        const genomeDrawer = document.getElementById('genome-drawer');
+        const drawerHandle = document.getElementById('drawer-handle');
+        const drawerChevron = document.getElementById('drawer-chevron');
+        const drawerStateLabel = document.getElementById('drawer-state-label');
+        const sceneViewport = document.getElementById('scene-viewport');
+
+        function getDrawerClosedOffset() {
+            if (!genomeDrawer) return 0;
+            // Высота блока с кнопками над панелью (~60px) + видимая ручка панели (46px)
+            const topButtonsAndHandle = 60 + 46;
+            const totalH = genomeDrawer.offsetHeight || Math.min(480, Math.max(260, window.innerHeight * 0.5));
+            return Math.max(0, totalH - topButtonsAndHandle);
+        }
+
+        function updateSceneViewportTransform() {
+            if (!sceneViewport) return;
+            if (isDrawerOpen) {
+                const drawerHeight = genomeDrawer ? (genomeDrawer.offsetHeight || window.innerHeight * 0.5) : window.innerHeight * 0.5;
+                const shiftY = -Math.round(drawerHeight * 0.42);
+                const scale = window.innerWidth < 640 ? 0.68 : 0.76;
+                sceneViewport.style.transform = `translateY(${shiftY}px) scale(${scale})`;
+            } else {
+                sceneViewport.style.transform = 'translateY(0px) scale(1)';
+            }
+        }
+
+        function setDrawerOpen(open) {
+            isDrawerOpen = open;
+            const closedOffset = getDrawerClosedOffset();
+
+            if (genomeDrawer) {
+                if (isDrawerOpen) {
+                    genomeDrawer.style.transform = 'translateY(0px)';
+                } else {
+                    genomeDrawer.style.transform = `translateY(${closedOffset}px)`;
+                }
+            }
+            if (drawerChevron) {
+                drawerChevron.style.transform = isDrawerOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+            if (drawerStateLabel) {
+                drawerStateLabel.textContent = isDrawerOpen ? 'Свернуть' : 'Открыть';
+            }
+            updateSceneViewportTransform();
+        }
+
+        drawerHandle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDrawerOpen(!isDrawerOpen);
+        });
+
+        // Скрытие / показ дополнительной информации кнопкой справа сверху
+        let isHudHidden = false;
+        const btnToggleHud = document.getElementById('btn-toggle-hud');
+        const extraInfoPanel = document.getElementById('extra-info-panel');
+        const extraActionButtons = document.getElementById('extra-action-buttons');
+
+        btnToggleHud.addEventListener('click', () => {
+            isHudHidden = !isHudHidden;
+            extraInfoPanel.classList.toggle('opacity-0', isHudHidden);
+            extraInfoPanel.classList.toggle('pointer-events-none', isHudHidden);
+            extraActionButtons.classList.toggle('opacity-0', isHudHidden);
+            extraActionButtons.classList.toggle('pointer-events-none', isHudHidden);
+        });
+
+        // Две компактные иконочные кнопки над панелью
+        document.getElementById('btn-music-compact').addEventListener('click', () => {
+            musicEngine.toggle();
+        });
+
+        document.getElementById('btn-randomize-compact').addEventListener('click', () => {
+            const target = {
+                temp: Math.floor(Math.random() * 65) - 20,
+                precipitation: Math.random() > 0.4 ? Math.floor(Math.random() * 98) : 0,
+                humidity: Math.floor(Math.random() * 101),
+                season: Math.floor(Math.random() * 101),
+                wind: Math.floor(Math.random() * 160) - 80,
+                fog: Math.floor(Math.random() * 75),
+                timeOfDay: Math.floor(Math.random() * 48) / 2,
+                fertility: Math.floor(Math.random() * 80) + 20,
+                gravity: Math.floor(Math.random() * 170) - 30,
+                magic: Math.random() > 0.65 ? Math.floor(Math.random() * 100) : Math.floor(Math.random() * 15),
+                chaos: Math.floor(Math.random() * 90),
+                colorVar: Math.floor(Math.random() * 101),
+                altitude: Math.floor(Math.random() * 60) * 50,
+                bloom: Math.floor(Math.random() * 101),
+                trunkThickness: Math.floor(Math.random() * 42) * 5 + 40,
+                split: Math.floor(Math.random() * 101),
+                branchSpread: Math.floor(Math.random() * 91) + 10,
+                leafStyle: Math.random() > 0.4 ? 0 : Math.floor(Math.random() * 5),
+                clumpiness: Math.floor(Math.random() * 101)
+            };
+            startMorphToTargets(target, Math.floor(Math.random() * 1000000));
+        });
+
+        document.getElementById('btn-new-seed').addEventListener('click', () => {
+            state.seed = Math.floor(Math.random() * 1000000);
+            generateTreeData();
+        });
+
+        document.getElementById('btn-save').addEventListener('click', () => {
+            try {
+                const link = document.createElement('a');
+                link.download = `tree-${state.seed}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                const toast = document.getElementById('toast');
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 2000);
+            } catch (err) {
+                console.error('Ошибка сохранения:', err);
+            }
+        });
+
+        const presets = {
+            sakura: { temp: 16, precipitation: 10, humidity: 60, season: 12, wind: 20, fog: 15, timeOfDay: 19.5, fertility: 75, gravity: 35, magic: 0, chaos: 45, colorVar: 30, altitude: 200, bloom: 95, trunkThickness: 95, split: 55, branchSpread: 65, leafStyle: 1, clumpiness: 70 },
+            storm: { temp: 17, precipitation: 92, humidity: 90, season: 40, wind: 65, fog: 40, timeOfDay: 22.0, fertility: 80, gravity: 30, magic: 10, chaos: 75, colorVar: 35, altitude: 300, bloom: 10, trunkThickness: 120, split: 35, branchSpread: 60, leafStyle: 1, clumpiness: 85 },
+            autumn: { temp: 10, precipitation: 30, humidity: 65, season: 70, wind: -25, fog: 65, timeOfDay: 18.5, fertility: 85, gravity: 20, magic: 0, chaos: 40, colorVar: 85, altitude: 400, bloom: 0, trunkThickness: 115, split: 40, branchSpread: 60, leafStyle: 3, clumpiness: 80 },
+            winter: { temp: -14, precipitation: 75, humidity: 70, season: 92, wind: 45, fog: 35, timeOfDay: 22.0, fertility: 65, gravity: 25, magic: 0, chaos: 30, colorVar: 10, altitude: 1400, bloom: 0, trunkThickness: 85, split: 10, branchSpread: 35, leafStyle: 2, clumpiness: 85 },
+            magic: { temp: 15, precipitation: 15, humidity: 80, season: 45, wind: 10, fog: 30, timeOfDay: 1.5, fertility: 85, gravity: -10, magic: 95, chaos: 60, colorVar: 85, altitude: 800, bloom: 70, trunkThickness: 125, split: 65, branchSpread: 55, leafStyle: 4, clumpiness: 85 },
+            savanna: { temp: 36, precipitation: 0, humidity: 15, season: 48, wind: 15, fog: 10, timeOfDay: 18.0, fertility: 55, gravity: -35, magic: 0, chaos: 25, colorVar: 35, altitude: 500, bloom: 5, trunkThickness: 205, split: 50, branchSpread: 90, leafStyle: 1, clumpiness: 92 }
+        };
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.getAttribute('data-preset');
+                if (presets[name]) {
+                    startMorphToTargets(presets[name], Math.floor(Math.random() * 1000000));
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            setDrawerOpen(isDrawerOpen);
+        });
+        window.onload = function() {
+            updateUIValues();
+            resizeCanvas();
+            requestAnimationFrame(() => setDrawerOpen(false));
+            requestAnimationFrame(render);
+
+            const introSplash = document.getElementById('intro-splash');
+            if (introSplash) {
+                setTimeout(() => {
+                    introSplash.classList.add('opacity-0');
+                    setTimeout(() => introSplash.remove(), 500);
+                }, 1750);
+            }
+        };
+    </script>
+</body>
+</html>
